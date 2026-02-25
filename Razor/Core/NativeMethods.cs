@@ -11,6 +11,9 @@ namespace Assistant
         [System.Runtime.InteropServices.DllImport("Gdi32.dll")]
         internal static extern IntPtr DeleteObject(IntPtr hGdiObj);
 
+        [DllImport("uxtheme.dll", ExactSpelling = true, CharSet = CharSet.Unicode)]
+        internal static extern int SetWindowTheme(IntPtr hwnd, string pszSubAppName, string pszSubIdList);
+
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);

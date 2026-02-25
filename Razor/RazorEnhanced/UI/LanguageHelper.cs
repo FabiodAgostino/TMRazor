@@ -1,6 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Resources;
 using System.Windows.Forms;
 using RazorEnhanced;
@@ -10,13 +11,44 @@ namespace RazorEnhanced.UI
     internal static class LanguageHelper
     {
         private static ResourceManager _resourceManager;
+        private static ResourceSet _italianResourceSet;
         private static string _currentLanguage;
 
         static LanguageHelper()
         {
-            // Resource name matches the expected location Assistant.RazorEnhanced.UI.Strings
             _resourceManager = new ResourceManager("Assistant.RazorEnhanced.UI.Strings", typeof(LanguageHelper).Assembly);
+            _italianResourceSet = LoadItalianResourceSet();
             _currentLanguage = Shards.allShards.Language ?? "it";
+        }
+
+        // Loads the Italian satellite assembly directly from disk, handling both
+        // VS MSBuild ("...Strings.resources") and dotnet SDK ("...Strings.it.resources") naming conventions.
+        private static ResourceSet LoadItalianResourceSet()
+        {
+            try
+            {
+                string baseDir = Path.GetDirectoryName(typeof(LanguageHelper).Assembly.Location);
+                string satPath = Path.Combine(baseDir, "it", "RazorEnhanced.resources.dll");
+                if (!File.Exists(satPath))
+                    return null;
+
+                var satAssembly = Assembly.LoadFile(satPath);
+                string resName = satAssembly.GetManifestResourceNames()
+                    .FirstOrDefault(n => n.Contains("Strings") && n.EndsWith(".resources"));
+                if (resName == null)
+                    return null;
+
+                var stream = satAssembly.GetManifestResourceStream(resName);
+                if (stream == null)
+                    return null;
+
+                return new ResourceSet(stream);
+            }
+            catch (Exception ex)
+            {
+                Assistant.Utility.Logger.Debug($"LanguageHelper: failed to load Italian resources: {ex.Message}");
+                return null;
+            }
         }
 
         public static string CurrentLanguage
@@ -36,8 +68,12 @@ namespace RazorEnhanced.UI
         {
             try
             {
-                string value = _resourceManager.GetString(key, new CultureInfo(_currentLanguage == "it" ? "it-IT" : "en-US"));
-                return value ?? key;
+                if (_currentLanguage == "it" && _italianResourceSet != null)
+                {
+                    string val = _italianResourceSet.GetString(key);
+                    if (val != null) return val;
+                }
+                return _resourceManager.GetString(key) ?? key;
             }
             catch (Exception ex)
             {
@@ -51,7 +87,7 @@ namespace RazorEnhanced.UI
             string formText = GetString(form.Name + ".Text");
             if (formText != form.Name + ".Text")
                 form.Text = formText;
-                
+
             TranslateControls(form.Controls, form.Name);
         }
 

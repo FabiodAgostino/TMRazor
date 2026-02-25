@@ -862,7 +862,7 @@ namespace RazorEnhanced
                 {
                     AutoSize = true,
                     Location = new Point(0, 29),
-                    Font = new System.Drawing.Font("Arial", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.75F),
                     Name = "panel" + i + "count",
                     Size = new Size(25, 13),
                     TabIndex = 1,
@@ -1262,7 +1262,7 @@ namespace RazorEnhanced
                 m_weightlabelSV = new Label
                 {
                     AutoSize = true,
-                    Font = new Font("Arial", 6.00F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.00F, System.Drawing.FontStyle.Regular),
                     Location = new Point(5, offsetstat),
                     Name = "label1",
                     Size = new Size(50, 12),
@@ -1274,7 +1274,7 @@ namespace RazorEnhanced
                 m_weightmaxlabelSV = new Label
                 {
                     AutoSize = true,
-                    Font = new Font("Arial", 6.00F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.00F, System.Drawing.FontStyle.Regular),
                     Location = new Point(5, offsetstat + 13),
                     Name = "label1",
                     Size = new Size(50, 12),
@@ -1296,7 +1296,7 @@ namespace RazorEnhanced
                 m_tithelabelSV = new Label
                 {
                     AutoSize = true,
-                    Font = new Font("Arial", 6.00F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.00F, System.Drawing.FontStyle.Regular),
                     Location = new Point(5, offsetstat),
                     Name = "label1",
                     Size = new Size(50, 12),
@@ -1317,7 +1317,7 @@ namespace RazorEnhanced
                 m_followerlabelSV = new Label
                 {
                     AutoSize = true,
-                    Font = new Font("Arial", 6.00F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.00F, System.Drawing.FontStyle.Regular),
                     Location = new Point(5, offsetstat + 7),
                     Name = "label1",
                     Size = new Size(50, 12),
@@ -1343,9 +1343,7 @@ namespace RazorEnhanced
                 {
                     AutoSize = true,
                     Location = new Point(0, 18),
-                    Font =
-                        new Font("Arial", 6.75F, System.Drawing.FontStyle.Regular,
-                            GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.75F),
                     Name = "panel" + i + "count",
                     Size = new Size(10, 20),
                     TabIndex = 1,
@@ -1400,7 +1398,7 @@ namespace RazorEnhanced
                     AutoSize = false,
                     Width = 5,
                     Height = 5,
-                    Font = new Font("Arial", 6.75F, FontStyle.Regular, GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.75F),
                     Location = new Point(offsetstat + 16, 3),
                     Name = "h",
                     Size = new Size(20, 12),
@@ -1413,7 +1411,7 @@ namespace RazorEnhanced
                 m_hitslabelSH = new Label
                 {
                     AutoSize = true,
-                    Font = new System.Drawing.Font("Arial", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.75F),
                     Location = new Point(offsetstat, 14),
                     Name = "hitslabel",
                     Size = new Size(50, 12),
@@ -1436,7 +1434,7 @@ namespace RazorEnhanced
                     AutoSize = false,
                     Width = 5,
                     Height = 5,
-                    Font = new System.Drawing.Font("Arial", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.75F),
                     Location = new Point(offsetstat + 16, 3),
                     Name = "m",
                     Size = new Size(20, 12),
@@ -1449,7 +1447,7 @@ namespace RazorEnhanced
                 m_manalabelSH = new Label
                 {
                     AutoSize = true,
-                    Font = new System.Drawing.Font("Arial", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.75F),
                     Location = new Point(offsetstat, 14),
                     Name = "manalabel",
                     Size = new Size(52, 12),
@@ -1472,7 +1470,7 @@ namespace RazorEnhanced
                     AutoSize = false,
                     Width = 5,
                     Height = 5,
-                    Font = new System.Drawing.Font("Arial", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.75F),
                     Location = new Point(offsetstat + 16, 3),
                     Name = "s",
                     Size = new Size(20, 12),
@@ -1485,7 +1483,7 @@ namespace RazorEnhanced
                 m_staminalabelSH = new Label
                 {
                     AutoSize = true,
-                    Font = new System.Drawing.Font("Arial", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.75F),
                     Location = new Point(offsetstat, 14),
                     Name = "stamlabel",
                     Size = new Size(49, 12),
@@ -1510,7 +1508,7 @@ namespace RazorEnhanced
                     AutoSize = false,
                     Width = 5,
                     Height = 5,
-                    Font = new System.Drawing.Font("Arial", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.75F),
                     Location = new Point(offsetstat + 12, 3),
                     Name = "w",
                     Size = new Size(20, 12),
@@ -1523,7 +1521,7 @@ namespace RazorEnhanced
                 m_weightlabelSH = new Label
                 {
                     AutoSize = true,
-                    Font = new System.Drawing.Font("Arial", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.75F),
                     Location = new Point(offsetstat - 5, 14),
                     Name = "weightlabel",
                     Size = new Size(49, 12),
@@ -1545,7 +1543,7 @@ namespace RazorEnhanced
                     AutoSize = false,
                     Width = 5,
                     Height = 5,
-                    Font = new System.Drawing.Font("Arial", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.75F),
                     Location = new Point(offsetstat + 12, 3),
                     Name = "t",
                     Size = new Size(20, 12),
@@ -1558,7 +1556,7 @@ namespace RazorEnhanced
                 m_tithelabelSH = new Label
                 {
                     AutoSize = true,
-                    Font = new System.Drawing.Font("Arial", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.75F),
                     Location = new Point(offsetstat - 5, 14),
                     Name = "tithelabel",
                     Size = new Size(49, 12),
@@ -1583,7 +1581,7 @@ namespace RazorEnhanced
                     AutoSize = false,
                     Width = 5,
                     Height = 5,
-                    Font = new System.Drawing.Font("Arial", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.75F),
                     Location = new Point(offsetstat + 7, 3),
                     Name = "f",
                     Size = new Size(20, 12),
@@ -1596,7 +1594,7 @@ namespace RazorEnhanced
                 m_followerlabelSH = new Label
                 {
                     AutoSize = true,
-                    Font = new System.Drawing.Font("Arial", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0),
+                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(6.75F),
                     Location = new Point(offsetstat, 14),
                     Name = "followerlabel",
                     Size = new Size(49, 12),

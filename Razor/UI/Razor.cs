@@ -1,4 +1,4 @@
-using AutoUpdaterDotNET;
+﻿using AutoUpdaterDotNET;
 using JsonData;
 using RazorEnhanced;
 using RazorEnhanced.UI;
@@ -93,6 +93,9 @@ namespace Assistant
         private System.Windows.Forms.TabPage MacrosTab;
 
         #endregion Class Variables
+
+        [DllImport("uxtheme.dll", ExactSpelling = true, CharSet = CharSet.Unicode)]
+        private static extern int SetWindowTheme(IntPtr hwnd, string pszSubAppName, string pszSubIdList);
         private System.Windows.Forms.CheckBox preAOSstatbar;
         private System.Windows.Forms.ComboBox clientPrio;
         private System.Windows.Forms.Label label9;
@@ -106,7 +109,7 @@ namespace Assistant
         private readonly List<RazorEnhanced.BuyAgent.BuyAgentItem> buyItemList = new();
         private readonly List<RazorEnhanced.Dress.DressItemNew> dressItemList = new();
         private TabPage EnhancedAgent;
-        private TabControl tabControl1;
+        private RazorTabControl tabControl1;
         private TabPage eautoloot;
         private Assistant.UI.Controls.RazorCard groupBox13;
         private ListBox autolootLogBox;
@@ -608,9 +611,9 @@ namespace Assistant
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn8;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn7;
         private CheckBox bandagehealTimeWithBufCheckBox;
-        private TabControl FilterPages;
-        private TabControl AdvancedPages;
-        private TabControl TechnicalPages;
+        private RazorTabControl FilterPages;
+        private RazorTabControl AdvancedPages;
+        private RazorTabControl TechnicalPages;
         private TabPage MiscFilterPage;
         private Assistant.UI.Controls.RazorCard uomodgroupbox;
         private System.Windows.Forms.CheckBox uomodpaperdollCheckBox;
@@ -677,29 +680,29 @@ namespace Assistant
         private CheckBox buyToCompleteAmount;
         private Button ChkForUpdate;
         private TabPage AllScripts;
-        private TabControl AllScriptsTab;
+        private RazorTabControl AllScriptsTab;
         private TabPage pythonScriptingTab;
-        private CheckBox scriptshowStartStopCheckBox;
+        private RazorToggle scriptshowStartStopCheckBox;
         private Assistant.UI.Controls.RazorCard groupBox42;
-        private TextBox scriptSearchTextBox;
+        private RazorTextBox scriptSearchTextBox;
         private Assistant.UI.Controls.RazorCard scriptOperationsBox;
-        private Button buttonScriptTo;
-        private Button buttonScriptEditorNew;
-        private Button buttonScriptRefresh;
-        private Button buttonAddScript;
-        private Button buttonRemoveScript;
-        private Button buttonScriptDown;
-        private TextBox textBoxDelay;
-        private Button buttonScriptUp;
-        private Button buttonScriptEditor;
-        private Button buttonScriptStop;
-        private Button buttonScriptPlay;
+        private RazorButton buttonScriptTo;
+        private RazorButton buttonScriptEditorNew;
+        private RazorButton buttonScriptRefresh;
+        private RazorButton buttonAddScript;
+        private RazorButton buttonRemoveScript;
+        private RazorButton buttonScriptDown;
+        private RazorTextBox textBoxDelay;
+        private RazorButton buttonScriptUp;
+        private RazorButton buttonScriptEditor;
+        private RazorButton buttonScriptStop;
+        private RazorButton buttonScriptPlay;
         private Assistant.UI.Controls.RazorCard groupBox30;
-        private CheckBox scriptautostartcheckbox;
-        private CheckBox scriptwaitmodecheckbox;
-        private CheckBox scriptloopmodecheckbox;
-        private CheckBox scripterrorlogCheckBox;
-        private CheckBox showscriptmessageCheckBox;
+        private RazorToggle scriptautostartcheckbox;
+        private RazorToggle scriptwaitmodecheckbox;
+        private RazorToggle scriptloopmodecheckbox;
+        private RazorToggle scripterrorlogCheckBox;
+        private RazorToggle showscriptmessageCheckBox;
         private ScriptListView pyScriptListView;
         private ColumnHeader filename;
         private ColumnHeader status;
@@ -733,9 +736,9 @@ namespace Assistant
         private ColumnHeader columnHeader16;
         private ColumnHeader columnHeader17;
         private ColumnHeader columnHeader18;
-        private Button InspectContextButton;
-        private Button InspectGumpsButton;
-        private TextBox organizerDestination;
+        private RazorButton InspectContextButton;
+        private RazorButton InspectGumpsButton;
+        private RazorTextBox organizerDestination;
         private ListView friendlistView;
         private ListView friendguildListView;
         private SplitContainer splitContainer1;
@@ -743,14 +746,14 @@ namespace Assistant
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn14;
         private DataGridViewTextBoxColumn dataGridViewTextBoxColumn15;
         private RazorAgentNumOnlyTextBox autoLootTextBoxDelay;
-        private CheckBox bandageHealIgnoreCount;
-        private CheckBox scriptPacketLogCheckBox;
-        private CheckBox autoScriptReload;
+        private RazorToggle bandageHealIgnoreCount;
+        private RazorToggle scriptPacketLogCheckBox;
+        private RazorToggle autoScriptReload;
         private Assistant.UI.Controls.RazorCard DmgDsplyGroup;
-        private CheckBox limitDamageDisplayEnable;
+        private RazorToggle limitDamageDisplayEnable;
         private RazorAgentNumOnlyTextBox minDmgShown;
         private Label label81;
-        private CheckBox scriptpreload;
+        private RazorToggle scriptpreload;
         private ColumnHeader preload;
         private ColumnHeader columnHeader19;
         private ColumnHeader columnHeader20;
@@ -774,6 +777,7 @@ namespace Assistant
 
             LanguageHelper.CurrentLanguage = Shards.allShards.Language ?? "it";
             LanguageHelper.TranslateForm(this);
+            InitializeSidebar();
 
             m_NotifyIcon.ContextMenu =
                 new ContextMenu(new MenuItem[]
@@ -914,9 +918,9 @@ namespace Assistant
             this.chkForceSpellHue = new RazorToggle();
             this.chkForceSpeechHue = new RazorToggle();
             this.enhancedFilterTab = new System.Windows.Forms.TabPage();
-            this.FilterPages = new System.Windows.Forms.TabControl();
-            this.AdvancedPages = new System.Windows.Forms.TabControl();
-            this.TechnicalPages = new System.Windows.Forms.TabControl();
+            this.FilterPages = new RazorTabControl();
+            this.AdvancedPages = new RazorTabControl();
+            this.TechnicalPages = new RazorTabControl();
             this.MiscFilterPage = new System.Windows.Forms.TabPage();
             this.DmgDsplyGroup = new Assistant.UI.Controls.RazorCard();
             this.minDmgShown = new RazorEnhanced.UI.RazorAgentNumOnlyTextBox();
@@ -1011,7 +1015,7 @@ namespace Assistant
             this.buttonScriptStop = new RazorButton();
             this.buttonScriptPlay = new RazorButton();
             this.showscriptmessageCheckBox = new RazorToggle();
-            this.AllScriptsTab = new System.Windows.Forms.TabControl();
+            this.AllScriptsTab = new RazorTabControl();
             this.pythonScriptingTab = new System.Windows.Forms.TabPage();
             this.pyScriptListView = new RazorEnhanced.UI.ScriptListView();
             this.filename = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -1049,7 +1053,7 @@ namespace Assistant
             this.columnHeader20 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader18 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.EnhancedAgent = new System.Windows.Forms.TabPage();
-            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabControl1 = new RazorTabControl();
             this.eautoloot = new System.Windows.Forms.TabPage();
             this.autoLootButtonListClone = new RazorButton();
             this.autolootautostartCheckBox = new RazorToggle();
@@ -1281,7 +1285,7 @@ namespace Assistant
             this.groupBox5 = new Assistant.UI.Controls.RazorCard();
             this.bandagehealLogBox = new System.Windows.Forms.ListBox();
             this.toolbarTab = new System.Windows.Forms.TabPage();
-            this.toolbarstab = new System.Windows.Forms.TabControl();
+            this.toolbarstab = new RazorTabControl();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.groupBox39 = new Assistant.UI.Controls.RazorCard();
             this.toolbar_trackBar = new System.Windows.Forms.TrackBar();
@@ -1767,14 +1771,15 @@ namespace Assistant
             this.tabs.Controls.Add(this.enhancedHotKeytabPage);
             this.tabs.Controls.Add(this.advancedTab);
             this.tabs.Controls.Add(this.technicalTab);
-            this.tabs.ItemSize = new System.Drawing.Size(90, 25);
-            this.tabs.Location = new System.Drawing.Point(0, 0);
+            this.tabs.ItemSize = new System.Drawing.Size(0, 1);
+            this.tabs.Location = new System.Drawing.Point(200, 0);
             this.tabs.Multiline = true;
             this.tabs.Name = "tabs";
-            this.tabs.Padding = new System.Drawing.Point(9, 3);
+            this.tabs.Padding = new System.Drawing.Point(0, 0);
             this.tabs.SelectedIndex = 0;
-            this.tabs.Size = new System.Drawing.Size(686, 423);
-            this.tabs.SizeMode = System.Windows.Forms.TabSizeMode.FillToRight;
+            this.tabs.Size = new System.Drawing.Size(486, 423);
+            this.tabs.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
+            this.tabs.Appearance = System.Windows.Forms.TabAppearance.FlatButtons;
             this.tabs.TabIndex = 0;
             this.tabs.SelectedIndexChanged += new System.EventHandler(this.tabs_IndexChanged);
             #region Options Tab
@@ -2477,6 +2482,7 @@ namespace Assistant
             this.enhancedFilterTab.Size = new System.Drawing.Size(678, 365);
             this.enhancedFilterTab.TabIndex = 10;
             this.enhancedFilterTab.Text = "Filters";
+            this.enhancedFilterTab.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
             // 
             // FilterPages
             // 
@@ -2490,6 +2496,7 @@ namespace Assistant
             this.FilterPages.Name = "FilterPages";
             this.FilterPages.SelectedIndex = 0;
             this.FilterPages.Size = new System.Drawing.Size(657, 371);
+            this.FilterPages.TabIndex = 0;
             this.FilterPages.TabIndex = 0;
             #endregion
             #region Virtual Tab 
@@ -2516,15 +2523,15 @@ namespace Assistant
             | System.Windows.Forms.AnchorStyles.Right)));
             this.filters.CheckOnClick = true;
             this.filters.IntegralHeight = false;
-            this.filters.Location = new System.Drawing.Point(6, 100);
+            this.filters.Location = new System.Drawing.Point(6, 85);
             this.filters.Name = "filters";
-            this.filters.Size = new System.Drawing.Size(162, 246);
+            this.filters.Size = new System.Drawing.Size(162, 261);
             this.filters.TabIndex = 0;
             this.filters.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.OnFilterCheck);
             // 
             // morefilterLabel
             // 
-            this.morefilterLabel.Location = new System.Drawing.Point(8, 82); //251 189
+            this.morefilterLabel.Location = new System.Drawing.Point(8, 67); //251 189
             this.morefilterLabel.Name = "morefilterLabel";
             this.morefilterLabel.Size = new System.Drawing.Size(100, 15);
             this.morefilterLabel.TabIndex = 59;
@@ -2532,7 +2539,7 @@ namespace Assistant
             // 
             // filterNPC
             // 
-            this.filterNPC.Location = new System.Drawing.Point(12, 63);
+            this.filterNPC.Location = new System.Drawing.Point(12, 48);
             this.filterNPC.Name = "filterNPC";
             this.filterNPC.Size = new System.Drawing.Size(158, 17);
             this.filterNPC.TabIndex = 81;
@@ -2542,7 +2549,7 @@ namespace Assistant
             // 
             // filterPoison
             // 
-            this.filterPoison.Location = new System.Drawing.Point(12, 46);
+            this.filterPoison.Location = new System.Drawing.Point(12, 31);
             this.filterPoison.Name = "filterPoison";
             this.filterPoison.Size = new System.Drawing.Size(158, 17);
             this.filterPoison.TabIndex = 79;
@@ -2551,7 +2558,7 @@ namespace Assistant
             // 
             // filterSnoop
             // 
-            this.filterSnoop.Location = new System.Drawing.Point(12, 29);
+            this.filterSnoop.Location = new System.Drawing.Point(12, 14);
             this.filterSnoop.Name = "filterSnoop";
             this.filterSnoop.Size = new System.Drawing.Size(158, 17);
             this.filterSnoop.TabIndex = 49;
@@ -2560,7 +2567,7 @@ namespace Assistant
             // 
             // spamFilter
             // 
-            this.spamFilter.Location = new System.Drawing.Point(12, 12);
+            this.spamFilter.Location = new System.Drawing.Point(12, -3);
             this.spamFilter.Name = "spamFilter";
             this.spamFilter.Size = new System.Drawing.Size(158, 17);
             this.spamFilter.TabIndex = 2;
@@ -4298,243 +4305,225 @@ namespace Assistant
             this.scriptControlBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.scriptControlBox.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.scriptControlBox.BackColor = System.Drawing.SystemColors.Control;
-            this.scriptControlBox.Controls.Add(this.autoScriptReload);
-            this.scriptControlBox.Controls.Add(this.scriptPacketLogCheckBox);
             this.scriptControlBox.Controls.Add(this.InspectGumpsButton);
             this.scriptControlBox.Controls.Add(this.InspectContextButton);
-            this.scriptControlBox.Controls.Add(this.scriptshowStartStopCheckBox);
             this.scriptControlBox.Controls.Add(this.groupBox30);
+            this.scriptControlBox.Controls.Add(this.scriptOperationsBox);
             this.scriptControlBox.Controls.Add(this.groupBox42);
             this.scriptControlBox.Controls.Add(this.scripterrorlogCheckBox);
-            this.scriptControlBox.Controls.Add(this.scriptOperationsBox);
             this.scriptControlBox.Controls.Add(this.showscriptmessageCheckBox);
+            this.scriptControlBox.Controls.Add(this.scriptshowStartStopCheckBox);
+            this.scriptControlBox.Controls.Add(this.scriptPacketLogCheckBox);
+            this.scriptControlBox.Controls.Add(this.autoScriptReload);
             this.scriptControlBox.Location = new System.Drawing.Point(478, 2);
             this.scriptControlBox.Name = "scriptControlBox";
-            this.scriptControlBox.Size = new System.Drawing.Size(202, 335);
+            this.scriptControlBox.Size = new System.Drawing.Size(202, 465);
             this.scriptControlBox.TabIndex = 1;
             this.scriptControlBox.TabStop = false;
-            // 
-            // autoScriptReload
-            // 
-            this.autoScriptReload.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.autoScriptReload.Location = new System.Drawing.Point(11, 383);
-            this.autoScriptReload.Name = "autoScriptReload";
-            this.autoScriptReload.Size = new System.Drawing.Size(128, 17);
-            this.autoScriptReload.TabIndex = 80;
-            this.autoScriptReload.Text = "Auto Script Reload";
-            this.m_Tip.SetToolTip(this.autoScriptReload, "Used to automatically reload scripts modified by external editor");
-            this.autoScriptReload.UseVisualStyleBackColor = true;
-            this.autoScriptReload.CheckedChanged += new System.EventHandler(this.autoScriptReload_CheckedChanged);
-            // 
-            // scriptPacketLogCheckBox
-            // 
-            this.scriptPacketLogCheckBox.AccessibleDescription = "";
-            this.scriptPacketLogCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.scriptPacketLogCheckBox.Location = new System.Drawing.Point(11, 363);
-            this.scriptPacketLogCheckBox.Name = "scriptPacketLogCheckBox";
-            this.scriptPacketLogCheckBox.Size = new System.Drawing.Size(160, 21);
-            this.scriptPacketLogCheckBox.TabIndex = 79;
-            this.scriptPacketLogCheckBox.Text = "Enable Packet Logging";
-            this.scriptPacketLogCheckBox.CheckStateChanged += new System.EventHandler(this.scriptPacketLogCheckBox_CheckStateChanged);
-            // 
-            // InspectGumpsButton
-            // 
-            this.InspectGumpsButton.Font = new System.Drawing.Font("Arial", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.InspectGumpsButton.Image = global::Assistant.Properties.Resources.gump;
-            this.InspectGumpsButton.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.InspectGumpsButton.Location = new System.Drawing.Point(81, 6);
-            this.InspectGumpsButton.Name = "InspectGumpsButton";
-            this.InspectGumpsButton.Size = new System.Drawing.Size(99, 20);
-            this.InspectGumpsButton.TabIndex = 78;
-            this.InspectGumpsButton.Text = "Inspect Gump";
-            this.InspectGumpsButton.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.InspectGumpsButton.UseVisualStyleBackColor = true;
-            this.InspectGumpsButton.Click += new System.EventHandler(this.InspectGump_Click);
+            this.scriptControlBox.Text = "\uE713  Control Panel";
             // 
             // InspectContextButton
             // 
-            this.InspectContextButton.Font = new System.Drawing.Font("Arial", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.InspectContextButton.Image = global::Assistant.Properties.Resources.applications_utilities;
-            this.InspectContextButton.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.InspectContextButton.Location = new System.Drawing.Point(18, 4);
+            this.InspectContextButton.Font = new System.Drawing.Font("Segoe MDL2 Assets", 10F);
+            this.InspectContextButton.Location = new System.Drawing.Point(12, 32);
             this.InspectContextButton.Name = "InspectContextButton";
-            this.InspectContextButton.Size = new System.Drawing.Size(53, 23);
+            this.InspectContextButton.Size = new System.Drawing.Size(83, 26);
             this.InspectContextButton.TabIndex = 77;
-            this.InspectContextButton.Text = "Inspect";
-            this.InspectContextButton.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.InspectContextButton.UseVisualStyleBackColor = true;
+            this.InspectContextButton.Text = "\uE721 Inspect";
+            this.m_Tip.SetToolTip(this.InspectContextButton, "Inspect Object/Mobile");
             this.InspectContextButton.Click += new System.EventHandler(this.InspectContext_Click);
             // 
-            // scriptshowStartStopCheckBox
+            // InspectGumpsButton
             // 
-            this.scriptshowStartStopCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.scriptshowStartStopCheckBox.Location = new System.Drawing.Point(11, 343);
-            this.scriptshowStartStopCheckBox.Name = "scriptshowStartStopCheckBox";
-            this.scriptshowStartStopCheckBox.Size = new System.Drawing.Size(175, 22);
-            this.scriptshowStartStopCheckBox.TabIndex = 76;
-            this.scriptshowStartStopCheckBox.Text = "Show Start/Stop Message";
-            this.scriptshowStartStopCheckBox.CheckedChanged += new System.EventHandler(this.scriptshowStartStopCheckBox_CheckedChanged);
+            this.InspectGumpsButton.Font = new System.Drawing.Font("Segoe MDL2 Assets", 10F);
+            this.InspectGumpsButton.Location = new System.Drawing.Point(100, 32);
+            this.InspectGumpsButton.Name = "InspectGumpsButton";
+            this.InspectGumpsButton.Size = new System.Drawing.Size(83, 26);
+            this.InspectGumpsButton.TabIndex = 78;
+            this.InspectGumpsButton.Text = "\uE9F9 Gump";
+            this.m_Tip.SetToolTip(this.InspectGumpsButton, "Inspect Last Gump");
+            this.InspectGumpsButton.Click += new System.EventHandler(this.InspectGump_Click);
             // 
             // groupBox30
             // 
-            this.groupBox30.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox30.Controls.Add(this.scriptpreload);
-            this.groupBox30.Controls.Add(this.scriptautostartcheckbox);
-            this.groupBox30.Controls.Add(this.scriptwaitmodecheckbox);
             this.groupBox30.Controls.Add(this.scriptloopmodecheckbox);
-            this.groupBox30.Location = new System.Drawing.Point(11, 30);
+            this.groupBox30.Controls.Add(this.scriptwaitmodecheckbox);
+            this.groupBox30.Controls.Add(this.scriptautostartcheckbox);
+            this.groupBox30.Controls.Add(this.scriptpreload);
+            this.groupBox30.Location = new System.Drawing.Point(8, 65);
             this.groupBox30.Name = "groupBox30";
-            this.groupBox30.Size = new System.Drawing.Size(175, 96);
+            this.groupBox30.Size = new System.Drawing.Size(182, 95);
             this.groupBox30.TabIndex = 49;
             this.groupBox30.TabStop = false;
-            this.groupBox30.Text = "Script Info";
+            this.groupBox30.Text = "\uE946  Script Info";
+            // 
+            // scriptloopmodecheckbox
+            // 
+            this.scriptloopmodecheckbox.Location = new System.Drawing.Point(10, 26);
+            this.scriptloopmodecheckbox.Name = "scriptloopmodecheckbox";
+            this.scriptloopmodecheckbox.Size = new System.Drawing.Size(80, 20);
+            this.scriptloopmodecheckbox.TabIndex = 49;
+            this.scriptloopmodecheckbox.Text = "Loop";
+            this.scriptloopmodecheckbox.CheckedChanged += new System.EventHandler(this.scriptloopmodecheckbox_CheckedChanged);
+            // 
+            // scriptwaitmodecheckbox
+            // 
+            this.scriptwaitmodecheckbox.Location = new System.Drawing.Point(95, 26);
+            this.scriptwaitmodecheckbox.Name = "scriptwaitmodecheckbox";
+            this.scriptwaitmodecheckbox.Size = new System.Drawing.Size(80, 20);
+            this.scriptwaitmodecheckbox.TabIndex = 50;
+            this.scriptwaitmodecheckbox.Text = "Wait";
+            this.scriptwaitmodecheckbox.CheckedChanged += new System.EventHandler(this.scriptwaitmodecheckbox_CheckedChanged);
+            // 
+            // scriptautostartcheckbox
+            // 
+            this.scriptautostartcheckbox.Location = new System.Drawing.Point(10, 48);
+            this.scriptautostartcheckbox.Name = "scriptautostartcheckbox";
+            this.scriptautostartcheckbox.Size = new System.Drawing.Size(80, 20);
+            this.scriptautostartcheckbox.TabIndex = 51;
+            this.scriptautostartcheckbox.Text = "AutoStart";
+            this.scriptautostartcheckbox.CheckedChanged += new System.EventHandler(this.scriptautostartcheckbox_CheckedChanged);
             // 
             // scriptpreload
             // 
-            this.scriptpreload.Location = new System.Drawing.Point(6, 74);
+            this.scriptpreload.Location = new System.Drawing.Point(95, 48);
             this.scriptpreload.Name = "scriptpreload";
-            this.scriptpreload.Size = new System.Drawing.Size(62, 17);
+            this.scriptpreload.Size = new System.Drawing.Size(80, 20);
             this.scriptpreload.TabIndex = 52;
             this.scriptpreload.Text = "Preload";
             this.scriptpreload.CheckedChanged += new System.EventHandler(this.scriptpreloadcheckbox_CheckedChanged);
             // 
-            // scriptautostartcheckbox
-            // 
-            this.scriptautostartcheckbox.Location = new System.Drawing.Point(6, 53);
-            this.scriptautostartcheckbox.Name = "scriptautostartcheckbox";
-            this.scriptautostartcheckbox.Size = new System.Drawing.Size(138, 22);
-            this.scriptautostartcheckbox.TabIndex = 51;
-            this.scriptautostartcheckbox.Text = "AutoStart at Login";
-            this.scriptautostartcheckbox.CheckedChanged += new System.EventHandler(this.scriptautostartcheckbox_CheckedChanged);
-            // 
-            // scriptwaitmodecheckbox
-            // 
-            this.scriptwaitmodecheckbox.Location = new System.Drawing.Point(6, 33);
-            this.scriptwaitmodecheckbox.Name = "scriptwaitmodecheckbox";
-            this.scriptwaitmodecheckbox.Size = new System.Drawing.Size(138, 22);
-            this.scriptwaitmodecheckbox.TabIndex = 50;
-            this.scriptwaitmodecheckbox.Text = "Wait before interrupt";
-            this.scriptwaitmodecheckbox.CheckedChanged += new System.EventHandler(this.scriptwaitmodecheckbox_CheckedChanged);
-            // 
-            // scriptloopmodecheckbox
-            // 
-            this.scriptloopmodecheckbox.Location = new System.Drawing.Point(6, 13);
-            this.scriptloopmodecheckbox.Name = "scriptloopmodecheckbox";
-            this.scriptloopmodecheckbox.Size = new System.Drawing.Size(103, 22);
-            this.scriptloopmodecheckbox.TabIndex = 49;
-            this.scriptloopmodecheckbox.Text = "Loop Mode";
-            this.scriptloopmodecheckbox.CheckedChanged += new System.EventHandler(this.scriptloopmodecheckbox_CheckedChanged);
-            // 
-            // groupBox42
-            // 
-            this.groupBox42.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox42.Controls.Add(this.scriptSearchTextBox);
-            this.groupBox42.Location = new System.Drawing.Point(12, 260);
-            this.groupBox42.Name = "groupBox42";
-            this.groupBox42.Size = new System.Drawing.Size(175, 43);
-            this.groupBox42.TabIndex = 75;
-            this.groupBox42.TabStop = false;
-            this.groupBox42.Text = "Search";
-            // 
-            // scriptSearchTextBox
-            // 
-            this.scriptSearchTextBox.Location = new System.Drawing.Point(6, 17);
-            this.scriptSearchTextBox.Name = "scriptSearchTextBox";
-            this.scriptSearchTextBox.Size = new System.Drawing.Size(156, 20);
-            this.scriptSearchTextBox.TabIndex = 0;
-            this.scriptSearchTextBox.TextChanged += new System.EventHandler(this.scriptSearchTextBox_TextChanged);
-            // 
-            // scripterrorlogCheckBox
-            // 
-            this.scripterrorlogCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.scripterrorlogCheckBox.Location = new System.Drawing.Point(11, 303);
-            this.scripterrorlogCheckBox.Name = "scripterrorlogCheckBox";
-            this.scripterrorlogCheckBox.Size = new System.Drawing.Size(160, 23);
-            this.scripterrorlogCheckBox.TabIndex = 74;
-            this.scripterrorlogCheckBox.Text = "Log Script Error";
-            this.scripterrorlogCheckBox.CheckedChanged += new System.EventHandler(this.scripterrorlogCheckBox_CheckedChanged);
-            // 
             // scriptOperationsBox
             // 
-            this.scriptOperationsBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.scriptOperationsBox.Controls.Add(this.buttonScriptTo);
-            this.scriptOperationsBox.Controls.Add(this.buttonScriptEditorNew);
+            this.scriptOperationsBox.Controls.Add(this.buttonScriptPlay);
+            this.scriptOperationsBox.Controls.Add(this.buttonScriptStop);
             this.scriptOperationsBox.Controls.Add(this.buttonScriptRefresh);
             this.scriptOperationsBox.Controls.Add(this.buttonAddScript);
             this.scriptOperationsBox.Controls.Add(this.buttonRemoveScript);
-            this.scriptOperationsBox.Controls.Add(this.buttonScriptDown);
-            this.scriptOperationsBox.Controls.Add(this.textBoxDelay);
             this.scriptOperationsBox.Controls.Add(this.buttonScriptUp);
+            this.scriptOperationsBox.Controls.Add(this.buttonScriptDown);
+            this.scriptOperationsBox.Controls.Add(this.buttonScriptTo);
+            this.scriptOperationsBox.Controls.Add(this.buttonScriptEditorNew);
             this.scriptOperationsBox.Controls.Add(this.buttonScriptEditor);
-            this.scriptOperationsBox.Controls.Add(this.buttonScriptStop);
-            this.scriptOperationsBox.Controls.Add(this.buttonScriptPlay);
-            this.scriptOperationsBox.Location = new System.Drawing.Point(11, 125);
+            this.scriptOperationsBox.Controls.Add(this.textBoxDelay);
+            this.scriptOperationsBox.Location = new System.Drawing.Point(8, 165);
             this.scriptOperationsBox.Name = "scriptOperationsBox";
-            this.scriptOperationsBox.Size = new System.Drawing.Size(175, 133);
+            this.scriptOperationsBox.Size = new System.Drawing.Size(182, 155);
             this.scriptOperationsBox.TabIndex = 50;
             this.scriptOperationsBox.TabStop = false;
-            this.scriptOperationsBox.Text = "Script Operation";
+            this.scriptOperationsBox.Text = "\uE70F  Operations";
             // 
-            // buttonScriptTo
+            // buttonScriptPlay
             // 
-            this.buttonScriptTo.Location = new System.Drawing.Point(66, 50);
-            this.buttonScriptTo.Name = "buttonScriptTo";
-            this.buttonScriptTo.Size = new System.Drawing.Size(47, 21);
-            this.buttonScriptTo.TabIndex = 75;
-            this.buttonScriptTo.Text = "To";
-            this.buttonScriptTo.UseVisualStyleBackColor = true;
-            this.buttonScriptTo.Click += new System.EventHandler(this.buttonScriptTo_Click);
+            this.buttonScriptPlay.OverrideCustomColor = RazorTheme.Colors.Success;
+            this.buttonScriptPlay.Font = new System.Drawing.Font("Segoe MDL2 Assets", 12F, System.Drawing.FontStyle.Bold);
+            this.buttonScriptPlay.Location = new System.Drawing.Point(10, 30);
+            this.buttonScriptPlay.Name = "buttonScriptPlay";
+            this.buttonScriptPlay.Size = new System.Drawing.Size(50, 26);
+            this.buttonScriptPlay.TabIndex = 21;
+            this.buttonScriptPlay.Text = "\uE768";
+            this.m_Tip.SetToolTip(this.buttonScriptPlay, "Play Script");
+            this.buttonScriptPlay.Click += new System.EventHandler(this.buttonScriptPlay_Click);
             // 
-            // buttonScriptEditorNew
+            // buttonScriptStop
             // 
-            this.buttonScriptEditorNew.Location = new System.Drawing.Point(7, 77);
-            this.buttonScriptEditorNew.Name = "buttonScriptEditorNew";
-            this.buttonScriptEditorNew.Size = new System.Drawing.Size(75, 21);
-            this.buttonScriptEditorNew.TabIndex = 74;
-            this.buttonScriptEditorNew.Text = "New";
-            this.buttonScriptEditorNew.UseVisualStyleBackColor = true;
-            this.buttonScriptEditorNew.Click += new System.EventHandler(this.buttonScriptEditorNew_Click);
+            this.buttonScriptStop.OverrideCustomColor = RazorTheme.Colors.Danger;
+            this.buttonScriptStop.Font = new System.Drawing.Font("Segoe MDL2 Assets", 12F, System.Drawing.FontStyle.Bold);
+            this.buttonScriptStop.Location = new System.Drawing.Point(65, 30);
+            this.buttonScriptStop.Name = "buttonScriptStop";
+            this.buttonScriptStop.Size = new System.Drawing.Size(50, 26);
+            this.buttonScriptStop.TabIndex = 22;
+            this.buttonScriptStop.Text = "\uE71A";
+            this.m_Tip.SetToolTip(this.buttonScriptStop, "Stop Script");
+            this.buttonScriptStop.Click += new System.EventHandler(this.buttonScriptStop_Click);
             // 
             // buttonScriptRefresh
             // 
-            this.buttonScriptRefresh.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.buttonScriptRefresh.Image = ((System.Drawing.Image)(resources.GetObject("buttonScriptRefresh.Image")));
-            this.buttonScriptRefresh.Location = new System.Drawing.Point(66, 103);
+            this.buttonScriptRefresh.Font = new System.Drawing.Font("Segoe MDL2 Assets", 12F, System.Drawing.FontStyle.Bold);
+            this.buttonScriptRefresh.Location = new System.Drawing.Point(120, 30);
             this.buttonScriptRefresh.Name = "buttonScriptRefresh";
-            this.buttonScriptRefresh.Size = new System.Drawing.Size(44, 27);
+            this.buttonScriptRefresh.Size = new System.Drawing.Size(50, 26);
             this.buttonScriptRefresh.TabIndex = 73;
-            this.buttonScriptRefresh.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.buttonScriptRefresh.UseVisualStyleBackColor = true;
+            this.buttonScriptRefresh.Text = "\uE72C";
+            this.m_Tip.SetToolTip(this.buttonScriptRefresh, "Refresh Scripts");
             this.buttonScriptRefresh.Click += new System.EventHandler(this.buttonScriptRefresh_Click);
             // 
             // buttonAddScript
             // 
-            this.buttonAddScript.Location = new System.Drawing.Point(7, 24);
+            this.buttonAddScript.Font = new System.Drawing.Font("Segoe MDL2 Assets", 9F, System.Drawing.FontStyle.Bold);
+            this.buttonAddScript.Location = new System.Drawing.Point(10, 60);
             this.buttonAddScript.Name = "buttonAddScript";
-            this.buttonAddScript.Size = new System.Drawing.Size(75, 21);
+            this.buttonAddScript.Size = new System.Drawing.Size(78, 24);
             this.buttonAddScript.TabIndex = 14;
-            this.buttonAddScript.Text = "Add";
+            this.buttonAddScript.Text = "\uE710 Add";
             this.buttonAddScript.Click += new System.EventHandler(this.buttonScriptAdd_Click);
             // 
             // buttonRemoveScript
             // 
-            this.buttonRemoveScript.Location = new System.Drawing.Point(94, 24);
+            this.buttonRemoveScript.Font = new System.Drawing.Font("Segoe MDL2 Assets", 9F, System.Drawing.FontStyle.Bold);
+            this.buttonRemoveScript.Location = new System.Drawing.Point(92, 60);
             this.buttonRemoveScript.Name = "buttonRemoveScript";
-            this.buttonRemoveScript.Size = new System.Drawing.Size(75, 21);
+            this.buttonRemoveScript.Size = new System.Drawing.Size(78, 24);
             this.buttonRemoveScript.TabIndex = 15;
-            this.buttonRemoveScript.Text = "Remove";
+            this.buttonRemoveScript.Text = "\uE738 Rem";
             this.buttonRemoveScript.Click += new System.EventHandler(this.buttonScriptRemove_Click);
+            // 
+            // buttonScriptUp
+            // 
+            this.buttonScriptUp.OverrideCustomColor = RazorTheme.Colors.Success;
+            this.buttonScriptUp.Font = new System.Drawing.Font("Segoe MDL2 Assets", 10F, System.Drawing.FontStyle.Bold);
+            this.buttonScriptUp.Location = new System.Drawing.Point(10, 88);
+            this.buttonScriptUp.Name = "buttonScriptUp";
+            this.buttonScriptUp.Size = new System.Drawing.Size(50, 24);
+            this.buttonScriptUp.TabIndex = 18;
+            this.buttonScriptUp.Text = "\uE74A";
+            this.m_Tip.SetToolTip(this.buttonScriptUp, "Move Up");
+            this.buttonScriptUp.Click += new System.EventHandler(this.buttonScriptUp_Click);
             // 
             // buttonScriptDown
             // 
-            this.buttonScriptDown.Location = new System.Drawing.Point(7, 50);
+            this.buttonScriptDown.OverrideCustomColor = RazorTheme.Colors.Warning;
+            this.buttonScriptDown.Font = new System.Drawing.Font("Segoe MDL2 Assets", 10F, System.Drawing.FontStyle.Bold);
+            this.buttonScriptDown.Location = new System.Drawing.Point(65, 88);
             this.buttonScriptDown.Name = "buttonScriptDown";
-            this.buttonScriptDown.Size = new System.Drawing.Size(47, 21);
+            this.buttonScriptDown.Size = new System.Drawing.Size(50, 24);
             this.buttonScriptDown.TabIndex = 17;
-            this.buttonScriptDown.Text = "Down";
-            this.buttonScriptDown.UseVisualStyleBackColor = true;
+            this.buttonScriptDown.Text = "\uE74B";
+            this.m_Tip.SetToolTip(this.buttonScriptDown, "Move Down");
             this.buttonScriptDown.Click += new System.EventHandler(this.buttonScriptDown_Click);
+            // 
+            // buttonScriptTo
+            // 
+            this.buttonScriptTo.Font = new System.Drawing.Font("Segoe MDL2 Assets", 10F, System.Drawing.FontStyle.Bold);
+            this.buttonScriptTo.Location = new System.Drawing.Point(120, 88);
+            this.buttonScriptTo.Name = "buttonScriptTo";
+            this.buttonScriptTo.Size = new System.Drawing.Size(50, 24);
+            this.buttonScriptTo.TabIndex = 75;
+            this.buttonScriptTo.Text = "\uE8DE";
+            this.m_Tip.SetToolTip(this.buttonScriptTo, "Move To...");
+            this.buttonScriptTo.Click += new System.EventHandler(this.buttonScriptTo_Click);
+            // 
+            // buttonScriptEditorNew
+            // 
+            this.buttonScriptEditorNew.OverrideCustomColor = RazorTheme.Colors.Success;
+            this.buttonScriptEditorNew.Font = new System.Drawing.Font("Segoe MDL2 Assets", 9F, System.Drawing.FontStyle.Bold);
+            this.buttonScriptEditorNew.Location = new System.Drawing.Point(10, 116);
+            this.buttonScriptEditorNew.Name = "buttonScriptEditorNew";
+            this.buttonScriptEditorNew.Size = new System.Drawing.Size(78, 24);
+            this.buttonScriptEditorNew.TabIndex = 74;
+            this.buttonScriptEditorNew.Text = "\uE7C3 New";
+            this.buttonScriptEditorNew.Click += new System.EventHandler(this.buttonScriptEditorNew_Click);
+            // 
+            // buttonScriptEditor
+            // 
+            this.buttonScriptEditor.OverrideCustomColor = RazorTheme.Colors.Warning;
+            this.buttonScriptEditor.Font = new System.Drawing.Font("Segoe MDL2 Assets", 9F, System.Drawing.FontStyle.Bold);
+            this.buttonScriptEditor.Location = new System.Drawing.Point(92, 116);
+            this.buttonScriptEditor.Name = "buttonScriptEditor";
+            this.buttonScriptEditor.Size = new System.Drawing.Size(78, 24);
+            this.buttonScriptEditor.TabIndex = 20;
+            this.buttonScriptEditor.Text = "\uE70F Edit";
+            this.buttonScriptEditor.Click += new System.EventHandler(this.buttonOpenEditor_Click);
             // 
             // textBoxDelay
             // 
@@ -4544,61 +4533,70 @@ namespace Assistant
             this.textBoxDelay.TabIndex = 23;
             this.textBoxDelay.Text = "100";
             this.textBoxDelay.Visible = false;
-            this.textBoxDelay.TextChanged += new System.EventHandler(this.textBoxEngineDelay_TextChanged);
             // 
-            // buttonScriptUp
+            // groupBox42
             // 
-            this.buttonScriptUp.Location = new System.Drawing.Point(122, 50);
-            this.buttonScriptUp.Name = "buttonScriptUp";
-            this.buttonScriptUp.Size = new System.Drawing.Size(47, 21);
-            this.buttonScriptUp.TabIndex = 18;
-            this.buttonScriptUp.Text = "Up";
-            this.buttonScriptUp.UseVisualStyleBackColor = true;
-            this.buttonScriptUp.Click += new System.EventHandler(this.buttonScriptUp_Click);
+            this.groupBox42.Controls.Add(this.scriptSearchTextBox);
+            this.groupBox42.Location = new System.Drawing.Point(8, 325);
+            this.groupBox42.Name = "groupBox42";
+            this.groupBox42.Size = new System.Drawing.Size(182, 45);
+            this.groupBox42.TabIndex = 75;
+            this.groupBox42.TabStop = false;
+            this.groupBox42.Text = "\uE721  Search";
             // 
-            // buttonScriptEditor
+            // scriptSearchTextBox
             // 
-            this.buttonScriptEditor.Location = new System.Drawing.Point(94, 76);
-            this.buttonScriptEditor.Name = "buttonScriptEditor";
-            this.buttonScriptEditor.Size = new System.Drawing.Size(75, 21);
-            this.buttonScriptEditor.TabIndex = 20;
-            this.buttonScriptEditor.Text = "Edit";
-            this.buttonScriptEditor.UseVisualStyleBackColor = true;
-            this.buttonScriptEditor.Click += new System.EventHandler(this.buttonOpenEditor_Click);
+            this.scriptSearchTextBox.Location = new System.Drawing.Point(10, 22);
+            this.scriptSearchTextBox.Name = "scriptSearchTextBox";
+            this.scriptSearchTextBox.Size = new System.Drawing.Size(160, 20);
+            this.scriptSearchTextBox.TabIndex = 0;
+            this.scriptSearchTextBox.TextChanged += new System.EventHandler(this.scriptSearchTextBox_TextChanged);
             // 
-            // buttonScriptStop
+            // scripterrorlogCheckBox
             // 
-            this.buttonScriptStop.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.buttonScriptStop.Image = ((System.Drawing.Image)(resources.GetObject("buttonScriptStop.Image")));
-            this.buttonScriptStop.Location = new System.Drawing.Point(10, 103);
-            this.buttonScriptStop.Name = "buttonScriptStop";
-            this.buttonScriptStop.Size = new System.Drawing.Size(44, 27);
-            this.buttonScriptStop.TabIndex = 22;
-            this.buttonScriptStop.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.buttonScriptStop.UseVisualStyleBackColor = true;
-            this.buttonScriptStop.Click += new System.EventHandler(this.buttonScriptStop_Click);
-            // 
-            // buttonScriptPlay
-            // 
-            this.buttonScriptPlay.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.buttonScriptPlay.Image = ((System.Drawing.Image)(resources.GetObject("buttonScriptPlay.Image")));
-            this.buttonScriptPlay.Location = new System.Drawing.Point(122, 103);
-            this.buttonScriptPlay.Name = "buttonScriptPlay";
-            this.buttonScriptPlay.Size = new System.Drawing.Size(44, 27);
-            this.buttonScriptPlay.TabIndex = 21;
-            this.buttonScriptPlay.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.buttonScriptPlay.UseVisualStyleBackColor = true;
-            this.buttonScriptPlay.Click += new System.EventHandler(this.buttonScriptPlay_Click);
+            this.scripterrorlogCheckBox.Location = new System.Drawing.Point(12, 375);
+            this.scripterrorlogCheckBox.Name = "scripterrorlogCheckBox";
+            this.scripterrorlogCheckBox.Size = new System.Drawing.Size(175, 20);
+            this.scripterrorlogCheckBox.TabIndex = 74;
+            this.scripterrorlogCheckBox.Text = "Log Script Error";
+            this.scripterrorlogCheckBox.CheckedChanged += new System.EventHandler(this.scripterrorlogCheckBox_CheckedChanged);
             // 
             // showscriptmessageCheckBox
             // 
-            this.showscriptmessageCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.showscriptmessageCheckBox.Location = new System.Drawing.Point(11, 323);
+            this.showscriptmessageCheckBox.Location = new System.Drawing.Point(12, 395);
             this.showscriptmessageCheckBox.Name = "showscriptmessageCheckBox";
-            this.showscriptmessageCheckBox.Size = new System.Drawing.Size(175, 23);
+            this.showscriptmessageCheckBox.Size = new System.Drawing.Size(175, 20);
             this.showscriptmessageCheckBox.TabIndex = 72;
-            this.showscriptmessageCheckBox.Text = "Show Script Error Message";
+            this.showscriptmessageCheckBox.Text = "Show Script Error Msg";
             this.showscriptmessageCheckBox.CheckedChanged += new System.EventHandler(this.showscriptmessageCheckBox_CheckedChanged);
+            // 
+            // scriptshowStartStopCheckBox
+            // 
+            this.scriptshowStartStopCheckBox.Location = new System.Drawing.Point(12, 415);
+            this.scriptshowStartStopCheckBox.Name = "scriptshowStartStopCheckBox";
+            this.scriptshowStartStopCheckBox.Size = new System.Drawing.Size(175, 20);
+            this.scriptshowStartStopCheckBox.TabIndex = 76;
+            this.scriptshowStartStopCheckBox.Text = "Show Start/Stop Msg";
+            this.scriptshowStartStopCheckBox.CheckedChanged += new System.EventHandler(this.scriptshowStartStopCheckBox_CheckedChanged);
+            // 
+            // scriptPacketLogCheckBox
+            // 
+            this.scriptPacketLogCheckBox.Location = new System.Drawing.Point(12, 435);
+            this.scriptPacketLogCheckBox.Name = "scriptPacketLogCheckBox";
+            this.scriptPacketLogCheckBox.Size = new System.Drawing.Size(175, 20);
+            this.scriptPacketLogCheckBox.TabIndex = 79;
+            this.scriptPacketLogCheckBox.Text = "Enable Packet Logging";
+            this.scriptPacketLogCheckBox.CheckStateChanged += new System.EventHandler(this.scriptPacketLogCheckBox_CheckStateChanged);
+            // 
+            // autoScriptReload
+            // 
+            this.autoScriptReload.Location = new System.Drawing.Point(12, 455);
+            this.autoScriptReload.Name = "autoScriptReload";
+            this.autoScriptReload.Size = new System.Drawing.Size(175, 20);
+            this.autoScriptReload.TabIndex = 80;
+            this.autoScriptReload.Text = "Auto Script Reload";
+            this.m_Tip.SetToolTip(this.autoScriptReload, "Automatically reload scripts modified externally");
+            this.autoScriptReload.CheckedChanged += new System.EventHandler(this.autoScriptReload_CheckedChanged);
             #endregion
             #endregion
             #region Macros Tab
@@ -7318,7 +7316,7 @@ namespace Assistant
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage2.Size = new System.Drawing.Size(652, 336);
             this.tabPage2.TabIndex = 0;
-            this.tabPage2.Text = "Counter / Stat Bar";
+            this.tabPage2.Text = LanguageHelper.GetString("MainForm.tabPage2.Text");
             // 
             // groupBox39
             // 
@@ -7737,7 +7735,7 @@ namespace Assistant
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage3.Size = new System.Drawing.Size(652, 337);
             this.tabPage3.TabIndex = 1;
-            this.tabPage3.Text = "Spell Grid";
+            this.tabPage3.Text = LanguageHelper.GetString("MainForm.tabPage3.Text");
             // 
             // groupBox38
             // 
@@ -8225,6 +8223,8 @@ namespace Assistant
             // 
             this.skillHDRlock.Text = "Lock";
             this.skillHDRlock.Width = 80;
+            // Initialize Skills Tab UI (modern RazorCard layout)
+            InitializeSkillsTab();
             #endregion
             #region Hot Keys Tab
             // 
@@ -8341,7 +8341,7 @@ namespace Assistant
             this.hotkeyKeyMasterLabel.Name = "hotkeyKeyMasterLabel";
             this.hotkeyKeyMasterLabel.Size = new System.Drawing.Size(98, 14);
             this.hotkeyKeyMasterLabel.TabIndex = 4;
-            this.hotkeyKeyMasterLabel.Text = "ON/OFF Key: None";
+            this.hotkeyKeyMasterLabel.Text = LanguageHelper.GetString("MainForm.hotkeyKeyMaster.None");
             // 
             // hotkeyStatusLabel
             // 
@@ -8350,7 +8350,7 @@ namespace Assistant
             this.hotkeyStatusLabel.Name = "hotkeyStatusLabel";
             this.hotkeyStatusLabel.Size = new System.Drawing.Size(82, 14);
             this.hotkeyStatusLabel.TabIndex = 3;
-            this.hotkeyStatusLabel.Text = "Status: Enabled";
+            this.hotkeyStatusLabel.Text = LanguageHelper.GetString("MainForm.hotkeyStatus.Enabled");
             // 
             // groupBox27
             // 
@@ -9871,6 +9871,7 @@ namespace Assistant
             this.statusTab.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.advertisement)).EndInit();
             this.scriptgridMenuStrip.ResumeLayout(false);
+
             this.ResumeLayout(false);
 
         }
@@ -9881,6 +9882,11 @@ namespace Assistant
             // Yes I know this is stupid, but the compiler couldnt find the method if I put it in the MacrosUI.cs file, so here we are
             InitializeMacroTab2();
 
+        }
+
+        private void InitializeSkillsTab()
+        {
+            InitializeSkillsTab2();
         }
 
         protected override void WndProc(ref Message msg)
@@ -10339,9 +10345,9 @@ namespace Assistant
         {
             string str = LanguageHelper.GetString(this.Name + ".Text");
             if (str == null || str == String.Empty || str == this.Name + ".Text")
-                str = "Razor Enhanced {0}";
+                str = "TM Razor {0}";
             if (str == null || str == String.Empty)
-                str = "Razor Enhanced {0}";
+                str = "TM Razor {0}";
 
             str = String.Format(str, Engine.Version);
             if (World.Player != null)
@@ -10829,6 +10835,1585 @@ namespace Assistant
                     // Misc.SendMessage(path);
                 }
             }
+        }
+
+        private System.Windows.Forms.Panel SidebarPanel;
+        private Assistant.UI.Controls.RazorSidebarTab btnSidebarOptions;
+        private Assistant.UI.Controls.RazorSidebarTab btnSidebarFilters;
+        private Assistant.UI.Controls.RazorSidebarTab btnSidebarScripting;
+        private Assistant.UI.Controls.RazorSidebarTab btnSidebarMacros;
+        private Assistant.UI.Controls.RazorSidebarTab btnSidebarAgents;
+        private Assistant.UI.Controls.RazorSidebarTab btnSidebarToolbars;
+        private Assistant.UI.Controls.RazorSidebarTab btnSidebarSkills;
+        private Assistant.UI.Controls.RazorSidebarTab btnSidebarHotkeys;
+        private Assistant.UI.Controls.RazorSidebarTab btnSidebarAdvanced;
+        private EventHandler _spellHueVisibilityHandler;
+
+        private void InitializeSidebar()
+        {
+            SidebarPanel = new Panel {
+                Dock = DockStyle.Left,
+                Width = 200,
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                Padding = new Padding(0)
+            };
+            this.Controls.Add(SidebarPanel);
+            SidebarPanel.BringToFront();
+
+            Panel footerPanel = new Panel { Dock = DockStyle.Bottom, Height = 90, BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark };
+
+            // --- Language selector row ---
+            Panel langRow = new Panel { Height = 50, Dock = DockStyle.Top, BackColor = Color.Transparent, Padding = new Padding(0) };
+
+            Label langLabel = new Label {
+                Text = "\uE774", // Segoe MDL2 globe icon
+                Font = new Font("Segoe MDL2 Assets", 11F),
+                ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark,
+                AutoSize = false,
+                Width = 24, Height = 50,
+                Left = 14,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+
+            ComboBox langCombo = new ComboBox {
+                FlatStyle = FlatStyle.Flat,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.SurfaceDark,
+                ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode,
+                Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F),
+                Width = 130,
+                Height = 28,
+                Left = 44,
+                Top = 11,
+                Cursor = Cursors.Hand
+            };
+            langCombo.Items.AddRange(new object[] { "English", "Italiano" });
+            langCombo.SelectedIndex = (LanguageHelper.CurrentLanguage == "en") ? 0 : 1;
+            langCombo.SelectedIndexChanged += (s, e) => {
+                string newLang = langCombo.SelectedIndex == 0 ? "en" : "it";
+                if (LanguageHelper.CurrentLanguage != newLang) {
+                    LanguageHelper.CurrentLanguage = newLang;
+                    Shards.allShards.Language = newLang;
+                    // Translate standard WinForms controls (those with registered resource keys)
+                    LanguageHelper.TranslateForm(this);
+                    // Refresh dynamically-built sidebar button labels
+                    btnSidebarOptions.Text  = LanguageHelper.GetString("MainForm.moreOptTab.Text");
+                    btnSidebarFilters.Text  = LanguageHelper.GetString("MainForm.enhancedFilterTab.Text");
+                    btnSidebarScripting.Text = LanguageHelper.GetString("MainForm.AllScripts.Text");
+                    btnSidebarMacros.Text   = LanguageHelper.GetString("MainForm.MacrosTab.Text");
+                    btnSidebarAgents.Text   = LanguageHelper.GetString("MainForm.EnhancedAgent.Text");
+                    btnSidebarToolbars.Text = LanguageHelper.GetString("MainForm.toolbarTab.Text");
+                    btnSidebarSkills.Text   = LanguageHelper.GetString("MainForm.skillsTab.Text");
+                    btnSidebarHotkeys.Text  = LanguageHelper.GetString("MainForm.enhancedHotKeytabPage.Text");
+                    btnSidebarAdvanced.Text = LanguageHelper.GetString("MainForm.advancedTab.Text");
+                    // Rebuild the Options tab (cards/labels are created dynamically with GetString)
+                    RebuildOptionsTab();
+                    RebuildStatBarTab();
+                    RebuildSpellGridTab();
+                    RebuildHotKeysTab();
+                    RazorEnhanced.HotKey.Init();
+                    // Rebuild the Filters sub-tabs
+                    RebuildVirtualFilterTab();
+                    RebuildTargettingFilterTab();
+                    RebuildMiscFilterTab();
+                }
+            };
+
+            langRow.Controls.Add(langLabel);
+            langRow.Controls.Add(langCombo);
+            footerPanel.Controls.Add(langRow);
+
+            // --- Version / status row ---
+            Panel versionRow = new Panel { Height = 40, Dock = DockStyle.Bottom, BackColor = Color.Transparent };
+            versionRow.Paint += (s, e) => {
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                using (Font f = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(8F)) { TextRenderer.DrawText(e.Graphics, "Version 1.0.0.2", f, new Rectangle(20, 0, 100, 40), Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark, TextFormatFlags.Left | TextFormatFlags.VerticalCenter); }
+                using (SolidBrush b = new SolidBrush(Color.FromArgb(34, 197, 94))) { e.Graphics.FillEllipse(b, 175, 16, 8, 8); }
+            };
+            footerPanel.Controls.Add(versionRow);
+
+            SidebarPanel.Controls.Add(footerPanel);
+
+            Panel headerLogoPanel = new Panel { Dock = DockStyle.Top, Height = 80 };
+            headerLogoPanel.Paint += (s, e) => {
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                
+                if (this.Icon != null)
+                {
+                    e.Graphics.DrawIcon(this.Icon, new Rectangle(20, 24, 32, 32));
+                }
+
+                using (Font fontTitle = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(11F, FontStyle.Bold)) { TextRenderer.DrawText(e.Graphics, "TM Razor", fontTitle, new Rectangle(62, 25, 138, 30), Color.White, TextFormatFlags.Left | TextFormatFlags.VerticalCenter); }
+            };
+            SidebarPanel.Controls.Add(headerLogoPanel);
+            headerLogoPanel.BringToFront();
+
+            btnSidebarOptions = CreateSidebarButton(LanguageHelper.GetString("MainForm.moreOptTab.Text"), "\xE713", 0);
+            btnSidebarFilters = CreateSidebarButton(LanguageHelper.GetString("MainForm.enhancedFilterTab.Text"), "\xE71C", 1);
+            btnSidebarScripting = CreateSidebarButton(LanguageHelper.GetString("MainForm.AllScripts.Text"), "\xE943", 2);
+            btnSidebarMacros = CreateSidebarButton(LanguageHelper.GetString("MainForm.MacrosTab.Text"), "\xE765", 3);
+            btnSidebarAgents = CreateSidebarButton(LanguageHelper.GetString("MainForm.EnhancedAgent.Text"), "\xE716", 4);
+            btnSidebarToolbars = CreateSidebarButton(LanguageHelper.GetString("MainForm.toolbarTab.Text"), "\xE8A5", 5);
+            btnSidebarSkills = CreateSidebarButton(LanguageHelper.GetString("MainForm.skillsTab.Text"), "\xE825", 6);
+            btnSidebarHotkeys = CreateSidebarButton(LanguageHelper.GetString("MainForm.enhancedHotKeytabPage.Text"), "\xE8A6", 7);
+            btnSidebarAdvanced = CreateSidebarButton(LanguageHelper.GetString("MainForm.advancedTab.Text"), "\xE790", 8);
+
+            btnSidebarOptions.IsActive = true;
+            this.tabs.SelectedIndex = 0;
+            this.toolbarTab.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
+            this.toolbarstab.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
+            RebuildOptionsTab();
+            RebuildStatBarTab();
+            RebuildSpellGridTab();
+            RebuildHotKeysTab();
+            RebuildVirtualFilterTab();
+            RebuildTargettingFilterTab();
+            RebuildMiscFilterTab();
+        }
+
+        private Assistant.UI.Controls.RazorSidebarTab CreateSidebarButton(string text, string icon, int index)
+        {
+            var btn = new Assistant.UI.Controls.RazorSidebarTab {
+                Text = text,
+                IconText = icon,
+                Dock = DockStyle.Top,
+                Height = 45
+            };
+            btn.Click += (s, e) => {
+                foreach (Control c in SidebarPanel.Controls) {
+                    if (c is Assistant.UI.Controls.RazorSidebarTab tab) {
+                        tab.IsActive = false;
+                    }
+                }
+                btn.IsActive = true;
+                this.tabs.SelectedIndex = index;
+            };
+            SidebarPanel.Controls.Add(btn);
+            btn.BringToFront();
+            return btn;
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // FILTER TAB REBUILDS
+        // ─────────────────────────────────────────────────────────────────────
+
+        private void RebuildVirtualFilterTab()
+        {
+            this.JournalFilterPage.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
+            this.JournalFilterPage.Controls.Clear();
+
+            // ── Header ───────────────────────────────────────────────────────
+            Panel headerPanel = new Panel {
+                Dock = DockStyle.Top, Height = 90,
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark
+            };
+            headerPanel.Controls.Add(new Label {
+                Text = LanguageHelper.GetString("MainForm.JournalFilterPage.Text"),
+                Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(18F, FontStyle.Bold),
+                ForeColor = Color.White, AutoSize = true, Location = new Point(24, 16)
+            });
+            this.JournalFilterPage.Controls.Add(headerPanel);
+
+            // ── Scrollable body ───────────────────────────────────────────────
+            Panel scrollWrapper = new Panel {
+                Dock = DockStyle.Fill,
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                Padding = new Padding(0)
+            };
+            FlowLayoutPanel flow = new FlowLayoutPanel {
+                Dock = DockStyle.Fill,
+                AutoScroll = true,
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                Padding = new Padding(12, 8, 12, 8),
+                WrapContents = true
+            };
+            flow.HandleCreated += (s2, e2) => {
+                try { SetWindowTheme(flow.Handle, "DarkMode_Explorer", null); } catch { }
+            };
+            scrollWrapper.Controls.Add(flow);
+            this.JournalFilterPage.Controls.Add(scrollWrapper);
+            scrollWrapper.BringToFront();
+
+            Color accent = ColorTranslator.FromHtml("#8B5CF6");
+            int   cw     = 340;
+
+            // ── Card 1 – Filtri Messaggi (toggle rows – uses RazorCard fine) ──
+            var cMsgs = BuildCard("\uE965", LanguageHelper.GetString("MainForm.groupBox1.Text"), cw, accent);
+            AddRow(cMsgs, this.spamFilter,   LanguageHelper.GetString("MainForm.spamFilter.Text"));
+            AddRow(cMsgs, this.filterSnoop,  LanguageHelper.GetString("MainForm.filterSnoop.Text"));
+            AddRow(cMsgs, this.filterPoison, LanguageHelper.GetString("MainForm.filterPoison.Text"));
+            AddRow(cMsgs, this.filterNPC,    LanguageHelper.GetString("MainForm.filterNPC.Text"));
+            FinalizeCard(cMsgs);
+
+            // ── Pseudo-card 2 – Altri Filtri (plain Panel so scroll works) ───
+            // RazorCard extends GroupBox which clips children; for scrollable
+            // controls we use a self-painted Panel instead.
+            const int listH = 200;
+            var pMore = MakePseudoCard("\uE9B0  " + LanguageHelper.GetString("MainForm.morefilterLabel.Text"),
+                                       cw, listH + 44, accent);
+            this.filters.Parent      = pMore;
+            this.filters.Location    = new Point(10, 38);
+            this.filters.Width       = cw - 20;
+            this.filters.Height      = listH;
+            this.filters.BackColor   = Assistant.UI.Controls.RazorTheme.Colors.SurfaceDark;
+            this.filters.ForeColor   = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode;
+            this.filters.BorderStyle = BorderStyle.None;
+            this.filters.IntegralHeight = false;
+
+            // ── Pseudo-card 3 – Filtro Giornale (plain Panel so scroll works) ─
+            const int gridH = 230;
+            int       gridW = cw * 2 + 20; // fills two columns
+            var pGrid = MakePseudoCard("\uE8A7  " + "Filtro Giornale", gridW, gridH + 44, accent);
+            this.journalfilterdatagrid.Parent   = pGrid;
+            this.journalfilterdatagrid.Location = new Point(10, 38);
+            this.journalfilterdatagrid.Width    = gridW - 20;
+            this.journalfilterdatagrid.Height   = gridH;
+            this.journalfilterdatagrid.BackgroundColor = Assistant.UI.Controls.RazorTheme.Colors.SurfaceDark;
+            this.journalfilterdatagrid.GridColor       = Assistant.UI.Controls.RazorTheme.Colors.CardDark;
+            this.journalfilterdatagrid.DefaultCellStyle.BackColor  = Assistant.UI.Controls.RazorTheme.Colors.SurfaceDark;
+            this.journalfilterdatagrid.DefaultCellStyle.ForeColor  = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode;
+            this.journalfilterdatagrid.ColumnHeadersDefaultCellStyle.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
+            this.journalfilterdatagrid.ColumnHeadersDefaultCellStyle.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark;
+            this.journalfilterdatagrid.EnableHeadersVisualStyles = false;
+            this.journalfilterdatagrid.ScrollBars = ScrollBars.Both;
+
+            flow.Controls.AddRange(new Control[] { cMsgs, pMore, pGrid });
+        }
+
+        /// <summary>
+        /// Creates a self-painted Panel that looks like a RazorCard (same background,
+        /// rounded corners, coloured left bar, title) but extends Panel instead of
+        /// GroupBox, so child scrollable controls (DataGridView, CheckedListBox …)
+        /// are never clipped and their input events work correctly.
+        /// </summary>
+        private Panel MakePseudoCard(string iconAndTitle, int width, int height, Color accentColor)
+        {
+            var p = new Panel {
+                Width     = width,
+                Height    = height,
+                Margin    = new Padding(10),
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.CardDark
+            };
+            // Store accent for paint
+            p.Tag = accentColor;
+            p.Paint += (s, e) => {
+                var g     = e.Graphics;
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                Color bg = Assistant.UI.Controls.RazorTheme.Colors.CardDark;
+                Color ac = p.Tag is Color c ? c : ColorTranslator.FromHtml("#8B5CF6");
+
+                // Rounded rect background
+                var rect = new Rectangle(0, 0, p.Width - 1, p.Height - 1);
+                int r = 12;
+                using (var path = new System.Drawing.Drawing2D.GraphicsPath()) {
+                    path.AddArc(rect.X, rect.Y, r * 2, r * 2, 180, 90);
+                    path.AddArc(rect.Right - r * 2, rect.Y, r * 2, r * 2, 270, 90);
+                    path.AddArc(rect.Right - r * 2, rect.Bottom - r * 2, r * 2, r * 2, 0, 90);
+                    path.AddArc(rect.X, rect.Bottom - r * 2, r * 2, r * 2, 90, 90);
+                    path.CloseFigure();
+                    using (var brush = new SolidBrush(bg))
+                        g.FillPath(brush, path);
+                }
+                // Accent bar
+                using (var brush = new SolidBrush(ac))
+                    g.FillRectangle(brush, 0, r + 8, 4, Math.Max(p.Height - r * 2 - 16, 12));
+
+                // Title (icon + text)
+                int sep = iconAndTitle.IndexOf("  ");
+                string iconPart  = sep > 0 ? iconAndTitle.Substring(0, sep)      : "";
+                string titlePart = sep > 0 ? iconAndTitle.Substring(sep + 2)     : iconAndTitle;
+                Color fg = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode;
+                using (var iFont = new Font("Segoe MDL2 Assets", 11f))
+                using (var tFont = new Font(p.Font.FontFamily, 10f, FontStyle.Bold)) {
+                    Size iconSz = TextRenderer.MeasureText(g, iconPart, iFont, new Size(40, 28), TextFormatFlags.NoPadding);
+                    TextRenderer.DrawText(g, iconPart,  iFont,  new Point(14, 10), fg, TextFormatFlags.NoPadding);
+                    TextRenderer.DrawText(g, titlePart, tFont, new Point(14 + iconSz.Width + 4, 11), fg, TextFormatFlags.NoPadding);
+                }
+            };
+            return p;
+        }
+
+
+        private void RebuildTargettingFilterTab()
+        {
+            this.targettingTab.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
+            this.targettingTab.Controls.Clear();
+
+            // ── Header ───────────────────────────────────────────────────────
+            Panel headerPanel = new Panel {
+                Dock = DockStyle.Top, Height = 90,
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark
+            };
+            headerPanel.Controls.Add(new Label {
+                Text = LanguageHelper.GetString("MainForm.targettingTab.Text"),
+                Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(18F, FontStyle.Bold),
+                ForeColor = Color.White, AutoSize = true, Location = new Point(24, 16)
+            });
+            this.targettingTab.Controls.Add(headerPanel);
+
+            // ── Scrollable body ───────────────────────────────────────────────
+            Panel scrollWrapper = new Panel {
+                Dock = DockStyle.Fill,
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                Padding = new Padding(0)
+            };
+            FlowLayoutPanel flow = new FlowLayoutPanel {
+                Dock = DockStyle.Fill,
+                AutoScroll = true,
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                Padding = new Padding(12, 8, 12, 8),
+                WrapContents = true
+            };
+            flow.HandleCreated += (s2, e2) => {
+                try { SetWindowTheme(flow.Handle, "DarkMode_Explorer", null); } catch { }
+            };
+            scrollWrapper.Controls.Add(flow);
+            this.targettingTab.Controls.Add(scrollWrapper);
+            scrollWrapper.BringToFront();
+
+            int cw = 340;
+            Color accent = ColorTranslator.FromHtml("#8B5CF6"); // same as Options tab
+
+            // ── Card: Shortcut ────────────────────────────────────────────────
+            int scW = 210;
+            var cShortcut = BuildCard("\uE8C1", LanguageHelper.GetString("MainForm.groupBox43.Text"), scW, accent);
+            int curYs = cShortcut.Tag is int ts ? ts : 38;
+
+            // Name label + textbox row
+            var lblName = new Label { Text = LanguageHelper.GetString("MainForm.label76.Text"),
+                Location = new Point(10, curYs - 6), Width = 50, Height = 26,
+                Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F), ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark,
+                BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleLeft };
+            cShortcut.Controls.Add(lblName);
+            this.targetaddTextBox.Parent = cShortcut;
+            this.targetaddTextBox.Location = new Point(60, curYs - 4);
+            this.targetaddTextBox.Width = scW - 74;
+            this.targetaddTextBox.Height = 22;
+            this.targetaddTextBox.BackColor = Assistant.UI.Controls.RazorTheme.Colors.SurfaceDark;
+            this.targetaddTextBox.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode;
+            curYs += 30;
+
+            // Add / Remove buttons row
+            this.targetaddButton.Parent = cShortcut;
+            this.targetaddButton.Location = new Point(10, curYs - 6);
+            this.targetaddButton.Size = new Size(80, 26);
+            this.targetaddButton.Text = LanguageHelper.GetString("MainForm.targetaddButton.Text");
+            this.targetremoveButton.Parent = cShortcut;
+            this.targetremoveButton.Location = new Point(100, curYs - 6);
+            this.targetremoveButton.Size = new Size(80, 26);
+            this.targetremoveButton.Text = LanguageHelper.GetString("MainForm.targetremoveButton.Text");
+            curYs += 34;
+
+            // List box
+            this.targetlistBox.Parent = cShortcut;
+            this.targetlistBox.Location = new Point(10, curYs - 6);
+            this.targetlistBox.Width = scW - 24;
+            this.targetlistBox.Height = 140;
+            this.targetlistBox.BackColor = Assistant.UI.Controls.RazorTheme.Colors.SurfaceDark;
+            this.targetlistBox.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode;
+            this.targetlistBox.BorderStyle = BorderStyle.None;
+            curYs += 146;
+            cShortcut.Tag = curYs;
+            FinalizeCard(cShortcut);
+
+            // ── Card: Filtro Corpo ────────────────────────────────────────────
+            var cBody = BuildCard("\uE7B5", LanguageHelper.GetString("MainForm.groupBox44.Text"), cw, accent);
+            AddRow(cBody, this.targetbodyCheckBox, LanguageHelper.GetString("MainForm.targetbodyCheckBox.Text"));
+            int curYb = cBody.Tag is int tb ? tb : 38;
+            this.targetbodydataGridView.Parent = cBody;
+            this.targetbodydataGridView.Location = new Point(10, curYb - 6);
+            this.targetbodydataGridView.Width  = cw - 24;
+            this.targetbodydataGridView.Height = 80;
+            this.targetbodydataGridView.BackgroundColor = Assistant.UI.Controls.RazorTheme.Colors.SurfaceDark;
+            this.targetbodydataGridView.GridColor       = Assistant.UI.Controls.RazorTheme.Colors.CardDark;
+            this.targetbodydataGridView.DefaultCellStyle.BackColor  = Assistant.UI.Controls.RazorTheme.Colors.SurfaceDark;
+            this.targetbodydataGridView.DefaultCellStyle.ForeColor  = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode;
+            this.targetbodydataGridView.ColumnHeadersDefaultCellStyle.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
+            this.targetbodydataGridView.ColumnHeadersDefaultCellStyle.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark;
+            this.targetbodydataGridView.EnableHeadersVisualStyles = false;
+            cBody.Tag = curYb + 86;
+
+            // Choose body button
+            this.targetChoseBody.Parent = cBody;
+            int curYb2 = cBody.Tag is int tb2 ? tb2 : 38;
+            this.targetChoseBody.Location = new Point(10, curYb2 - 6);
+            this.targetChoseBody.Size = new Size(160, 28);
+            this.targetChoseBody.Text = LanguageHelper.GetString("MainForm.targetChoseBody.Text");
+            // Style as outline (secondary action)
+            StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.targetChoseBody);
+            cBody.Tag = curYb2 + 36;
+            FinalizeCard(cBody);
+
+            // ── Card: Filtro Colore ───────────────────────────────────────────
+            var cColor = BuildCard("\uE790", LanguageHelper.GetString("MainForm.groupBox45.Text"), cw, accent);
+            AddRow(cColor, this.targetcoloCheckBox, LanguageHelper.GetString("MainForm.targetcoloCheckBox.Text"));
+            int curYc = cColor.Tag is int tc ? tc : 38;
+
+            this.targetChoseHue.Parent = cColor;
+            this.targetChoseHue.Location = new Point(10, curYc - 6);
+            this.targetChoseHue.Size = new Size(160, 28);
+            this.targetChoseHue.Text = LanguageHelper.GetString("MainForm.targetChoseHue.Text");
+            // Style as outline (secondary action)
+            StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.targetChoseHue);
+            cColor.Tag = curYc + 36;
+            FinalizeCard(cColor);
+
+            // ── Card: Raggio ──────────────────────────────────────────────────
+            var cRange = BuildCard("\uE81D", LanguageHelper.GetString("MainForm.groupBox48.Text"), cw, accent);
+            AddIndentRow(cRange, this.targetRangeMinTextBox, LanguageHelper.GetString("MainForm.label75.Text"), 60);
+            AddIndentRow(cRange, this.targetRangeMaxTextBox, LanguageHelper.GetString("MainForm.label74.Text"), 60);
+            // hint label
+            int curYr = cRange.Tag is int tr ? tr : 38;
+            var lblHint = new Label {
+                Text = LanguageHelper.GetString("MainForm.label73.Text"),
+                Location = new Point(10, curYr - 6), Width = cw - 24, Height = 26,
+                Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(8F),
+                ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark,
+                BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleLeft
+            };
+            cRange.Controls.Add(lblHint);
+            cRange.Tag = curYr + 26;
+            FinalizeCard(cRange);
+
+            // ── Card: Notorietà ───────────────────────────────────────────────
+            var cNot = BuildCard("\uE902", LanguageHelper.GetString("MainForm.groupBox57.Text"), cw, accent);
+            AddRow(cNot, this.targetBlueCheckBox,     LanguageHelper.GetString("MainForm.targetBlueCheckBox.Text"));
+            AddRow(cNot, this.targetGreenCheckBox,    LanguageHelper.GetString("MainForm.targetGreenCheckBox.Text"));
+            AddRow(cNot, this.targetGreyCheckBox,     LanguageHelper.GetString("MainForm.targetGreyCheckBox.Text"));
+            AddRow(cNot, this.targetCriminalCheckBox, LanguageHelper.GetString("MainForm.targetCriminalCheckBox.Text"));
+            AddRow(cNot, this.targetOrangeCheckBox,   LanguageHelper.GetString("MainForm.targetOrangeCheckBox.Text"));
+            AddRow(cNot, this.targetRedCheckBox,      LanguageHelper.GetString("MainForm.targetRedCheckBox.Text"));
+            AddRow(cNot, this.targetYellowCheckBox,   LanguageHelper.GetString("MainForm.targetYellowCheckBox.Text"));
+            FinalizeCard(cNot);
+
+            // ── Card: Flag ────────────────────────────────────────────────────
+            var cFlags = BuildCard("\uE9D9", LanguageHelper.GetString("MainForm.groupBox46.Text"), cw, accent);
+
+            // Helper: adds 3 radio buttons (Sì / No / Entrambi) horizontally on one row after a section label.
+            Action<string, RadioButton, RadioButton, RadioButton> addFlagGroup = (groupLabel, rbOn, rbOff, rbBoth) => {
+                AddSectionLabel(cFlags, groupLabel);
+                if (rbOn == null && rbOff == null && rbBoth == null) return;
+                int cardW3 = cFlags.Width > 0 ? cFlags.Width : 340;
+                int curY3  = cFlags.Tag is int ct3 ? ct3 : 38;
+                int rowH3  = 28;
+                int colW3  = (cardW3 - 20) / 3;
+                void PlaceRb(RadioButton rb, string lbl, int colX) {
+                    if (rb == null) return;
+                    rb.Parent    = cFlags;
+                    rb.Text      = lbl;
+                    rb.Font      = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F);
+                    rb.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode;
+                    rb.BackColor = Color.Transparent;
+                    rb.AutoSize  = false;
+                    rb.Size      = new Size(colW3, rowH3);
+                    rb.Location  = new Point(10 + colX, curY3 - 4);
+                }
+                PlaceRb(rbOn,   LanguageHelper.GetString("MainForm.paralizedOn.Text"),   0);
+                PlaceRb(rbOff,  LanguageHelper.GetString("MainForm.paralizedOff.Text"),  colW3);
+                PlaceRb(rbBoth, LanguageHelper.GetString("MainForm.paralizedBoth.Text"), colW3 * 2);
+                cFlags.Tag = curY3 + rowH3 + 4;
+            };
+
+            addFlagGroup(LanguageHelper.GetString("MainForm.groupBox54.Text"), this.poisonedOn,  this.poisonedOff,  this.poisonedBoth);
+            addFlagGroup(LanguageHelper.GetString("MainForm.groupBox53.Text"), this.blessedOn,   this.blessedOff,   this.blessedBoth);
+            addFlagGroup(LanguageHelper.GetString("MainForm.groupBox52.Text"), this.humanOn,     this.humanOff,     this.humanBoth);
+            addFlagGroup(LanguageHelper.GetString("MainForm.groupBox51.Text"), this.ghostOn,     this.ghostOff,     this.ghostBoth);
+            addFlagGroup(LanguageHelper.GetString("MainForm.groupBox50.Text"), this.warmodeOn,   this.warmodeOff,   this.warmodeBoth);
+            addFlagGroup(LanguageHelper.GetString("MainForm.groupBox49.Text"), this.friendOn,    this.friendOff,    this.friendBoth);
+            addFlagGroup(LanguageHelper.GetString("MainForm.groupBox47.Text"), this.paralizedOn, this.paralizedOff, this.paralizedBoth);
+            FinalizeCard(cFlags);
+
+
+            // ── Card: Selettore + Bersaglio ───────────────────────────────────
+            var cSel = BuildCard("\uE721", LanguageHelper.GetString("MainForm.groupBox56.Text"), cw, accent);
+            AddIndentRow(cSel, this.targetSelectorComboBox, LanguageHelper.GetString("MainForm.groupBox56.Text"), 180);
+            AddIndentRow(cSel, this.targetNameTextBox, LanguageHelper.GetString("MainForm.groupBox55.Text"), 180);
+
+            // Test + Save buttons
+            int curYsel = cSel.Tag is int tsel ? tsel : 38;
+            this.targetTestButton.Parent = cSel;
+            this.targetTestButton.Location = new Point(10, curYsel - 6);
+            this.targetTestButton.Size = new Size(120, 26);
+            this.targetTestButton.Text = LanguageHelper.GetString("MainForm.targetTestButton.Text");
+            this.targetsaveButton.Parent = cSel;
+            this.targetsaveButton.Location = new Point(140, curYsel - 6);
+            this.targetsaveButton.Size = new Size(130, 26);
+            this.targetsaveButton.Text = LanguageHelper.GetString("MainForm.targetsaveButton.Text");
+            cSel.Tag = curYsel + 34;
+            FinalizeCard(cSel);
+
+            flow.Controls.AddRange(new Control[] {
+                cShortcut, cBody, cColor, cRange, cNot, cFlags, cSel
+            });
+        }
+
+        private void RebuildMiscFilterTab()
+        {
+            this.MiscFilterPage.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
+            this.MiscFilterPage.Controls.Clear();
+
+            // ── Header ───────────────────────────────────────────────────────
+            Panel headerPanel = new Panel {
+                Dock = DockStyle.Top, Height = 90,
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark
+            };
+            headerPanel.Controls.Add(new Label {
+                Text = LanguageHelper.GetString("MainForm.MiscFilterPage.Text"),
+                Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(18F, FontStyle.Bold),
+                ForeColor = Color.White, AutoSize = true, Location = new Point(24, 16)
+            });
+            this.MiscFilterPage.Controls.Add(headerPanel);
+
+            // ── Scrollable body ───────────────────────────────────────────────
+            Panel scrollWrapper = new Panel {
+                Dock = DockStyle.Fill,
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                Padding = new Padding(0)
+            };
+            FlowLayoutPanel flow = new FlowLayoutPanel {
+                Dock = DockStyle.Fill,
+                AutoScroll = true,
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                Padding = new Padding(12, 8, 12, 8),
+                WrapContents = true
+            };
+            flow.HandleCreated += (s2, e2) => {
+                try { SetWindowTheme(flow.Handle, "DarkMode_Explorer", null); } catch { }
+            };
+            scrollWrapper.Controls.Add(flow);
+            this.MiscFilterPage.Controls.Add(scrollWrapper);
+            scrollWrapper.BringToFront();
+
+            int cw = 340;
+            Color accent = ColorTranslator.FromHtml("#8B5CF6"); // same as Options tab
+
+            // ── Card: Varie (scrollable pseudo-card so it doesn't dominate layout) ──
+            // Build as a pseudo-card so we can host a scrollable inner Panel.
+            const int miscMaxH = 290;
+            // Compute full content height (14 rows × 44px)
+            int miscContentH = 14 * 44 + 20;
+            var pMisc = MakePseudoCard("\uE115  " + LanguageHelper.GetString("MainForm.groupBox24.Text"),
+                                       cw, miscMaxH, accent);
+            // Scrollable inner panel
+            var miscScrollPanel = new Panel {
+                Location    = new Point(8, 38),
+                Width       = cw - 16,
+                Height      = miscMaxH - 46,
+                AutoScroll  = true,
+                BackColor   = Assistant.UI.Controls.RazorTheme.Colors.CardDark,
+                BorderStyle = BorderStyle.None
+            };
+            miscScrollPanel.HandleCreated += (s2, e2) => {
+                try { SetWindowTheme(miscScrollPanel.Handle, "DarkMode_Explorer", null); } catch { }
+            };
+            pMisc.Controls.Add(miscScrollPanel);
+            // Build toggle rows inside the scroll panel using a temporary card-like shim
+            // We use a Panel as a layout proxy (same approach as AddRow but targeting miscScrollPanel)
+            int miscRowY = 2;
+            int miscRowW = miscScrollPanel.Width - 4;
+            int miscRowH = 40;
+            Action<System.Windows.Forms.CheckBox, string> addMiscRow = (toggle, text) => {
+                if (toggle == null) return;
+                toggle.Text      = "";
+                toggle.Size      = new Size(44, 22);
+                toggle.Location  = new Point(miscRowW - 48, miscRowY + (miscRowH - 22) / 2);
+                toggle.BackColor = Color.Transparent;
+                toggle.Parent    = miscScrollPanel;
+                var lbl = new Label {
+                    Text      = text,
+                    Location  = new Point(4, miscRowY),
+                    Width     = miscRowW - 56,
+                    Height    = miscRowH,
+                    Font      = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9.5F),
+                    ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode,
+                    BackColor = Color.Transparent,
+                    TextAlign = ContentAlignment.MiddleLeft
+                };
+                miscScrollPanel.Controls.Add(lbl);
+                toggle.BringToFront();
+                // Subtle separator
+                var line = new Panel {
+                    Location  = new Point(2, miscRowY + miscRowH - 1),
+                    Width     = miscRowW - 4,
+                    Height    = 1,
+                    BackColor = Color.FromArgb(30, 255, 255, 255)
+                };
+                miscScrollPanel.Controls.Add(line);
+                miscRowY += miscRowH;
+            };
+            addMiscRow(this.highlighttargetCheckBox,         LanguageHelper.GetString("MainForm.highlighttargetCheckBox.Text"));
+            addMiscRow(this.flagsHighlightCheckBox,          LanguageHelper.GetString("MainForm.flagsHighlightCheckBox.Text"));
+            addMiscRow(this.colorflagsHighlightCheckBox,     LanguageHelper.GetString("MainForm.colorflagsHighlightCheckBox.Text"));
+            addMiscRow(this.colorflagsselfHighlightCheckBox, LanguageHelper.GetString("MainForm.colorflagsselfHighlightCheckBox.Text"));
+            addMiscRow(this.showstaticfieldCheckBox,         LanguageHelper.GetString("MainForm.showstaticfieldCheckBox.Text"));
+            addMiscRow(this.showmessagefieldCheckBox,        LanguageHelper.GetString("MainForm.showmessagefieldCheckBox.Text"));
+            addMiscRow(this.blocktraderequestCheckBox,       LanguageHelper.GetString("MainForm.blocktraderequestCheckBox.Text"));
+            addMiscRow(this.blockpartyinviteCheckBox,        LanguageHelper.GetString("MainForm.blockpartyinviteCheckBox.Text"));
+            addMiscRow(this.showheadtargetCheckBox,          LanguageHelper.GetString("MainForm.showheadtargetCheckBox.Text"));
+            addMiscRow(this.blockhealpoisonCheckBox,         LanguageHelper.GetString("MainForm.blockhealpoisonCheckBox.Text"));
+            addMiscRow(this.blockminihealCheckBox,           LanguageHelper.GetString("MainForm.blockminihealCheckBox.Text"));
+            addMiscRow(this.blockbighealCheckBox,            LanguageHelper.GetString("MainForm.blockbighealCheckBox.Text"));
+            addMiscRow(this.blockchivalryhealCheckBox,       LanguageHelper.GetString("MainForm.blockchivalryhealCheckBox.Text"));
+            addMiscRow(this.showagentmessageCheckBox,        LanguageHelper.GetString("MainForm.showagentmessageCheckBox.Text"));
+            var cMisc = pMisc; // alias for consistency with AddRange below
+
+            // ── Card: Cambio Grafica Mobile ───────────────────────────────────
+            var cMob = BuildCard("\uE8FD", LanguageHelper.GetString("MainForm.groupBox23.Text"), cw, accent);
+            AddRow(cMob, this.mobfilterCheckBox, LanguageHelper.GetString("MainForm.mobfilterCheckBox.Text"));
+            int curYm = cMob.Tag is int tm ? tm : 38;
+            this.graphfilterdatagrid.Parent = cMob;
+            this.graphfilterdatagrid.Location = new Point(10, curYm - 6);
+            this.graphfilterdatagrid.Width  = cw - 24;
+            this.graphfilterdatagrid.Height = 120;
+            this.graphfilterdatagrid.BackgroundColor = Assistant.UI.Controls.RazorTheme.Colors.SurfaceDark;
+            this.graphfilterdatagrid.GridColor       = Assistant.UI.Controls.RazorTheme.Colors.CardDark;
+            this.graphfilterdatagrid.DefaultCellStyle.BackColor  = Assistant.UI.Controls.RazorTheme.Colors.SurfaceDark;
+            this.graphfilterdatagrid.DefaultCellStyle.ForeColor  = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode;
+            this.graphfilterdatagrid.ColumnHeadersDefaultCellStyle.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
+            this.graphfilterdatagrid.ColumnHeadersDefaultCellStyle.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark;
+            this.graphfilterdatagrid.EnableHeadersVisualStyles = false;
+            cMob.Tag = curYm + 126;
+            FinalizeCard(cMob);
+
+            // ── Card: Auto Carver ─────────────────────────────────────────────
+            var cCarver = BuildCard("\uE8B8", LanguageHelper.GetString("MainForm.groupBox10.Text"), cw, accent);
+            AddRow(cCarver, this.autocarverCheckBox, LanguageHelper.GetString("MainForm.autocarverCheckBox.Text"));
+            int curYcv = cCarver.Tag is int tcv ? tcv : 38;
+            // serial label + set button row
+            var lblCvSerial = new Label { Text = LanguageHelper.GetString("MainForm.label34.Text"),
+                Location = new Point(10, curYcv - 6), Width = 90, Height = 32,
+                Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F), ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark,
+                BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleLeft };
+            cCarver.Controls.Add(lblCvSerial);
+            this.autocarverbladeLabel.Parent = cCarver;
+            this.autocarverbladeLabel.Location = new Point(100, curYcv - 3);
+            this.autocarverbladeLabel.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark;
+            this.autocarverrazorButton.Parent = cCarver;
+            this.autocarverrazorButton.Location = new Point(cw - 100, curYcv - 5);
+            this.autocarverrazorButton.Size = new Size(80, 26);
+            this.autocarverrazorButton.Text = LanguageHelper.GetString("MainForm.autocarverrazorButton.Text");
+            cCarver.Tag = curYcv + 36;
+            FinalizeCard(cCarver);
+
+            // ── Card: Taglia Ossa ─────────────────────────────────────────────
+            var cBone = BuildCard("\uE8B8", LanguageHelper.GetString("MainForm.groupBox9.Text"), cw, accent);
+            AddRow(cBone, this.bonecutterCheckBox, LanguageHelper.GetString("MainForm.bonecutterCheckBox.Text"));
+            int curYbn = cBone.Tag is int tbn ? tbn : 38;
+            var lblBnSerial = new Label { Text = LanguageHelper.GetString("MainForm.label16.Text"),
+                Location = new Point(10, curYbn - 6), Width = 90, Height = 32,
+                Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F), ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark,
+                BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleLeft };
+            cBone.Controls.Add(lblBnSerial);
+            this.bonebladeLabel.Parent = cBone;
+            this.bonebladeLabel.Location = new Point(100, curYbn - 3);
+            this.bonebladeLabel.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark;
+            this.boneCutterrazorButton.Parent = cBone;
+            this.boneCutterrazorButton.Location = new Point(cw - 100, curYbn - 5);
+            this.boneCutterrazorButton.Size = new Size(80, 26);
+            this.boneCutterrazorButton.Text = LanguageHelper.GetString("MainForm.boneCutterrazorButton.Text");
+            cBone.Tag = curYbn + 36;
+            FinalizeCard(cBone);
+
+            // ── Card: Auto Rimonta ────────────────────────────────────────────
+            var cRemount = BuildCard("\uE806", LanguageHelper.GetString("MainForm.groupBox32.Text"), cw, accent);
+            AddRow(cRemount, this.remountcheckbox, LanguageHelper.GetString("MainForm.remountcheckbox.Text"));
+            int curYrm = cRemount.Tag is int trm ? trm : 38;
+            // Serial label + Set Mount button
+            var lblRmSerial = new Label { Text = LanguageHelper.GetString("MainForm.label47.Text"),
+                Location = new Point(10, curYrm - 6), Width = 90, Height = 32,
+                Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F), ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark,
+                BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleLeft };
+            cRemount.Controls.Add(lblRmSerial);
+            this.remountseriallabel.Parent = cRemount;
+            this.remountseriallabel.Location = new Point(100, curYrm - 3);
+            this.remountseriallabel.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark;
+            this.remountsetbutton.Parent = cRemount;
+            this.remountsetbutton.Location = new Point(cw - 100, curYrm - 5);
+            this.remountsetbutton.Size = new Size(80, 26);
+            this.remountsetbutton.Text = LanguageHelper.GetString("MainForm.remountsetbutton.Text");
+            cRemount.Tag = curYrm + 36;
+            AddIndentRow(cRemount, this.remountdelay,  LanguageHelper.GetString("MainForm.label40.Text"), 60);
+            AddIndentRow(cRemount, this.remountedelay, LanguageHelper.GetString("MainForm.label48.Text"), 60);
+            FinalizeCard(cRemount);
+
+            // ── Card: Visualizzazione Danno ───────────────────────────────────
+            var cDmg = BuildCard("\uE9E9", LanguageHelper.GetString("MainForm.DmgDsplyGroup.Text"), cw, accent);
+            AddRow(cDmg, this.limitDamageDisplayEnable, LanguageHelper.GetString("MainForm.limitDamageDisplayEnable.Text"));
+            AddIndentRow(cDmg, this.minDmgShown, LanguageHelper.GetString("MainForm.label81.Text"), 60);
+            FinalizeCard(cDmg);
+
+            // ── Card: UoMod ───────────────────────────────────────────────────
+            var cUoMod = BuildCard("\uE9B0", LanguageHelper.GetString("MainForm.uomodgroupbox.Text"), cw, accent);
+            AddRow(cUoMod, this.uomodFPSCheckBox,        LanguageHelper.GetString("MainForm.uomodFPSCheckBox.Text"));
+            AddRow(cUoMod, this.uomodpaperdollCheckBox,  LanguageHelper.GetString("MainForm.uomodpaperdollCheckBox.Text"));
+            AddRow(cUoMod, this.uomodglobalsoundCheckBox,LanguageHelper.GetString("MainForm.uomodglobalsoundCheckBox.Text"));
+            FinalizeCard(cUoMod);
+
+            flow.Controls.AddRange(new Control[] {
+                cMisc, cMob, cCarver, cBone, cRemount, cDmg, cUoMod
+            });
+        }
+
+        private void RebuildOptionsTab()
+        {
+            this.moreOptTab.Text = LanguageHelper.GetString("MainForm.moreOptTab.Text");
+            this.moreOptTab.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
+            this.moreOptTab.Controls.Clear();
+
+            // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            Panel headerPanel = new Panel {
+                Dock = DockStyle.Top, Height = 90,
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark
+            };
+            Label lblTitle = new Label {
+                Text = this.moreOptTab.Text,
+                Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(18F, FontStyle.Bold),
+                ForeColor = Color.White, AutoSize = true, Location = new Point(24, 16)
+            };
+            Label lblSub = new Label {
+                Text = LanguageHelper.GetString("MainForm.generalTab.Text"),
+                Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(10F),
+                ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark,
+                AutoSize = true, Location = new Point(24, 55)
+            };
+            headerPanel.Controls.Add(lblTitle);
+            headerPanel.Controls.Add(lblSub);
+            this.moreOptTab.Controls.Add(headerPanel);
+
+            // ―― Scrollable body ─────────────────────────────────────────────────
+            // Wrap FlowLayoutPanel in a dark Panel so the Win32 scrollbar
+            // lies inside the dark area and doesn't show a white border.
+            Panel scrollWrapper = new Panel {
+                Dock = DockStyle.Fill,
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                Padding = new Padding(0)
+            };
+            FlowLayoutPanel flow = new FlowLayoutPanel {
+                Dock = DockStyle.Fill,
+                AutoScroll = true,
+                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                Padding = new Padding(12, 8, 12, 8),
+                WrapContents = true
+            };
+            // Apply dark scrollbar via UxTheme (Windows 10/11)
+            flow.HandleCreated += (s2, e2) => {
+                try { SetWindowTheme(flow.Handle, "DarkMode_Explorer", null); } catch { }
+            };
+            scrollWrapper.Controls.Add(flow);
+            this.moreOptTab.Controls.Add(scrollWrapper);
+            scrollWrapper.BringToFront();
+
+            // Card width so two fit side-by-side with comfortable margin
+            int cw = 340;
+            Color accent = ColorTranslator.FromHtml("#8B5CF6");
+
+            // ―― 1. Bersagli ──────────────────────────────────────────────────
+            var cTargets = BuildCard(
+                "\uE909", LanguageHelper.GetString("MainForm.targetGroupBox.Text"),
+                cw, accent);
+            AddRow(cTargets, this.smartLT,      LanguageHelper.GetString("MainForm.smartLT.Text"));
+            AddRow(cTargets, this.rangeCheckLT, LanguageHelper.GetString("MainForm.rangeCheckLT.Text"));
+            AddIndentRow(cTargets, this.ltRange, LanguageHelper.GetString("MainForm.label8.Text"), 60);
+            AddRow(cTargets, this.showtargtext, LanguageHelper.GetString("MainForm.showtargtext.Text"));
+            FinalizeCard(cTargets);
+
+            // ―― 2. Code / Queue ──────────────────────────────────────────────────
+            var cQueues = BuildCard(
+                "\uE965", LanguageHelper.GetString("MainForm.queueGroupBox.Text"),
+                cw, accent);
+            AddRow(cQueues, this.actionStatusMsg, LanguageHelper.GetString("MainForm.actionStatusMsg.Text"));
+            AddRow(cQueues, this.QueueActions,    LanguageHelper.GetString("MainForm.QueueActions.Text"));
+            AddIndentRow(cQueues, this.txtObjDelay, LanguageHelper.GetString("MainForm.label5.Text"), 60);
+            AddRow(cQueues, this.queueTargets,   LanguageHelper.GetString("MainForm.queueTargets.Text"));
+            FinalizeCard(cQueues);
+
+            // ―― 3. Visuale ──────────────────────────────────────────────────
+            var cVisuals = BuildCard(
+                "\uE7B3", LanguageHelper.GetString("MainForm.showmobileGroupBox.Text"),
+                cw, accent);
+            AddRow(cVisuals, this.incomingMob,    LanguageHelper.GetString("MainForm.incomingMob.Text"));
+            AddRow(cVisuals, this.incomingCorpse, LanguageHelper.GetString("MainForm.incomingCorpse.Text"));
+            AddRow(cVisuals, this.showHealthOH,   LanguageHelper.GetString("MainForm.showHealthOH.Text"));
+            AddIndentRow(cVisuals, this.healthFmt, LanguageHelper.GetString("MainForm.label10.Text"), 120);
+            AddRow(cVisuals, this.chkPartyOverhead, LanguageHelper.GetString("MainForm.chkPartyOverhead.Text"));
+            AddSectionLabel(cVisuals, LanguageHelper.GetString("MainForm.preaosstatusGroupBox.Text"));
+            AddRow(cVisuals, this.preAOSstatbar, LanguageHelper.GetString("MainForm.preAOSstatbar.Text"));
+            FinalizeCard(cVisuals);
+
+            // ―― 4. Overrides ──────────────────────────────────────────────────
+            var cOverrides = BuildCard(
+                "\uE932", LanguageHelper.GetString("MainForm.overrideGroupBox.Text"),
+                cw, accent);
+            // Message / Warn hue rows
+            AddColorHueRow(cOverrides,
+                this.lblMsgHue,  this.setMsgHue,
+                LanguageHelper.GetString("MainForm.lblMsgHue.Text"));
+            AddColorHueRow(cOverrides,
+                this.lblWarnHue, this.setWarnHue,
+                LanguageHelper.GetString("MainForm.lblWarnHue.Text"));
+            AddSectionLabel(cOverrides, LanguageHelper.GetString("MainForm.miscellaneousGroupBox.Text"));
+            AddRow(cOverrides, this.chkForceSpeechHue, LanguageHelper.GetString("MainForm.chkForceSpeechHue.Text"));
+            AddRow(cOverrides, this.lthilight,          LanguageHelper.GetString("MainForm.lthilight.Text"));
+            AddRow(cOverrides, this.chkForceSpellHue,   LanguageHelper.GetString("MainForm.chkForceSpellHue.Text"));
+            // ── Spell hue rows – visible only when chkForceSpellHue is checked ──────
+            int _compactTagY = cOverrides.Tag is int _cty ? _cty : 38;
+            int _preCount    = cOverrides.Controls.Count;
+
+            AddSectionLabel(cOverrides, LanguageHelper.GetString("MainForm.overrideGroupBox.Text") + " " + LanguageHelper.GetString("MainForm.spellspotionsGroupBox.Text"));
+            AddSpellHueTriple(cOverrides,
+                this.lblBeneHue, this.setBeneHue, LanguageHelper.GetString("MainForm.lblBeneHue.Text"), Color.FromArgb(100, 220, 120),
+                this.lblHarmHue, this.setHarmHue, LanguageHelper.GetString("MainForm.lblHarmHue.Text"), Color.FromArgb(220, 100, 100),
+                this.lblNeuHue,  this.setNeuHue,  LanguageHelper.GetString("MainForm.lblNeuHue.Text"),  Color.FromArgb(170, 170, 170));
+
+            FinalizeCard(cOverrides);
+            int _expandedH = cOverrides.Height;
+
+            // Compute compact height (no spell-hue sub-section)
+            cOverrides.Tag = _compactTagY;
+            FinalizeCard(cOverrides);
+            int _compactH  = cOverrides.Height;
+
+            // Collect the controls that belong to the spell-hue sub-section
+            var _spellHueCtrls = new System.Collections.Generic.List<Control>();
+            for (int _i = _preCount; _i < cOverrides.Controls.Count; _i++)
+                _spellHueCtrls.Add(cOverrides.Controls[_i]);
+
+            // Apply initial visibility state
+            bool _initShow = this.chkForceSpellHue?.Checked ?? false;
+            foreach (var _c in _spellHueCtrls) _c.Visible = _initShow;
+            cOverrides.Height = _initShow ? _expandedH : _compactH;
+
+            // Re-register toggle handler (remove stale one from previous rebuild)
+            if (_spellHueVisibilityHandler != null)
+                this.chkForceSpellHue.CheckedChanged -= _spellHueVisibilityHandler;
+            _spellHueVisibilityHandler = (s, ev) =>
+            {
+                bool _show = this.chkForceSpellHue?.Checked ?? false;
+                foreach (var _c in _spellHueCtrls) _c.Visible = _show;
+                cOverrides.Height = _show ? _expandedH : _compactH;
+            };
+            this.chkForceSpellHue.CheckedChanged += _spellHueVisibilityHandler;
+
+            // ―― 5. Contenitori ──────────────────────────────────────────────────
+            var cContainers = BuildCard(
+                "\uE8B1", LanguageHelper.GetString("MainForm.containeruseGroupBox.Text"),
+                cw, accent);
+            AddRow(cContainers, this.openCorpses,         LanguageHelper.GetString("MainForm.openCorpses.Text"));
+            AddIndentRow(cContainers, this.corpseRange,   LanguageHelper.GetString("MainForm.label4.Text"), 40);
+            AddRow(cContainers, this.autosearchcontainers, LanguageHelper.GetString("MainForm.autosearchcontainers.Text"));
+            AddRow(cContainers, this.nosearchpouches,     LanguageHelper.GetString("MainForm.nosearchpouches.Text"));
+            FinalizeCard(cContainers);
+
+            // ―― 6. Magie / Pozioni ──────────────────────────────────────────────────
+            var cSpells = BuildCard(
+                "\uE70B", LanguageHelper.GetString("MainForm.spellspotionsGroupBox.Text"),
+                cw, accent);
+            AddRow(cSpells, this.potionEquip,      LanguageHelper.GetString("MainForm.potionEquip.Text"));
+            AddRow(cSpells, this.spellUnequip,     LanguageHelper.GetString("MainForm.spellUnequip.Text"));
+            AddRow(cSpells, this.druidClericPackets, LanguageHelper.GetString("MainForm.druidClericPackets.Text"));
+            FinalizeCard(cSpells);
+
+            // ―― 7. Stealth ──────────────────────────────────────────────────
+            var cStealth = BuildCard(
+                "\uE7B8", LanguageHelper.GetString("MainForm.stealthGroupBox.Text"),
+                cw, accent);
+            AddRow(cStealth, this.chkStealth,      LanguageHelper.GetString("MainForm.chkStealth.Text"));
+            AddRow(cStealth, this.chknorunStealth,  LanguageHelper.GetString("MainForm.chknorunStealth.Text"));
+            FinalizeCard(cStealth);
+
+            // ―― 8. Varie ──────────────────────────────────────────────────
+            var cMisc = BuildCard(
+                "\uE115", LanguageHelper.GetString("MainForm.miscellaneousGroupBox.Text"),
+                cw, accent);
+            AddRow(cMisc, this.blockDis,    LanguageHelper.GetString("MainForm.blockDis.Text"));
+            AddRow(cMisc, this.autoStackRes, LanguageHelper.GetString("MainForm.autoStackRes.Text"));
+            FinalizeCard(cMisc);
+
+                        flow.Controls.AddRange(new Control[] {
+                            cTargets, cQueues, cVisuals, cOverrides, cContainers, cSpells, cStealth, cMisc
+                        });
+                    }
+            
+                            private void RebuildStatBarTab()
+                            {
+                                this.tabPage2.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
+                                this.tabPage2.Controls.Clear();
+                    
+                                // ―― Scrollable body ─────────────────────────────────────────────────
+                                Panel scrollWrapper = new Panel
+                                {
+                                    Dock = DockStyle.Fill,
+                                    BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                                    Padding = new Padding(0)
+                                };
+                                FlowLayoutPanel flow = new FlowLayoutPanel
+                                {
+                                    Dock = DockStyle.Fill,
+                                    AutoScroll = true,
+                                    BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                                    Padding = new Padding(12, 8, 12, 8),
+                                    WrapContents = true
+                                };
+                                flow.HandleCreated += (s2, e2) =>
+                                {
+                                    try { SetWindowTheme(flow.Handle, "DarkMode_Explorer", null); } catch { }
+                                };
+                                scrollWrapper.Controls.Add(flow);
+                                this.tabPage2.Controls.Add(scrollWrapper);
+                                scrollWrapper.BringToFront();
+
+                                int cw = 290; // due colonne: 2*(290+20)=620 ≤ 628px disponibili
+                                Color accent = ColorTranslator.FromHtml("#8B5CF6");
+
+                                // ―― 1. Generale ──────────────────────────────────────────────────
+                                var cGeneral = BuildCard("\uE713", LanguageHelper.GetString("MainForm.groupBox25.Text"), cw, accent);
+                                AddRow(cGeneral, this.lockToolBarCheckBox, LanguageHelper.GetString("MainForm.lockToolBarCheckBox.Text"));
+                                AddRow(cGeneral, this.autoopenToolBarCheckBox, LanguageHelper.GetString("MainForm.autoopenToolBarCheckBox.Text"));
+                    
+                                int curY = (int)cGeneral.Tag;
+                                this.locationToolBarLabel.Parent = cGeneral;
+                                this.locationToolBarLabel.Location = new Point(12, curY + 6);
+                                this.locationToolBarLabel.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark;
+                                this.locationToolBarLabel.Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F);
+                                this.locationToolBarLabel.AutoSize = true;
+                    
+                                this.openToolBarButton.Parent = cGeneral;
+                                this.openToolBarButton.Location = new Point(cw - 185, curY + 2);
+                                this.openToolBarButton.Size = new Size(80, 26);
+                                this.openToolBarButton.Text = LanguageHelper.GetString("MainForm.openToolBarButton.Text");
+                                StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.openToolBarButton);
+                    
+                                this.closeToolBarButton.Parent = cGeneral;
+                                this.closeToolBarButton.Location = new Point(cw - 95, curY + 2);
+                                this.closeToolBarButton.Size = new Size(80, 26);
+                                this.closeToolBarButton.Text = LanguageHelper.GetString("MainForm.closeToolBarButton.Text");
+                                StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.closeToolBarButton);
+                    
+                                cGeneral.Tag = curY + 44;
+                                FinalizeCard(cGeneral);
+                    
+                                // ―― 2. Layout ────────────────────────────────────────────────────
+                                var cLayout = BuildCard("\uE9B0", LanguageHelper.GetString("MainForm.groupBox4.Text"), cw, accent);
+                                AddIndentRow(cLayout, this.toolboxstyleComboBox, LanguageHelper.GetString("MainForm.label2.Text"), 120);
+                                AddIndentRow(cLayout, this.toolboxsizeComboBox, LanguageHelper.GetString("MainForm.label41.Text"), 120);
+                    
+                                curY = (int)cLayout.Tag;
+                                var lblSlots = new Label
+                                {
+                                    Text = LanguageHelper.GetString("MainForm.label43.Text"),
+                                    Location = new Point(20 - 8, curY - 6),
+                                    Width = 100,
+                                    Height = 36,
+                                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F),
+                                    ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark,
+                                    BackColor = Color.Transparent,
+                                    TextAlign = ContentAlignment.MiddleLeft
+                                };
+                                cLayout.Controls.Add(lblSlots);
+                    
+                                this.toolbarslot_label.Parent = cLayout;
+                                this.toolbarslot_label.Location = new Point(110, curY + 5);
+                                this.toolbarslot_label.ForeColor = Color.White;
+                                this.toolbarslot_label.AutoSize = true;
+                    
+                                this.toolbaraddslotButton.Parent = cLayout;
+                                this.toolbaraddslotButton.Location = new Point(cw - 85, curY + 2);
+                                this.toolbaraddslotButton.Size = new Size(30, 26);
+                                this.toolbaraddslotButton.Text = "+";
+                                StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.toolbaraddslotButton);
+                    
+                                this.toolbarremoveslotButton.Parent = cLayout;
+                                this.toolbarremoveslotButton.Location = new Point(cw - 50, curY + 2);
+                                this.toolbarremoveslotButton.Size = new Size(30, 26);
+                                this.toolbarremoveslotButton.Text = "-";
+                                StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.toolbarremoveslotButton);
+                                cLayout.Tag = curY + 40;
+                    
+                                AddRow(cLayout, this.showhitsToolBarCheckBox, LanguageHelper.GetString("MainForm.showhitsToolBarCheckBox.Text"));
+                                AddRow(cLayout, this.showstaminaToolBarCheckBox, LanguageHelper.GetString("MainForm.showstaminaToolBarCheckBox.Text"));
+                                AddRow(cLayout, this.showmanaToolBarCheckBox, LanguageHelper.GetString("MainForm.showmanaToolBarCheckBox.Text"));
+                                AddRow(cLayout, this.showweightToolBarCheckBox, LanguageHelper.GetString("MainForm.showweightToolBarCheckBox.Text"));
+                                AddRow(cLayout, this.showfollowerToolBarCheckBox, LanguageHelper.GetString("MainForm.showfollowerToolBarCheckBox.Text"));
+                                AddRow(cLayout, this.showtitheToolBarCheckBox, LanguageHelper.GetString("MainForm.showtitheToolBarCheckBox.Text"));
+                                FinalizeCard(cLayout);
+                    
+                                // ―― 3. Conteggio Oggetti ─────────────────────────────────────────
+                                var cCount = BuildCard("\uE8A1", LanguageHelper.GetString("MainForm.groupBox26.Text"), cw, accent);
+                                AddIndentRow(cCount, this.toolboxcountComboBox, "Slot:", 120);
+                                AddIndentRow(cCount, this.toolboxcountNameTextBox, LanguageHelper.GetString("MainForm.label37.Text"), 180);
+                                AddIndentRow(cCount, this.toolboxcountGraphTextBox, LanguageHelper.GetString("MainForm.label18.Text"), 100);
+                                AddIndentRow(cCount, this.toolboxcountHueTextBox, LanguageHelper.GetString("MainForm.label35.Text"), 100);
+                                AddRow(cCount, this.toolboxcountHueWarningCheckBox, LanguageHelper.GetString("MainForm.toolboxcountHueWarningCheckBox.Text"));
+                                AddIndentRow(cCount, this.toolboxcountWarningTextBox, LanguageHelper.GetString("MainForm.label36.Text"), 100);
+                    
+                                curY = (int)cCount.Tag;
+                                this.toolboxcountTargetButton.Parent = cCount;
+                                this.toolboxcountTargetButton.Location = new Point(20, curY + 5);
+                                this.toolboxcountTargetButton.Size = new Size(120, 30);
+                                this.toolboxcountTargetButton.Text = LanguageHelper.GetString("MainForm.toolboxcountTargetButton.Text");
+                                StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.toolboxcountTargetButton);
+                    
+                                this.toolboxcountClearButton.Parent = cCount;
+                                this.toolboxcountClearButton.Location = new Point(cw - 140, curY + 5);
+                                this.toolboxcountClearButton.Size = new Size(120, 30);
+                                this.toolboxcountClearButton.Text = LanguageHelper.GetString("MainForm.toolboxcountClearButton.Text");
+                                StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.toolboxcountClearButton);
+                                cCount.Tag = curY + 45;
+                    
+                                FinalizeCard(cCount);
+                    
+                                // ―― 4. OpacitÃ  ───────────────────────────────────────────────────
+                                var cOpacity = BuildCard("\uE7B3", LanguageHelper.GetString("MainForm.groupBox39.Text"), cw, accent);
+                                curY = (int)cOpacity.Tag;
+                                this.toolbar_opacity_label.Parent = cOpacity;
+                                this.toolbar_opacity_label.Location = new Point(20, curY + 5);
+                                this.toolbar_opacity_label.ForeColor = Color.White;
+                                this.toolbar_opacity_label.AutoSize = true;
+                    
+                                this.toolbar_trackBar.Parent = cOpacity;
+                                this.toolbar_trackBar.Location = new Point(70, curY + 5);
+                                this.toolbar_trackBar.Width = cw - 90;
+                                this.toolbar_trackBar.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
+                                cOpacity.Tag = curY + 44;
+                                FinalizeCard(cOpacity);
+                    
+                                flow.Controls.AddRange(new Control[] { cGeneral, cLayout, cCount, cOpacity });
+                            }
+            
+                            private void RebuildSpellGridTab()
+                            {
+                                this.tabPage3.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
+                                this.tabPage3.Controls.Clear();
+                    
+                                // ―― Scrollable body ─────────────────────────────────────────────────
+                                Panel scrollWrapper = new Panel
+                                {
+                                    Dock = DockStyle.Fill,
+                                    BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                                    Padding = new Padding(0)
+                                };
+                                FlowLayoutPanel flow = new FlowLayoutPanel
+                                {
+                                    Dock = DockStyle.Fill,
+                                    AutoScroll = true,
+                                    BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                                    Padding = new Padding(12, 8, 12, 8),
+                                    WrapContents = true
+                                };
+                                flow.HandleCreated += (s2, e2) =>
+                                {
+                                    try { SetWindowTheme(flow.Handle, "DarkMode_Explorer", null); } catch { }
+                                };
+                                scrollWrapper.Controls.Add(flow);
+                                this.tabPage3.Controls.Add(scrollWrapper);
+                                scrollWrapper.BringToFront();
+
+                                int cw = 290; // due colonne: 2*(290+20)=620 ≤ 628px disponibili
+                                Color accent = ColorTranslator.FromHtml("#8B5CF6");
+
+                                // ―― 1. Generale ──────────────────────────────────────────────────
+                                var cGeneral = BuildCard("\uE713", LanguageHelper.GetString("MainForm.groupBox35.Text"), cw, accent);
+                                AddRow(cGeneral, this.gridlock_CheckBox, LanguageHelper.GetString("MainForm.gridlock_CheckBox.Text"));
+                                AddRow(cGeneral, this.gridopenlogin_CheckBox, LanguageHelper.GetString("MainForm.gridopenlogin_CheckBox.Text"));
+                    
+                                int curY = (int)cGeneral.Tag;
+                                this.gridlocation_label.Parent = cGeneral;
+                                this.gridlocation_label.Location = new Point(12, curY + 6);
+                                this.gridlocation_label.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark;
+                                this.gridlocation_label.Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F);
+                                this.gridlocation_label.AutoSize = true;
+                    
+                                this.gridopen_button.Parent = cGeneral;
+                                this.gridopen_button.Location = new Point(cw - 185, curY + 2);
+                                this.gridopen_button.Size = new Size(80, 26);
+                                this.gridopen_button.Text = LanguageHelper.GetString("MainForm.gridopen_button.Text");
+                                StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.gridopen_button);
+                    
+                                this.gridclose_button.Parent = cGeneral;
+                                this.gridclose_button.Location = new Point(cw - 95, curY + 2);
+                                this.gridclose_button.Size = new Size(80, 26);
+                                this.gridclose_button.Text = LanguageHelper.GetString("MainForm.gridclose_button.Text");
+                                StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.gridclose_button);
+                    
+                                curY += 35;
+                                this.setSpellBarOrigin.Parent = cGeneral;
+                                this.setSpellBarOrigin.Location = new Point(20, curY);
+                                this.setSpellBarOrigin.Size = new Size(cw - 40, 26);
+                                this.setSpellBarOrigin.Text = LanguageHelper.GetString("MainForm.setSpellBarOrigin.Text");
+                                StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.setSpellBarOrigin);
+                    
+                                cGeneral.Tag = curY + 40;
+                                FinalizeCard(cGeneral);
+                    
+                                // ―― 2. Layout ────────────────────────────────────────────────────
+                                var cLayout = BuildCard("\uE9B0", LanguageHelper.GetString("MainForm.groupBox37.Text"), cw, accent);
+                                AddIndentRow(cLayout, this.spellgridstyleComboBox, LanguageHelper.GetString("MainForm.label80.Text"), 120);
+                    
+                                // Slots V
+                                curY = (int)cLayout.Tag;
+                                var lblSlotsV = new Label
+                                {
+                                    Text = LanguageHelper.GetString("MainForm.label49.Text"),
+                                    Location = new Point(20 - 8, curY - 6),
+                                    Width = 100,
+                                    Height = 36,
+                                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F),
+                                    ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark,
+                                    BackColor = Color.Transparent,
+                                    TextAlign = ContentAlignment.MiddleLeft
+                                };
+                                cLayout.Controls.Add(lblSlotsV);
+                                this.gridvslot_textbox.Parent = cLayout;
+                                this.gridvslot_textbox.Location = new Point(110, curY + 5);
+                                this.gridvslot_textbox.ForeColor = Color.White;
+                                this.gridvslot_textbox.AutoSize = true;
+                                this.gridvslotadd_button.Parent = cLayout;
+                                this.gridvslotadd_button.Location = new Point(cw - 85, curY + 2);
+                                this.gridvslotadd_button.Size = new Size(30, 26);
+                                this.gridvslotadd_button.Text = "+";
+                                StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.gridvslotadd_button);
+                                this.gridvslotremove_button.Parent = cLayout;
+                                this.gridvslotremove_button.Location = new Point(cw - 50, curY + 2);
+                                this.gridvslotremove_button.Size = new Size(30, 26);
+                                this.gridvslotremove_button.Text = "-";
+                                StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.gridvslotremove_button);
+                                curY += 40;
+                    
+                                // Slots H
+                                var lblSlotsH = new Label
+                                {
+                                    Text = LanguageHelper.GetString("MainForm.label53.Text"),
+                                    Location = new Point(20 - 8, curY - 6),
+                                    Width = 100,
+                                    Height = 36,
+                                    Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F),
+                                    ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark,
+                                    BackColor = Color.Transparent,
+                                    TextAlign = ContentAlignment.MiddleLeft
+                                };
+                                cLayout.Controls.Add(lblSlotsH);
+                                this.gridhslot_textbox.Parent = cLayout;
+                                this.gridhslot_textbox.Location = new Point(110, curY + 5);
+                                this.gridhslot_textbox.ForeColor = Color.White;
+                                this.gridhslot_textbox.AutoSize = true;
+                                this.gridhslotadd_button.Parent = cLayout;
+                                this.gridhslotadd_button.Location = new Point(cw - 85, curY + 2);
+                                this.gridhslotadd_button.Size = new Size(30, 26);
+                                this.gridhslotadd_button.Text = "+";
+                                StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.gridhslotadd_button);
+                                this.gridhslotremove_button.Parent = cLayout;
+                                this.gridhslotremove_button.Location = new Point(cw - 50, curY + 2);
+                                this.gridhslotremove_button.Size = new Size(30, 26);
+                                this.gridhslotremove_button.Text = "-";
+                                StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.gridhslotremove_button);
+                                cLayout.Tag = curY + 40;
+                    
+                                FinalizeCard(cLayout);
+                    
+                                // ―― 3. Elemento Griglia ──────────────────────────────────────────
+                                var cItem = BuildCard("\uE8A1", LanguageHelper.GetString("MainForm.groupBox36.Text"), cw, accent);
+                                AddIndentRow(cItem, this.gridslot_ComboBox, LanguageHelper.GetString("MainForm.label51.Text"), 180);
+                                AddIndentRow(cItem, this.gridgroup_ComboBox, LanguageHelper.GetString("MainForm.label45.Text"), 180);
+                                AddIndentRow(cItem, this.gridspell_ComboBox, LanguageHelper.GetString("MainForm.label52.Text"), 180);
+                                AddIndentRow(cItem, this.gridborder_ComboBox, LanguageHelper.GetString("MainForm.label44.Text"), 180);
+                                AddIndentRow(cItem, this.gridscript_ComboBox, LanguageHelper.GetString("MainForm.label65.Text"), 180);
+                                FinalizeCard(cItem);
+                    
+                                // ―― 4. OpacitÃ  ───────────────────────────────────────────────────
+                                var cOpacity = BuildCard("\uE7B3", LanguageHelper.GetString("MainForm.groupBox38.Text"), cw, accent);
+                                curY = (int)cOpacity.Tag;
+                                this.spellgrid_opacity_label.Parent = cOpacity;
+                                this.spellgrid_opacity_label.Location = new Point(20, curY + 5);
+                                this.spellgrid_opacity_label.ForeColor = Color.White;
+                                this.spellgrid_opacity_label.AutoSize = true;
+                    
+                                this.spellgrid_trackBar.Parent = cOpacity;
+                                this.spellgrid_trackBar.Location = new Point(70, curY + 5);
+                                this.spellgrid_trackBar.Width = cw - 90;
+                                this.spellgrid_trackBar.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
+                                cOpacity.Tag = curY + 44;
+                    
+                                FinalizeCard(cOpacity);
+                    
+                                            flow.Controls.AddRange(new Control[] { cGeneral, cLayout, cItem, cOpacity });
+                                        }
+                                
+                                        private void RebuildHotKeysTab()
+                                        {
+                                            this.enhancedHotKeytabPage.BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark;
+                                            this.enhancedHotKeytabPage.Controls.Clear();
+                                
+                                            // ―― Scrollable body ─────────────────────────────────────────────────
+                                            Panel scrollWrapper = new Panel
+                                            {
+                                                Dock = DockStyle.Fill,
+                                                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                                                Padding = new Padding(0)
+                                            };
+                                            FlowLayoutPanel flow = new FlowLayoutPanel
+                                            {
+                                                Dock = DockStyle.Fill,
+                                                AutoScroll = true,
+                                                BackColor = Assistant.UI.Controls.RazorTheme.Colors.BackgroundDark,
+                                                Padding = new Padding(12, 8, 12, 8),
+                                                WrapContents = true
+                                            };
+                                            flow.HandleCreated += (s2, e2) =>
+                                            {
+                                                try { SetWindowTheme(flow.Handle, "DarkMode_Explorer", null); } catch { }
+                                            };
+                                            scrollWrapper.Controls.Add(flow);
+                                            this.enhancedHotKeytabPage.Controls.Add(scrollWrapper);
+                                            scrollWrapper.BringToFront();
+                                
+                                            int fullW = 642;
+                                            int cw = 310;
+                                            Color accent = ColorTranslator.FromHtml("#8B5CF6");
+                                
+                                            // ―― 1. TreeView Pseudo-Card ──────────────────────────────────────
+                                            var pTree = MakePseudoCard("\uE8A6  " + LanguageHelper.GetString("MainForm.enhancedHotKeytabPage.Text"), fullW, 400, accent);
+                                            this.hotkeytreeView.Parent = pTree;
+                                            this.hotkeytreeView.Location = new Point(12, 40);
+                                            this.hotkeytreeView.Width = fullW - 24;
+                                            this.hotkeytreeView.Height = 400 - 52;
+                                            this.hotkeytreeView.BackColor = Assistant.UI.Controls.RazorTheme.Colors.SurfaceDark;
+                                            this.hotkeytreeView.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode;
+                                            this.hotkeytreeView.BorderStyle = BorderStyle.None;
+                                            // The theme usually applies Explorer style to treeviews, but let's ensure
+                                            this.hotkeytreeView.HandleCreated += (s, e) => {
+                                                try { SetWindowTheme(this.hotkeytreeView.Handle, "Explorer", null); } catch { }
+                                            };
+                                            flow.Controls.Add(pTree);
+                                
+                                            // ―― 2. Status Card ───────────────────────────────────────────────
+                                            var cStatus = BuildCard("\uE953", LanguageHelper.GetString("MainForm.groupBox28.Text"), cw, accent);
+                                            int curY = (int)cStatus.Tag;
+                                
+                                            this.hotkeyStatusLabel.Parent = cStatus;
+                                            this.hotkeyStatusLabel.Location = new Point(12, curY + 4);
+                                            this.hotkeyStatusLabel.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode;
+                                            this.hotkeyStatusLabel.Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9.5F, FontStyle.Bold);
+                                            this.hotkeyStatusLabel.AutoSize = true;
+                                
+                                            this.hotkeyKeyMasterLabel.Parent = cStatus;
+                                            this.hotkeyKeyMasterLabel.Location = new Point(12, curY + 26);
+                                            this.hotkeyKeyMasterLabel.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark;
+                                            this.hotkeyKeyMasterLabel.Font = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F);
+                                            this.hotkeyKeyMasterLabel.AutoSize = true;
+                                
+                                            curY += 55;
+                                            this.hotkeyMEnableButton.Parent = cStatus;
+                                            this.hotkeyMEnableButton.Location = new Point(20, curY);
+                                            this.hotkeyMEnableButton.Size = new Size(cw / 2 - 30, 28);
+                                            this.hotkeyMEnableButton.Text = LanguageHelper.GetString("MainForm.hotkeyMEnableButton.Text");
+                                            StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.hotkeyMEnableButton);
+                                
+                                            this.hotkeyMDisableButton.Parent = cStatus;
+                                            this.hotkeyMDisableButton.Location = new Point(cw / 2 + 10, curY);
+                                            this.hotkeyMDisableButton.Size = new Size(cw / 2 - 30, 28);
+                                            this.hotkeyMDisableButton.Text = LanguageHelper.GetString("MainForm.hotkeyMDisableButton.Text");
+                                            StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.hotkeyMDisableButton);
+                                
+                                            cStatus.Tag = curY + 40;
+                                            FinalizeCard(cStatus);
+                                
+                                            // ―― 3. Master Key Card ───────────────────────────────────────────
+                                            var cMaster = BuildCard("\uE722", LanguageHelper.GetString("MainForm.groupBox8.Text"), cw, accent);
+                                            AddIndentRow(cMaster, this.hotkeyKeyMasterTextBox, LanguageHelper.GetString("MainForm.label42.Text"), 140);
+                                            
+                                            curY = (int)cMaster.Tag;
+                                            this.hotkeyMasterSetButton.Parent = cMaster;
+                                            this.hotkeyMasterSetButton.Location = new Point(20, curY + 4);
+                                            this.hotkeyMasterSetButton.Size = new Size(cw / 2 - 30, 28);
+                                            this.hotkeyMasterSetButton.Text = LanguageHelper.GetString("MainForm.hotkeyMasterSetButton.Text");
+                                            StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.hotkeyMasterSetButton);
+                                
+                                            this.hotkeyMasterClearButton.Parent = cMaster;
+                                            this.hotkeyMasterClearButton.Location = new Point(cw / 2 + 10, curY + 4);
+                                            this.hotkeyMasterClearButton.Size = new Size(cw / 2 - 30, 28);
+                                            this.hotkeyMasterClearButton.Text = LanguageHelper.GetString("MainForm.hotkeyMasterClearButton.Text");
+                                            StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.hotkeyMasterClearButton);
+                                
+                                            cMaster.Tag = curY + 42;
+                                            FinalizeCard(cMaster);
+                                
+                                            // ―― 4. Modify Key Card ───────────────────────────────────────────
+                                            var cModify = BuildCard("\uE70F", LanguageHelper.GetString("MainForm.groupBox27.Text"), cw, accent);
+                                            AddIndentRow(cModify, this.hotkeytextbox, LanguageHelper.GetString("MainForm.label39.Text"), 140);
+                                            AddRow(cModify, this.hotkeypassCheckBox, LanguageHelper.GetString("MainForm.hotkeypassCheckBox.Text"));
+                                
+                                            curY = (int)cModify.Tag;
+                                            this.hotkeySetButton.Parent = cModify;
+                                            this.hotkeySetButton.Location = new Point(20, curY + 4);
+                                            this.hotkeySetButton.Size = new Size(cw / 2 - 30, 28);
+                                            this.hotkeySetButton.Text = LanguageHelper.GetString("MainForm.hotkeySetButton.Text");
+                                            StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.hotkeySetButton);
+                                
+                                            this.hotkeyClearButton.Parent = cModify;
+                                            this.hotkeyClearButton.Location = new Point(cw / 2 + 10, curY + 4);
+                                            this.hotkeyClearButton.Size = new Size(cw / 2 - 30, 28);
+                                            this.hotkeyClearButton.Text = LanguageHelper.GetString("MainForm.hotkeyClearButton.Text");
+                                            StyleButtonAsOutline((Assistant.UI.Controls.RazorButton)this.hotkeyClearButton);
+                                
+                                                        cModify.Tag = curY + 42;
+                                                        FinalizeCard(cModify);
+                                            
+                                                        flow.Controls.AddRange(new Control[] { pTree, cStatus, cMaster, cModify });
+                                                    }
+                                            
+                                        // ── Card factory ─────────────────────────────────────────────────────
+        // card.Tag = current Y (pre-shift). OnHandleCreated adds +8L/+6T to every
+        // direct child, so we pre-subtract 8 from X and 6 from Y when positioning.
+        private Assistant.UI.Controls.RazorCard BuildCard(
+            string icon, string title, int width, Color borderColor)
+        {
+            var card = new Assistant.UI.Controls.RazorCard {
+                Text        = icon + "  " + title,
+                Width       = width,
+                Height      = 60,
+                Margin      = new Padding(10),
+                BorderColor = borderColor
+            };
+            card.Tag = 38; // first row starts at actual Y=38 (pre-shift stored as 38)
+            return card;
+        }
+
+        // Set card.Height based on tracked Y so the purple bar spans full height.
+        private void FinalizeCard(Assistant.UI.Controls.RazorCard card)
+        {
+            int curY = card.Tag is int t ? t : 38;
+            // After OnHandleCreated +6 shift, final content bottom = curY + 6
+            card.Height = curY + 6 + 14;
+        }
+
+        // ── Toggle row ───────────────────────────────────────────────────────
+        private void AddRow(Control card, System.Windows.Forms.CheckBox toggle, string text)
+        {
+            if (toggle == null) return;
+            int cardW = card.Width > 0 ? card.Width : 340;
+            int rowW  = cardW - 20;
+            int rowH  = 44;
+            int curY  = card.Tag is int t ? t : 38;
+
+            toggle.Text      = "";
+            toggle.Size      = new Size(44, 22);
+            toggle.Location  = new Point(rowW - 48 - 8, curY + (rowH - 22) / 2 - 6);
+            toggle.BackColor = Color.Transparent;
+            toggle.Parent    = card;
+
+            var lbl = new Label {
+                Text      = text,
+                Location  = new Point(12 - 8, curY - 6),
+                Width     = rowW - 68,
+                Height    = rowH,
+                Font      = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9.5F),
+                ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode,
+                BackColor = Color.Transparent,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            card.Controls.Add(lbl);
+            toggle.BringToFront();
+            card.Tag = curY + rowH;
+        }
+
+        // ── Indented text-box row ────────────────────────────────────────────
+        private void AddIndentRow(Control card, Control txt, string label, int tbWidth)
+        {
+            if (txt == null) return;
+            int cardW = card.Width > 0 ? card.Width : 340;
+            int rowW  = cardW - 20;
+            int rowH  = 36;
+            int curY  = card.Tag is int t ? t : 38;
+
+            var lbl = new Label {
+                Text      = label,
+                Location  = new Point(20 - 8, curY - 6),
+                Width     = rowW - tbWidth - 30,
+                Height    = rowH,
+                Font      = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F),
+                ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark,
+                BackColor = Color.Transparent,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            card.Controls.Add(lbl);
+
+            txt.Width     = tbWidth;
+            txt.Height    = 22;
+            txt.Location  = new Point(rowW - tbWidth - 4 - 8, curY + (rowH - 22) / 2 - 6);
+            txt.Parent    = card;
+            txt.BackColor = Assistant.UI.Controls.RazorTheme.Colors.SurfaceDark;
+            txt.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode;
+            txt.BringToFront();
+            card.Tag = curY + rowH;
+        }
+
+        // ── Section sub-label + separator ───────────────────────────────────
+        private void AddSectionLabel(Control card, string text)
+        {
+            int cardW = card.Width > 0 ? card.Width : 340;
+            int rowW  = cardW - 20;
+            int rowH  = 28;
+            int curY  = card.Tag is int t ? t : 38;
+
+            var sep = new Label {
+                Location  = new Point(8 - 8, curY - 6),
+                Width     = rowW, Height = rowH,
+                BackColor = Color.Transparent,
+                ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextSecondaryDark,
+                Text      = "  " + text.ToUpper(),
+                Font      = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(7.5F, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            int capturedRowW = rowW, capturedRowH = rowH;
+            sep.Paint += (s, ev) => {
+                ev.Graphics.DrawLine(
+                    new System.Drawing.Pen(Color.FromArgb(55, 255, 255, 255), 1),
+                    0, capturedRowH / 2, capturedRowW, capturedRowH / 2);
+            };
+            card.Controls.Add(sep);
+            card.Tag = curY + rowH;
+        }
+
+        // ── Color hue row ────────────────────────────────────────────────────
+        private void AddColorHueRow(Control card, Control swatch,
+            Assistant.UI.Controls.RazorButton btn, string text)
+        {
+            if (swatch == null || btn == null) return;
+            int cardW = card.Width > 0 ? card.Width : 340;
+            int rowW  = cardW - 20;
+            int rowH  = 44;
+            int curY  = card.Tag is int t ? t : 38;
+
+            var lbl = new Label {
+                Text      = text,
+                Location  = new Point(12 - 8, curY - 6),
+                Width     = rowW - 110,
+                Height    = rowH,
+                Font      = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9.5F),
+                ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode,
+                BackColor = Color.Transparent,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            card.Controls.Add(lbl);
+
+            swatch.Parent   = card;
+            swatch.Size     = new Size(26, 22);
+            swatch.Location = new Point(rowW - 98 - 8, curY + (rowH - 22) / 2 - 6);
+            if (swatch is Label swL) swL.BorderStyle = BorderStyle.FixedSingle;
+
+            btn.Text     = "Set";
+            btn.Parent   = card;
+            btn.Size     = new Size(52, 26);
+            btn.Location = new Point(rowW - 62 - 8, curY + (rowH - 26) / 2 - 6);
+            card.Tag = curY + rowH;
+        }
+
+        // ── Spell hue triple (Bene / Harm / Neu) ─────────────────────────────
+        private void AddSpellHueTriple(
+            Control card,
+            Control sw1, Assistant.UI.Controls.RazorButton b1, string t1, Color c1,
+            Control sw2, Assistant.UI.Controls.RazorButton b2, string t2, Color c2,
+            Control sw3, Assistant.UI.Controls.RazorButton b3, string t3, Color c3)
+        {
+            int cardW = card.Width > 0 ? card.Width : 340;
+            int rowW  = cardW - 20;
+            int rowH  = 76;
+            int curY  = card.Tag is int t ? t : 38;
+            int colW  = rowW / 3;
+
+            void PlaceHue(Control sw, Assistant.UI.Controls.RazorButton btn,
+                          string label, Color accent, int colX)
+            {
+                var lb = new Label {
+                    Text      = label,
+                    Location  = new Point(colX + 4 - 8, curY + 2 - 6),
+                    Width     = colW - 8, Height = 18,
+                    Font      = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(8F),
+                    ForeColor = accent,
+                    BackColor = Color.Transparent,
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+                card.Controls.Add(lb);
+
+                sw.Parent   = card;
+                sw.Size     = new Size(colW - 20, 14);
+                sw.Location = new Point(colX + 10 - 8, curY + 22 - 6);
+                if (sw is Label swL2) swL2.BorderStyle = BorderStyle.FixedSingle;
+
+                btn.Text     = "Set";
+                btn.Parent   = card;
+                btn.Size     = new Size(colW - 16, 20);
+                btn.Location = new Point(colX + 8 - 8, curY + 42 - 6);
+            }
+            PlaceHue(sw1, b1, t1, c1, 0);
+            PlaceHue(sw2, b2, t2, c2, colW);
+            PlaceHue(sw3, b3, t3, c3, colW * 2);
+            card.Tag = curY + rowH;
+        }
+
+        // ── Compact single spell-hue row (label + swatch + Set button) ────────────
+        private void AddSpellHueRow(Control card, Control swatch,
+            Assistant.UI.Controls.RazorButton btn, string label, Color accent)
+        {
+            if (swatch == null || btn == null) return;
+            int cardW = card.Width > 0 ? card.Width : 340;
+            int rowW  = cardW - 20;
+            int rowH  = 34;
+            int curY  = card.Tag is int t ? t : 38;
+
+            var lbl = new Label {
+                Text      = label,
+                Location  = new Point(20 - 8, curY - 6),
+                Width     = rowW - 90,
+                Height    = rowH,
+                Font      = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F),
+                ForeColor = accent,
+                BackColor = Color.Transparent,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            card.Controls.Add(lbl);
+
+            swatch.Parent   = card;
+            swatch.Size     = new Size(22, 16);
+            swatch.Location = new Point(rowW - 76 - 8, curY + (rowH - 16) / 2 - 6);
+            if (swatch is Label swL) swL.BorderStyle = BorderStyle.FixedSingle;
+
+            btn.Text     = "Set";
+            btn.Parent   = card;
+            btn.Size     = new Size(46, 22);
+            btn.Location = new Point(rowW - 50 - 8, curY + (rowH - 22) / 2 - 6);
+            card.Tag = curY + rowH;
+        }
+        // ── Helper to style a RazorButton as an outline button (secondary action) ──
+        private void StyleButtonAsOutline(Assistant.UI.Controls.RazorButton btn)
+        {
+            if (btn == null) return;
+            btn.BackColor = Assistant.UI.Controls.RazorTheme.Colors.CardDark; // Dark background
+            btn.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode;
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderColor = Assistant.UI.Controls.RazorTheme.Colors.Primary;
+            btn.FlatAppearance.BorderSize = 1;
+        }
+
+        // GetInner kept for API compat — always returns null (direct mode now)
+        private FlowLayoutPanel GetInner(Control card) => null;
+
+        // Legacy helpers  delegate to new row-based methods
+        private void AddOptionToggle(System.Windows.Forms.CheckBox toggle, string defaultText, Control parent, int x, int y)
+        {
+            AddRow(parent, toggle, defaultText);
+        }
+
+        private void AddOptionTextBox(Assistant.UI.Controls.RazorTextBox txt, string prefixText, Control parent, int x, int y, int width)
+        {
+            AddIndentRow(parent, txt, prefixText, width);
+        }
+
+        private void AddOptionColorHue(Control lblHue, Assistant.UI.Controls.RazorButton btn, string text, Control parent, int x, int y)
+        {
+            AddColorHueRow(parent, lblHue, btn, text);
         }
     }
 }

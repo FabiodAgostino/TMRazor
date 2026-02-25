@@ -29,7 +29,7 @@ namespace RazorEnhanced.UI
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabControl1 = new Assistant.UI.Controls.RazorTabControl();
             this.objecttabPage = new System.Windows.Forms.TabPage();
             this.sharedobjectGridView = new System.Windows.Forms.DataGridView();
             this.Alias = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -196,7 +196,7 @@ namespace RazorEnhanced.UI
 
         #endregion
 
-        private System.Windows.Forms.TabControl tabControl1;
+        private Assistant.UI.Controls.RazorTabControl tabControl1;
         private System.Windows.Forms.TabPage objecttabPage;
         private System.Windows.Forms.TabPage timerstabPage;
         private System.Windows.Forms.DataGridView sharedobjectGridView;

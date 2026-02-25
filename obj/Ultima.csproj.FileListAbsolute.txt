@@ -1,0 +1,8 @@
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\Ultima.csproj.AssemblyReference.cache
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\Ultima.csproj.CoreCompileInputs.cache
+C:\Users\thebe\Documents\GitHub\TMRazor\bin\x64\Debug\Ultima.dll.config
+C:\Users\thebe\Documents\GitHub\TMRazor\bin\x64\Debug\Ultima.dll
+C:\Users\thebe\Documents\GitHub\TMRazor\bin\x64\Debug\Ultima.pdb
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\Ultima.csproj.Up2Date
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\Ultima.dll
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\Ultima.pdb

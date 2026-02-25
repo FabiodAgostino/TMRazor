@@ -895,7 +895,8 @@ namespace RazorEnhanced
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-            g.DrawString(text, new Font("Tahoma", 10), Brushes.Yellow, rectf);
+            using (Font f = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(10F))
+                g.DrawString(text, f, Brushes.Yellow, rectf);
 
             g.Flush();
             return bmp;

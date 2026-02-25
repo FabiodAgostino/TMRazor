@@ -1,0 +1,12 @@
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\FastColoredTextBox.csproj.AssemblyReference.cache
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\FastColoredTextBoxNS.FastColoredTextBox.resources
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\FastColoredTextBoxNS.FindForm.resources
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\FastColoredTextBoxNS.GoToForm.resources
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\FastColoredTextBoxNS.HotkeysEditorForm.resources
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\FastColoredTextBoxNS.ReplaceForm.resources
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\FastColoredTextBox.csproj.GenerateResource.cache
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\FastColoredTextBox.csproj.CoreCompileInputs.cache
+C:\Users\thebe\Documents\GitHub\TMRazor\bin\x64\Debug\FastColoredTextBox.dll
+C:\Users\thebe\Documents\GitHub\TMRazor\bin\x64\Debug\FastColoredTextBox.pdb
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\FastColoredTextBox.dll
+C:\Users\thebe\Documents\GitHub\TMRazor\obj\FastColoredTextBox.pdb

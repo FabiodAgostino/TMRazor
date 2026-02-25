@@ -2,12 +2,14 @@
 using RazorEnhanced;
 using RazorEnhanced.Macros;
 using RazorEnhanced.Macros.Actions;
+using Assistant.UI.Controls;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using RazorEnhanced.UI;
 
 namespace Assistant
 {
@@ -15,151 +17,186 @@ namespace Assistant
     {
         // Macro UI Controls
         private ListBox macroListBox;
-        private Button btnMacroNew;
-        private Button btnMacroDelete;
-        private Button btnMacroSave;
-        private Button btnMacroPlay;
-        private Button btnMacroStop;
-        private Button btnMacroRecord;
-        private Button btnMacroStopRecord;
+        private RazorButton btnMacroNew;
+        private RazorButton btnMacroDelete;
+        private RazorButton btnMacroSave;
+        private RazorButton btnMacroPlay;
+        private RazorButton btnMacroStop;
+        private RazorButton btnMacroRecord;
+        private RazorButton btnMacroStopRecord;
         private ListView macroActionsListView;
         private Label lblMacroStatus;
-        private CheckBox chkMacroLoop;
+        private RazorToggle chkMacroLoop;
         private TextBox txtMacroHotkey;
         private int? m_RecordFromActionIndex = null;
 
+        private RazorCard macroListCard;
+        private RazorCard macroActionsCard;
+        private RazorCard macroStatusCard;
+
         private void InitializeMacroTab2()
         {
+            // Cards
+            macroListCard = new RazorCard
+            {
+                Name = "macroListCard",
+                Text = "  " + (Language.GetControlText("MainForm::macrosTab") ?? "Macros"),
+                Location = new Point(10, 10),
+                Size = new Size(220, 350),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left
+            };
 
-            // Macro List
+            macroActionsCard = new RazorCard
+            {
+                Name = "macroActionsCard",
+                Text = "  " + (Language.GetControlText("MainForm::macroActGroup") ?? "Actions"),
+                Location = new Point(240, 10),
+                Size = new Size(430, 350),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+
+            // Macro List inside macroListCard
             macroListBox = new ListBox
             {
-                Location = new Point(10, 10),
-                Size = new Size(200, 300),
-                Name = "macroListBox"
+                Location = new Point(10, 30),
+                Size = new Size(185, 260),
+                Name = "macroListBox",
+                BorderStyle = BorderStyle.None,
+                BackColor = RazorTheme.Colors.CurrentCard,
+                ForeColor = RazorTheme.Colors.CurrentText,
+                Font = RazorTheme.Fonts.DisplayFont(9F),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
             };
             macroListBox.SelectedIndexChanged += MacroListBox_SelectedIndexChanged;
+            CreateMacroListBoxContextMenu();
 
-            // Buttons
-            btnMacroNew = new Button
+            btnMacroNew = new RazorButton
             {
-                Text = "New",
-                Location = new Point(10, 320),
-                Size = new Size(60, 25)
+                Name = "newMacro",
+                Text = Language.GetControlText("MainForm::newMacro") ?? "New",
+                Location = new Point(10, 300),
+                Size = new Size(55, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
             btnMacroNew.Click += BtnMacroNew_Click;
 
-            btnMacroDelete = new Button
+            btnMacroDelete = new RazorButton
             {
-                Text = "Delete",
-                Location = new Point(75, 320),
-                Size = new Size(60, 25)
+                Name = "delMacro",
+                Text = Language.GetControlText("MainForm::delMacro") ?? "Delete",
+                Location = new Point(70, 300),
+                Size = new Size(60, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
+                OverrideCustomColor = RazorTheme.Colors.Danger
             };
             btnMacroDelete.Click += BtnMacroDelete_Click;
 
-            btnMacroSave = new Button
+            btnMacroSave = new RazorButton
             {
-                Text = "Save",
-                Location = new Point(140, 320), // Adjust as needed to be next to New and Delete
-                Size = new Size(60, 25)
+                Name = "btnMacroSave",
+                Text = Language.GetString(LocString.Save) ?? "Save",
+                Location = new Point(135, 300),
+                Size = new Size(55, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
+                OverrideCustomColor = Color.FromArgb(21, 128, 61) // Verde scuro
             };
             btnMacroSave.Click += BtnMacroSave_Click;
 
-            macroListBox = new ListBox
-            {
-                Location = new Point(10, 10),
-                Size = new Size(200, 300),
-                Name = "macroListBox"
-            };
-            macroListBox.SelectedIndexChanged += MacroListBox_SelectedIndexChanged;
+            macroListCard.Controls.AddRange(new Control[] { macroListBox, btnMacroNew, btnMacroDelete, btnMacroSave });
 
-            CreateMacroListBoxContextMenu();
-
-            btnMacroRecord = new Button
+            // Actions inside macroActionsCard
+            btnMacroRecord = new RazorButton
             {
-                Text = "Record",
-                Location = new Point(220, 10),
+                Name = "recMacro",
+                Text = Language.GetControlText("MainForm::recMacro") ?? "Record",
+                Location = new Point(10, 30),
                 Size = new Size(80, 30),
-                BackColor = Color.LightCoral
+                OverrideCustomColor = RazorTheme.Colors.Danger
             };
             btnMacroRecord.Click += BtnMacroRecord_Click;
 
-            btnMacroStopRecord = new Button
+            btnMacroStopRecord = new RazorButton
             {
-                Text = "Stop Record",
-                Location = new Point(220, 45),
-                Size = new Size(80, 30),
+                Name = "btnMacroStopRecord",
+                Text = Language.GetControlText("MainForm::btnMacroStopRecord") ?? "Stop Record",
+                Location = new Point(95, 30),
+                Size = new Size(100, 30),
                 Enabled = false
             };
             btnMacroStopRecord.Click += BtnMacroStopRecord_Click;
 
-            btnMacroPlay = new Button
+            btnMacroPlay = new RazorButton
             {
-                Text = "Play",
-                Location = new Point(310, 10),
+                Name = "playMacro",
+                Text = Language.GetControlText("MainForm::playMacro") ?? "Play",
+                Location = new Point(200, 30),
                 Size = new Size(60, 30),
-                BackColor = Color.LightGreen
+                OverrideCustomColor = RazorTheme.Colors.Success
             };
             btnMacroPlay.Click += BtnMacroPlay_Click;
 
-            btnMacroStop = new Button
+            btnMacroStop = new RazorButton
             {
-                Text = "Stop",
-                Location = new Point(375, 10),
+                Name = "btnMacroStop",
+                Text = Language.GetString(LocString.StopCurrent) ?? "Stop",
+                Location = new Point(265, 30),
                 Size = new Size(60, 30),
                 Enabled = false
             };
             btnMacroStop.Click += BtnMacroStop_Click;
 
-            // Actions ListView
-            macroActionsListView = new ListView
+            chkMacroLoop = new RazorToggle
             {
-                Location = new Point(220, 85),
-                Size = new Size(440, 230),
-                View = View.Details,
-                FullRowSelect = true,
-                GridLines = true
-            };
-            macroActionsListView.Columns.Add("Action", 150);
-            macroActionsListView.Columns.Add("Details", 280);
-            macroActionsListView.DoubleClick += MacroActionsListView_DoubleClick;   
-
-            CreateMacroActionsContextMenu();
-
-            // Status
-            lblMacroStatus = new Label
-            {
-                Location = new Point(220, 320),
-                Size = new Size(440, 20),
-                Text = "Ready"
-            };
-
-            // Loop checkbox
-            chkMacroLoop = new CheckBox
-            {
-                Text = "Loop",
-                Location = new Point(445, 10),
-                Size = new Size(60, 25)
+                Name = "loopMacro",
+                Text = Language.GetControlText("MainForm::loopMacro") ?? "Loop",
+                Location = new Point(335, 35),
+                Size = new Size(80, 20),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
             chkMacroLoop.CheckedChanged += ChkMacroLoop_CheckedChanged;
 
-            // Add all controls to MacrosTab
-            MacrosTab.Controls.AddRange(new Control[]
+            macroActionsListView = new ListView
             {
-        macroListBox,
-        btnMacroNew,
-        btnMacroDelete,
-        btnMacroSave, 
-        btnMacroRecord,
-        btnMacroStopRecord,
-        btnMacroPlay,
-        btnMacroStop,
-        macroActionsListView,
-        lblMacroStatus,
-        chkMacroLoop
+                Name = "macroActionsListView",
+                Location = new Point(10, 80),
+                Size = new Size(395, 220),
+                View = View.Details,
+                FullRowSelect = true,
+                GridLines = false,
+                BorderStyle = BorderStyle.None,
+                BackColor = RazorTheme.Colors.CurrentCard,
+                ForeColor = RazorTheme.Colors.CurrentText,
+                Font = RazorTheme.Fonts.DisplayFont(9F),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+            macroActionsListView.Columns.Add(Language.GetControlText("MainForm::macroActionsListView::0") ?? "Action", 150);
+            macroActionsListView.Columns.Add(Language.GetControlText("MainForm::macroActionsListView::1") ?? "Details", 230);
+            macroActionsListView.DoubleClick += MacroActionsListView_DoubleClick;
+            CreateMacroActionsContextMenu();
+
+            lblMacroStatus = new Label
+            {
+                Name = "lblMacroStatus",
+                Location = new Point(10, 310),
+                Size = new Size(395, 20),
+                Text = LanguageHelper.GetString("MainForm.lblMacroStatus.Text"),
+                ForeColor = RazorTheme.Colors.CurrentText,
+                Font = RazorTheme.Fonts.DisplayFont(9F, FontStyle.Italic),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+
+            macroActionsCard.Controls.AddRange(new Control[] { 
+                btnMacroRecord, btnMacroStopRecord, btnMacroPlay, btnMacroStop, 
+                chkMacroLoop, macroActionsListView, lblMacroStatus 
             });
 
+            // Add cards to MacrosTab
+            MacrosTab.Controls.Clear();
+            MacrosTab.Controls.AddRange(new Control[] { macroListCard, macroActionsCard });
+            MacrosTab.BackColor = RazorTheme.Colors.BackgroundDark;
 
+            // Trigger translation for the newly added controls
+            Language.LoadControlNames(this);
 
             // Sub to MacroManager events
             MacroManager.MacrosChanged += OnMacrosChanged;
@@ -169,8 +206,6 @@ namespace Assistant
             MacroManager.LoadMacrosFromFiles();
 
             RefreshMacroList();
-
-
         }
 
         private MacroAction m_CopiedAction = null;
@@ -179,75 +214,75 @@ namespace Assistant
         {
             ContextMenuStrip contextMenu = new ContextMenuStrip();
 
-            ToolStripMenuItem insertSetAbilityItem = new ToolStripMenuItem("Set Ability");
+            ToolStripMenuItem insertSetAbilityItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.SetAbility"));
             insertSetAbilityItem.Click += InsertSetAbilityMenuItem_Click;
 
-            ToolStripMenuItem insertTargetResourceItem = new ToolStripMenuItem("Target Resource");
+            ToolStripMenuItem insertTargetResourceItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.TargetResource"));
             insertTargetResourceItem.Click += InsertTargetResourceMenuItem_Click;
 
-            ToolStripMenuItem insertBandageItem = new ToolStripMenuItem("Bandage");
+            ToolStripMenuItem insertBandageItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Bandage"));
             insertBandageItem.Click += InsertBandageMenuItem_Click;
 
-            ToolStripMenuItem insertMovementActionItem = new ToolStripMenuItem("Movement");
+            ToolStripMenuItem insertMovementActionItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Movement"));
             insertMovementActionItem.Click += InsertMovementActionMenuItem_Click;
 
-            ToolStripMenuItem insertMessagingItem = new ToolStripMenuItem("Messaging");
+            ToolStripMenuItem insertMessagingItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Messaging"));
             insertMessagingItem.Click += InsertMessagingMenuItem_Click;
 
-            ToolStripMenuItem insertActionsMenuItem = new ToolStripMenuItem("Actions");
+            ToolStripMenuItem insertActionsMenuItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Actions"));
 
-            ToolStripMenuItem insertMoveItemActionItem = new ToolStripMenuItem("Move Item");
+            ToolStripMenuItem insertMoveItemActionItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.MoveItem"));
             insertMoveItemActionItem.Click += InsertMoveItemActionMenuItem_Click;
 
-            ToolStripMenuItem insertDoubleClickItem = new ToolStripMenuItem("Double Click");
+            ToolStripMenuItem insertDoubleClickItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.DoubleClick"));
             insertDoubleClickItem.Click += InsertDoubleClickMenuItem_Click;
 
-            ToolStripMenuItem insertTargetItem = new ToolStripMenuItem("Target");
+            ToolStripMenuItem insertTargetItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Target"));
             insertTargetItem.Click += InsertTargetMenuItem_Click;
 
-            ToolStripMenuItem insertAttackEntityItem = new ToolStripMenuItem("Attack");
+            ToolStripMenuItem insertAttackEntityItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Attack"));
             insertAttackEntityItem.Click += InsertAttackEntityMenuItem_Click;
 
-            ToolStripMenuItem insertCastSpellItem = new ToolStripMenuItem("Cast Spell");
+            ToolStripMenuItem insertCastSpellItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.CastSpell"));
             insertCastSpellItem.Click += InsertCastSpellMenuItem_Click;
 
-            ToolStripMenuItem insertUseSkillItem = new ToolStripMenuItem("Use Skill");
+            ToolStripMenuItem insertUseSkillItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.UseSkill"));
             insertUseSkillItem.Click += InsertUseSkillMenuItem_Click;
 
-            ToolStripMenuItem insertUsePotionItem = new ToolStripMenuItem("Use Potion");
+            ToolStripMenuItem insertUsePotionItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.UsePotion"));
             insertUsePotionItem.Click += InsertUsePotionMenuItem_Click;
 
-            ToolStripMenuItem insertInvokeVirtueItem = new ToolStripMenuItem("Invoke Virtue");
+            ToolStripMenuItem insertInvokeVirtueItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.InvokeVirtue"));
             insertInvokeVirtueItem.Click += InsertInvokeVirtueMenuItem_Click;
 
-            ToolStripMenuItem insertRunOrganizerOnceItem = new ToolStripMenuItem("Run Organizer Once");
+            ToolStripMenuItem insertRunOrganizerOnceItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.RunOrganizer"));
             insertRunOrganizerOnceItem.Click += InsertRunOrganizerOnceMenuItem_Click;
 
-            ToolStripMenuItem insertToggleWarModeItem = new ToolStripMenuItem("Toggle War Mode");
+            ToolStripMenuItem insertToggleWarModeItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.ToggleWarMode"));
             insertToggleWarModeItem.Click += InsertToggleWarModeMenuItem_Click;
 
-            ToolStripMenuItem insertMountItem = new ToolStripMenuItem("Mount");
+            ToolStripMenuItem insertMountItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Mount"));
             insertMountItem.Click += InsertMountMenuItem_Click;
 
-            ToolStripMenuItem insertFlyItem = new ToolStripMenuItem("Fly");
+            ToolStripMenuItem insertFlyItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Fly"));
             insertFlyItem.Click += InsertFlyMenuItem_Click;
 
-            ToolStripMenuItem insertUseEmoteItem = new ToolStripMenuItem("Use Emote");
+            ToolStripMenuItem insertUseEmoteItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.UseEmote"));
             insertUseEmoteItem.Click += InsertUseEmoteMenuItem_Click;
 
-            ToolStripMenuItem insertArmDisarmItem = new ToolStripMenuItem("Arm/Disarm");
+            ToolStripMenuItem insertArmDisarmItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.ArmDisarm"));
             insertArmDisarmItem.Click += InsertArmDisarmMenuItem_Click;
 
-            ToolStripMenuItem insertRenameMobileItem = new ToolStripMenuItem("Rename Mobile");
+            ToolStripMenuItem insertRenameMobileItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.RenameMobile"));
             insertRenameMobileItem.Click += InsertRenameMobileMenuItem_Click;
 
-            ToolStripMenuItem insertPromptResponseItem = new ToolStripMenuItem("Prompt Response");
+            ToolStripMenuItem insertPromptResponseItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.PromptResponse"));
             insertPromptResponseItem.Click += InsertPromptResponseMenuItem_Click;
 
-            ToolStripMenuItem insertGumpResponseItem = new ToolStripMenuItem("Gump Response");
+            ToolStripMenuItem insertGumpResponseItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.GumpResponse"));
             insertGumpResponseItem.Click += InsertGumpResponseMenuItem_Click;
 
-            ToolStripMenuItem insertDropItem = new ToolStripMenuItem("Drop");
+            ToolStripMenuItem insertDropItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Drop"));
             insertDropItem.Click += InsertDropMenuItem_Click;
 
             insertActionsMenuItem.DropDownItems.Add(insertMessagingItem);
@@ -276,30 +311,30 @@ namespace Assistant
             insertActionsMenuItem.DropDownItems.Add(insertRenameMobileItem);
             insertActionsMenuItem.DropDownItems.Add(insertPromptResponseItem);
 
-            ToolStripMenuItem insertControlMenuItem = new ToolStripMenuItem("Control");
+            ToolStripMenuItem insertControlMenuItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Control"));
 
-            ToolStripMenuItem insertPauseItem = new ToolStripMenuItem("Pause");
+            ToolStripMenuItem insertPauseItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Pause"));
             insertPauseItem.Click += InsertPauseMenuItem_Click;
 
-            ToolStripMenuItem insertResyncItem = new ToolStripMenuItem("Resync");
+            ToolStripMenuItem insertResyncItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Resync"));
             insertResyncItem.Click += InsertResyncMenuItem_Click;
 
-            ToolStripMenuItem insertCommentItem = new ToolStripMenuItem("Comment");
+            ToolStripMenuItem insertCommentItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Comment"));
             insertCommentItem.Click += InsertCommentMenuItem_Click;
 
-            ToolStripMenuItem insertUseContextMenuItem = new ToolStripMenuItem("Use Context Menu");
+            ToolStripMenuItem insertUseContextMenuItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.UseContextMenu"));
             insertUseContextMenuItem.Click += InsertUseContextMenuMenuItem_Click;
 
-            ToolStripMenuItem insertClearJournalItem = new ToolStripMenuItem("Clear Journal");
+            ToolStripMenuItem insertClearJournalItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.ClearJournal"));
             insertClearJournalItem.Click += InsertClearJournalMenuItem_Click;
 
-            ToolStripMenuItem insertWaitForTargetItem = new ToolStripMenuItem("Wait For Target");
+            ToolStripMenuItem insertWaitForTargetItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.WaitForTarget"));
             insertWaitForTargetItem.Click += InsertWaitForTargetMenuItem_Click;
 
-            ToolStripMenuItem insertWaitForGumpItem = new ToolStripMenuItem("Wait For Gump");
+            ToolStripMenuItem insertWaitForGumpItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.WaitForGump"));
             insertWaitForGumpItem.Click += InsertWaitForGumpMenuItem_Click;
 
-            ToolStripMenuItem insertDisconnectItem = new ToolStripMenuItem("Disconnect");
+            ToolStripMenuItem insertDisconnectItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Disconnect"));
             insertDisconnectItem.Click += InsertDisconnectMenuItem_Click;
 
             insertControlMenuItem.DropDownItems.Add(insertPauseItem);
@@ -313,51 +348,51 @@ namespace Assistant
             insertControlMenuItem.DropDownItems.Add(new ToolStripSeparator());
             insertControlMenuItem.DropDownItems.Add(insertDisconnectItem);
 
-            ToolStripMenuItem insertMenuItem = new ToolStripMenuItem("Insert");
+            ToolStripMenuItem insertMenuItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Insert"));
 
-            ToolStripMenuItem saveMacroItem = new ToolStripMenuItem("Save Macro");
+            ToolStripMenuItem saveMacroItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.SaveMacro"));
             saveMacroItem.Click += SaveMacroMenuItem_Click;
 
-            ToolStripMenuItem moveUpItem = new ToolStripMenuItem("Move Up");
+            ToolStripMenuItem moveUpItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.MoveUp"));
             moveUpItem.Click += MoveUpMenuItem_Click;
 
-            ToolStripMenuItem moveDownItem = new ToolStripMenuItem("Move Down");
+            ToolStripMenuItem moveDownItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.MoveDown"));
             moveDownItem.Click += MoveDownMenuItem_Click;
 
-            ToolStripMenuItem copyItem = new ToolStripMenuItem("Copy");
+            ToolStripMenuItem copyItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Copy"));
             copyItem.Click += CopyMenuItem_Click;
 
-            ToolStripMenuItem pasteItem = new ToolStripMenuItem("Paste After");
+            ToolStripMenuItem pasteItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.PasteAfter"));
             pasteItem.Click += PasteMenuItem_Click;
 
-            ToolStripMenuItem insertIfItem = new ToolStripMenuItem("If Condition");
+            ToolStripMenuItem insertIfItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.IfCondition"));
             insertIfItem.Click += InsertIfMenuItem_Click;
 
-            ToolStripMenuItem insertElseIfItem = new ToolStripMenuItem("ElseIf Condition");
+            ToolStripMenuItem insertElseIfItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.ElseIfCondition"));
             insertElseIfItem.Click += InsertElseIfMenuItem_Click;
 
-            ToolStripMenuItem insertElseItem = new ToolStripMenuItem("Else");
+            ToolStripMenuItem insertElseItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Else"));
             insertElseItem.Click += InsertElseMenuItem_Click;
 
-            ToolStripMenuItem insertEndIfItem = new ToolStripMenuItem("EndIf");
+            ToolStripMenuItem insertEndIfItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.EndIf"));
             insertEndIfItem.Click += InsertEndIfMenuItem_Click;
 
-            ToolStripMenuItem insertWhileItem = new ToolStripMenuItem("While");
+            ToolStripMenuItem insertWhileItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.While"));
             insertWhileItem.Click += InsertWhileMenuItem_Click;
 
-            ToolStripMenuItem insertEndWhileItem = new ToolStripMenuItem("EndWhile");
+            ToolStripMenuItem insertEndWhileItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.EndWhile"));
             insertEndWhileItem.Click += InsertEndWhileMenuItem_Click;
 
-            ToolStripMenuItem insertForItem = new ToolStripMenuItem("For Loop");
+            ToolStripMenuItem insertForItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.ForLoop"));
             insertForItem.Click += InsertForMenuItem_Click;
 
-            ToolStripMenuItem insertEndForItem = new ToolStripMenuItem("EndFor");
+            ToolStripMenuItem insertEndForItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.EndFor"));
             insertEndForItem.Click += InsertEndForMenuItem_Click;
 
-            ToolStripMenuItem insertSetAliasItem = new ToolStripMenuItem("Set Alias");
+            ToolStripMenuItem insertSetAliasItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.SetAlias"));
             insertSetAliasItem.Click += InsertSetAliasMenuItem_Click;
 
-            ToolStripMenuItem insertRemoveAliasItem = new ToolStripMenuItem("Remove Alias");
+            ToolStripMenuItem insertRemoveAliasItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.RemoveAlias"));
             insertRemoveAliasItem.Click += InsertRemoveAliasMenuItem_Click;
 
             insertMenuItem.DropDownItems.Add(insertActionsMenuItem);
@@ -378,9 +413,9 @@ namespace Assistant
             insertMenuItem.DropDownItems.Add(insertRemoveAliasItem);
 
 
-            ToolStripMenuItem removeMenuItem = new ToolStripMenuItem("Remove");
+            ToolStripMenuItem removeMenuItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Remove"));
 
-            ToolStripMenuItem removeLinesItem = new ToolStripMenuItem("Line(s)");
+            ToolStripMenuItem removeLinesItem = new ToolStripMenuItem(LanguageHelper.GetString("MainForm.macroActions.Lines"));
             removeLinesItem.Click += RemoveActionMenuItem_Click;
 
             ToolStripMenuItem removeAllItem = new ToolStripMenuItem("All");
@@ -1201,8 +1236,8 @@ namespace Assistant
                         btnMacroPlay.Enabled = !macro.IsRunning && !MacroManager.IsRecording;
                         btnMacroStop.Enabled = macro.IsRunning;
 
-                        lblMacroStatus.Text = macro.IsRunning ? "Macro running..." : "Ready";
-                        lblMacroStatus.ForeColor = macro.IsRunning ? Color.Green : Color.Black;
+                        lblMacroStatus.Text = macro.IsRunning ? LanguageHelper.GetString("MainForm.lblMacroStatus.Running") : LanguageHelper.GetString("MainForm.lblMacroStatus.Text");
+                        lblMacroStatus.ForeColor = macro.IsRunning ? RazorTheme.Colors.Success : RazorTheme.Colors.CurrentText;
                     }
                 }
             }
@@ -1244,8 +1279,8 @@ namespace Assistant
 
 
 
-            lblMacroStatus.Text = isRecording ? "Recording... (Perform actions in-game)" : "Ready";
-            lblMacroStatus.ForeColor = isRecording ? Color.Red : Color.Black;
+            lblMacroStatus.Text = isRecording ? LanguageHelper.GetString("MainForm.lblMacroStatus.Recording") : LanguageHelper.GetString("MainForm.lblMacroStatus.Text");
+            lblMacroStatus.ForeColor = isRecording ? RazorTheme.Colors.Danger : RazorTheme.Colors.CurrentText;
         }
         private void MacroListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -1691,18 +1726,21 @@ namespace Assistant
             Form prompt = new Form
             {
                 Width = 400,
-                Height = 150,
+                Height = 180,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 Text = caption,
                 StartPosition = FormStartPosition.CenterScreen,
                 MaximizeBox = false,
-                MinimizeBox = false
+                MinimizeBox = false,
+                Font = RazorTheme.Fonts.DisplayFont(9F)
             };
 
-            Label textLabel = new Label { Left = 20, Top = 20, Text = text, Width = 350 };
-            TextBox textBox = new TextBox { Left = 20, Top = 50, Width = 350, Text = defaultValue };
-            Button confirmation = new Button { Text = "OK", Left = 200, Width = 80, Top = 80, DialogResult = DialogResult.OK };
-            Button cancel = new Button { Text = "Cancel", Left = 290, Width = 80, Top = 80, DialogResult = DialogResult.Cancel };
+            RazorTheme.ApplyThemeToForm(prompt);
+
+            Label textLabel = new Label { Left = 20, Top = 20, Text = text, Width = 350, ForeColor = RazorTheme.Colors.CurrentText };
+            Assistant.UI.Controls.RazorTextBox textBox = new Assistant.UI.Controls.RazorTextBox { Left = 20, Top = 50, Width = 350, Text = defaultValue };
+            Assistant.UI.Controls.RazorButton confirmation = new Assistant.UI.Controls.RazorButton { Text = "OK", Left = 200, Width = 80, Top = 90, DialogResult = DialogResult.OK };
+            Assistant.UI.Controls.RazorButton cancel = new Assistant.UI.Controls.RazorButton { Text = "Cancel", Left = 290, Width = 80, Top = 90, DialogResult = DialogResult.Cancel };
 
             confirmation.Click += (s, ev) => { prompt.Close(); };
             cancel.Click += (s, ev) => { prompt.Close(); };

@@ -803,6 +803,9 @@
     <Compile Include="UI\Controls\RazorButton.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="UI\Controls\RazorSidebarTab.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="UI\Controls\RazorCard.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -813,7 +816,9 @@
     <Compile Include="UI\Controls\RazorComboBox.cs">
       <SubType>Component</SubType>
     </Compile>
-
+    <Compile Include="UI\Controls\RazorTabControl.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="UI\HueEntry.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -842,6 +847,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="UI\Other\Skills.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Other\SkillsUI.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="UI\Other\Target.cs">
@@ -935,6 +943,8 @@
     </EmbeddedResource>
     <EmbeddedResource Include="RazorEnhanced\UI\Strings.it.resx">
       <SubType>Designer</SubType>
+      <Culture>it</Culture>
+      <LogicalName>Assistant.RazorEnhanced.UI.Strings.resources</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="RazorEnhanced\UI\Strings.resx" />
     <EmbeddedResource Include="RazorEnhanced\UI\EnhancedScriptEditor.resx">

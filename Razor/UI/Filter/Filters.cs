@@ -57,8 +57,6 @@ namespace Assistant
                 Settings.General.WriteInt("LTHilight", 0);
                 LTHilight = 0;
                 Assistant.Client.Instance.SetCustomNotoHue(0);
-                lthilight.BackColor = SystemColors.Control;
-                lthilight.ForeColor = SystemColors.ControlText;
             }
         }
 
@@ -87,11 +85,13 @@ namespace Assistant
             int hueIdx = RazorEnhanced.Settings.General.ReadInt(cfg);
             if (hueIdx > 0 && hueIdx < 3000)
             {
-                ctrl.BackColor = Ultima.Hues.GetHue(hueIdx - 1).GetColor(HueEntry.TextHueIDX);
+                if (!(ctrl is Assistant.UI.Controls.RazorToggle))
+                    ctrl.BackColor = Ultima.Hues.GetHue(hueIdx - 1).GetColor(HueEntry.TextHueIDX);
             }
             else
             {
-                ctrl.BackColor = SystemColors.Control;
+                if (!(ctrl is Assistant.UI.Controls.RazorToggle))
+                    ctrl.BackColor = SystemColors.Control;
             }
 
             ctrl.ForeColor = (ctrl.BackColor.GetBrightness() < 0.35 ? System.Drawing.Color.White : System.Drawing.Color.Black);
@@ -158,11 +158,13 @@ namespace Assistant
 
                 if (hueIdx > 0 && hueIdx < 3000)
                 {
-                    ctrl.BackColor = Ultima.Hues.GetHue(hueIdx - 1).GetColor(HueEntry.TextHueIDX);
+                    if (!(ctrl is Assistant.UI.Controls.RazorToggle))
+                        ctrl.BackColor = Ultima.Hues.GetHue(hueIdx - 1).GetColor(HueEntry.TextHueIDX);
                 }
                 else
                 {
-                    ctrl.BackColor = System.Drawing.Color.White;
+                    if (!(ctrl is Assistant.UI.Controls.RazorToggle))
+                        ctrl.BackColor = System.Drawing.Color.White;
                 }
 
                 ctrl.ForeColor = (ctrl.BackColor.GetBrightness() < 0.35 ? System.Drawing.Color.White : System.Drawing.Color.Black);

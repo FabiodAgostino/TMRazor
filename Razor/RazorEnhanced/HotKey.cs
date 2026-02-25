@@ -1,5 +1,6 @@
 using Assistant;
 using Assistant.UI;
+using RazorEnhanced.UI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -137,13 +138,13 @@ namespace RazorEnhanced
                     if (RazorEnhanced.Settings.General.ReadBool("HotKeyEnable"))
                     {
                         RazorEnhanced.Settings.General.WriteBool("HotKeyEnable", false);
-                        Engine.MainWindow.SafeAction(s => s.HotKeyStatusLabel.Text = "Status: Disable");
+                        Engine.MainWindow.SafeAction(s => s.HotKeyStatusLabel.Text = LanguageHelper.GetString("MainForm.hotkeyStatus.Disabled"));
                         if (World.Player != null)
                             RazorEnhanced.Misc.SendMessage("HotKey: DISABLED", 37, false);
                     }
                     else
                     {
-                        Engine.MainWindow.SafeAction(s => s.HotKeyStatusLabel.Text = "Status: Enable");
+                        Engine.MainWindow.SafeAction(s => s.HotKeyStatusLabel.Text = LanguageHelper.GetString("MainForm.hotkeyStatus.Enabled"));
                         RazorEnhanced.Settings.General.WriteBool("HotKeyEnable", true);
                         if (World.Player != null)
                             RazorEnhanced.Misc.SendMessage("HotKey: ENABLED", 168, false);
@@ -1648,17 +1649,17 @@ namespace RazorEnhanced
         internal static void Init()
         {
             // BLocco generico
-            Engine.MainWindow.HotKeyKeyMasterLabel.Text = "ON/OFF Key: " + KeyString(RazorEnhanced.Settings.General.ReadKey("HotKeyMasterKey"));
+            Engine.MainWindow.HotKeyKeyMasterLabel.Text = LanguageHelper.GetString("MainForm.hotkeyKeyMaster.Prefix") + KeyString(RazorEnhanced.Settings.General.ReadKey("HotKeyMasterKey"));
 
             if (RazorEnhanced.Settings.General.ReadBool("HotKeyEnable"))
-                Engine.MainWindow.HotKeyStatusLabel.Text = "Status: Enabled";
+                Engine.MainWindow.HotKeyStatusLabel.Text = LanguageHelper.GetString("MainForm.hotkeyStatus.Enabled");
             else
-                Engine.MainWindow.HotKeyStatusLabel.Text = "Status: Disabled";
+                Engine.MainWindow.HotKeyStatusLabel.Text = LanguageHelper.GetString("MainForm.hotkeyStatus.Disabled");
 
             // Parametri lista
             Engine.MainWindow.HotKeyTreeView.Nodes.Clear();
-            Engine.MainWindow.HotKeyTreeView.Nodes.Add("HotKeys");
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add("General");
+            Engine.MainWindow.HotKeyTreeView.Nodes.Add(LanguageHelper.GetString("HotKey.Category.HotKeys"));
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add(LanguageHelper.GetString("HotKey.Category.General"));
 
             // General
             List<HotKeyData> keylist = RazorEnhanced.Settings.HotKey.ReadGroup("General");
@@ -1666,257 +1667,257 @@ namespace RazorEnhanced
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[0].Nodes.Add(GenerateNode(keydata));
 
             // Actions
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add("Actions");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Actions"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("Actions");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[1].Nodes.Add(GenerateNode(keydata));
 
             // Actions -> Use
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[1].Nodes.Add("Use");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[1].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Use"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("Use");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[1].Nodes[4].Nodes.Add(GenerateNode(keydata));
 
             // Actions -> Show Names
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[1].Nodes.Add("Show Names");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[1].Nodes.Add(LanguageHelper.GetString("HotKey.Category.ShowNames"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("Show Names");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[1].Nodes[5].Nodes.Add(GenerateNode(keydata));
 
             // Actions -> Per Commands
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[1].Nodes.Add("Pet Commands");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[1].Nodes.Add(LanguageHelper.GetString("HotKey.Category.PetCommands"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("Pet Commands");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[1].Nodes[6].Nodes.Add(GenerateNode(keydata));
 
             // Agents
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add("Agents");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Agents"));
 
             // Agent Autoloot
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add("Autoloot");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Autoloot"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("AgentAutoloot");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[0].Nodes.Add(GenerateNode(keydata));
 
             // Agent Scavenger
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add("Scavenger");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Scavenger"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("AgentScavenger");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[1].Nodes.Add(GenerateNode(keydata));
 
             // Organizer Agent
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add("Organizer");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Organizer"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("AgentOrganizer");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[2].Nodes.Add(GenerateNode(keydata));
 
             // Sell Agent
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add("Sell");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Sell"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("AgentSell");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[3].Nodes.Add(GenerateNode(keydata));
 
             // Buy Agent
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add("Buy");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Buy"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("AgentBuy");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[4].Nodes.Add(GenerateNode(keydata));
 
             // Dress Agent
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add("Dress");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Dress"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("AgentDress");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[5].Nodes.Add(GenerateNode(keydata));
 
             // Agents -> Dress List
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[5].Nodes.Add("DList", "List");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[5].Nodes.Add("DList", LanguageHelper.GetString("HotKey.Category.List"));
             keylist = RazorEnhanced.Settings.HotKey.ReadDress();
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[5].Nodes[3].Nodes.Add(GenerateNode(keydata));
 
             // Restock Agent
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add("Restock");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Restock"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("AgentRestock");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[6].Nodes.Add(GenerateNode(keydata));
 
             // Bandage Heal agent
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add("Bandage Heal");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add(LanguageHelper.GetString("HotKey.Category.BandageHeal"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("AgentBandage");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[7].Nodes.Add(GenerateNode(keydata));
 
             // BoneCutter agent
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add("Bone Cutter");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add(LanguageHelper.GetString("HotKey.Category.BoneCutter"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("AgentBoneCutter");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[8].Nodes.Add(GenerateNode(keydata));
 
             // AutoCarver agent
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add("Auto Carver");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add(LanguageHelper.GetString("HotKey.Category.AutoCarver"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("AgentAutoCarver");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[9].Nodes.Add(GenerateNode(keydata));
 
             // AutoRemount agent
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add("Auto Remount");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add(LanguageHelper.GetString("HotKey.Category.AutoRemount"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("AgentAutoRemount");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[10].Nodes.Add(GenerateNode(keydata));
 
-            // AutoRemount agent
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add("Graphics Filter");
+            // Graphics Filter agent
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add(LanguageHelper.GetString("HotKey.Category.GraphicsFilter"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("AgentGraphFilter");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[11].Nodes.Add(GenerateNode(keydata));
 
             // Friend  agent
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add("Friend");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Friend"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("AgentFriend");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[2].Nodes[12].Nodes.Add(GenerateNode(keydata));
 
 
             // Combats
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add("Combat");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Combat"));
 
             // Combat  --> Abilities
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes.Add("Abilities");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Abilities"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("Abilities");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes[0].Nodes.Add(GenerateNode(keydata));
 
             // Combat  --> Attack
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes.Add("Attack");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Attack"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("Attack");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes[1].Nodes.Add(GenerateNode(keydata));
 
             // Combat  --> Bandage
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes.Add("Bandage");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Bandage"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("Bandage");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes[2].Nodes.Add(GenerateNode(keydata));
 
             // Combat  --> Consumable
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes.Add("Consumable");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Consumable"));
 
             // Combat  --> Consumable --> Potions
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes[3].Nodes.Add("Potions");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes[3].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Potions"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("Potions");
             foreach (HotKeyData keydata in keylist)
-                Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes[3].Nodes[0].Nodes.Add(GenerateNode(keydata));
+                Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes[3].Nodes.Add(GenerateNode(keydata));
 
             // Combat --> Consumable --> Other
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes[3].Nodes.Add("Other");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes[3].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Other"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("Other");
             foreach (HotKeyData keydata in keylist)
-                Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes[3].Nodes[1].Nodes.Add(GenerateNode(keydata));
+                Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes[3].Nodes.Add(GenerateNode(keydata));
 
             // Combat --> Hands
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes.Add("Hands");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Hands"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("Hands");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes[4].Nodes.Add(GenerateNode(keydata));
 
             // Combat --> Hands -> Equip Wands
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes.Add("Equip Wands");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes.Add(LanguageHelper.GetString("HotKey.Category.EquipWands"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("Equip Wands");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[3].Nodes[5].Nodes.Add(GenerateNode(keydata));
 
             // Skills
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add("Skills");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Skills"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("Skills");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[4].Nodes.Add(GenerateNode(keydata));
 
             // Spells
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add("Spells");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Spells"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("SpellsAgent");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add(GenerateNode(keydata));
 
             // Spells -- > Magery
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add("Magery");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Magery"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("SpellsMagery");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes[6].Nodes.Add(GenerateNode(keydata));
 
             // Spells -- > Necro
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add("Necro");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Necro"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("SpellsNecro");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes[7].Nodes.Add(GenerateNode(keydata));
 
             // Spells -- > Bushido
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add("Bushido");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Bushido"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("SpellsBushido");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes[8].Nodes.Add(GenerateNode(keydata));
 
             // Spells -- > Ninjitsu
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add("Ninjitsu");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Ninjitsu"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("SpellsNinjitsu");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes[9].Nodes.Add(GenerateNode(keydata));
 
             // Spells -- > Spellweaving
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add("Spellweaving");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Spellweaving"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("SpellsSpellweaving");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes[10].Nodes.Add(GenerateNode(keydata));
 
             // Spells -- > Mysticism
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add("Mysticism");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Mysticism"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("SpellsMysticism");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes[11].Nodes.Add(GenerateNode(keydata));
 
             // Spells -- > Chivalry
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add("Chivalry");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Chivalry"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("SpellsChivalry");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes[12].Nodes.Add(GenerateNode(keydata));
 
             // Spells -- > Mastery
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add("Mastery");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Mastery"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("SpellsMastery");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes[13].Nodes.Add(GenerateNode(keydata));
 
             // Spells -- > Cleric
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add("Cleric");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Cleric"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("SpellsCleric");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes[14].Nodes.Add(GenerateNode(keydata));
 
             // Spells -- > Druid
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add("Druid");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Druid"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("SpellsDruid");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[5].Nodes[15].Nodes.Add(GenerateNode(keydata));
 
             // Target
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add("Target");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Target"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("Target");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[6].Nodes.Add(GenerateNode(keydata));
 
             // Target -> List
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[6].Nodes.Add("TList", "List");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[6].Nodes.Add("TList", LanguageHelper.GetString("HotKey.Category.List"));
             keylist = RazorEnhanced.Settings.HotKey.ReadTarget();
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[6].Nodes[9].Nodes.Add(GenerateNode(keydata));
 
             // Script
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add("Script");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Script"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("Script");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[7].Nodes.Add(GenerateNode(keydata));
 
             // Script -> List
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[7].Nodes.Add("SList", "List");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[7].Nodes.Add("SList", LanguageHelper.GetString("HotKey.Category.List"));
             keylist = RazorEnhanced.Settings.HotKey.ReadScript();
             Engine.MainWindow.GridScriptComboBox.Items.Clear();
             foreach (HotKeyData keydata in keylist)
@@ -1926,7 +1927,7 @@ namespace RazorEnhanced
             }
 
             // Virtue
-            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add("Virtue");
+            Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes.Add(LanguageHelper.GetString("HotKey.Category.Virtue"));
             keylist = RazorEnhanced.Settings.HotKey.ReadGroup("UseVirtue");
             foreach (HotKeyData keydata in keylist)
                 Engine.MainWindow.HotKeyTreeView.Nodes[0].Nodes[8].Nodes.Add(GenerateNode(keydata));
@@ -2068,7 +2069,7 @@ namespace RazorEnhanced
             if (!RazorEnhanced.Settings.HotKey.AssignedKey(m_masterkey))
             {
                 RazorEnhanced.Settings.General.WriteKey("HotKeyMasterKey", RazorEnhanced.HotKey.m_masterkey);
-                Assistant.Engine.MainWindow.HotKeyKeyMasterLabel.Text = "ON/OFF Key: " + KeyString(RazorEnhanced.HotKey.m_masterkey);
+                Assistant.Engine.MainWindow.HotKeyKeyMasterLabel.Text = LanguageHelper.GetString("MainForm.hotkeyKeyMaster.Prefix") + KeyString(RazorEnhanced.HotKey.m_masterkey);
             }
             else
             {
@@ -2079,7 +2080,7 @@ namespace RazorEnhanced
                 {
                     RazorEnhanced.Settings.HotKey.UnassignKey(m_masterkey);
                     RazorEnhanced.Settings.General.WriteKey("HotKeyMasterKey", RazorEnhanced.HotKey.m_masterkey);
-                    Assistant.Engine.MainWindow.HotKeyKeyMasterLabel.Text = "ON/OFF Key: " + KeyString(RazorEnhanced.HotKey.m_masterkey);
+                    Assistant.Engine.MainWindow.HotKeyKeyMasterLabel.Text = LanguageHelper.GetString("MainForm.hotkeyKeyMaster.Prefix") + KeyString(RazorEnhanced.HotKey.m_masterkey);
                 }
             }
         }
@@ -2106,7 +2107,7 @@ namespace RazorEnhanced
         internal static void ClearMasterKey()
         {
             RazorEnhanced.Settings.General.WriteKey("HotKeyMasterKey", Keys.None);
-            Assistant.Engine.MainWindow.HotKeyKeyMasterLabel.Text = "ON/OFF Key: " + KeyString(RazorEnhanced.Settings.General.ReadKey("HotKeyMasterKey"));
+            Assistant.Engine.MainWindow.HotKeyKeyMasterLabel.Text = LanguageHelper.GetString("MainForm.hotkeyKeyMaster.Prefix") + KeyString(RazorEnhanced.Settings.General.ReadKey("HotKeyMasterKey"));
         }
 
         private static bool UseItemByIdHue(Assistant.Item cont, ushort find, int hue)

@@ -1,29 +1,38 @@
+using System;
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace Assistant.UI.Controls
 {
     public static class RazorTheme
     {
-        public static bool IsDark { get; set; } = true; // Default to true based on prompt instruction
+        public static bool IsDark { get; set; } = true;
 
         public static class Colors
         {
             public static Color Primary => ColorTranslator.FromHtml("#F97316"); // Orange
             public static Color BackgroundLight => ColorTranslator.FromHtml("#F3F4F6");
-            public static Color BackgroundDark => ColorTranslator.FromHtml("#2D2424");
-            public static Color CardDark => ColorTranslator.FromHtml("#382E2E");
+            public static Color BackgroundDark => ColorTranslator.FromHtml("#152331"); // Deep Blue Grey
+            public static Color GradientEndDark => ColorTranslator.FromHtml("#000000"); // Pure Black
+            public static Color CardDark => ColorTranslator.FromHtml("#1E2D3D"); // Adjusted card color for the new bg
             public static Color CardLight => ColorTranslator.FromHtml("#FFFFFF");
             public static Color GlowViolet => ColorTranslator.FromHtml("#8B5CF6");
-            public static Color SurfaceDark => ColorTranslator.FromHtml("#1E1818");
+            public static Color SurfaceDark => ColorTranslator.FromHtml("#050C26");
 
             // Text colors
-            public static Color TextLightMode => ColorTranslator.FromHtml("#1F2937"); // gray-800
-            public static Color TextDarkMode => ColorTranslator.FromHtml("#E5E7EB"); // gray-200
-            public static Color TextSecondaryLight => ColorTranslator.FromHtml("#6B7280"); // gray-500
-            public static Color TextSecondaryDark => ColorTranslator.FromHtml("#9CA3AF"); // gray-400
+            public static Color TextLightMode => ColorTranslator.FromHtml("#1F2937");
+            public static Color TextDarkMode => ColorTranslator.FromHtml("#E5E7EB");
+            public static Color TextSecondaryLight => ColorTranslator.FromHtml("#6B7280");
+            public static Color TextSecondaryDark => ColorTranslator.FromHtml("#9CA3AF");
+
+            // Semantic colors
+            public static Color Success => Color.FromArgb(34, 197, 94);
+            public static Color Danger => Color.FromArgb(239, 44, 44);
+            public static Color Warning => Color.FromArgb(234, 179, 8);
 
             // Helper for current theme
             public static Color CurrentBackground => IsDark ? BackgroundDark : BackgroundLight;
+            public static Color CurrentGradientEnd => IsDark ? GradientEndDark : BackgroundLight;
             public static Color CurrentCard => IsDark ? CardDark : CardLight;
             public static Color CurrentSurface => IsDark ? SurfaceDark : Color.White;
             public static Color CurrentText => IsDark ? TextDarkMode : TextLightMode;
@@ -32,10 +41,9 @@ namespace Assistant.UI.Controls
 
         public static class Fonts
         {
-            // Fallback to Segoe UI or Arial if Inter is not installed
             public static Font DisplayFont(float size, FontStyle style = FontStyle.Regular)
             {
-                return new Font("Inter", size, style) ?? new Font("Segoe UI", size, style);
+                return new Font("Nunito", size, style) ?? new Font("Segoe UI", size, style);
             }
         }
 
@@ -43,43 +51,95 @@ namespace Assistant.UI.Controls
         {
             form.BackColor = Colors.CurrentBackground;
             form.ForeColor = Colors.CurrentText;
+
+            if (IsDark)
+            {
+                form.Paint -= Form_PaintGradient;
+                form.Paint += Form_PaintGradient;
+
+                if (form.IsHandleCreated)
+                {
+                    ActivateDarkMode(form.Handle);
+                }
+                else
+                {
+                    form.HandleCreated += (s, e) => ActivateDarkMode(form.Handle);
+                }
+            }
+
             ApplyThemeToControls(form.Controls);
         }
 
-        private static void ApplyThemeToControls(System.Windows.Forms.Control.ControlCollection controls)
-        {
-            foreach (System.Windows.Forms.Control control in controls)
-            {
-                // Default handling
-                control.ForeColor = Colors.CurrentText;
+        [System.Runtime.InteropServices.DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
 
-                if (control is System.Windows.Forms.Panel || control is System.Windows.Forms.TabPage || control is System.Windows.Forms.TabControl)
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        private static void ActivateDarkMode(IntPtr handle)
+        {
+            if (System.Environment.OSVersion.Version.Major >= 10)
+            {
+                int attribute = 20;
+                if (System.Environment.OSVersion.Version.Build < 18985)
+                    attribute = 19;
+
+                int useDarkMode = 1;
+                DwmSetWindowAttribute(handle, attribute, ref useDarkMode, sizeof(int));
+
+                SetWindowPos(handle, IntPtr.Zero, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0020 | 0x0040);
+            }
+        }
+
+        private static void Form_PaintGradient(object sender, PaintEventArgs e)
+        {
+            if (sender is Form form)
+            {
+                using (var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                    form.ClientRectangle,
+                    Colors.BackgroundDark,
+                    Colors.GradientEndDark,
+                    45f))
                 {
-                    control.BackColor = Colors.CurrentBackground;
+                    e.Graphics.FillRectangle(brush, form.ClientRectangle);
                 }
-                else if (control is System.Windows.Forms.TextBox || control is System.Windows.Forms.ComboBox || control is Assistant.UI.Controls.RazorTextBox || control is Assistant.UI.Controls.RazorComboBox)
+            }
+        }
+
+        private static void ApplyThemeToControls(Control.ControlCollection controls)
+        {
+            foreach (Control control in controls)
+            {
+                if (control is Assistant.UI.Controls.RazorButton || control is Assistant.UI.Controls.RazorCard)
                 {
-                    control.BackColor = Colors.CurrentSurface;
+                    // Managed controls
+                }
+                else
+                {
                     control.ForeColor = Colors.CurrentText;
-                    
-                    if (control is System.Windows.Forms.TextBox tb)
+
+                    if (control is Panel || control is TabPage || control is GroupBox || control is TabControl || control is CheckedListBox)
                     {
-                        tb.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+                        control.BackColor = Colors.CurrentBackground;
                     }
-                    else if (control is System.Windows.Forms.ComboBox cb)
+                    else if (control is Label || control is CheckBox || control is RadioButton)
                     {
-                        cb.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+                        // Standard controls that might support transparency if not nested too deep
+                        control.BackColor = Color.Transparent;
+                        if (control.Parent is TabControl || control.Parent is TabPage)
+                            control.BackColor = Colors.CurrentBackground;
                     }
-                }
-                else if (control is Assistant.UI.Controls.RazorButton rb)
-                {
-                    // Preserved because RazorButton manages its own background rendering
-                }
-                else if (control is System.Windows.Forms.Button btn)
-                {
-                    btn.BackColor = Colors.Primary;
-                    btn.ForeColor = Color.White;
-                    btn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+                    else if (control is TextBox || control is ComboBox || control is Assistant.UI.Controls.RazorTextBox || control is Assistant.UI.Controls.RazorComboBox)
+                    {
+                        control.BackColor = Colors.CurrentSurface;
+                        control.ForeColor = Colors.CurrentText;
+                    }
+                    else if (control is Button btn)
+                    {
+                        btn.BackColor = Colors.Primary;
+                        btn.ForeColor = Color.White;
+                        btn.FlatStyle = FlatStyle.Flat;
+                    }
                 }
 
                 if (control.Controls.Count > 0)
@@ -89,4 +149,5 @@ namespace Assistant.UI.Controls
             }
         }
     }
+
 }

@@ -19,6 +19,23 @@ namespace Assistant.UI.Controls
             this.Cursor = Cursors.Hand;
         }
 
+        // Suppress the focus-rectangle glow that Windows draws around the control
+        protected override bool ShowFocusCues => false;
+        protected override bool ShowKeyboardCues => false;
+
+        protected override void WndProc(ref Message m)
+        {
+            // Suppress WM_SETFOCUS and WM_KILLFOCUS repaints from the native checkbox
+            const int WM_SETFOCUS   = 0x0007;
+            const int WM_KILLFOCUS  = 0x0008;
+            if (m.Msg == WM_SETFOCUS || m.Msg == WM_KILLFOCUS)
+            {
+                this.Invalidate();
+                return;
+            }
+            base.WndProc(ref m);
+        }
+
         public override Size GetPreferredSize(Size proposedSize)
         {
             Size baseSize = base.GetPreferredSize(proposedSize);
@@ -35,7 +52,13 @@ namespace Assistant.UI.Controls
         protected override void OnPaint(PaintEventArgs pevent)
         {
             pevent.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            pevent.Graphics.Clear(this.Parent?.BackColor ?? RazorTheme.Colors.CurrentBackground);
+            
+            // Force opaque background paint to avoid black/white corner artifacts
+            Color bgClearColor = this.BackColor == Color.Transparent ? (this.Parent?.BackColor ?? RazorTheme.Colors.CurrentBackground) : this.BackColor;
+            using (SolidBrush bgBrush = new SolidBrush(bgClearColor))
+            {
+                pevent.Graphics.FillRectangle(bgBrush, this.ClientRectangle);
+            }
 
             Color currentOffBack = RazorTheme.IsDark ? _offBackColorDark : _offBackColor;
             Color backColor = this.Checked ? _onBackColor : currentOffBack;
