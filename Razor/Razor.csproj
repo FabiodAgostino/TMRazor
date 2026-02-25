@@ -1,0 +1,1772 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
+  <Import Project="..\packages\Grpc.Tools.2.70.0\build\Grpc.Tools.props" Condition="Exists('..\packages\Grpc.Tools.2.70.0\build\Grpc.Tools.props')" />
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <ProjectType>Local</ProjectType>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{B24E4FB1-4936-4544-9E88-F3FF9B04FDBA}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ApplicationIcon>razor-enhanced.ico</ApplicationIcon>
+    <AssemblyKeyContainerName>
+    </AssemblyKeyContainerName>
+    <AssemblyName>RazorEnhanced</AssemblyName>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
+    <DefaultClientScript>JScript</DefaultClientScript>
+    <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
+    <DefaultTargetSchema>IE50</DefaultTargetSchema>
+    <DelaySign>false</DelaySign>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Assistant</RootNamespace>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <StartupObject>Assistant.Engine</StartupObject>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <LangVersion>9.0</LangVersion>
+    <!-- Disable nullable reference type warnings for this old project -->
+    <!-- Disable xml comment missing  -->
+    <Nullable>disable</Nullable>
+    <NoWarn>CS8618;CS8619;CS8625;CS8600;CS8601;CS8602;CS8603;CS8604;CS1591</NoWarn>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Protobuf_Generator>CSharp</Protobuf_Generator>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>..\bin\Win32\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <BaseAddress>285212672</BaseAddress>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <FileAlignment>4096</FileAlignment>
+    <DebugType>portable</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <Prefer32Bit>false</Prefer32Bit>
+    <DocumentationFile>..\bin\Win32\Debug\RazorEnhanced.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>..\bin\Win32\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <BaseAddress>285212672</BaseAddress>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <FileAlignment>4096</FileAlignment>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup />
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup />
+  <PropertyGroup />
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>..\bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <BaseAddress>285212672</BaseAddress>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <FileAlignment>4096</FileAlignment>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <LangVersion>9.0</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <BaseAddress>285212672</BaseAddress>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <FileAlignment>4096</FileAlignment>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>9.0</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <OutputPath>..\bin\Win32\Release\</OutputPath>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Accord, Version=3.8.0.0, Culture=neutral, PublicKeyToken=fa1a88e29555ccf7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Accord.3.8.0\lib\net462\Accord.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Accord.Controls.Imaging, Version=3.8.0.0, Culture=neutral, PublicKeyToken=fa1a88e29555ccf7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Accord.Controls.Imaging.3.8.0\lib\net462\Accord.Controls.Imaging.dll</HintPath>
+    </Reference>
+    <Reference Include="Accord.Imaging, Version=3.8.0.0, Culture=neutral, PublicKeyToken=fa1a88e29555ccf7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Accord.Imaging.3.8.0\lib\net462\Accord.Imaging.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Accord.Math, Version=3.8.0.0, Culture=neutral, PublicKeyToken=fa1a88e29555ccf7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Accord.Math.3.8.0\lib\net462\Accord.Math.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Accord.Math.Core, Version=3.8.0.0, Culture=neutral, PublicKeyToken=fa1a88e29555ccf7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Accord.Math.3.8.0\lib\net462\Accord.Math.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Accord.Statistics, Version=3.8.0.0, Culture=neutral, PublicKeyToken=fa1a88e29555ccf7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Accord.Statistics.3.8.0\lib\net462\Accord.Statistics.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Accord.Video, Version=3.8.0.0, Culture=neutral, PublicKeyToken=fa1a88e29555ccf7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Accord.Video.3.8.0\lib\net462\Accord.Video.dll</HintPath>
+    </Reference>
+    <Reference Include="Accord.Video.DirectShow, Version=3.8.0.0, Culture=neutral, PublicKeyToken=fa1a88e29555ccf7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Accord.Video.DirectShow.3.8.0\lib\net462\Accord.Video.DirectShow.dll</HintPath>
+    </Reference>
+    <Reference Include="Accord.Video.FFMPEG, Version=3.8.0.0, Culture=neutral, PublicKeyToken=fa1a88e29555ccf7, processorArchitecture=x86">
+      <HintPath>..\packages\Accord.Video.FFMPEG.3.8.0\lib\net462\Accord.Video.FFMPEG.dll</HintPath>
+    </Reference>
+    <Reference Include="AutoUpdater.NET, Version=1.9.2.0, Culture=neutral, PublicKeyToken=501435c91b35f4bc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autoupdater.NET.Official.1.9.2\lib\net462\AutoUpdater.NET.dll</HintPath>
+    </Reference>
+    <Reference Include="ConcurrentCollections, Version=1.3.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ConcurrentHashSet.1.3.0\lib\net461\ConcurrentCollections.dll</HintPath>
+    </Reference>
+    <Reference Include="Consul, Version=1.7.14.7, Culture=neutral, PublicKeyToken=20a6ad9a81df1d95, processorArchitecture=MSIL">
+      <HintPath>..\packages\Consul.1.7.14.7\lib\net461\Consul.dll</HintPath>
+    </Reference>
+    <Reference Include="CrashReporter.NET, Version=1.6.0.0, Culture=neutral, PublicKeyToken=7828e0fd88cab698, processorArchitecture=MSIL">
+      <HintPath>..\packages\CrashReporter.NET.Official.1.6.0\lib\net462\CrashReporter.NET.dll</HintPath>
+    </Reference>
+    <Reference Include="cuoapi, Version=1.3.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\cuoapi.dll</HintPath>
+    </Reference>
+    <Reference Include="Google.Protobuf, Version=3.29.3.0, Culture=neutral, PublicKeyToken=a7d26565bac4d604, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Protobuf.3.29.3\lib\net45\Google.Protobuf.dll</HintPath>
+    </Reference>
+    <Reference Include="Grpc.Core, Version=2.0.0.0, Culture=neutral, PublicKeyToken=d754f35622e28bad, processorArchitecture=MSIL">
+      <HintPath>..\packages\Grpc.Core.2.37.1\lib\net45\Grpc.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Grpc.Core.Api, Version=2.0.0.0, Culture=neutral, PublicKeyToken=d754f35622e28bad, processorArchitecture=MSIL">
+      <HintPath>..\packages\Grpc.Core.Api.2.37.1\lib\net45\Grpc.Core.Api.dll</HintPath>
+    </Reference>
+    <Reference Include="HtmlAgilityPack, Version=1.11.73.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
+      <HintPath>..\packages\HtmlAgilityPack.1.11.73\lib\Net45\HtmlAgilityPack.dll</HintPath>
+    </Reference>
+    <Reference Include="IronPython, Version=3.4.2.0, Culture=neutral, PublicKeyToken=7f709c5b713576e1, processorArchitecture=MSIL">
+      <HintPath>..\packages\IronPython.3.4.2\lib\net462\IronPython.dll</HintPath>
+    </Reference>
+    <Reference Include="IronPython.Modules, Version=3.4.2.0, Culture=neutral, PublicKeyToken=7f709c5b713576e1, processorArchitecture=MSIL">
+      <HintPath>..\packages\IronPython.3.4.2\lib\net462\IronPython.Modules.dll</HintPath>
+    </Reference>
+    <Reference Include="IronPython.SQLite, Version=3.4.2.0, Culture=neutral, PublicKeyToken=7f709c5b713576e1, processorArchitecture=MSIL">
+      <HintPath>..\packages\IronPython.3.4.2\lib\net462\IronPython.SQLite.dll</HintPath>
+    </Reference>
+    <Reference Include="IronPython.Wpf, Version=3.4.2.0, Culture=neutral, PublicKeyToken=7f709c5b713576e1, processorArchitecture=MSIL">
+      <HintPath>..\packages\IronPython.3.4.2\lib\net462\IronPython.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=9.0.0.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.9.0.2\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis, Version=4.13.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.Common.4.13.0\lib\netstandard2.0\Microsoft.CodeAnalysis.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=4.13.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.CSharp.4.13.0\lib\netstandard2.0\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=4.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\lib\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Dynamic, Version=1.3.5.0, Culture=neutral, PublicKeyToken=7f709c5b713576e1, processorArchitecture=MSIL">
+      <HintPath>..\packages\DynamicLanguageRuntime.1.3.5\lib\net462\Microsoft.Dynamic.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration, Version=9.0.0.2, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Configuration.9.0.2\lib\net462\Microsoft.Extensions.Configuration.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.Abstractions, Version=9.0.0.2, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Configuration.Abstractions.9.0.2\lib\net462\Microsoft.Extensions.Configuration.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.Binder, Version=9.0.0.2, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Configuration.Binder.9.0.2\lib\net462\Microsoft.Extensions.Configuration.Binder.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.EnvironmentVariables, Version=9.0.0.2, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Configuration.EnvironmentVariables.9.0.2\lib\net462\Microsoft.Extensions.Configuration.EnvironmentVariables.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.FileExtensions, Version=9.0.0.2, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Configuration.FileExtensions.9.0.2\lib\net462\Microsoft.Extensions.Configuration.FileExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.Json, Version=9.0.0.2, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Configuration.Json.9.0.2\lib\net462\Microsoft.Extensions.Configuration.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=9.0.0.2, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.9.0.2\lib\net462\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.FileProviders.Abstractions, Version=9.0.0.2, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.FileProviders.Abstractions.9.0.2\lib\net462\Microsoft.Extensions.FileProviders.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.FileProviders.Physical, Version=9.0.0.2, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.FileProviders.Physical.9.0.2\lib\net462\Microsoft.Extensions.FileProviders.Physical.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.FileSystemGlobbing, Version=9.0.0.2, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.FileSystemGlobbing.9.0.2\lib\net462\Microsoft.Extensions.FileSystemGlobbing.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Options, Version=9.0.0.2, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Options.9.0.2\lib\net462\Microsoft.Extensions.Options.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Options.ConfigurationExtensions, Version=9.0.0.2, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Options.ConfigurationExtensions.9.0.2\lib\net462\Microsoft.Extensions.Options.ConfigurationExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Primitives, Version=9.0.0.2, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.Primitives.9.0.2\lib\net462\Microsoft.Extensions.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Scripting, Version=1.3.5.0, Culture=neutral, PublicKeyToken=7f709c5b713576e1, processorArchitecture=MSIL">
+      <HintPath>..\packages\DynamicLanguageRuntime.1.3.5\lib\net462\Microsoft.Scripting.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Scripting.Metadata, Version=1.3.5.0, Culture=neutral, PublicKeyToken=7f709c5b713576e1, processorArchitecture=MSIL">
+      <HintPath>..\packages\DynamicLanguageRuntime.1.3.5\lib\net462\Microsoft.Scripting.Metadata.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.WebView2.Core, Version=1.0.3065.39, Culture=neutral, PublicKeyToken=2a8ab48044d2601e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Web.WebView2.1.0.3065.39\lib\net462\Microsoft.Web.WebView2.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.WebView2.WinForms, Version=1.0.3065.39, Culture=neutral, PublicKeyToken=2a8ab48044d2601e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Web.WebView2.1.0.3065.39\lib\net462\Microsoft.Web.WebView2.WinForms.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.WebView2.Wpf, Version=1.0.3065.39, Culture=neutral, PublicKeyToken=2a8ab48044d2601e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Web.WebView2.1.0.3065.39\lib\net462\Microsoft.Web.WebView2.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Options, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mono.Options.6.12.0.148\lib\net40\Mono.Options.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="NLog, Version=5.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.5.4.0\lib\net46\NLog.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System">
+      <Name>System</Name>
+    </Reference>
+    <Reference Include="System.Buffers, Version=4.0.4.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Buffers.4.6.0\lib\net462\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Collections.Immutable, Version=9.0.0.2, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Collections.Immutable.9.0.2\lib\net462\System.Collections.Immutable.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.Annotations, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ComponentModel.Annotations.5.0.0\lib\net461\System.ComponentModel.Annotations.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Data">
+      <Name>System.Data</Name>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Deployment, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\FrameworkExtract.System.Deployment.4.0.30319\lib\netstandard2.0\System.Deployment.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Design" />
+    <Reference Include="System.DirectoryServices" />
+    <Reference Include="System.Drawing">
+      <Name>System.Drawing</Name>
+    </Reference>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Pipelines, Version=9.0.0.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.Pipelines.9.0.2\lib\net462\System.IO.Pipelines.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Management" />
+    <Reference Include="System.Memory, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Memory.4.6.0\lib\net462\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http, Version=4.1.1.3, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Net.Http.4.3.4\lib\net46\System.Net.Http.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http.WebRequest" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Numerics.Vectors.4.6.0\lib\net462\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Reflection.Metadata, Version=9.0.0.2, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Reflection.Metadata.9.0.2\lib\net462\System.Reflection.Metadata.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime, Version=4.1.1.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.4.3.1\lib\net462\System.Runtime.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.1.0\lib\net462\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.Extensions, Version=4.1.1.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.Extensions.4.3.1\lib\net462\System.Runtime.Extensions.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security.Cryptography.Algorithms, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Algorithms.4.3.1\lib\net463\System.Security.Cryptography.Algorithms.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Encoding, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Encoding.4.3.0\lib\net46\System.Security.Cryptography.Encoding.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Primitives, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Primitives.4.3.0\lib\net46\System.Security.Cryptography.Primitives.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.X509Certificates, Version=4.1.1.2, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.X509Certificates.4.3.2\lib\net461\System.Security.Cryptography.X509Certificates.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Text.Encoding.CodePages, Version=9.0.0.2, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.Encoding.CodePages.9.0.2\lib\net462\System.Text.Encoding.CodePages.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Encodings.Web, Version=9.0.0.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.Encodings.Web.9.0.2\lib\net462\System.Text.Encodings.Web.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Json, Version=9.0.0.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.Json.9.0.2\lib\net462\System.Text.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.RegularExpressions, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.RegularExpressions.4.3.1\lib\net463\System.Text.RegularExpressions.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.6.0\lib\net462\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web" />
+    <Reference Include="System.Windows.Forms">
+      <Name>System.Windows.Forms</Name>
+    </Reference>
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml">
+      <Name>System.XML</Name>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Xml.ReaderWriter, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Xml.ReaderWriter.4.3.1\lib\net46\System.Xml.ReaderWriter.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="websocket-sharp, Version=1.0.1.0, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
+      <HintPath>..\packages\WebSocketSharp-netstandard.1.0.1\lib\net45\websocket-sharp.dll</HintPath>
+    </Reference>
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Client\ClassicUO.cs" />
+    <Compile Include="Client\Client.cs" />
+    <Compile Include="Client\UOAssist.cs" />
+    <Compile Include="Core\ActionQueue.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\BuffInfo.cs" />
+    <Compile Include="Enums\TargetFlags.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Network\PacketLogger.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\BuffInfo.cs" />
+    <Compile Include="RazorEnhanced\CircularBuffer.cs" />
+    <Compile Include="RazorEnhanced\Config.cs" />
+    <Compile Include="Core\SkillIcon.cs" />
+    <Compile Include="Core\DLLImport.cs" />
+    <Compile Include="Core\TitleBar.cs" />
+    <Compile Include="Core\VideoCapture.cs" />
+    <Compile Include="Core\Commands.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Filters\Death.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Filters\Filter.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Filters\Light.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Filters\MessageFilter.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Filters\Season.cs" />
+    <Compile Include="Filters\SoundFilters.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Filters\StaffNpcs.cs" />
+    <Compile Include="Filters\StaffItems.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Filters\VetRewardGump.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Filters\Weather.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\Geometry.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Network\Ping.cs" />
+    <Compile Include="Network\PacketTable.cs" />
+    <Compile Include="Network\UoMod.cs" />
+    <Compile Include="Network\UoWarper.cs" />
+    <Compile Include="Platform.cs" />
+    <Compile Include="RazorEnhanced\AutoDoc.cs" />
+    <Compile Include="RazorEnhanced\Constants.cs" />
+    <Compile Include="RazorEnhanced\CSharpEngine.cs" />
+    <Compile Include="RazorEnhanced\CUO.cs" />
+    <Compile Include="RazorEnhanced\EncodedSpeech.cs" />
+    <Compile Include="RazorEnhanced\EnhancedScript.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\ArmDisarmAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\AttackAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\BandageAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\CastSpellAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\ClearJournalAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\CommentAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\DisconnectAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\DoubleClickAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\DropAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\ElseAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\ElseIfAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\EndForAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\EndIfAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\EndWhileAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\FlyAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\ForAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\GumpResponseAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\IfAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\InvokeVirtueAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\MessagingAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\MountAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\MoveItemAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\MovementAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\PauseAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\PickupAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\PromptResponseAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\QueryStringResponseAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\RemoveAliasAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\RenameMobileAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\ResyncAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\RunOrganizerOnceAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\SetAbilityAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\SetAliasAction.cs.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\TargetAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\TargetResource.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\ToggleWarModeAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\UseContextMenuAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\UseEmoteAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\UsePotionAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\UseSkillAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\WaitForGumpAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\WaitForTargetAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Actions\WhileAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\Macro.cs" />
+    <Compile Include="RazorEnhanced\Macros\MacroAction.cs" />
+    <Compile Include="RazorEnhanced\Macros\MacroActionFactory.cs" />
+    <Compile Include="RazorEnhanced\Macros\MacroManager.cs" />
+    <Compile Include="RazorEnhanced\PacketLogger.cs" />
+    <None Include="RazorEnhanced\Proto-Control\ProtoControl.proto" GrpcServices="Server" />
+    <Compile Include="RazorEnhanced\Proto-Control\ProtoControl.cs" />
+    <Compile Include="RazorEnhanced\Proto-Control\ProtoControlGrpc.cs" />
+    <Compile Include="RazorEnhanced\Proto-Control\ProtoControlServer.cs" />
+    <Compile Include="RazorEnhanced\PythonEngine.cs" />
+    <Compile Include="RazorEnhanced\ScriptRecorder.cs" />
+    <Compile Include="RazorEnhanced\PathFinding.cs" />
+    <Compile Include="RazorEnhanced\Multi.cs" />
+    <Compile Include="RazorEnhanced\SeasonManager.cs" />
+    <Compile Include="RazorEnhanced\Skills.cs" />
+    <Compile Include="RazorEnhanced\Sound.cs" />
+    <Compile Include="RazorEnhanced\SpellGrid.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\SyncPrimitives.cs" />
+    <Compile Include="RazorEnhanced\Timer.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\Statics.cs" />
+    <Compile Include="RazorEnhanced\DragDropManager.cs" />
+    <Compile Include="RazorEnhanced\Profiles.cs" />
+    <Compile Include="RazorEnhanced\SpecialMoves.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\Item.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\TypeID.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\Main.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\Facet.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\Mobile.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\MsgQueue.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Client\OSIClient.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Network\Handlers.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Network\Packet.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Network\PacketHandler.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Network\Packets.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\ObjectPropertyList.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\PasswordMemory.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\Player.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Core\ScreenCapture.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\Serial.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\Spells.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\StealthSteps.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\Targeting.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\Timer.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\HotKey.cs" />
+    <Compile Include="RazorEnhanced\DPSMeter.cs" />
+    <Compile Include="RazorEnhanced\ToolBar.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\BandageHeal.cs" />
+    <Compile Include="RazorEnhanced\Restock.cs" />
+    <Compile Include="RazorEnhanced\Filters.cs" />
+    <Compile Include="RazorEnhanced\JsonData.cs" />
+    <Compile Include="RazorEnhanced\Target.cs" />
+    <Compile Include="RazorEnhanced\Journal.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\AutoLoot.cs" />
+    <Compile Include="RazorEnhanced\Dress.cs" />
+    <Compile Include="RazorEnhanced\GumpInspector.cs" />
+    <Compile Include="RazorEnhanced\Gumps.cs" />
+    <Compile Include="RazorEnhanced\Shards.cs" />
+    <Compile Include="RazorEnhanced\Trade.cs" />
+    <Compile Include="RazorEnhanced\UI\RE_MessageBox.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\RE_MessageBox.Designer.cs">
+      <DependentUpon>RE_MessageBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedAgentAddList.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedAgentAddList.Designer.cs">
+      <DependentUpon>EnhancedAgentAddList.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedChangeLog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedChangeLog.Designer.cs">
+      <DependentUpon>EnhancedChangeLog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedFriendAddGuildManual.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedFriendAddGuildManual.Designer.cs">
+      <DependentUpon>EnhancedFriendAddGuildManual.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedObjectInspector.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedObjectInspector.Designer.cs">
+      <DependentUpon>EnhancedObjectInspector.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedStaticInspector.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedStaticInspector.Designer.cs">
+      <DependentUpon>EnhancedStaticInspector.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedProfileClone.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedProfileClone.Designer.cs">
+      <DependentUpon>EnhancedProfileClone.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedProfileRename.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedProfileRename.Designer.cs">
+      <DependentUpon>EnhancedProfileRename.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedProfileAdd.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedProfileAdd.Designer.cs">
+      <DependentUpon>EnhancedProfileAdd.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedAutolootEditItemProps.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedAutolootEditItemProps.Designer.cs">
+      <DependentUpon>EnhancedAutolootEditItemProps.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedFriendAddPlayerManual.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedFriendAddPlayerManual.Designer.cs">
+      <DependentUpon>EnhancedFriendAddPlayerManual.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedDressAddUndressLayer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedDressAddUndressLayer.Designer.cs">
+      <DependentUpon>EnhancedDressAddUndressLayer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedGumpInspector.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedGumpInspector.Designer.cs">
+      <DependentUpon>EnhancedGumpInspector.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedLauncher.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedLauncher.Designer.cs">
+      <DependentUpon>EnhancedLauncher.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\LanguageHelper.cs" />
+    <Compile Include="RazorEnhanced\Friend.cs" />
+    <Compile Include="RazorEnhanced\UI\RazorFastColoredTextBox.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\RazorFastColoredTextBox.Designer.cs">
+      <DependentUpon>RazorFastColoredTextBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\ScriptListView.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UOSteamEngine.cs" />
+    <Compile Include="RazorEnhanced\Vendor.cs" />
+    <Compile Include="RazorEnhanced\Organizer.cs" />
+    <Compile Include="RazorEnhanced\Scavenger.cs" />
+    <Compile Include="RazorEnhanced\Geometry.cs" />
+    <Compile Include="RazorEnhanced\Item.cs" />
+    <Compile Include="Core\Buffs.cs" />
+    <Compile Include="RazorEnhanced\Misc.cs" />
+    <Compile Include="RazorEnhanced\Scripts.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\Settings.cs" />
+    <Compile Include="RazorEnhanced\Spells.cs" />
+    <Compile Include="RazorEnhanced\Player.cs" />
+    <Compile Include="RazorEnhanced\UI\EnhancedScavengerEditItemProps.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedScavengerEditItemProps.Designer.cs">
+      <DependentUpon>EnhancedScavengerEditItemProps.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedItemInspector.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedItemInspector.Designer.cs">
+      <DependentUpon>EnhancedItemInspector.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedMobileInspector.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedMobileInspector.Designer.cs">
+      <DependentUpon>EnhancedMobileInspector.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedScriptEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RazorEnhanced\UI\EnhancedScriptEditor.Designer.cs">
+      <DependentUpon>EnhancedScriptEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RazorEnhanced\Mobile.cs" />
+    <Compile Include="RazorEnhanced\Property.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\AutoLoot.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\BandageHeal.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\Dress.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\Common.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\DPSMeter.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Ext.cs" />
+    <Compile Include="UI\Filter\EN-Filters.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\Friends.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Filter\Filters.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\MacrosUI.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Other\Hotkey.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Controls\RazorTheme.cs" />
+    <Compile Include="UI\Controls\RazorToggle.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\Controls\RazorButton.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\Controls\RazorCard.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\Controls\RazorSidebar.cs" />
+    <Compile Include="UI\Controls\RazorTextBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\Controls\RazorComboBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
+
+    <Compile Include="UI\HueEntry.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Languages.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\Organizer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Other\Profile.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Razor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\Restock.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\Scavenger.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Grids-Bars\SpellGrid.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Other\Script.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Other\Skills.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Other\Target.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Video-Screen\ScreenShot.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\SplashScreen.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Core\UOEntity.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\Utility.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\World.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Core\ZLib.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="UI\Grids-Bars\Toolbar.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\VendorBuy.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\VendorSell.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Video-Screen\VideoRecorder.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\RE_MessageBox.resx">
+      <DependentUpon>RE_MessageBox.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedAgentAddList.resx">
+      <DependentUpon>EnhancedAgentAddList.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedChangeLog.resx">
+      <DependentUpon>EnhancedChangeLog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedFriendAddGuildManual.resx">
+      <DependentUpon>EnhancedFriendAddGuildManual.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedObjectInspector.resx">
+      <DependentUpon>EnhancedObjectInspector.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedStaticInspector.resx">
+      <DependentUpon>EnhancedStaticInspector.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedProfileClone.resx">
+      <DependentUpon>EnhancedProfileClone.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedProfileRename.resx">
+      <DependentUpon>EnhancedProfileRename.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedProfileAdd.resx">
+      <DependentUpon>EnhancedProfileAdd.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedAutolootEditItemProps.resx">
+      <DependentUpon>EnhancedAutolootEditItemProps.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedFriendAddPlayerManual.resx">
+      <DependentUpon>EnhancedFriendAddPlayerManual.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedDressAddUndressLayer.resx">
+      <DependentUpon>EnhancedDressAddUndressLayer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedGumpInspector.resx">
+      <DependentUpon>EnhancedGumpInspector.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedLauncher.resx">
+      <DependentUpon>EnhancedLauncher.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedScavengerEditItemProps.resx">
+      <DependentUpon>EnhancedScavengerEditItemProps.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedItemInspector.resx">
+      <DependentUpon>EnhancedItemInspector.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedMobileInspector.resx">
+      <DependentUpon>EnhancedMobileInspector.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\Strings.it.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RazorEnhanced\UI\Strings.resx" />
+    <EmbeddedResource Include="RazorEnhanced\UI\EnhancedScriptEditor.resx">
+      <DependentUpon>EnhancedScriptEditor.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\App.ico" />
+    <EmbeddedResource Include="UI\HueEntry.resx">
+      <DependentUpon>HueEntry.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\Razor.resx">
+      <DependentUpon>Razor.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\SplashScreen.resx">
+      <DependentUpon>SplashScreen.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="..\.editorconfig">
+      <Link>RazorEnhanced\.editorconfig</Link>
+    </None>
+    <None Include="app.manifest" />
+    <None Include="lib\ctypes\macholib\fetch_macholib" />
+    <None Include="lib\ctypes\macholib\fetch_macholib.bat" />
+    <None Include="lib\ctypes\macholib\README.ctypes" />
+    <None Include="lib\distutils\command\command_template" />
+    <None Include="lib\distutils\README" />
+    <None Include="lib\email\architecture.rst" />
+    <None Include="lib\ensurepip\_bundled\pip-18.1-py2.py3-none-any.whl" />
+    <None Include="lib\ensurepip\_bundled\pip-9.0.1-py2.py3-none-any.whl" />
+    <None Include="lib\ensurepip\_bundled\setuptools-28.8.0-py2.py3-none-any.whl" />
+    <None Include="lib\ensurepip\_bundled\setuptools-40.6.2-py2.py3-none-any.whl" />
+    <None Include="lib\site-packages\README" />
+    <None Include="lib\turtledemo\turtle.cfg" />
+    <None Include="lib\venv\scripts\nt\activate.bat" />
+    <None Include="lib\venv\scripts\nt\Activate.ps1" />
+    <None Include="lib\venv\scripts\nt\deactivate.bat" />
+    <None Include="lib\venv\scripts\posix\activate" />
+    <None Include="lib\venv\scripts\posix\activate.fish" />
+    <None Include="packages.config" />
+    <None Include="Properties\DataSources\Client.datasource" />
+    <None Include="Properties\DataSources\Ultima.Client.datasource" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="RazorEnhanced\Resources\bug-add.png" />
+    <None Include="RazorEnhanced\Resources\bug-delete.png" />
+    <None Include="RazorEnhanced\Resources\document-close-2.png" />
+    <None Include="RazorEnhanced\Resources\document-open-7.png" />
+    <None Include="RazorEnhanced\Resources\document-save-5.png" />
+    <None Include="RazorEnhanced\Resources\accessories-text-editor-5.ico" />
+    <None Include="RazorEnhanced\Resources\applications-utilities.png" />
+    <None Include="RazorEnhanced\Resources\applications-utilities.ico" />
+    <Content Include="lib\abc.py" />
+    <Content Include="lib\aifc.py" />
+    <Content Include="lib\antigravity.py" />
+    <Content Include="lib\argparse.py" />
+    <Content Include="lib\ast.py" />
+    <Content Include="lib\asynchat.py" />
+    <Content Include="lib\asyncio\base_events.py" />
+    <Content Include="lib\asyncio\base_subprocess.py" />
+    <Content Include="lib\asyncio\compat.py" />
+    <Content Include="lib\asyncio\constants.py" />
+    <Content Include="lib\asyncio\coroutines.py" />
+    <Content Include="lib\asyncio\events.py" />
+    <Content Include="lib\asyncio\futures.py" />
+    <Content Include="lib\asyncio\locks.py" />
+    <Content Include="lib\asyncio\log.py" />
+    <Content Include="lib\asyncio\proactor_events.py" />
+    <Content Include="lib\asyncio\protocols.py" />
+    <Content Include="lib\asyncio\queues.py" />
+    <Content Include="lib\asyncio\selector_events.py" />
+    <Content Include="lib\asyncio\sslproto.py" />
+    <Content Include="lib\asyncio\streams.py" />
+    <Content Include="lib\asyncio\subprocess.py" />
+    <Content Include="lib\asyncio\tasks.py" />
+    <Content Include="lib\asyncio\test_utils.py" />
+    <Content Include="lib\asyncio\transports.py" />
+    <Content Include="lib\asyncio\unix_events.py" />
+    <Content Include="lib\asyncio\windows_events.py" />
+    <Content Include="lib\asyncio\windows_utils.py" />
+    <Content Include="lib\asyncio\__init__.py" />
+    <Content Include="lib\asyncore.py" />
+    <Content Include="lib\base64.py" />
+    <Content Include="lib\bdb.py" />
+    <Content Include="lib\binhex.py" />
+    <Content Include="lib\bisect.py" />
+    <Content Include="lib\bz2.py" />
+    <Content Include="lib\calendar.py" />
+    <Content Include="lib\cgi.py" />
+    <Content Include="lib\cgitb.py" />
+    <Content Include="lib\chunk.py" />
+    <Content Include="lib\clrtype.py" />
+    <Content Include="lib\cmd.py" />
+    <Content Include="lib\code.py" />
+    <Content Include="lib\codecs.py" />
+    <Content Include="lib\codeop.py" />
+    <Content Include="lib\collections\abc.py" />
+    <Content Include="lib\collections\__init__.py" />
+    <Content Include="lib\collections\__main__.py" />
+    <Content Include="lib\colorsys.py" />
+    <Content Include="lib\compileall.py" />
+    <Content Include="lib\concurrent\futures\process.py" />
+    <Content Include="lib\concurrent\futures\thread.py" />
+    <Content Include="lib\concurrent\futures\_base.py" />
+    <Content Include="lib\concurrent\futures\__init__.py" />
+    <Content Include="lib\concurrent\__init__.py" />
+    <Content Include="lib\configparser.py" />
+    <Content Include="lib\contextlib.py" />
+    <Content Include="lib\copy.py" />
+    <Content Include="lib\copyreg.py" />
+    <Content Include="lib\cProfile.py" />
+    <Content Include="lib\crypt.py" />
+    <Content Include="lib\csv.py" />
+    <Content Include="lib\ctypes\macholib\dyld.py" />
+    <Content Include="lib\ctypes\macholib\dylib.py" />
+    <Content Include="lib\ctypes\macholib\framework.py" />
+    <Content Include="lib\ctypes\macholib\__init__.py" />
+    <Content Include="lib\ctypes\util.py" />
+    <Content Include="lib\ctypes\wintypes.py" />
+    <Content Include="lib\ctypes\_endian.py" />
+    <Content Include="lib\ctypes\__init__.py" />
+    <Content Include="lib\curses\ascii.py" />
+    <Content Include="lib\curses\has_key.py" />
+    <Content Include="lib\curses\panel.py" />
+    <Content Include="lib\curses\textpad.py" />
+    <Content Include="lib\curses\__init__.py" />
+    <Content Include="lib\datetime.py" />
+    <Content Include="lib\dbm\dumb.py" />
+    <Content Include="lib\dbm\gnu.py" />
+    <Content Include="lib\dbm\ndbm.py" />
+    <Content Include="lib\dbm\__init__.py" />
+    <Content Include="lib\decimal.py" />
+    <Content Include="lib\difflib.py" />
+    <Content Include="lib\dis.py" />
+    <Content Include="lib\distutils\archive_util.py" />
+    <Content Include="lib\distutils\bcppcompiler.py" />
+    <Content Include="lib\distutils\ccompiler.py" />
+    <Content Include="lib\distutils\cmd.py" />
+    <Content Include="lib\distutils\command\bdist.py" />
+    <Content Include="lib\distutils\command\bdist_dumb.py" />
+    <Content Include="lib\distutils\command\bdist_msi.py" />
+    <Content Include="lib\distutils\command\bdist_rpm.py" />
+    <Content Include="lib\distutils\command\bdist_wininst.py" />
+    <Content Include="lib\distutils\command\build.py" />
+    <Content Include="lib\distutils\command\build_clib.py" />
+    <Content Include="lib\distutils\command\build_ext.py" />
+    <Content Include="lib\distutils\command\build_py.py" />
+    <Content Include="lib\distutils\command\build_scripts.py" />
+    <Content Include="lib\distutils\command\check.py" />
+    <Content Include="lib\distutils\command\clean.py" />
+    <Content Include="lib\distutils\command\config.py" />
+    <Content Include="lib\distutils\command\install.py" />
+    <Content Include="lib\distutils\command\install_data.py" />
+    <Content Include="lib\distutils\command\install_egg_info.py" />
+    <Content Include="lib\distutils\command\install_headers.py" />
+    <Content Include="lib\distutils\command\install_lib.py" />
+    <Content Include="lib\distutils\command\install_scripts.py" />
+    <Content Include="lib\distutils\command\register.py" />
+    <Content Include="lib\distutils\command\sdist.py" />
+    <Content Include="lib\distutils\command\upload.py" />
+    <Content Include="lib\distutils\command\wininst-10.0-amd64.exe" />
+    <Content Include="lib\distutils\command\wininst-10.0.exe" />
+    <Content Include="lib\distutils\command\wininst-6.0.exe" />
+    <Content Include="lib\distutils\command\wininst-7.1.exe" />
+    <Content Include="lib\distutils\command\wininst-8.0.exe" />
+    <Content Include="lib\distutils\command\wininst-9.0-amd64.exe" />
+    <Content Include="lib\distutils\command\wininst-9.0.exe" />
+    <Content Include="lib\distutils\command\__init__.py" />
+    <Content Include="lib\distutils\config.py" />
+    <Content Include="lib\distutils\core.py" />
+    <Content Include="lib\distutils\cygwinccompiler.py" />
+    <Content Include="lib\distutils\debug.py" />
+    <Content Include="lib\distutils\dep_util.py" />
+    <Content Include="lib\distutils\dir_util.py" />
+    <Content Include="lib\distutils\dist.py" />
+    <Content Include="lib\distutils\errors.py" />
+    <Content Include="lib\distutils\extension.py" />
+    <Content Include="lib\distutils\fancy_getopt.py" />
+    <Content Include="lib\distutils\filelist.py" />
+    <Content Include="lib\distutils\file_util.py" />
+    <Content Include="lib\distutils\log.py" />
+    <Content Include="lib\distutils\msvc9compiler.py" />
+    <Content Include="lib\distutils\msvccompiler.py" />
+    <Content Include="lib\distutils\spawn.py" />
+    <Content Include="lib\distutils\sysconfig.py" />
+    <Content Include="lib\distutils\text_file.py" />
+    <Content Include="lib\distutils\unixccompiler.py" />
+    <Content Include="lib\distutils\util.py" />
+    <Content Include="lib\distutils\version.py" />
+    <Content Include="lib\distutils\versionpredicate.py" />
+    <Content Include="lib\distutils\__init__.py" />
+    <Content Include="lib\doctest.py" />
+    <Content Include="lib\dummy_threading.py" />
+    <Content Include="lib\email\base64mime.py" />
+    <Content Include="lib\email\charset.py" />
+    <Content Include="lib\email\contentmanager.py" />
+    <Content Include="lib\email\encoders.py" />
+    <Content Include="lib\email\errors.py" />
+    <Content Include="lib\email\feedparser.py" />
+    <Content Include="lib\email\generator.py" />
+    <Content Include="lib\email\header.py" />
+    <Content Include="lib\email\headerregistry.py" />
+    <Content Include="lib\email\iterators.py" />
+    <Content Include="lib\email\message.py" />
+    <Content Include="lib\email\mime\application.py" />
+    <Content Include="lib\email\mime\audio.py" />
+    <Content Include="lib\email\mime\base.py" />
+    <Content Include="lib\email\mime\image.py" />
+    <Content Include="lib\email\mime\message.py" />
+    <Content Include="lib\email\mime\multipart.py" />
+    <Content Include="lib\email\mime\nonmultipart.py" />
+    <Content Include="lib\email\mime\text.py" />
+    <Content Include="lib\email\mime\__init__.py" />
+    <Content Include="lib\email\parser.py" />
+    <Content Include="lib\email\policy.py" />
+    <Content Include="lib\email\quoprimime.py" />
+    <Content Include="lib\email\utils.py" />
+    <Content Include="lib\email\_encoded_words.py" />
+    <Content Include="lib\email\_header_value_parser.py" />
+    <Content Include="lib\email\_parseaddr.py" />
+    <Content Include="lib\email\_policybase.py" />
+    <Content Include="lib\email\__init__.py" />
+    <Content Include="lib\encodings\aliases.py" />
+    <Content Include="lib\encodings\ascii.py" />
+    <Content Include="lib\encodings\base64_codec.py" />
+    <Content Include="lib\encodings\big5.py" />
+    <Content Include="lib\encodings\big5hkscs.py" />
+    <Content Include="lib\encodings\bz2_codec.py" />
+    <Content Include="lib\encodings\charmap.py" />
+    <Content Include="lib\encodings\cp037.py" />
+    <Content Include="lib\encodings\cp1006.py" />
+    <Content Include="lib\encodings\cp1026.py" />
+    <Content Include="lib\encodings\cp1125.py" />
+    <Content Include="lib\encodings\cp1140.py" />
+    <Content Include="lib\encodings\cp1250.py" />
+    <Content Include="lib\encodings\cp1251.py" />
+    <Content Include="lib\encodings\cp1252.py" />
+    <Content Include="lib\encodings\cp1253.py" />
+    <Content Include="lib\encodings\cp1254.py" />
+    <Content Include="lib\encodings\cp1255.py" />
+    <Content Include="lib\encodings\cp1256.py" />
+    <Content Include="lib\encodings\cp1257.py" />
+    <Content Include="lib\encodings\cp1258.py" />
+    <Content Include="lib\encodings\cp273.py" />
+    <Content Include="lib\encodings\cp424.py" />
+    <Content Include="lib\encodings\cp437.py" />
+    <Content Include="lib\encodings\cp500.py" />
+    <Content Include="lib\encodings\cp65001.py" />
+    <Content Include="lib\encodings\cp720.py" />
+    <Content Include="lib\encodings\cp737.py" />
+    <Content Include="lib\encodings\cp775.py" />
+    <Content Include="lib\encodings\cp850.py" />
+    <Content Include="lib\encodings\cp852.py" />
+    <Content Include="lib\encodings\cp855.py" />
+    <Content Include="lib\encodings\cp856.py" />
+    <Content Include="lib\encodings\cp857.py" />
+    <Content Include="lib\encodings\cp858.py" />
+    <Content Include="lib\encodings\cp860.py" />
+    <Content Include="lib\encodings\cp861.py" />
+    <Content Include="lib\encodings\cp862.py" />
+    <Content Include="lib\encodings\cp863.py" />
+    <Content Include="lib\encodings\cp864.py" />
+    <Content Include="lib\encodings\cp865.py" />
+    <Content Include="lib\encodings\cp866.py" />
+    <Content Include="lib\encodings\cp869.py" />
+    <Content Include="lib\encodings\cp874.py" />
+    <Content Include="lib\encodings\cp875.py" />
+    <Content Include="lib\encodings\cp932.py" />
+    <Content Include="lib\encodings\cp949.py" />
+    <Content Include="lib\encodings\cp950.py" />
+    <Content Include="lib\encodings\euc_jisx0213.py" />
+    <Content Include="lib\encodings\euc_jis_2004.py" />
+    <Content Include="lib\encodings\euc_jp.py" />
+    <Content Include="lib\encodings\euc_kr.py" />
+    <Content Include="lib\encodings\gb18030.py" />
+    <Content Include="lib\encodings\gb2312.py" />
+    <Content Include="lib\encodings\gbk.py" />
+    <Content Include="lib\encodings\hex_codec.py" />
+    <Content Include="lib\encodings\hp_roman8.py" />
+    <Content Include="lib\encodings\hz.py" />
+    <Content Include="lib\encodings\idna.py" />
+    <Content Include="lib\encodings\iso2022_jp.py" />
+    <Content Include="lib\encodings\iso2022_jp_1.py" />
+    <Content Include="lib\encodings\iso2022_jp_2.py" />
+    <Content Include="lib\encodings\iso2022_jp_2004.py" />
+    <Content Include="lib\encodings\iso2022_jp_3.py" />
+    <Content Include="lib\encodings\iso2022_jp_ext.py" />
+    <Content Include="lib\encodings\iso2022_kr.py" />
+    <Content Include="lib\encodings\iso8859_1.py" />
+    <Content Include="lib\encodings\iso8859_10.py" />
+    <Content Include="lib\encodings\iso8859_11.py" />
+    <Content Include="lib\encodings\iso8859_13.py" />
+    <Content Include="lib\encodings\iso8859_14.py" />
+    <Content Include="lib\encodings\iso8859_15.py" />
+    <Content Include="lib\encodings\iso8859_16.py" />
+    <Content Include="lib\encodings\iso8859_2.py" />
+    <Content Include="lib\encodings\iso8859_3.py" />
+    <Content Include="lib\encodings\iso8859_4.py" />
+    <Content Include="lib\encodings\iso8859_5.py" />
+    <Content Include="lib\encodings\iso8859_6.py" />
+    <Content Include="lib\encodings\iso8859_7.py" />
+    <Content Include="lib\encodings\iso8859_8.py" />
+    <Content Include="lib\encodings\iso8859_9.py" />
+    <Content Include="lib\encodings\johab.py" />
+    <Content Include="lib\encodings\koi8_r.py" />
+    <Content Include="lib\encodings\koi8_u.py" />
+    <Content Include="lib\encodings\latin_1.py" />
+    <Content Include="lib\encodings\mac_arabic.py" />
+    <Content Include="lib\encodings\mac_centeuro.py" />
+    <Content Include="lib\encodings\mac_croatian.py" />
+    <Content Include="lib\encodings\mac_cyrillic.py" />
+    <Content Include="lib\encodings\mac_farsi.py" />
+    <Content Include="lib\encodings\mac_greek.py" />
+    <Content Include="lib\encodings\mac_iceland.py" />
+    <Content Include="lib\encodings\mac_latin2.py" />
+    <Content Include="lib\encodings\mac_roman.py" />
+    <Content Include="lib\encodings\mac_romanian.py" />
+    <Content Include="lib\encodings\mac_turkish.py" />
+    <Content Include="lib\encodings\mbcs.py" />
+    <Content Include="lib\encodings\palmos.py" />
+    <Content Include="lib\encodings\ptcp154.py" />
+    <Content Include="lib\encodings\punycode.py" />
+    <Content Include="lib\encodings\quopri_codec.py" />
+    <Content Include="lib\encodings\raw_unicode_escape.py" />
+    <Content Include="lib\encodings\rot_13.py" />
+    <Content Include="lib\encodings\shift_jis.py" />
+    <Content Include="lib\encodings\shift_jisx0213.py" />
+    <Content Include="lib\encodings\shift_jis_2004.py" />
+    <Content Include="lib\encodings\tis_620.py" />
+    <Content Include="lib\encodings\undefined.py" />
+    <Content Include="lib\encodings\unicode_escape.py" />
+    <Content Include="lib\encodings\unicode_internal.py" />
+    <Content Include="lib\encodings\utf_16.py" />
+    <Content Include="lib\encodings\utf_16_be.py" />
+    <Content Include="lib\encodings\utf_16_le.py" />
+    <Content Include="lib\encodings\utf_32.py" />
+    <Content Include="lib\encodings\utf_32_be.py" />
+    <Content Include="lib\encodings\utf_32_le.py" />
+    <Content Include="lib\encodings\utf_7.py" />
+    <Content Include="lib\encodings\utf_8.py" />
+    <Content Include="lib\encodings\utf_8_sig.py" />
+    <Content Include="lib\encodings\uu_codec.py" />
+    <Content Include="lib\encodings\zlib_codec.py" />
+    <Content Include="lib\encodings\__init__.py" />
+    <Content Include="lib\ensurepip\_uninstall.py" />
+    <Content Include="lib\ensurepip\__init__.py" />
+    <Content Include="lib\ensurepip\__main__.py" />
+    <Content Include="lib\enum.py" />
+    <Content Include="lib\filecmp.py" />
+    <Content Include="lib\fileinput.py" />
+    <Content Include="lib\fnmatch.py" />
+    <Content Include="lib\formatter.py" />
+    <Content Include="lib\fractions.py" />
+    <Content Include="lib\ftplib.py" />
+    <Content Include="lib\functools.py" />
+    <Content Include="lib\genericpath.py" />
+    <Content Include="lib\getopt.py" />
+    <Content Include="lib\getpass.py" />
+    <Content Include="lib\gettext.py" />
+    <Content Include="lib\glob.py" />
+    <Content Include="lib\gzip.py" />
+    <Content Include="lib\hashlib.py" />
+    <Content Include="lib\heapq.py" />
+    <Content Include="lib\hmac.py" />
+    <Content Include="lib\html\entities.py" />
+    <Content Include="lib\html\parser.py" />
+    <Content Include="lib\html\__init__.py" />
+    <Content Include="lib\http\client.py" />
+    <Content Include="lib\http\cookiejar.py" />
+    <Content Include="lib\http\cookies.py" />
+    <Content Include="lib\http\server.py" />
+    <Content Include="lib\http\__init__.py" />
+    <Content Include="lib\imaplib.py" />
+    <Content Include="lib\imghdr.py" />
+    <Content Include="lib\imp.py" />
+    <Content Include="lib\importlib\abc.py" />
+    <Content Include="lib\importlib\machinery.py" />
+    <Content Include="lib\importlib\util.py" />
+    <Content Include="lib\importlib\_bootstrap.py" />
+    <Content Include="lib\importlib\__init__.py" />
+    <Content Include="lib\inspect.py" />
+    <Content Include="lib\io.py" />
+    <Content Include="lib\ipaddress.py" />
+    <Content Include="lib\json\decoder.py" />
+    <Content Include="lib\json\encoder.py" />
+    <Content Include="lib\json\scanner.py" />
+    <Content Include="lib\json\tool.py" />
+    <Content Include="lib\json\__init__.py" />
+    <Content Include="lib\keyword.py" />
+    <Content Include="lib\lib2to3\btm_matcher.py" />
+    <Content Include="lib\lib2to3\btm_utils.py" />
+    <Content Include="lib\lib2to3\fixer_base.py" />
+    <Content Include="lib\lib2to3\fixer_util.py" />
+    <Content Include="lib\lib2to3\fixes\fix_apply.py" />
+    <Content Include="lib\lib2to3\fixes\fix_asserts.py" />
+    <Content Include="lib\lib2to3\fixes\fix_basestring.py" />
+    <Content Include="lib\lib2to3\fixes\fix_buffer.py" />
+    <Content Include="lib\lib2to3\fixes\fix_callable.py" />
+    <Content Include="lib\lib2to3\fixes\fix_dict.py" />
+    <Content Include="lib\lib2to3\fixes\fix_except.py" />
+    <Content Include="lib\lib2to3\fixes\fix_exec.py" />
+    <Content Include="lib\lib2to3\fixes\fix_execfile.py" />
+    <Content Include="lib\lib2to3\fixes\fix_exitfunc.py" />
+    <Content Include="lib\lib2to3\fixes\fix_filter.py" />
+    <Content Include="lib\lib2to3\fixes\fix_funcattrs.py" />
+    <Content Include="lib\lib2to3\fixes\fix_future.py" />
+    <Content Include="lib\lib2to3\fixes\fix_getcwdu.py" />
+    <Content Include="lib\lib2to3\fixes\fix_has_key.py" />
+    <Content Include="lib\lib2to3\fixes\fix_idioms.py" />
+    <Content Include="lib\lib2to3\fixes\fix_import.py" />
+    <Content Include="lib\lib2to3\fixes\fix_imports.py" />
+    <Content Include="lib\lib2to3\fixes\fix_imports2.py" />
+    <Content Include="lib\lib2to3\fixes\fix_input.py" />
+    <Content Include="lib\lib2to3\fixes\fix_intern.py" />
+    <Content Include="lib\lib2to3\fixes\fix_isinstance.py" />
+    <Content Include="lib\lib2to3\fixes\fix_itertools.py" />
+    <Content Include="lib\lib2to3\fixes\fix_itertools_imports.py" />
+    <Content Include="lib\lib2to3\fixes\fix_long.py" />
+    <Content Include="lib\lib2to3\fixes\fix_map.py" />
+    <Content Include="lib\lib2to3\fixes\fix_metaclass.py" />
+    <Content Include="lib\lib2to3\fixes\fix_methodattrs.py" />
+    <Content Include="lib\lib2to3\fixes\fix_ne.py" />
+    <Content Include="lib\lib2to3\fixes\fix_next.py" />
+    <Content Include="lib\lib2to3\fixes\fix_nonzero.py" />
+    <Content Include="lib\lib2to3\fixes\fix_numliterals.py" />
+    <Content Include="lib\lib2to3\fixes\fix_operator.py" />
+    <Content Include="lib\lib2to3\fixes\fix_paren.py" />
+    <Content Include="lib\lib2to3\fixes\fix_print.py" />
+    <Content Include="lib\lib2to3\fixes\fix_raise.py" />
+    <Content Include="lib\lib2to3\fixes\fix_raw_input.py" />
+    <Content Include="lib\lib2to3\fixes\fix_reduce.py" />
+    <Content Include="lib\lib2to3\fixes\fix_reload.py" />
+    <Content Include="lib\lib2to3\fixes\fix_renames.py" />
+    <Content Include="lib\lib2to3\fixes\fix_repr.py" />
+    <Content Include="lib\lib2to3\fixes\fix_set_literal.py" />
+    <Content Include="lib\lib2to3\fixes\fix_standarderror.py" />
+    <Content Include="lib\lib2to3\fixes\fix_sys_exc.py" />
+    <Content Include="lib\lib2to3\fixes\fix_throw.py" />
+    <Content Include="lib\lib2to3\fixes\fix_tuple_params.py" />
+    <Content Include="lib\lib2to3\fixes\fix_types.py" />
+    <Content Include="lib\lib2to3\fixes\fix_unicode.py" />
+    <Content Include="lib\lib2to3\fixes\fix_urllib.py" />
+    <Content Include="lib\lib2to3\fixes\fix_ws_comma.py" />
+    <Content Include="lib\lib2to3\fixes\fix_xrange.py" />
+    <Content Include="lib\lib2to3\fixes\fix_xreadlines.py" />
+    <Content Include="lib\lib2to3\fixes\fix_zip.py" />
+    <Content Include="lib\lib2to3\fixes\__init__.py" />
+    <Content Include="lib\lib2to3\Grammar.txt" />
+    <Content Include="lib\lib2to3\main.py" />
+    <Content Include="lib\lib2to3\patcomp.py" />
+    <Content Include="lib\lib2to3\PatternGrammar.txt" />
+    <Content Include="lib\lib2to3\pgen2\conv.py" />
+    <Content Include="lib\lib2to3\pgen2\driver.py" />
+    <Content Include="lib\lib2to3\pgen2\grammar.py" />
+    <Content Include="lib\lib2to3\pgen2\literals.py" />
+    <Content Include="lib\lib2to3\pgen2\parse.py" />
+    <Content Include="lib\lib2to3\pgen2\pgen.py" />
+    <Content Include="lib\lib2to3\pgen2\token.py" />
+    <Content Include="lib\lib2to3\pgen2\tokenize.py" />
+    <Content Include="lib\lib2to3\pgen2\__init__.py" />
+    <Content Include="lib\lib2to3\pygram.py" />
+    <Content Include="lib\lib2to3\pytree.py" />
+    <Content Include="lib\lib2to3\refactor.py" />
+    <Content Include="lib\lib2to3\__init__.py" />
+    <Content Include="lib\lib2to3\__main__.py" />
+    <Content Include="lib\linecache.py" />
+    <Content Include="lib\locale.py" />
+    <Content Include="lib\logging\config.py" />
+    <Content Include="lib\logging\handlers.py" />
+    <Content Include="lib\logging\__init__.py" />
+    <Content Include="lib\lzma.py" />
+    <Content Include="lib\macpath.py" />
+    <Content Include="lib\macurl2path.py" />
+    <Content Include="lib\mailbox.py" />
+    <Content Include="lib\mailcap.py" />
+    <Content Include="lib\mimetypes.py" />
+    <Content Include="lib\modulefinder.py" />
+    <Content Include="lib\msilib\schema.py" />
+    <Content Include="lib\msilib\sequence.py" />
+    <Content Include="lib\msilib\text.py" />
+    <Content Include="lib\msilib\__init__.py" />
+    <Content Include="lib\multiprocessing\connection.py" />
+    <Content Include="lib\multiprocessing\context.py" />
+    <Content Include="lib\multiprocessing\dummy\connection.py" />
+    <Content Include="lib\multiprocessing\dummy\__init__.py" />
+    <Content Include="lib\multiprocessing\forkserver.py" />
+    <Content Include="lib\multiprocessing\heap.py" />
+    <Content Include="lib\multiprocessing\managers.py" />
+    <Content Include="lib\multiprocessing\pool.py" />
+    <Content Include="lib\multiprocessing\popen_fork.py" />
+    <Content Include="lib\multiprocessing\popen_forkserver.py" />
+    <Content Include="lib\multiprocessing\popen_spawn_posix.py" />
+    <Content Include="lib\multiprocessing\popen_spawn_win32.py" />
+    <Content Include="lib\multiprocessing\process.py" />
+    <Content Include="lib\multiprocessing\queues.py" />
+    <Content Include="lib\multiprocessing\reduction.py" />
+    <Content Include="lib\multiprocessing\resource_sharer.py" />
+    <Content Include="lib\multiprocessing\semaphore_tracker.py" />
+    <Content Include="lib\multiprocessing\sharedctypes.py" />
+    <Content Include="lib\multiprocessing\spawn.py" />
+    <Content Include="lib\multiprocessing\synchronize.py" />
+    <Content Include="lib\multiprocessing\util.py" />
+    <Content Include="lib\multiprocessing\__init__.py" />
+    <Content Include="lib\netrc.py" />
+    <Content Include="lib\nntplib.py" />
+    <Content Include="lib\ntpath.py" />
+    <Content Include="lib\nturl2path.py" />
+    <Content Include="lib\numbers.py" />
+    <Content Include="lib\opcode.py" />
+    <Content Include="lib\operator.py" />
+    <Content Include="lib\optparse.py" />
+    <Content Include="lib\os.py" />
+    <Content Include="lib\pathlib.py" />
+    <Content Include="lib\pdb.py" />
+    <Content Include="lib\pickle.py" />
+    <Content Include="lib\pickletools.py" />
+    <Content Include="lib\pipes.py" />
+    <Content Include="lib\pkgutil.py" />
+    <Content Include="lib\platform.py" />
+    <Content Include="lib\plistlib.py" />
+    <Content Include="lib\poplib.py" />
+    <Content Include="lib\posixpath.py" />
+    <Content Include="lib\pprint.py" />
+    <Content Include="lib\profile.py" />
+    <Content Include="lib\pstats.py" />
+    <Content Include="lib\pty.py" />
+    <Content Include="lib\pyclbr.py" />
+    <Content Include="lib\pydoc.py" />
+    <Content Include="lib\pydoc_data\topics.py" />
+    <Content Include="lib\pydoc_data\_pydoc.css" />
+    <Content Include="lib\pydoc_data\__init__.py" />
+    <Content Include="lib\py_compile.py" />
+    <Content Include="lib\queue.py" />
+    <Content Include="lib\quopri.py" />
+    <Content Include="lib\random.py" />
+    <Content Include="lib\re.py" />
+    <Content Include="lib\reprlib.py" />
+    <Content Include="lib\rlcompleter.py" />
+    <Content Include="lib\runpy.py" />
+    <Content Include="lib\sched.py" />
+    <Content Include="lib\selectors.py" />
+    <Content Include="lib\shelve.py" />
+    <Content Include="lib\shlex.py" />
+    <Content Include="lib\shutil.py" />
+    <Content Include="lib\site.py" />
+    <Content Include="lib\smtpd.py" />
+    <Content Include="lib\smtplib.py" />
+    <Content Include="lib\sndhdr.py" />
+    <Content Include="lib\socket.py" />
+    <Content Include="lib\socketserver.py" />
+    <Content Include="lib\sqlite3\dbapi2.py" />
+    <Content Include="lib\sqlite3\dump.py" />
+    <Content Include="lib\sqlite3\__init__.py" />
+    <Content Include="lib\sre_compile.py" />
+    <Content Include="lib\sre_constants.py" />
+    <Content Include="lib\sre_parse.py" />
+    <Content Include="lib\ssl.py" />
+    <Content Include="lib\stat.py" />
+    <Content Include="lib\statistics.py" />
+    <Content Include="lib\string.py" />
+    <Content Include="lib\stringprep.py" />
+    <Content Include="lib\struct.py" />
+    <Content Include="lib\subprocess.py" />
+    <Content Include="lib\sunau.py" />
+    <Content Include="lib\symbol.py" />
+    <Content Include="lib\symtable.py" />
+    <Content Include="lib\sysconfig.py" />
+    <Content Include="lib\tabnanny.py" />
+    <Content Include="lib\tarfile.py" />
+    <Content Include="lib\telnetlib.py" />
+    <Content Include="lib\tempfile.py" />
+    <Content Include="lib\textwrap.py" />
+    <Content Include="lib\this.py" />
+    <Content Include="lib\threading.py" />
+    <Content Include="lib\timeit.py" />
+    <Content Include="lib\token.py" />
+    <Content Include="lib\tokenize.py" />
+    <Content Include="lib\trace.py" />
+    <Content Include="lib\traceback.py" />
+    <Content Include="lib\tracemalloc.py" />
+    <Content Include="lib\tty.py" />
+    <Content Include="lib\turtle.py" />
+    <Content Include="lib\turtledemo\bytedesign.py" />
+    <Content Include="lib\turtledemo\chaos.py" />
+    <Content Include="lib\turtledemo\clock.py" />
+    <Content Include="lib\turtledemo\colormixer.py" />
+    <Content Include="lib\turtledemo\forest.py" />
+    <Content Include="lib\turtledemo\fractalcurves.py" />
+    <Content Include="lib\turtledemo\lindenmayer.py" />
+    <Content Include="lib\turtledemo\minimal_hanoi.py" />
+    <Content Include="lib\turtledemo\nim.py" />
+    <Content Include="lib\turtledemo\paint.py" />
+    <Content Include="lib\turtledemo\peace.py" />
+    <Content Include="lib\turtledemo\penrose.py" />
+    <Content Include="lib\turtledemo\planet_and_moon.py" />
+    <Content Include="lib\turtledemo\round_dance.py" />
+    <Content Include="lib\turtledemo\tree.py" />
+    <Content Include="lib\turtledemo\two_canvases.py" />
+    <Content Include="lib\turtledemo\wikipedia.py" />
+    <Content Include="lib\turtledemo\yinyang.py" />
+    <Content Include="lib\turtledemo\__init__.py" />
+    <Content Include="lib\turtledemo\__main__.py" />
+    <Content Include="lib\types.py" />
+    <Content Include="lib\typing.py" />
+    <Content Include="lib\unittest\case.py" />
+    <Content Include="lib\unittest\loader.py" />
+    <Content Include="lib\unittest\main.py" />
+    <Content Include="lib\unittest\mock.py" />
+    <Content Include="lib\unittest\result.py" />
+    <Content Include="lib\unittest\runner.py" />
+    <Content Include="lib\unittest\signals.py" />
+    <Content Include="lib\unittest\suite.py" />
+    <Content Include="lib\unittest\util.py" />
+    <Content Include="lib\unittest\__init__.py" />
+    <Content Include="lib\unittest\__main__.py" />
+    <Content Include="lib\urllib\error.py" />
+    <Content Include="lib\urllib\parse.py" />
+    <Content Include="lib\urllib\request.py" />
+    <Content Include="lib\urllib\response.py" />
+    <Content Include="lib\urllib\robotparser.py" />
+    <Content Include="lib\urllib\__init__.py" />
+    <Content Include="lib\uu.py" />
+    <Content Include="lib\uuid.py" />
+    <Content Include="lib\venv\scripts\posix\activate.csh" />
+    <Content Include="lib\venv\__init__.py" />
+    <Content Include="lib\venv\__main__.py" />
+    <Content Include="lib\warnings.py" />
+    <Content Include="lib\wave.py" />
+    <Content Include="lib\weakref.py" />
+    <Content Include="lib\webbrowser.py" />
+    <Content Include="lib\wpf.py" />
+    <Content Include="lib\wsgiref\handlers.py" />
+    <Content Include="lib\wsgiref\headers.py" />
+    <Content Include="lib\wsgiref\simple_server.py" />
+    <Content Include="lib\wsgiref\util.py" />
+    <Content Include="lib\wsgiref\validate.py" />
+    <Content Include="lib\wsgiref\__init__.py" />
+    <Content Include="lib\xdrlib.py" />
+    <Content Include="lib\xmlrpc\client.py" />
+    <Content Include="lib\xmlrpc\server.py" />
+    <Content Include="lib\xmlrpc\__init__.py" />
+    <Content Include="lib\xml\dom\domreg.py" />
+    <Content Include="lib\xml\dom\expatbuilder.py" />
+    <Content Include="lib\xml\dom\minicompat.py" />
+    <Content Include="lib\xml\dom\minidom.py" />
+    <Content Include="lib\xml\dom\NodeFilter.py" />
+    <Content Include="lib\xml\dom\pulldom.py" />
+    <Content Include="lib\xml\dom\xmlbuilder.py" />
+    <Content Include="lib\xml\dom\__init__.py" />
+    <Content Include="lib\xml\etree\cElementTree.py" />
+    <Content Include="lib\xml\etree\ElementInclude.py" />
+    <Content Include="lib\xml\etree\ElementPath.py" />
+    <Content Include="lib\xml\etree\ElementTree.py" />
+    <Content Include="lib\xml\etree\__init__.py" />
+    <Content Include="lib\xml\parsers\expat.py" />
+    <Content Include="lib\xml\parsers\__init__.py" />
+    <Content Include="lib\xml\sax\expatreader.py" />
+    <Content Include="lib\xml\sax\handler.py" />
+    <Content Include="lib\xml\sax\saxutils.py" />
+    <Content Include="lib\xml\sax\xmlreader.py" />
+    <Content Include="lib\xml\sax\_exceptions.py" />
+    <Content Include="lib\xml\sax\__init__.py" />
+    <Content Include="lib\xml\__init__.py" />
+    <Content Include="lib\zipfile.py" />
+    <Content Include="lib\_bootlocale.py" />
+    <Content Include="lib\_collections_abc.py" />
+    <Content Include="lib\_compat_pickle.py" />
+    <Content Include="lib\_dummy_thread.py" />
+    <Content Include="lib\_markupbase.py" />
+    <Content Include="lib\_osx_support.py" />
+    <Content Include="lib\_pyio.py" />
+    <Content Include="lib\_sitebuiltins.py" />
+    <Content Include="lib\_strptime.py" />
+    <Content Include="lib\_threading_local.py" />
+    <Content Include="lib\_weakrefset.py" />
+    <Content Include="lib\__future__.py" />
+    <Content Include="lib\__phello__.foo.py" />
+    <Content Include="razor-enhanced.ico" />
+    <None Include="RazorEnhanced\Resources\bug.png" />
+    <None Include="RazorEnhanced\Resources\BarraGrandeOrizzontaBordoDestro.png" />
+    <None Include="RazorEnhanced\Resources\BarraGrandeOrizzontaBordoSinistro.png" />
+    <None Include="RazorEnhanced\Resources\BarraGrandeOrizzontaleSlot.png" />
+    <None Include="RazorEnhanced\Resources\BarraGrandeOrizzontaleSpazioStat.png" />
+    <None Include="RazorEnhanced\Resources\BarraGrandeVerticaleBordoSopra.png" />
+    <None Include="RazorEnhanced\Resources\BarraGrandeVerticaleBordoSotto.png" />
+    <None Include="RazorEnhanced\Resources\BarraGrandeVerticaleSlot.png" />
+    <None Include="RazorEnhanced\Resources\BarraGrandeVerticaleSpazioStat.png" />
+    <None Include="RazorEnhanced\Resources\BarraOrizzontaBordoDestro.png" />
+    <None Include="RazorEnhanced\Resources\BarraOrizzontaBordoSinistro.png" />
+    <None Include="RazorEnhanced\Resources\BarraOrizzontaleSlot.png" />
+    <None Include="RazorEnhanced\Resources\BarraOrizzontaleSpazioStat.png" />
+    <None Include="RazorEnhanced\Resources\BarraVerticaleBordoSopra.png" />
+    <None Include="RazorEnhanced\Resources\BarraVerticaleBordoSotto.png" />
+    <None Include="RazorEnhanced\Resources\BarraVerticaleSlot.png" />
+    <None Include="RazorEnhanced\Resources\BarraVerticaleSpazioStat.png" />
+    <None Include="RazorEnhanced\Resources\bug_go.png" />
+    <None Include="RazorEnhanced\Resources\aggiungi.png" />
+    <None Include="RazorEnhanced\Resources\cancella.png" />
+    <None Include="RazorEnhanced\Resources\esporta.png" />
+    <Content Include="RazorEnhanced\Proto-Control\proto_control_test_client.py" />
+    <Content Include="RazorEnhanced\Resources\green.png" />
+    <None Include="RazorEnhanced\Resources\media-playback-start.png" />
+    <None Include="RazorEnhanced\Resources\media-playback-stop-3.png" />
+    <None Include="RazorEnhanced\Resources\media-seek-forward-3.png" />
+    <None Include="RazorEnhanced\Resources\media-playback-start-3.png" />
+    <None Include="RazorEnhanced\Resources\media-skip-forward-3.png" />
+    <None Include="RazorEnhanced\Resources\media-playback-pause-3.png" />
+    <None Include="RazorEnhanced\Resources\razor-enhanced.ico" />
+    <None Include="RazorEnhanced\Resources\razor-enhanced.png" />
+    <None Include="RazorEnhanced\Resources\gump.png" />
+    <None Include="RazorEnhanced\Resources\map-poison.gif" />
+    <None Include="RazorEnhanced\Resources\map-dead.gif" />
+    <None Include="RazorEnhanced\Resources\map-mortal.gif" />
+    <None Include="RazorEnhanced\Resources\map-paralized.gif" />
+    <None Include="RazorEnhanced\Resources\map-deadIn.png" />
+    <None Include="RazorEnhanced\Resources\map-deadOut.png" />
+    <None Include="RazorEnhanced\Resources\importa.png" />
+    <Content Include="RazorEnhanced\Resources\loop.png" />
+    <None Include="RazorEnhanced\Resources\playagent.png" />
+    <Content Include="RazorEnhanced\Resources\PayPal.png" />
+    <Content Include="RazorEnhanced\Resources\razor-enhanced-splash.png" />
+    <Content Include="RazorEnhanced\Resources\RazorCheckBox.Off.png" />
+    <Content Include="RazorEnhanced\Resources\RazorCheckBox.On.png" />
+    <Content Include="RazorEnhanced\Resources\RazorComboBox.Arrow.png" />
+    <Content Include="RazorEnhanced\Resources\RazorRadioButton.Off.png" />
+    <Content Include="RazorEnhanced\Resources\RazorRadioButton.On.png" />
+    <None Include="RazorEnhanced\Resources\record.png" />
+    <Content Include="RazorEnhanced\Resources\red.png" />
+    <None Include="RazorEnhanced\Resources\RoundButton.png" />
+    <None Include="RazorEnhanced\Resources\uod_logo.png" />
+    <None Include="RazorEnhanced\Resources\toolbar.png" />
+    <None Include="RazorEnhanced\Resources\stopagent.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_Anatomy.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_AnimalLore.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_AnimalTaming.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_ArmsLore.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_Begging.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_Cartography.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_DetectingHidden.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_Discordance.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_EvalInt.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_ForesicEvalutation.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_Hiding.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_Imbuing.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_Inscription.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_ItemID.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_Meditation.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_Peacemaking.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_Poisoning.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_Provocation.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_RemoveTrap.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_SpiritSpeak.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_Stealing.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_Stealth.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_TasteID.png" />
+    <None Include="RazorEnhanced\Resources\Skill_Icon_Tracking.png" />
+    <None Include="RazorEnhanced\Resources\splashnew.jpg" />
+    <Content Include="RazorEnhanced\Resources\search2.png" />
+    <Content Include="RazorEnhanced\Resources\yellow.png" />
+    <None Include="Resources\github.png" />
+    <Content Include="UI\Lock.ico" />
+    <Content Include="UI\UOPS.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FastColoredTextBox\FastColoredTextBox.csproj">
+      <Project>{6dd14a85-ccfc-4774-bd26-0f5772512319}</Project>
+      <Name>FastColoredTextBox</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\UltimaSDK\Ultima.csproj">
+      <Project>{5d66ace6-b2a4-400f-b5a5-24525959ac5c}</Project>
+      <Name>Ultima</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.3.11.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
+    <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.3.11.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <ProtoBufNet_ProtoCompile>true</ProtoBufNet_ProtoCompile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+    <PostBuildEvent>XCOPY  "$(SolutionDir)packages\IronPython.StdLib.3.4.1\content\Lib"  "$(TargetDir)Lib\"  /y /s
+XCOPY  "$(SolutionDir)BuildSupplementalFiles\"*  "$(TargetDir)"  /y /s</PostBuildEvent>
+  </PropertyGroup>
+  <Import Project="..\packages\Accord.3.8.0\build\Accord.targets" Condition="Exists('..\packages\Accord.3.8.0\build\Accord.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Accord.3.8.0\build\Accord.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Accord.3.8.0\build\Accord.targets'))" />
+    <Error Condition="!Exists('..\packages\NETStandard.Library.2.0.3\build\netstandard2.0\NETStandard.Library.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NETStandard.Library.2.0.3\build\netstandard2.0\NETStandard.Library.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\build\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\build\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.targets'))" />
+    <Error Condition="!Exists('..\packages\Accord.Video.FFMPEG.3.8.0\build\Accord.Video.FFMPEG.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Accord.Video.FFMPEG.3.8.0\build\Accord.Video.FFMPEG.targets'))" />
+    <Error Condition="!Exists('..\packages\Grpc.Tools.2.70.0\build\Grpc.Tools.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Grpc.Tools.2.70.0\build\Grpc.Tools.props'))" />
+    <Error Condition="!Exists('..\packages\Grpc.Tools.2.70.0\build\Grpc.Tools.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Grpc.Tools.2.70.0\build\Grpc.Tools.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Web.WebView2.1.0.3065.39\build\Microsoft.Web.WebView2.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Web.WebView2.1.0.3065.39\build\Microsoft.Web.WebView2.targets'))" />
+    <Error Condition="!Exists('..\packages\Grpc.Core.2.37.1\build\net45\Grpc.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Grpc.Core.2.37.1\build\net45\Grpc.Core.targets'))" />
+  </Target>
+  <Import Project="..\packages\NETStandard.Library.2.0.3\build\netstandard2.0\NETStandard.Library.targets" Condition="Exists('..\packages\NETStandard.Library.2.0.3\build\netstandard2.0\NETStandard.Library.targets')" />
+  <Import Project="..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\build\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.targets" Condition="Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.4.1.0\build\net472\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.targets')" />
+  <Import Project="..\packages\Accord.Video.FFMPEG.3.8.0\build\Accord.Video.FFMPEG.targets" Condition="Exists('..\packages\Accord.Video.FFMPEG.3.8.0\build\Accord.Video.FFMPEG.targets')" />
+  <Import Project="..\CustomIntermediateDirs.props" />
+  <Import Project="..\packages\Grpc.Tools.2.70.0\build\Grpc.Tools.targets" Condition="Exists('..\packages\Grpc.Tools.2.70.0\build\Grpc.Tools.targets')" />
+  <Import Project="..\packages\Microsoft.Web.WebView2.1.0.3065.39\build\Microsoft.Web.WebView2.targets" Condition="Exists('..\packages\Microsoft.Web.WebView2.1.0.3065.39\build\Microsoft.Web.WebView2.targets')" />
+  <Import Project="..\packages\Grpc.Core.2.37.1\build\net45\Grpc.Core.targets" Condition="Exists('..\packages\Grpc.Core.2.37.1\build\net45\Grpc.Core.targets')" />
+</Project>

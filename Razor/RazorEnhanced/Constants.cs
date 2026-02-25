@@ -1,0 +1,1 @@
+namespace RazorEnhanced{    internal static class Constants    {        public const int MAX_LAND_DATA_INDEX_COUNT = 0x4000;        public const int MAX_STATIC_DATA_INDEX_COUNT = 0x14000;    }}
