@@ -416,8 +416,8 @@ namespace Assistant
         private Assistant.UI.Controls.RazorCard groupBox3;
         private Label label59;
         private Label label58;
-        private System.Windows.Forms.Button restockExecuteButton;
-        private System.Windows.Forms.Button restockStopButton;
+        private Assistant.UI.Controls.RazorButton restockExecuteButton;
+        private Assistant.UI.Controls.RazorButton restockStopButton;
         private Label label60;
         private RazorAgentNumOnlyTextBox autoLootTextBoxMaxRange;
         private Label label61;
@@ -9872,6 +9872,17 @@ namespace Assistant
             ((System.ComponentModel.ISupportInitialize)(this.advertisement)).EndInit();
             this.scriptgridMenuStrip.ResumeLayout(false);
 
+            // Initialize refactored Agent Tab UIs
+            InitializeAutolootTab();
+            InitializeScavengerTab();
+            InitializeOrganizerTab();
+            InitializeVendorBuyTab();
+            InitializeDressTab();
+            InitializeVendorSellTab();
+            InitializeRestockTab();
+            InitializeFriendsTab();
+            InitializeBandageHealTab();
+
             this.ResumeLayout(false);
 
         }
@@ -9888,6 +9899,16 @@ namespace Assistant
         {
             InitializeSkillsTab2();
         }
+
+        private void InitializeAutolootTab()    { InitializeAutolootTab2(); }
+        private void InitializeScavengerTab()   { InitializeScavengerTab2(); }
+        private void InitializeOrganizerTab()   { InitializeOrganizerTab2(); }
+        private void InitializeVendorBuyTab()   { InitializeVendorBuyTab2(); }
+        private void InitializeDressTab()       { InitializeDressTab2(); }
+        private void InitializeVendorSellTab()  { InitializeVendorSellTab2(); }
+        private void InitializeRestockTab()     { InitializeRestockTab2(); }
+        private void InitializeFriendsTab()     { InitializeFriendsTab2(); }
+        private void InitializeBandageHealTab() { InitializeBandageHealTab2(); }
 
         protected override void WndProc(ref Message msg)
         {
@@ -11292,6 +11313,7 @@ namespace Assistant
             var cFlags = BuildCard("\uE9D9", LanguageHelper.GetString("MainForm.groupBox46.Text"), cw, accent);
 
             // Helper: adds 3 radio buttons (Sì / No / Entrambi) horizontally on one row after a section label.
+            // Each row gets its own Panel so WinForms groups the three radios independently per row.
             Action<string, RadioButton, RadioButton, RadioButton> addFlagGroup = (groupLabel, rbOn, rbOff, rbBoth) => {
                 AddSectionLabel(cFlags, groupLabel);
                 if (rbOn == null && rbOff == null && rbBoth == null) return;
@@ -11299,16 +11321,25 @@ namespace Assistant
                 int curY3  = cFlags.Tag is int ct3 ? ct3 : 38;
                 int rowH3  = 28;
                 int colW3  = (cardW3 - 20) / 3;
+
+                // Panel isolates this row's radio buttons from other rows
+                var rowPanel = new Panel {
+                    Location  = new Point(10, curY3 - 4),
+                    Size      = new Size(cardW3 - 20, rowH3),
+                    BackColor = Color.Transparent,
+                };
+                cFlags.Controls.Add(rowPanel);
+
                 void PlaceRb(RadioButton rb, string lbl, int colX) {
                     if (rb == null) return;
-                    rb.Parent    = cFlags;
+                    rb.Parent    = rowPanel;
                     rb.Text      = lbl;
                     rb.Font      = Assistant.UI.Controls.RazorTheme.Fonts.DisplayFont(9F);
                     rb.ForeColor = Assistant.UI.Controls.RazorTheme.Colors.TextDarkMode;
                     rb.BackColor = Color.Transparent;
                     rb.AutoSize  = false;
                     rb.Size      = new Size(colW3, rowH3);
-                    rb.Location  = new Point(10 + colX, curY3 - 4);
+                    rb.Location  = new Point(colX, 0);
                 }
                 PlaceRb(rbOn,   LanguageHelper.GetString("MainForm.paralizedOn.Text"),   0);
                 PlaceRb(rbOff,  LanguageHelper.GetString("MainForm.paralizedOff.Text"),  colW3);

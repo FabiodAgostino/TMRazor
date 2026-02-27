@@ -770,10 +770,10 @@
     <value>Avanzate</value>
   </data>
   <data name="MainForm.screenshotTab.Text" xml:space="preserve">
-    <value>Istantanee</value>
+    <value>Screenshot</value>
   </data>
   <data name="MainForm.videoTab.Text" xml:space="preserve">
-    <value>Registratore Video</value>
+    <value>Video</value>
   </data>
   <data name="MainForm.showlauncher.Text" xml:space="preserve">
     <value>Mostra Launcher all'avvio</value>
@@ -1298,55 +1298,55 @@
     <value>Autoloot</value>
   </data>
   <data name="MainForm.allowHiddenLooting.Text" xml:space="preserve">
-    <value>Allow looting while hidden</value>
+    <value>Loota da nascosto</value>
   </data>
   <data name="MainForm.autoLootButtonListClone.Text" xml:space="preserve">
-    <value>Clone</value>
+    <value>Clona</value>
   </data>
   <data name="MainForm.autolootautostartCheckBox.Text" xml:space="preserve">
-    <value>Autostart OnLogin</value>
+    <value>Avvio automatico</value>
   </data>
   <data name="MainForm.label60.Text" xml:space="preserve">
-    <value>Max Range</value>
+    <value>Range max</value>
   </data>
   <data name="MainForm.autolootItemPropsB.Text" xml:space="preserve">
-    <value>Edit Props</value>
+    <value>Modifica Proprietà</value>
   </data>
   <data name="MainForm.groupBox14.Text" xml:space="preserve">
-    <value>AutoLoot Bag</value>
+    <value>Sacca Autoloot</value>
   </data>
   <data name="MainForm.label55.Text" xml:space="preserve">
-    <value>Serial:</value>
+    <value>Seriale:</value>
   </data>
   <data name="MainForm.autolootContainerLabel.Text" xml:space="preserve">
     <value>0x00000000</value>
   </data>
   <data name="MainForm.autolootContainerButton.Text" xml:space="preserve">
-    <value>Set Bag</value>
+    <value>Imposta Sacca</value>
   </data>
   <data name="MainForm.autolootAddItemBTarget.Text" xml:space="preserve">
-    <value>Add Item</value>
+    <value>Aggiungi Oggetto</value>
   </data>
   <data name="MainForm.autoLootnoopenCheckBox.Text" xml:space="preserve">
-    <value>No Open Corpse</value>
+    <value>Non aprire cadaveri</value>
   </data>
   <data name="MainForm.label21.Text" xml:space="preserve">
-    <value>Delay (ms)</value>
+    <value>Ritardo (ms)</value>
   </data>
   <data name="MainForm.autoLootButtonRemoveList.Text" xml:space="preserve">
-    <value>Remove</value>
+    <value>Rimuovi</value>
   </data>
   <data name="MainForm.autolootButtonAddList.Text" xml:space="preserve">
-    <value>Add</value>
+    <value>Aggiungi</value>
   </data>
   <data name="MainForm.label20.Text" xml:space="preserve">
-    <value>Autoloot List:</value>
+    <value>Lista Autoloot:</value>
   </data>
   <data name="MainForm.groupBox13.Text" xml:space="preserve">
-    <value>Autoloot Log</value>
+    <value>Log Autoloot</value>
   </data>
   <data name="MainForm.autoLootCheckBox.Text" xml:space="preserve">
-    <value>Enable autoloot</value>
+    <value>Abilita Autoloot</value>
   </data>
   <data name="MainForm.escavenger.Text" xml:space="preserve">
     <value>Scavenger</value>
@@ -1355,46 +1355,46 @@
     <value>Clone</value>
   </data>
   <data name="MainForm.scavengerautostartCheckBox.Text" xml:space="preserve">
-    <value>Autostart OnLogin</value>
+    <value>Avvio Automatico</value>
   </data>
   <data name="MainForm.label61.Text" xml:space="preserve">
-    <value>Max Range</value>
+    <value>Portata Massima</value>
   </data>
   <data name="MainForm.groupBox41.Text" xml:space="preserve">
-    <value>Scavenger Bag</value>
+    <value>Sacca Scavenger</value>
   </data>
   <data name="MainForm.label54.Text" xml:space="preserve">
-    <value>Serial:</value>
+    <value>Seriale:</value>
   </data>
   <data name="MainForm.scavengerContainerLabel.Text" xml:space="preserve">
     <value>0x00000000</value>
   </data>
   <data name="MainForm.scavengerButtonSetContainer.Text" xml:space="preserve">
-    <value>Set Bag</value>
+    <value>Imposta Sacca</value>
   </data>
   <data name="MainForm.groupBox12.Text" xml:space="preserve">
-    <value>Scavenger Log</value>
+    <value>Log Scavenger</value>
   </data>
   <data name="MainForm.label23.Text" xml:space="preserve">
-    <value>Delay (ms)</value>
+    <value>Ritardo (ms)</value>
   </data>
   <data name="MainForm.label22.Text" xml:space="preserve">
-    <value>Scavenger List:</value>
+    <value>Lista Scavenger:</value>
   </data>
   <data name="MainForm.scavengerButtonEditProps.Text" xml:space="preserve">
-    <value>Edit Props</value>
+    <value>Modifica Proprietà</value>
   </data>
   <data name="MainForm.scavengerButtonAddTarget.Text" xml:space="preserve">
-    <value>Add Item</value>
+    <value>Aggiungi Oggetto</value>
   </data>
   <data name="MainForm.scavengerCheckBox.Text" xml:space="preserve">
-    <value>Enable scavenger</value>
+    <value>Abilita Scavenger</value>
   </data>
   <data name="MainForm.scavengerButtonRemoveList.Text" xml:space="preserve">
-    <value>Remove</value>
+    <value>Rimuovi</value>
   </data>
   <data name="MainForm.scavengerButtonAddList.Text" xml:space="preserve">
-    <value>Add</value>
+    <value>Aggiungi</value>
   </data>
   <data name="MainForm.organizer.Text" xml:space="preserve">
     <value>Organizer</value>
@@ -1403,154 +1403,178 @@
     <value>Clone</value>
   </data>
   <data name="MainForm.groupBox11.Text" xml:space="preserve">
-    <value>Organizer Bags</value>
+    <value>Sacche Organizer</value>
   </data>
   <data name="MainForm.label57.Text" xml:space="preserve">
-    <value>Destination:</value>
+    <value>Destinazione:</value>
   </data>
   <data name="MainForm.label56.Text" xml:space="preserve">
-    <value>Source:</value>
+    <value>Sorgente:</value>
   </data>
   <data name="MainForm.organizerSetSourceB.Text" xml:space="preserve">
-    <value>Set Source</value>
+    <value>Imposta Sorgente</value>
   </data>
   <data name="MainForm.organizerSetDestinationB.Text" xml:space="preserve">
-    <value>Set Dest</value>
+    <value>Imposta Dest.</value>
   </data>
   <data name="MainForm.organizerSourceLabel.Text" xml:space="preserve">
     <value>0x00000000</value>
   </data>
   <data name="MainForm.groupBox16.Text" xml:space="preserve">
-    <value>Organizer Log</value>
+    <value>Log Organizer</value>
   </data>
   <data name="MainForm.label27.Text" xml:space="preserve">
-    <value>Drag Item Delay (ms)</value>
+    <value>Ritardo Trascina (ms)</value>
   </data>
   <data name="MainForm.label24.Text" xml:space="preserve">
-    <value>Organizer List:</value>
+    <value>Lista Organizer:</value>
   </data>
   <data name="MainForm.organizerAddTargetB.Text" xml:space="preserve">
-    <value>Add Item</value>
+    <value>Aggiungi Oggetto</value>
   </data>
   <data name="MainForm.organizerRemoveListB.Text" xml:space="preserve">
-    <value>Remove</value>
+    <value>Rimuovi</value>
   </data>
   <data name="MainForm.organizerAddListB.Text" xml:space="preserve">
-    <value>Add</value>
+    <value>Aggiungi</value>
+  </data>
+  <data name="MainForm.organizerConfigCard.Text" xml:space="preserve">
+    <value>Impostazioni</value>
+  </data>
+  <data name="MainForm.organizerExecuteButton.Text" xml:space="preserve">
+    <value>Avvia</value>
+  </data>
+  <data name="MainForm.organizerStopButton.Text" xml:space="preserve">
+    <value>Ferma</value>
+  </data>
+  <data name="MainForm.OrganizerColumnX.HeaderText" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.OrganizerColumnItemName.HeaderText" xml:space="preserve">
+    <value>Nome Oggetto</value>
+  </data>
+  <data name="MainForm.OrganizerColumnGraphics.HeaderText" xml:space="preserve">
+    <value>Grafica</value>
+  </data>
+  <data name="MainForm.OrganizerColumnColor.HeaderText" xml:space="preserve">
+    <value>Colore</value>
+  </data>
+  <data name="MainForm.OrganizerColumnAmount.HeaderText" xml:space="preserve">
+    <value>Quantità</value>
   </data>
   <data name="MainForm.VendorBuy.Text" xml:space="preserve">
-    <value>Vendor Buy</value>
+    <value>Acquisti Vendor</value>
   </data>
   <data name="MainForm.buyToCompleteAmount.Text" xml:space="preserve">
-    <value>Restock</value>
+    <value>Reintegra</value>
   </data>
   <data name="MainForm.buyCompareNameCheckBox.Text" xml:space="preserve">
-    <value>Compare Item Name</value>
+    <value>Confronta Nome Oggetto</value>
   </data>
   <data name="MainForm.buyCloneButton.Text" xml:space="preserve">
     <value>Clone</value>
   </data>
   <data name="MainForm.groupBox18.Text" xml:space="preserve">
-    <value>Buy Log</value>
+    <value>Log Acquisti</value>
   </data>
   <data name="MainForm.label25.Text" xml:space="preserve">
-    <value>Vendor Buy:</value>
+    <value>Acquisti Vendor:</value>
   </data>
   <data name="MainForm.buyAddTargetB.Text" xml:space="preserve">
-    <value>Add Item</value>
+    <value>Aggiungi Oggetto</value>
   </data>
   <data name="MainForm.buyEnableCheckBox.Text" xml:space="preserve">
-    <value>Enable Buy List</value>
+    <value>Abilita Lista Acquisti</value>
   </data>
   <data name="MainForm.buyRemoveListButton.Text" xml:space="preserve">
-    <value>Remove</value>
+    <value>Rimuovi</value>
   </data>
   <data name="MainForm.buyAddListButton.Text" xml:space="preserve">
-    <value>Add</value>
+    <value>Aggiungi</value>
   </data>
   <data name="MainForm.VendorSell.Text" xml:space="preserve">
-    <value>Vendor Sell</value>
+    <value>Vendite Vendor</value>
   </data>
   <data name="MainForm.sellCloneListButton.Text" xml:space="preserve">
     <value>Clone</value>
   </data>
   <data name="MainForm.groupBox19.Text" xml:space="preserve">
-    <value>Sell Bag</value>
+    <value>Sacca Vendita</value>
   </data>
   <data name="MainForm.sellSetBagButton.Text" xml:space="preserve">
-    <value>Set Bag</value>
+    <value>Imposta Sacca</value>
   </data>
   <data name="MainForm.label50.Text" xml:space="preserve">
-    <value>Serial:</value>
+    <value>Seriale:</value>
   </data>
   <data name="MainForm.sellBagLabel.Text" xml:space="preserve">
     <value>0x00000000</value>
   </data>
   <data name="MainForm.groupBox20.Text" xml:space="preserve">
-    <value>Sell Log</value>
+    <value>Log Vendite</value>
   </data>
   <data name="MainForm.label26.Text" xml:space="preserve">
-    <value>Vendor Sell:</value>
+    <value>Vendite Vendor:</value>
   </data>
   <data name="MainForm.sellAddTargerButton.Text" xml:space="preserve">
-    <value>Add Item</value>
+    <value>Aggiungi Oggetto</value>
   </data>
   <data name="MainForm.sellEnableCheckBox.Text" xml:space="preserve">
-    <value>Enable Sell List</value>
+    <value>Abilita Lista Vendite</value>
   </data>
   <data name="MainForm.sellRemoveListButton.Text" xml:space="preserve">
-    <value>Remove</value>
+    <value>Rimuovi</value>
   </data>
   <data name="MainForm.sellAddListButton.Text" xml:space="preserve">
-    <value>Add</value>
+    <value>Aggiungi</value>
   </data>
   <data name="MainForm.Dress.Text" xml:space="preserve">
     <value>Dress / Arm</value>
   </data>
   <data name="MainForm.useUo3D.Text" xml:space="preserve">
-    <value>Use UO3D Equip and UnEquip</value>
+    <value>Usa Equip/UnEquip UO3D</value>
   </data>
   <data name="MainForm.dressStopButton.Text" xml:space="preserve">
-    <value>Stop</value>
+    <value>Ferma</value>
   </data>
   <data name="MainForm.dressConflictCheckB.Text" xml:space="preserve">
-    <value>Remove Conflict Item</value>
+    <value>Rimuovi Oggetti in Conflitto</value>
   </data>
   <data name="MainForm.dressBagLabel.Text" xml:space="preserve">
     <value>0x00000000</value>
   </data>
   <data name="MainForm.groupBox22.Text" xml:space="preserve">
-    <value>Item List</value>
+    <value>Lista Oggetti</value>
   </data>
   <data name="MainForm.dressAddTargetB.Text" xml:space="preserve">
-    <value>Add Target</value>
+    <value>Aggiungi Bersaglio</value>
   </data>
   <data name="MainForm.dressAddManualB.Text" xml:space="preserve">
-    <value>Add Clear Layer</value>
+    <value>Aggiungi Layer Pulito</value>
   </data>
   <data name="MainForm.dressRemoveB.Text" xml:space="preserve">
-    <value>Remove</value>
+    <value>Rimuovi</value>
   </data>
   <data name="MainForm.dressClearListB.Text" xml:space="preserve">
-    <value>ClearList</value>
+    <value>Pulisci Lista</value>
   </data>
   <data name="MainForm.dressReadB.Text" xml:space="preserve">
-    <value>Read Current</value>
+    <value>Leggi Attuale</value>
   </data>
   <data name="MainForm.label29.Text" xml:space="preserve">
-    <value>Drag Item Delay (ms)</value>
+    <value>Ritardo Trascina (ms)</value>
   </data>
   <data name="MainForm.groupBox21.Text" xml:space="preserve">
-    <value>Organizer Log</value>
+    <value>Log Dress</value>
   </data>
   <data name="MainForm.dressSetBagB.Text" xml:space="preserve">
-    <value>Undress Bag</value>
+    <value>Sacca Spoglio</value>
   </data>
   <data name="MainForm.undressExecuteButton.Text" xml:space="preserve">
-    <value>Undres</value>
+    <value>Spoglia</value>
   </data>
   <data name="MainForm.dressExecuteButton.Text" xml:space="preserve">
-    <value>Dress</value>
+    <value>Vesti</value>
   </data>
   <data name="MainForm.columnHeader24.Text" xml:space="preserve">
     <value>X</value>
@@ -1565,28 +1589,28 @@
     <value>Serial</value>
   </data>
   <data name="MainForm.label28.Text" xml:space="preserve">
-    <value>Dress List:</value>
+    <value>Lista Dress:</value>
   </data>
   <data name="MainForm.dressRemoveListB.Text" xml:space="preserve">
-    <value>Remove</value>
+    <value>Rimuovi</value>
   </data>
   <data name="MainForm.dressAddListB.Text" xml:space="preserve">
-    <value>Add</value>
+    <value>Aggiungi</value>
   </data>
   <data name="MainForm.friends.Text" xml:space="preserve">
-    <value>Friends</value>
+    <value>Amici</value>
   </data>
   <data name="MainForm.groupBox34.Text" xml:space="preserve">
-    <value>Guild Friend</value>
+    <value>Amici Gilda</value>
   </data>
   <data name="MainForm.FriendGuildAddButton.Text" xml:space="preserve">
-    <value>Add Manual</value>
+    <value>Aggiungi Manuale</value>
   </data>
   <data name="MainForm.FriendGuildRemoveButton.Text" xml:space="preserve">
-    <value>Remove</value>
+    <value>Rimuovi</value>
   </data>
   <data name="MainForm.groupBox33.Text" xml:space="preserve">
-    <value>Faction Friend</value>
+    <value>Amici Fazione</value>
   </data>
   <data name="MainForm.MINfriendCheckBox.Text" xml:space="preserve">
     <value>MIN</value>
@@ -1601,37 +1625,37 @@
     <value>CoM</value>
   </data>
   <data name="MainForm.friendGroupBox.Text" xml:space="preserve">
-    <value>User Friend</value>
+    <value>Amici Utente</value>
   </data>
   <data name="MainForm.friendAddTargetButton.Text" xml:space="preserve">
-    <value>Add Target</value>
+    <value>Aggiungi Bersaglio</value>
   </data>
   <data name="MainForm.friendRemoveButton.Text" xml:space="preserve">
-    <value>Remove</value>
+    <value>Rimuovi</value>
   </data>
   <data name="MainForm.friendAddButton.Text" xml:space="preserve">
-    <value>Add Manual</value>
+    <value>Aggiungi Manuale</value>
   </data>
   <data name="MainForm.friendloggroupBox.Text" xml:space="preserve">
-    <value>Friend Log</value>
+    <value>Log Amici</value>
   </data>
   <data name="MainForm.friendIncludePartyCheckBox.Text" xml:space="preserve">
-    <value>Include party member in Friend List</value>
+    <value>Includi membri party nella lista amici</value>
   </data>
   <data name="MainForm.friendAttackCheckBox.Text" xml:space="preserve">
-    <value>Prevent attacking friends in warmode</value>
+    <value>Impedisci attacco amici in warmode</value>
   </data>
   <data name="MainForm.friendPartyCheckBox.Text" xml:space="preserve">
-    <value>Autoaccept party from Friends</value>
+    <value>Accetta party automatico da Amici</value>
   </data>
   <data name="MainForm.labelfriend.Text" xml:space="preserve">
-    <value>Friend List:</value>
+    <value>Lista Amici:</value>
   </data>
   <data name="MainForm.friendButtonRemoveList.Text" xml:space="preserve">
-    <value>Remove</value>
+    <value>Rimuovi</value>
   </data>
   <data name="MainForm.friendButtonAddList.Text" xml:space="preserve">
-    <value>Add</value>
+    <value>Aggiungi</value>
   </data>
   <data name="MainForm.restock.Text" xml:space="preserve">
     <value>Restock</value>
@@ -1640,16 +1664,16 @@
     <value>Clone</value>
   </data>
   <data name="MainForm.groupBox3.Text" xml:space="preserve">
-    <value>Restock Bags</value>
+    <value>Sacche Restock</value>
   </data>
   <data name="MainForm.label59.Text" xml:space="preserve">
-    <value>Destination:</value>
+    <value>Destinazione:</value>
   </data>
   <data name="MainForm.label58.Text" xml:space="preserve">
-    <value>Source:</value>
+    <value>Sorgente:</value>
   </data>
   <data name="MainForm.restockSetSourceButton.Text" xml:space="preserve">
-    <value>Set Bag</value>
+    <value>Imposta Sacca</value>
   </data>
   <data name="MainForm.restockSourceLabel.Text" xml:space="preserve">
     <value>0x00000000</value>
@@ -1658,49 +1682,49 @@
     <value>0x00000000</value>
   </data>
   <data name="MainForm.restockSetDestinationButton.Text" xml:space="preserve">
-    <value>Set Bag</value>
+    <value>Imposta Sacca</value>
   </data>
   <data name="MainForm.groupBox2.Text" xml:space="preserve">
-    <value>Restock Log</value>
+    <value>Log Restock</value>
   </data>
   <data name="MainForm.label13.Text" xml:space="preserve">
-    <value>Drag Item Delay (ms)</value>
+    <value>Ritardo Trascina (ms)</value>
   </data>
   <data name="MainForm.label7.Text" xml:space="preserve">
-    <value>Restock List:</value>
+    <value>Lista Restock:</value>
   </data>
   <data name="MainForm.restockAddTargetButton.Text" xml:space="preserve">
-    <value>Add Item</value>
+    <value>Aggiungi Oggetto</value>
   </data>
   <data name="MainForm.restockRemoveListB.Text" xml:space="preserve">
-    <value>Remove</value>
+    <value>Rimuovi</value>
   </data>
   <data name="MainForm.restockAddListB.Text" xml:space="preserve">
-    <value>Add</value>
+    <value>Aggiungi</value>
   </data>
   <data name="MainForm.bandageheal.Text" xml:space="preserve">
-    <value>Bandage Heal</value>
+    <value>Cura con bende</value>
   </data>
   <data name="MainForm.BandageHealSettingsBox.Text" xml:space="preserve">
-    <value>Settings</value>
+    <value>Impostazioni</value>
   </data>
   <data name="MainForm.bandagehealAutostartCheckBox.Text" xml:space="preserve">
-    <value>Autostart OnLogin</value>
+    <value>Avvio Automatico</value>
   </data>
   <data name="MainForm.bandageHealIgnoreCount.Text" xml:space="preserve">
-    <value>Ignore Count</value>
+    <value>Ignora Conteggio</value>
   </data>
   <data name="MainForm.bandagehealTimeWithBufCheckBox.Text" xml:space="preserve">
-    <value>Time with Buff</value>
+    <value>Tempo con Buff</value>
   </data>
   <data name="MainForm.label78.Text" xml:space="preserve">
-    <value>Other:</value>
+    <value>Altro:</value>
   </data>
   <data name="MainForm.bandagehealenableCheckBox.Text" xml:space="preserve">
-    <value>Enable Bandage Heal</value>
+    <value>Abilita Cura Bende</value>
   </data>
   <data name="MainForm.label77.Text" xml:space="preserve">
-    <value>Self:</value>
+    <value>Se Stesso:</value>
   </data>
   <data name="MainForm.bandagehealusetextContent.Text" xml:space="preserve">
     <value>[band</value>
@@ -1709,61 +1733,61 @@
     <value>[bandself</value>
   </data>
   <data name="MainForm.bandagehealusetext.Text" xml:space="preserve">
-    <value>Send text for self heal</value>
+    <value>Invia testo per auto cura</value>
   </data>
   <data name="MainForm.bandagehealusetarget.Text" xml:space="preserve">
-    <value>Use Normal Target</value>
+    <value>Usa Bersaglio Normale</value>
   </data>
   <data name="MainForm.label46.Text" xml:space="preserve">
-    <value>Max Range:</value>
+    <value>Portata Massima:</value>
   </data>
   <data name="MainForm.bandagehealcountdownCheckBox.Text" xml:space="preserve">
-    <value>Show Heal Countdown</value>
+    <value>Mostra Conto alla Rovescia</value>
   </data>
   <data name="MainForm.bandagehealhiddedCheckBox.Text" xml:space="preserve">
-    <value>Block heal if Hidden</value>
+    <value>Blocca cura se Nascosto</value>
   </data>
   <data name="MainForm.bandagehealmortalCheckBox.Text" xml:space="preserve">
-    <value>Block heal if Mortalled</value>
+    <value>Blocca cura se Mortal</value>
   </data>
   <data name="MainForm.bandagehealpoisonCheckBox.Text" xml:space="preserve">
-    <value>Block heal if Poisoned</value>
+    <value>Blocca cura se Avvelenato</value>
   </data>
   <data name="MainForm.label33.Text" xml:space="preserve">
-    <value>% hits</value>
+    <value>% vita</value>
   </data>
   <data name="MainForm.label32.Text" xml:space="preserve">
-    <value>Start Below:</value>
+    <value>Inizia Sotto:</value>
   </data>
   <data name="MainForm.label31.Text" xml:space="preserve">
-    <value>Custom Delay:</value>
+    <value>Ritardo Pers.:</value>
   </data>
   <data name="MainForm.bandagehealdexformulaCheckBox.Text" xml:space="preserve">
-    <value>Use DEX formula delay</value>
+    <value>Usa ritardo formula DEX</value>
   </data>
   <data name="MainForm.label30.Text" xml:space="preserve">
-    <value>Color:</value>
+    <value>Colore:</value>
   </data>
   <data name="MainForm.label19.Text" xml:space="preserve">
     <value>ID:</value>
   </data>
   <data name="MainForm.bandagehealcustomCheckBox.Text" xml:space="preserve">
-    <value>Use Custom Bandage</value>
+    <value>Usa Bende Pers.</value>
   </data>
   <data name="MainForm.bandagehealtargetLabel.Text" xml:space="preserve">
-    <value>Null (0x00000000)</value>
+    <value>Nessuno (0x00000000)</value>
   </data>
   <data name="MainForm.label15.Text" xml:space="preserve">
-    <value>Target:</value>
+    <value>Bersaglio:</value>
   </data>
   <data name="MainForm.bandagehealsettargetButton.Text" xml:space="preserve">
-    <value>Set Target</value>
+    <value>Imposta Bersaglio</value>
   </data>
   <data name="MainForm.label14.Text" xml:space="preserve">
-    <value>Heal Target:</value>
+    <value>Bersaglio Cura:</value>
   </data>
   <data name="MainForm.groupBox5.Text" xml:space="preserve">
-    <value>Bandage Heal Log</value>
+    <value>Log Cura Bende</value>
   </data>
   <data name="MainForm.tabPage2.Text" xml:space="preserve">
     <value>Barra Statistiche</value>
@@ -2213,7 +2237,7 @@
     <value>Formato Immagine:</value>
   </data>
   <data name="MainForm.capNow.Text" xml:space="preserve">
-    <value>Scatta Foto Ora</value>
+    <value>Capture</value>
   </data>
   <data name="MainForm.radioUO.Text" xml:space="preserve">
     <value>Solo UO</value>
@@ -2346,5 +2370,167 @@
   </data>
   <data name="MainForm.stopToolStripMenuItem.Text" xml:space="preserve">
     <value>Stop</value>
+  </data>
+  <data name="MainForm.autolootConfigCard.Text" xml:space="preserve">
+    <value>Impostazioni</value>
+  </data>
+  <data name="MainForm.scavengerConfigCard.Text" xml:space="preserve">
+    <value>Impostazioni</value>
+  </data>
+  <data name="MainForm.AutolootColumnX.HeaderText" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.AutolootColumnItemName.HeaderText" xml:space="preserve">
+    <value>Nome Oggetto</value>
+  </data>
+  <data name="MainForm.AutolootColumnItemID.HeaderText" xml:space="preserve">
+    <value>Grafica</value>
+  </data>
+  <data name="MainForm.AutolootColumnColor.HeaderText" xml:space="preserve">
+    <value>Colore</value>
+  </data>
+  <data name="MainForm.AutolootColumnProps.HeaderText" xml:space="preserve">
+    <value>Proprietà</value>
+  </data>
+  <data name="MainForm.vendorbuyItemsCard.Text" xml:space="preserve">
+    <value>Acquisti Vendor</value>
+  </data>
+  <data name="MainForm.vendorbuyConfigCard.Text" xml:space="preserve">
+    <value>Impostazioni</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnX.HeaderText" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnName.HeaderText" xml:space="preserve">
+    <value>Nome Oggetto</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnGraphics.HeaderText" xml:space="preserve">
+    <value>Grafica</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnAmount.HeaderText" xml:space="preserve">
+    <value>Quantità</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnColor.HeaderText" xml:space="preserve">
+    <value>Colore</value>
+  </data>
+  <data name="MainForm.dressItemsCard.Text" xml:space="preserve">
+    <value>Vestizione / Armi</value>
+  </data>
+  <data name="MainForm.dressConfigCard.Text" xml:space="preserve">
+    <value>Impostazioni</value>
+  </data>
+  <data name="MainForm.dressConfigCard.Log" xml:space="preserve">
+    <value>Log Vestizione</value>
+  </data>
+  <data name="sellListLabel" xml:space="preserve">
+    <value>Lista:</value>
+  </data>
+  <data name="sellAddListButton" xml:space="preserve">
+    <value>Aggiungi</value>
+  </data>
+  <data name="sellRemoveListButton" xml:space="preserve">
+    <value>Rimuovi</value>
+  </data>
+  <data name="sellCloneListButton" xml:space="preserve">
+    <value>Clona</value>
+  </data>
+  <data name="vendorSellDataGridX" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="vendorSellDataGridItemName" xml:space="preserve">
+    <value>Nome Oggetto</value>
+  </data>
+  <data name="vendorSellDataGridGraphics" xml:space="preserve">
+    <value>Grafica</value>
+  </data>
+  <data name="vendorSellDataGridAmount" xml:space="preserve">
+    <value>Quantità</value>
+  </data>
+  <data name="vendorSellDataGridColor" xml:space="preserve">
+    <value>Colore</value>
+  </data>
+  <data name="sellAddItemButton" xml:space="preserve">
+    <value>Aggiungi Oggetto</value>
+  </data>
+  <data name="sellSettingsCard" xml:space="preserve">
+    <value>Impostazioni</value>
+  </data>
+  <data name="sellEnableCheckBox" xml:space="preserve">
+    <value>Abilita Lista Vendita</value>
+  </data>
+  <data name="sellBagLabel" xml:space="preserve">
+    <value>Contenitore Vendita</value>
+  </data>
+  <data name="sellSetBagButton" xml:space="preserve">
+    <value>Imposta Contenitore</value>
+  </data>
+  <data name="sellLogLabel" xml:space="preserve">
+    <value>Log Vendita</value>
+  </data>
+  <data name="MainForm.vendorsellItemsCard.Text" xml:space="preserve">
+    <value>Vendite Vendor</value>
+  </data>
+  <data name="MainForm.friends.Text" xml:space="preserve">
+    <value>Amici</value>
+  </data>
+  <data name="MainForm.friendsConfigCard.Text" xml:space="preserve">
+    <value>Impostazioni</value>
+  </data>
+  <data name="restockAddListButton" xml:space="preserve">
+    <value>Aggiungi</value>
+  </data>
+  <data name="restockRemoveListButton" xml:space="preserve">
+    <value>Rimuovi</value>
+  </data>
+  <data name="restockCloneListButton" xml:space="preserve">
+    <value>Clona</value>
+  </data>
+  <data name="restockDataGridX" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="restockDataGridItemName" xml:space="preserve">
+    <value>Nome Oggetto</value>
+  </data>
+  <data name="restockDataGridGraphics" xml:space="preserve">
+    <value>Grafica</value>
+  </data>
+  <data name="restockDataGridColor" xml:space="preserve">
+    <value>Colore</value>
+  </data>
+  <data name="restockDataGridLimit" xml:space="preserve">
+    <value>Limite</value>
+  </data>
+  <data name="restockAddItemButton" xml:space="preserve">
+    <value>Aggiungi Oggetto</value>
+  </data>
+  <data name="restockConfigCard" xml:space="preserve">
+    <value>Impostazioni</value>
+  </data>
+  <data name="restockBagsLabel" xml:space="preserve">
+    <value>Sacche Restock</value>
+  </data>
+  <data name="restockSourceLabel" xml:space="preserve">
+    <value>Sorgente:</value>
+  </data>
+  <data name="restockSetSourceButton" xml:space="preserve">
+    <value>Imposta Sorgente</value>
+  </data>
+  <data name="restockDestinationLabel" xml:space="preserve">
+    <value>Destinazione:</value>
+  </data>
+  <data name="restockSetDestinationButton" xml:space="preserve">
+    <value>Imposta Destinazione</value>
+  </data>
+  <data name="restockExecuteButton" xml:space="preserve">
+    <value>Esegui</value>
+  </data>
+  <data name="restockStopButton" xml:space="preserve">
+    <value>Ferma</value>
+  </data>
+  <data name="restockDragDelayLabel" xml:space="preserve">
+    <value>Ritardo Trascina (ms)</value>
+  </data>
+  <data name="restockLogLabel" xml:space="preserve">
+    <value>Log Restock</value>
   </data>
 </root>

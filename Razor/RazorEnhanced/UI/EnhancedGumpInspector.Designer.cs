@@ -1,3 +1,5 @@
+using Assistant.UI.Controls;
+
 namespace RazorEnhanced.UI
 {
     partial class EnhancedGumpInspector
@@ -31,7 +33,7 @@ namespace RazorEnhanced.UI
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(EnhancedGumpInspector));
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.close = new System.Windows.Forms.Button();
-            this.clear = new System.Windows.Forms.Button();
+            this.clear = new RazorButton();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.razorButton1 = new System.Windows.Forms.Button();
@@ -55,6 +57,7 @@ namespace RazorEnhanced.UI
             this.clear.Size = new System.Drawing.Size(75, 25);
             this.clear.TabIndex = 4;
             this.clear.Text = "Clear";
+            this.clear.OverrideCustomColor = Assistant.UI.Controls.RazorTheme.Colors.Danger;
             this.clear.UseVisualStyleBackColor = true;
             this.clear.Click += new System.EventHandler(this.razorButton1_Click);
             // 

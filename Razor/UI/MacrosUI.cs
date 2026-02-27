@@ -76,7 +76,8 @@ namespace Assistant
                 Text = Language.GetControlText("MainForm::newMacro") ?? "New",
                 Location = new Point(10, 300),
                 Size = new Size(55, 30),
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
+                OverrideCustomColor = RazorTheme.Colors.New
             };
             btnMacroNew.Click += BtnMacroNew_Click;
 

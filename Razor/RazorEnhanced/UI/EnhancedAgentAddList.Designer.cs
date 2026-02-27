@@ -1,3 +1,5 @@
+using Assistant.UI.Controls;
+
 namespace RazorEnhanced.UI
 {
     partial class EnhancedAgentAddList
@@ -32,7 +34,7 @@ namespace RazorEnhanced.UI
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.AgentListToAdd = new System.Windows.Forms.TextBox();
             this.agentcloseItemList = new System.Windows.Forms.Button();
-            this.agentaddItemList = new System.Windows.Forms.Button();
+            this.agentaddItemList = new RazorButton();
             this.SuspendLayout();
             // 
             // AgentListToAdd
@@ -64,6 +66,7 @@ namespace RazorEnhanced.UI
             this.agentaddItemList.Size = new System.Drawing.Size(75, 25);
             this.agentaddItemList.TabIndex = 3;
             this.agentaddItemList.Text = "Add";
+            this.agentaddItemList.OverrideCustomColor = Assistant.UI.Controls.RazorTheme.Colors.Success;
             this.agentaddItemList.UseVisualStyleBackColor = true;
             this.agentaddItemList.Click += new System.EventHandler(this.EnhancedAgentAddList_Click);
             // 
@@ -90,7 +93,7 @@ namespace RazorEnhanced.UI
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private System.Windows.Forms.TextBox AgentListToAdd;
         private System.Windows.Forms.Button agentcloseItemList;
-        private System.Windows.Forms.Button agentaddItemList;
+        private RazorButton agentaddItemList;
 
     }
 }

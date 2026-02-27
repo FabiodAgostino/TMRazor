@@ -1,3 +1,5 @@
+using Assistant.UI.Controls;
+
 namespace RazorEnhanced.UI
 {
     partial class EnhancedAutolootEditItemProps
@@ -61,7 +63,7 @@ namespace RazorEnhanced.UI
             this.label1 = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.label6 = new System.Windows.Forms.Label();
-            this.bAddProp = new System.Windows.Forms.Button();
+            this.bAddProp = new RazorButton();
             this.comboboxProp = new System.Windows.Forms.ComboBox();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.deleteRowToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -303,6 +305,7 @@ namespace RazorEnhanced.UI
             this.bAddProp.Size = new System.Drawing.Size(75, 25);
             this.bAddProp.TabIndex = 6;
             this.bAddProp.Text = "Add";
+            this.bAddProp.OverrideCustomColor = Assistant.UI.Controls.RazorTheme.Colors.Success;
             this.bAddProp.UseVisualStyleBackColor = true;
             this.bAddProp.Click += new System.EventHandler(this.bAddProp_Click);
             // 
@@ -386,7 +389,7 @@ namespace RazorEnhanced.UI
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.Button razorButton1;
-        private System.Windows.Forms.Button bAddProp;
+        private RazorButton bAddProp;
         private System.Windows.Forms.ComboBox comboboxProp;
         private System.Windows.Forms.Label lColor;
         private System.Windows.Forms.Label lGraphics;

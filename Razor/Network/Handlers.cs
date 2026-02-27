@@ -2584,6 +2584,19 @@ namespace Assistant
             RazorEnhanced.Gumps.AddGump(World.Player.CurrentGumpS, World.Player.CurrentGumpI);
 
             RazorEnhanced.Macros.MacroManager.RecordAction(new RazorEnhanced.Macros.Actions.WaitForGumpAction(World.Player.CurrentGumpI, 10000));
+
+            // --- AntiMacro: salva layout 0xB0 in SharedValue per script Python ---
+            try
+            {
+                p.ReadUInt32(); // x
+                p.ReadUInt32(); // y
+                ushort layoutLen = p.ReadUInt16();
+                string layout = layoutLen > 0 ? p.ReadString(layoutLen) : "";
+                RazorEnhanced.Misc.SetSharedValue("LastGumpLayout", layout);
+                RazorEnhanced.Misc.SetSharedValue("LastGumpLayoutID", World.Player.CurrentGumpI);
+                RazorEnhanced.Misc.SetSharedValue("LastGumpLayoutSerial", World.Player.CurrentGumpS);
+            }
+            catch { }
         }
 
         internal static void ClientGumpResponse(PacketReader p, PacketHandlerEventArgs args)
@@ -2611,6 +2624,11 @@ namespace Assistant
             int bid = p.ReadInt32();
             if (gd != null)
                 gd.buttonid = bid;
+
+            // --- AntiMacro: salva buttonID del click manuale in SharedValue ---
+            RazorEnhanced.Misc.SetSharedValue("LastGumpResponseID", gumpID);
+            RazorEnhanced.Misc.SetSharedValue("LastGumpResponseSerial", (uint)ser);
+            RazorEnhanced.Misc.SetSharedValue("LastGumpResponseButtonID", bid);
 
             List<int> switchesid = new();
 

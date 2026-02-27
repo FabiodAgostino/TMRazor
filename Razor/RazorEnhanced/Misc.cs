@@ -779,7 +779,7 @@ namespace RazorEnhanced
         /// List all Shared Value Keys
         /// Shared values are accessible by every script.
         /// </summary>
-        /// <returns>List<string> containing all the shared value keys</returns>
+        /// <returns>List&lt;string&gt; containing all the shared value keys</returns>
         public static List<string> AllSharedValue()
         {
             return m_sharedscriptdata.Keys.ToList();

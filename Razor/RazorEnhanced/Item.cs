@@ -2329,8 +2329,8 @@ namespace RazorEnhanced
         /// Open a container at a specific location
         /// </summary>
         /// <param name="serial">Serial or Item to hide.</param>
-        /// <param name="x"> x location to open at
-        /// <param name="y"> y location to open at
+        /// <param name="x"> x location to open at </param>
+        /// <param name="y"> y location to open at </param>
         ///
         public static void OpenAt(int serial, int x, int y)
         {

@@ -1,3 +1,5 @@
+using Assistant.UI.Controls;
+
 namespace RazorEnhanced.UI
 {
     partial class EnhancedProfileClone
@@ -32,7 +34,7 @@ namespace RazorEnhanced.UI
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.profilename = new System.Windows.Forms.TextBox();
             this.close = new System.Windows.Forms.Button();
-            this.profileadd = new System.Windows.Forms.Button();
+            this.profileadd = new RazorButton();
             this.label1 = new System.Windows.Forms.Label();
             this.cloneNameLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
@@ -66,6 +68,7 @@ namespace RazorEnhanced.UI
             this.profileadd.Size = new System.Drawing.Size(75, 25);
             this.profileadd.TabIndex = 3;
             this.profileadd.Text = "Clone";
+            this.profileadd.OverrideCustomColor = Assistant.UI.Controls.RazorTheme.Colors.Success;
             this.profileadd.UseVisualStyleBackColor = true;
             this.profileadd.Click += new System.EventHandler(this.profileadd_Click);
             // 
@@ -113,7 +116,7 @@ namespace RazorEnhanced.UI
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private System.Windows.Forms.TextBox profilename;
         private System.Windows.Forms.Button close;
-        private System.Windows.Forms.Button profileadd;
+        private RazorButton profileadd;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label cloneNameLabel;
 

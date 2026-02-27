@@ -1,3 +1,5 @@
+using Assistant.UI.Controls;
+
 namespace RazorEnhanced.UI
 {
     partial class EnhancedLauncher
@@ -33,8 +35,8 @@ namespace RazorEnhanced.UI
             this.openclientlocation = new System.Windows.Forms.OpenFileDialog();
             this.label1 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.removeShard = new System.Windows.Forms.Button();
-            this.addShard = new System.Windows.Forms.Button();
+            this.removeShard = new RazorButton();
+            this.addShard = new RazorButton();
             this.shardlistCombobox = new System.Windows.Forms.ComboBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.cuoPathClick = new System.Windows.Forms.Button();
@@ -52,10 +54,10 @@ namespace RazorEnhanced.UI
             this.bNameCopy = new System.Windows.Forms.Button();
             this.clientPathLabel = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
-            this.checkupdatebutton = new System.Windows.Forms.Button();
-            this.quit = new System.Windows.Forms.Button();
-            this.launch = new System.Windows.Forms.Button();
-            this.launchCUO = new System.Windows.Forms.Button();
+            this.checkupdatebutton = new RazorButton();
+            this.quit = new RazorButton();
+            this.launch = new RazorButton();
+            this.launchCUO = new RazorButton();
             this.m_Tip = new System.Windows.Forms.ToolTip(this.components);
             this.labelLanguage = new System.Windows.Forms.Label();
             this.languageComboBox = new System.Windows.Forms.ComboBox();
@@ -100,6 +102,7 @@ namespace RazorEnhanced.UI
             this.removeShard.Size = new System.Drawing.Size(60, 23);
             this.removeShard.TabIndex = 3;
             this.removeShard.Text = "Remove";
+            this.removeShard.OverrideCustomColor = Assistant.UI.Controls.RazorTheme.Colors.Danger;
             this.removeShard.UseVisualStyleBackColor = true;
             this.removeShard.Click += new System.EventHandler(this.RazorButton2_Click);
             // 
@@ -110,6 +113,7 @@ namespace RazorEnhanced.UI
             this.addShard.Size = new System.Drawing.Size(60, 23);
             this.addShard.TabIndex = 2;
             this.addShard.Text = "Add";
+            this.addShard.OverrideCustomColor = Assistant.UI.Controls.RazorTheme.Colors.Success;
             this.addShard.UseVisualStyleBackColor = true;
             this.addShard.Click += new System.EventHandler(this.RazorButton1_Click);
             // 
@@ -319,6 +323,7 @@ namespace RazorEnhanced.UI
             this.quit.Size = new System.Drawing.Size(84, 23);
             this.quit.TabIndex = 103;
             this.quit.Text = "Exit";
+            this.quit.OverrideCustomColor = Assistant.UI.Controls.RazorTheme.Colors.Danger;
             this.quit.Click += new System.EventHandler(this.Quit_Click);
             // 
             // launch
@@ -329,6 +334,7 @@ namespace RazorEnhanced.UI
             this.launch.Size = new System.Drawing.Size(84, 23);
             this.launch.TabIndex = 100;
             this.launch.Text = "Launch";
+            this.launch.OverrideCustomColor = Assistant.UI.Controls.RazorTheme.Colors.Success;
             this.launch.Click += new System.EventHandler(this.Okay_Click);
             // 
             // launchCUO
@@ -340,6 +346,7 @@ namespace RazorEnhanced.UI
             this.launchCUO.Size = new System.Drawing.Size(84, 23);
             this.launchCUO.TabIndex = 101;
             this.launchCUO.Text = "Launch CUO";
+            this.launchCUO.OverrideCustomColor = Assistant.UI.Controls.RazorTheme.Colors.Success;
             this.launchCUO.Click += new System.EventHandler(this.LaunchCUO_Click);
             // 
             // labelLanguage
@@ -397,8 +404,8 @@ namespace RazorEnhanced.UI
         internal System.Windows.Forms.ToolTip m_Tip;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.Button removeShard;
-        private System.Windows.Forms.Button addShard;
+        private RazorButton removeShard;
+        private RazorButton addShard;
         private System.Windows.Forms.Label clientPathLabel;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button bNameCopy;
@@ -411,16 +418,16 @@ namespace RazorEnhanced.UI
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.CheckBox osiEnc;
         private System.Windows.Forms.CheckBox patchEnc;
-        private System.Windows.Forms.Button quit;
-        private System.Windows.Forms.Button launch;
+        private RazorButton quit;
+        private RazorButton launch;
         private System.Windows.Forms.GroupBox groupBox2;
         public System.Windows.Forms.ComboBox shardlistCombobox;
         private System.Windows.Forms.OpenFileDialog openclientlocation;
-        private System.Windows.Forms.Button checkupdatebutton;
+        private RazorButton checkupdatebutton;
         private System.Windows.Forms.Button cuoPathClick;
         private System.Windows.Forms.Label cuoClientLabel;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.Button launchCUO;
+        private RazorButton launchCUO;
         private System.Windows.Forms.ComboBox languageComboBox;
         private System.Windows.Forms.Label labelLanguage;
     }

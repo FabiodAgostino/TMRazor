@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -388,7 +388,981 @@
   <data name="MainForm.groupBox29.Text" xml:space="preserve">
     <value>Profiles</value>
   </data>
-<data name="MainForm.columnHeader28.Text" xml:space="preserve"><value>X</value></data><data name="MainForm.columnHeader29.Text" xml:space="preserve"><value>Name</value></data><data name="MainForm.columnHeader30.Text" xml:space="preserve"><value>Serial</value></data><data name="MainForm.columnHeader63.Text" xml:space="preserve"><value>X</value></data><data name="MainForm.columnHeader64.Text" xml:space="preserve"><value>Guild</value></data><data name="MainForm.groupBox1.Text" xml:space="preserve"><value>Filters</value></data><data name="MainForm.morefilterLabel.Text" xml:space="preserve"><value>More Filters:</value></data><data name="MainForm.filterNPC.Text" xml:space="preserve"><value>Monster Messages</value></data><data name="MainForm.filterPoison.Text" xml:space="preserve"><value>Poison Messages</value></data><data name="MainForm.filterSnoop.Text" xml:space="preserve"><value>Snooping Messages</value></data><data name="MainForm.spamFilter.Text" xml:space="preserve"><value>Repeating Sys Messages</value></data><data name="MainForm.JournalFilterPage.Text" xml:space="preserve"><value>Virtual</value></data><data name="MainForm.deleteRowToolStripMenuItem.Text" xml:space="preserve"><value>Delete Row</value></data><data name="MainForm.targettingTab.Text" xml:space="preserve"><value>Targetting</value></data><data name="MainForm.groupBox43.Text" xml:space="preserve"><value>Shortcut</value></data><data name="MainForm.label76.Text" xml:space="preserve"><value>Name:</value></data><data name="MainForm.targetremoveButton.Text" xml:space="preserve"><value>Remove</value></data><data name="MainForm.targetaddButton.Text" xml:space="preserve"><value>Add</value></data><data name="MainForm.groupBox44.Text" xml:space="preserve"><value>Body Filter</value></data><data name="MainForm.targetChoseBody.Text" xml:space="preserve"><value>Target Body ID</value></data><data name="MainForm.targetbodyCheckBox.Text" xml:space="preserve"><value>Enable</value></data><data name="MainForm.groupBox45.Text" xml:space="preserve"><value>Color Filter</value></data><data name="MainForm.targetChoseHue.Text" xml:space="preserve"><value>Target Hue ID</value></data><data name="MainForm.targetcoloCheckBox.Text" xml:space="preserve"><value>Enable</value></data><data name="MainForm.groupBox48.Text" xml:space="preserve"><value>Range</value></data><data name="MainForm.label73.Text" xml:space="preserve"><value>Set -1 for no limit</value></data><data name="MainForm.label74.Text" xml:space="preserve"><value>Max:</value></data><data name="MainForm.targetRangeMaxTextBox.Text" xml:space="preserve"><value>-1</value></data><data name="MainForm.label75.Text" xml:space="preserve"><value>Min:</value></data><data name="MainForm.targetRangeMinTextBox.Text" xml:space="preserve"><value>-1</value></data><data name="MainForm.groupBox57.Text" xml:space="preserve"><value>Notoriety Color</value></data><data name="MainForm.targetYellowCheckBox.Text" xml:space="preserve"><value>Yellow</value></data><data name="MainForm.targetRedCheckBox.Text" xml:space="preserve"><value>Red</value></data><data name="MainForm.targetOrangeCheckBox.Text" xml:space="preserve"><value>Orange</value></data><data name="MainForm.targetCriminalCheckBox.Text" xml:space="preserve"><value>Grey (Aggro)</value></data><data name="MainForm.targetGreyCheckBox.Text" xml:space="preserve"><value>Grey</value></data><data name="MainForm.targetGreenCheckBox.Text" xml:space="preserve"><value>Green</value></data><data name="MainForm.targetBlueCheckBox.Text" xml:space="preserve"><value>Blue</value></data><data name="MainForm.groupBox46.Text" xml:space="preserve"><value>Flags</value></data><data name="MainForm.groupBox47.Text" xml:space="preserve"><value>Paralized</value></data><data name="MainForm.paralizedBoth.Text" xml:space="preserve"><value>Both</value></data><data name="MainForm.paralizedOff.Text" xml:space="preserve"><value>No</value></data><data name="MainForm.paralizedOn.Text" xml:space="preserve"><value>Yes</value></data><data name="MainForm.groupBox49.Text" xml:space="preserve"><value>Friend</value></data><data name="MainForm.friendOn.Text" xml:space="preserve"><value>Yes</value></data><data name="MainForm.friendBoth.Text" xml:space="preserve"><value>Both</value></data><data name="MainForm.friendOff.Text" xml:space="preserve"><value>No</value></data><data name="MainForm.groupBox50.Text" xml:space="preserve"><value>Warmode</value></data><data name="MainForm.warmodeOn.Text" xml:space="preserve"><value>Yes</value></data><data name="MainForm.warmodeBoth.Text" xml:space="preserve"><value>Both</value></data><data name="MainForm.warmodeOff.Text" xml:space="preserve"><value>No</value></data><data name="MainForm.groupBox51.Text" xml:space="preserve"><value>Ghost</value></data><data name="MainForm.ghostOn.Text" xml:space="preserve"><value>Yes</value></data><data name="MainForm.ghostBoth.Text" xml:space="preserve"><value>Both</value></data><data name="MainForm.ghostOff.Text" xml:space="preserve"><value>No</value></data><data name="MainForm.groupBox52.Text" xml:space="preserve"><value>Human</value></data><data name="MainForm.humanOn.Text" xml:space="preserve"><value>Yes</value></data><data name="MainForm.humanOff.Text" xml:space="preserve"><value>No</value></data><data name="MainForm.humanBoth.Text" xml:space="preserve"><value>Both</value></data><data name="MainForm.groupBox53.Text" xml:space="preserve"><value>Yellow Hits</value></data><data name="MainForm.blessedOn.Text" xml:space="preserve"><value>Yes</value></data><data name="MainForm.blessedOff.Text" xml:space="preserve"><value>No</value></data><data name="MainForm.blessedBoth.Text" xml:space="preserve"><value>Both</value></data><data name="MainForm.groupBox54.Text" xml:space="preserve"><value>Poisoned</value></data><data name="MainForm.poisonedOn.Text" xml:space="preserve"><value>Yes</value></data><data name="MainForm.poisonedOff.Text" xml:space="preserve"><value>No</value></data><data name="MainForm.poisonedBoth.Text" xml:space="preserve"><value>Both</value></data><data name="MainForm.groupBox56.Text" xml:space="preserve"><value>Selector</value></data><data name="MainForm.groupBox55.Text" xml:space="preserve"><value>Target (Char/Mob) Name</value></data><data name="MainForm.targetTestButton.Text" xml:space="preserve"><value>Test Target</value></data><data name="MainForm.targetsaveButton.Text" xml:space="preserve"><value>Save Change</value></data><data name="MainForm.MiscFilterPage.Text" xml:space="preserve"><value>Misc</value></data><data name="MainForm.groupBox24.Text" xml:space="preserve"><value>Misc</value></data><data name="MainForm.colorflagsselfHighlightCheckBox.Text" xml:space="preserve"><value>Color Flag Self Highlight</value></data><data name="MainForm.showagentmessageCheckBox.Text" xml:space="preserve"><value>Show Agent Message</value></data><data name="MainForm.showmessagefieldCheckBox.Text" xml:space="preserve"><value>Show Filed Message</value></data><data name="MainForm.colorflagsHighlightCheckBox.Text" xml:space="preserve"><value>Color Flag Highlight</value></data><data name="MainForm.blockchivalryhealCheckBox.Text" xml:space="preserve"><value>Block ChivaHeal if no need</value></data><data name="MainForm.blockbighealCheckBox.Text" xml:space="preserve"><value>Block BigHeal if no need</value></data><data name="MainForm.blockminihealCheckBox.Text" xml:space="preserve"><value>Block MiniHeal if no need</value></data><data name="MainForm.blockhealpoisonCheckBox.Text" xml:space="preserve"><value>Block Heal if Poison/Mortal</value></data><data name="MainForm.showheadtargetCheckBox.Text" xml:space="preserve"><value>Show Target on Head</value></data><data name="MainForm.blockpartyinviteCheckBox.Text" xml:space="preserve"><value>Block Party Invite</value></data><data name="MainForm.blocktraderequestCheckBox.Text" xml:space="preserve"><value>Block Trade Request</value></data><data name="MainForm.highlighttargetCheckBox.Text" xml:space="preserve"><value>Text Current Target</value></data><data name="MainForm.flagsHighlightCheckBox.Text" xml:space="preserve"><value>Text Flags Highlight</value></data><data name="MainForm.showstaticfieldCheckBox.Text" xml:space="preserve"><value>Show Static Field</value></data><data name="MainForm.groupBox23.Text" xml:space="preserve"><value>Mobile Graphics Change Filter</value></data><data name="MainForm.mobfilterCheckBox.Text" xml:space="preserve"><value>Enable</value></data><data name="MainForm.uomodgroupbox.Text" xml:space="preserve"><value>UoMod (Client &gt; 7.0.0.0)</value></data><data name="MainForm.uomodpaperdollCheckBox.Text" xml:space="preserve"><value>Show Paperdoll Slot</value></data><data name="MainForm.uomodglobalsoundCheckBox.Text" xml:space="preserve"><value>Global Sound</value></data><data name="MainForm.uomodFPSCheckBox.Text" xml:space="preserve"><value>Increase FPS</value></data><data name="MainForm.groupBox10.Text" xml:space="preserve"><value>Auto Carver</value></data><data name="MainForm.autocarverbladeLabel.Text" xml:space="preserve"><value>0x00000000</value></data><data name="MainForm.label34.Text" xml:space="preserve"><value>Blade Serial:</value></data><data name="MainForm.autocarverrazorButton.Text" xml:space="preserve"><value>Set Blade</value></data><data name="MainForm.autocarverCheckBox.Text" xml:space="preserve"><value>Enable</value></data><data name="MainForm.groupBox9.Text" xml:space="preserve"><value>Bone Cutter</value></data><data name="MainForm.bonebladeLabel.Text" xml:space="preserve"><value>0x00000000</value></data><data name="MainForm.label16.Text" xml:space="preserve"><value>Blade Serial:</value></data><data name="MainForm.boneCutterrazorButton.Text" xml:space="preserve"><value>Set Blade</value></data><data name="MainForm.bonecutterCheckBox.Text" xml:space="preserve"><value>Enable</value></data><data name="MainForm.groupBox32.Text" xml:space="preserve"><value>Auto Remount</value></data><data name="MainForm.label48.Text" xml:space="preserve"><value>Ethereal Delay:</value></data><data name="MainForm.label40.Text" xml:space="preserve"><value>Mount Delay:</value></data><data name="MainForm.remountseriallabel.Text" xml:space="preserve"><value>0x00000000</value></data><data name="MainForm.label47.Text" xml:space="preserve"><value>Mount Serial:</value></data><data name="MainForm.remountsetbutton.Text" xml:space="preserve"><value>Set Mount</value></data><data name="MainForm.remountcheckbox.Text" xml:space="preserve"><value>Enable</value></data><data name="MainForm.DmgDsplyGroup.Text" xml:space="preserve"><value>Damage Display</value></data><data name="MainForm.label81.Text" xml:space="preserve"><value>Min Dmg:</value></data><data name="MainForm.limitDamageDisplayEnable.Text" xml:space="preserve"><value>Suppress Dmg Display</value></data><data name="MainForm.pythonScriptingTab.Text" xml:space="preserve"><value>Python</value></data><data name="MainForm.filename.Text" xml:space="preserve"><value>Filename</value></data><data name="MainForm.status.Text" xml:space="preserve"><value>Status</value></data><data name="MainForm.loop.Text" xml:space="preserve"><value>Loop</value></data><data name="MainForm.autostart.Text" xml:space="preserve"><value>A.S.</value></data><data name="MainForm.wait.Text" xml:space="preserve"><value>Wait</value></data><data name="MainForm.hotkey.Text" xml:space="preserve"><value>Hot Keys</value></data><data name="MainForm.heypass.Text" xml:space="preserve"><value>KeyPass</value></data><data name="MainForm.index.Text" xml:space="preserve"><value>#</value></data><data name="MainForm.preload.Text" xml:space="preserve"><value>Preload</value></data><data name="MainForm.fullFilePath.Text" xml:space="preserve"><value></value></data><data name="MainForm.uosScriptingTab.Text" xml:space="preserve"><value>UOS</value></data><data name="MainForm.columnHeader1.Text" xml:space="preserve"><value>Filename</value></data><data name="MainForm.columnHeader2.Text" xml:space="preserve"><value>Status</value></data><data name="MainForm.columnHeader3.Text" xml:space="preserve"><value>Loop</value></data><data name="MainForm.columnHeader4.Text" xml:space="preserve"><value>A.S.</value></data><data name="MainForm.columnHeader5.Text" xml:space="preserve"><value>Wait</value></data><data name="MainForm.columnHeader6.Text" xml:space="preserve"><value>Hot Keys</value></data><data name="MainForm.columnHeader7.Text" xml:space="preserve"><value>KeyPass</value></data><data name="MainForm.columnHeader8.Text" xml:space="preserve"><value>#</value></data><data name="MainForm.columnHeader19.Text" xml:space="preserve"><value>Preload</value></data><data name="MainForm.columnHeader9.Text" xml:space="preserve"><value></value></data><data name="MainForm.csScriptingTab.Text" xml:space="preserve"><value>C#</value></data><data name="MainForm.columnHeader10.Text" xml:space="preserve"><value>Filename</value></data><data name="MainForm.columnHeader11.Text" xml:space="preserve"><value>Status</value></data><data name="MainForm.columnHeader12.Text" xml:space="preserve"><value>Loop</value></data><data name="MainForm.columnHeader13.Text" xml:space="preserve"><value>A.S.</value></data><data name="MainForm.columnHeader14.Text" xml:space="preserve"><value>Wait</value></data><data name="MainForm.columnHeader15.Text" xml:space="preserve"><value>Hot Keys</value></data><data name="MainForm.columnHeader16.Text" xml:space="preserve"><value>KeyPass</value></data><data name="MainForm.columnHeader17.Text" xml:space="preserve"><value>#</value></data><data name="MainForm.columnHeader20.Text" xml:space="preserve"><value>Preload</value></data><data name="MainForm.columnHeader18.Text" xml:space="preserve"><value></value></data><data name="MainForm.autoScriptReload.Text" xml:space="preserve"><value>Auto Script Reload</value></data><data name="MainForm.scriptPacketLogCheckBox.Text" xml:space="preserve"><value>Enable Packet Logging</value></data><data name="MainForm.InspectGumpsButton.Text" xml:space="preserve"><value> Gump</value></data><data name="MainForm.InspectContextButton.Text" xml:space="preserve"><value> Inspect</value></data><data name="MainForm.scriptshowStartStopCheckBox.Text" xml:space="preserve"><value>Show Start/Stop Msg</value></data><data name="MainForm.groupBox30.Text" xml:space="preserve"><value>  Script Info</value></data><data name="MainForm.scriptpreload.Text" xml:space="preserve"><value>Preload</value></data><data name="MainForm.scriptautostartcheckbox.Text" xml:space="preserve"><value>AutoStart</value></data><data name="MainForm.scriptwaitmodecheckbox.Text" xml:space="preserve"><value>Wait</value></data><data name="MainForm.scriptloopmodecheckbox.Text" xml:space="preserve"><value>Loop</value></data><data name="MainForm.groupBox42.Text" xml:space="preserve"><value>  Search</value></data><data name="MainForm.scripterrorlogCheckBox.Text" xml:space="preserve"><value>Log Script Error</value></data><data name="MainForm.scriptOperationsBox.Text" xml:space="preserve"><value>  Operations</value></data><data name="MainForm.buttonScriptTo.Text" xml:space="preserve"><value></value></data><data name="MainForm.buttonScriptEditorNew.Text" xml:space="preserve"><value> New</value></data><data name="MainForm.buttonAddScript.Text" xml:space="preserve"><value> Add</value></data><data name="MainForm.buttonRemoveScript.Text" xml:space="preserve"><value> Rem</value></data><data name="MainForm.buttonScriptDown.Text" xml:space="preserve"><value></value></data><data name="MainForm.textBoxDelay.Text" xml:space="preserve"><value>100</value></data><data name="MainForm.buttonScriptUp.Text" xml:space="preserve"><value></value></data><data name="MainForm.buttonScriptEditor.Text" xml:space="preserve"><value> Edit</value></data><data name="MainForm.showscriptmessageCheckBox.Text" xml:space="preserve"><value>Show Script Error Msg</value></data><data name="MainForm.eautoloot.Text" xml:space="preserve"><value>Autoloot</value></data><data name="MainForm.allowHiddenLooting.Text" xml:space="preserve"><value>Allow looting while hidden</value></data><data name="MainForm.autoLootButtonListClone.Text" xml:space="preserve"><value>Clone</value></data><data name="MainForm.autolootautostartCheckBox.Text" xml:space="preserve"><value>Autostart OnLogin</value></data><data name="MainForm.label60.Text" xml:space="preserve"><value>Max Range</value></data><data name="MainForm.autolootItemPropsB.Text" xml:space="preserve"><value>Edit Props</value></data><data name="MainForm.groupBox14.Text" xml:space="preserve"><value>AutoLoot Bag</value></data><data name="MainForm.label55.Text" xml:space="preserve"><value>Serial:</value></data><data name="MainForm.autolootContainerLabel.Text" xml:space="preserve"><value>0x00000000</value></data><data name="MainForm.autolootContainerButton.Text" xml:space="preserve"><value>Set Bag</value></data><data name="MainForm.autolootAddItemBTarget.Text" xml:space="preserve"><value>Add Item</value></data><data name="MainForm.autoLootnoopenCheckBox.Text" xml:space="preserve"><value>No Open Corpse</value></data><data name="MainForm.label21.Text" xml:space="preserve"><value>Delay (ms)</value></data><data name="MainForm.autoLootButtonRemoveList.Text" xml:space="preserve"><value>Remove</value></data><data name="MainForm.autolootButtonAddList.Text" xml:space="preserve"><value>Add</value></data><data name="MainForm.label20.Text" xml:space="preserve"><value>Autoloot List:</value></data><data name="MainForm.groupBox13.Text" xml:space="preserve"><value>Autoloot Log</value></data><data name="MainForm.autoLootCheckBox.Text" xml:space="preserve"><value>Enable autoloot</value></data><data name="MainForm.escavenger.Text" xml:space="preserve"><value>Scavenger</value></data><data name="MainForm.scavengerButtonClone.Text" xml:space="preserve"><value>Clone</value></data><data name="MainForm.scavengerautostartCheckBox.Text" xml:space="preserve"><value>Autostart OnLogin</value></data><data name="MainForm.label61.Text" xml:space="preserve"><value>Max Range</value></data><data name="MainForm.groupBox41.Text" xml:space="preserve"><value>Scavenger Bag</value></data><data name="MainForm.label54.Text" xml:space="preserve"><value>Serial:</value></data><data name="MainForm.scavengerContainerLabel.Text" xml:space="preserve"><value>0x00000000</value></data><data name="MainForm.scavengerButtonSetContainer.Text" xml:space="preserve"><value>Set Bag</value></data><data name="MainForm.groupBox12.Text" xml:space="preserve"><value>Scavenger Log</value></data><data name="MainForm.label23.Text" xml:space="preserve"><value>Delay (ms)</value></data><data name="MainForm.label22.Text" xml:space="preserve"><value>Scavenger List:</value></data><data name="MainForm.scavengerButtonEditProps.Text" xml:space="preserve"><value>Edit Props</value></data><data name="MainForm.scavengerButtonAddTarget.Text" xml:space="preserve"><value>Add Item</value></data><data name="MainForm.scavengerCheckBox.Text" xml:space="preserve"><value>Enable scavenger</value></data><data name="MainForm.scavengerButtonRemoveList.Text" xml:space="preserve"><value>Remove</value></data><data name="MainForm.scavengerButtonAddList.Text" xml:space="preserve"><value>Add</value></data><data name="MainForm.organizer.Text" xml:space="preserve"><value>Organizer</value></data><data name="MainForm.organizerCloneListB.Text" xml:space="preserve"><value>Clone</value></data><data name="MainForm.groupBox11.Text" xml:space="preserve"><value>Organizer Bags</value></data><data name="MainForm.label57.Text" xml:space="preserve"><value>Destination:</value></data><data name="MainForm.label56.Text" xml:space="preserve"><value>Source:</value></data><data name="MainForm.organizerSetSourceB.Text" xml:space="preserve"><value>Set Source</value></data><data name="MainForm.organizerSetDestinationB.Text" xml:space="preserve"><value>Set Dest</value></data><data name="MainForm.organizerSourceLabel.Text" xml:space="preserve"><value>0x00000000</value></data><data name="MainForm.groupBox16.Text" xml:space="preserve"><value>Organizer Log</value></data><data name="MainForm.label27.Text" xml:space="preserve"><value>Drag Item Delay (ms)</value></data><data name="MainForm.label24.Text" xml:space="preserve"><value>Organizer List:</value></data><data name="MainForm.organizerAddTargetB.Text" xml:space="preserve"><value>Add Item</value></data><data name="MainForm.organizerRemoveListB.Text" xml:space="preserve"><value>Remove</value></data><data name="MainForm.organizerAddListB.Text" xml:space="preserve"><value>Add</value></data><data name="MainForm.VendorBuy.Text" xml:space="preserve"><value>Vendor Buy</value></data><data name="MainForm.buyToCompleteAmount.Text" xml:space="preserve"><value>Restock</value></data><data name="MainForm.buyCompareNameCheckBox.Text" xml:space="preserve"><value>Compare Item Name</value></data><data name="MainForm.buyCloneButton.Text" xml:space="preserve"><value>Clone</value></data><data name="MainForm.groupBox18.Text" xml:space="preserve"><value>Buy Log</value></data><data name="MainForm.label25.Text" xml:space="preserve"><value>Vendor Buy:</value></data><data name="MainForm.buyAddTargetB.Text" xml:space="preserve"><value>Add Item</value></data><data name="MainForm.buyEnableCheckBox.Text" xml:space="preserve"><value>Enable Buy List</value></data><data name="MainForm.buyRemoveListButton.Text" xml:space="preserve"><value>Remove</value></data><data name="MainForm.buyAddListButton.Text" xml:space="preserve"><value>Add</value></data><data name="MainForm.VendorSell.Text" xml:space="preserve"><value>Vendor Sell</value></data><data name="MainForm.sellCloneListButton.Text" xml:space="preserve"><value>Clone</value></data><data name="MainForm.groupBox19.Text" xml:space="preserve"><value>Sell Bag</value></data><data name="MainForm.sellSetBagButton.Text" xml:space="preserve"><value>Set Bag</value></data><data name="MainForm.label50.Text" xml:space="preserve"><value>Serial:</value></data><data name="MainForm.sellBagLabel.Text" xml:space="preserve"><value>0x00000000</value></data><data name="MainForm.groupBox20.Text" xml:space="preserve"><value>Sell Log</value></data><data name="MainForm.label26.Text" xml:space="preserve"><value>Vendor Sell:</value></data><data name="MainForm.sellAddTargerButton.Text" xml:space="preserve"><value>Add Item</value></data><data name="MainForm.sellEnableCheckBox.Text" xml:space="preserve"><value>Enable Sell List</value></data><data name="MainForm.sellRemoveListButton.Text" xml:space="preserve"><value>Remove</value></data><data name="MainForm.sellAddListButton.Text" xml:space="preserve"><value>Add</value></data><data name="MainForm.Dress.Text" xml:space="preserve"><value>Dress / Arm</value></data><data name="MainForm.useUo3D.Text" xml:space="preserve"><value>Use UO3D Equip and UnEquip</value></data><data name="MainForm.dressStopButton.Text" xml:space="preserve"><value>Stop</value></data><data name="MainForm.dressConflictCheckB.Text" xml:space="preserve"><value>Remove Conflict Item</value></data><data name="MainForm.dressBagLabel.Text" xml:space="preserve"><value>0x00000000</value></data><data name="MainForm.groupBox22.Text" xml:space="preserve"><value>Item List</value></data><data name="MainForm.dressAddTargetB.Text" xml:space="preserve"><value>Add Target</value></data><data name="MainForm.dressAddManualB.Text" xml:space="preserve"><value>Add Clear Layer</value></data><data name="MainForm.dressRemoveB.Text" xml:space="preserve"><value>Remove</value></data><data name="MainForm.dressClearListB.Text" xml:space="preserve"><value>ClearList</value></data><data name="MainForm.dressReadB.Text" xml:space="preserve"><value>Read Current</value></data><data name="MainForm.label29.Text" xml:space="preserve"><value>Drag Item Delay (ms)</value></data><data name="MainForm.groupBox21.Text" xml:space="preserve"><value>Organizer Log</value></data><data name="MainForm.dressSetBagB.Text" xml:space="preserve"><value>Undress Bag</value></data><data name="MainForm.undressExecuteButton.Text" xml:space="preserve"><value>Undres</value></data><data name="MainForm.dressExecuteButton.Text" xml:space="preserve"><value>Dress</value></data><data name="MainForm.columnHeader24.Text" xml:space="preserve"><value>X</value></data><data name="MainForm.columnHeader25.Text" xml:space="preserve"><value>Layer</value></data><data name="MainForm.columnHeader26.Text" xml:space="preserve"><value>Name</value></data><data name="MainForm.columnHeader27.Text" xml:space="preserve"><value>Serial</value></data><data name="MainForm.label28.Text" xml:space="preserve"><value>Dress List:</value></data><data name="MainForm.dressRemoveListB.Text" xml:space="preserve"><value>Remove</value></data><data name="MainForm.dressAddListB.Text" xml:space="preserve"><value>Add</value></data><data name="MainForm.friends.Text" xml:space="preserve"><value>Friends</value></data><data name="MainForm.groupBox34.Text" xml:space="preserve"><value>Guild Friend</value></data><data name="MainForm.FriendGuildAddButton.Text" xml:space="preserve"><value>Add Manual</value></data><data name="MainForm.FriendGuildRemoveButton.Text" xml:space="preserve"><value>Remove</value></data><data name="MainForm.groupBox33.Text" xml:space="preserve"><value>Faction Friend</value></data><data name="MainForm.MINfriendCheckBox.Text" xml:space="preserve"><value>MIN</value></data><data name="MainForm.SLfriendCheckBox.Text" xml:space="preserve"><value>SL</value></data><data name="MainForm.TBfriendCheckBox.Text" xml:space="preserve"><value>TB</value></data><data name="MainForm.COMfriendCheckBox.Text" xml:space="preserve"><value>CoM</value></data><data name="MainForm.friendGroupBox.Text" xml:space="preserve"><value>User Friend</value></data><data name="MainForm.friendAddTargetButton.Text" xml:space="preserve"><value>Add Target</value></data><data name="MainForm.friendRemoveButton.Text" xml:space="preserve"><value>Remove</value></data><data name="MainForm.friendAddButton.Text" xml:space="preserve"><value>Add Manual</value></data><data name="MainForm.friendloggroupBox.Text" xml:space="preserve"><value>Friend Log</value></data><data name="MainForm.friendIncludePartyCheckBox.Text" xml:space="preserve"><value>Include party member in Friend List</value></data><data name="MainForm.friendAttackCheckBox.Text" xml:space="preserve"><value>Prevent attacking friends in warmode</value></data><data name="MainForm.friendPartyCheckBox.Text" xml:space="preserve"><value>Autoaccept party from Friends</value></data><data name="MainForm.labelfriend.Text" xml:space="preserve"><value>Friend List:</value></data><data name="MainForm.friendButtonRemoveList.Text" xml:space="preserve"><value>Remove</value></data><data name="MainForm.friendButtonAddList.Text" xml:space="preserve"><value>Add</value></data><data name="MainForm.restock.Text" xml:space="preserve"><value>Restock</value></data><data name="MainForm.restockCloneListB.Text" xml:space="preserve"><value>Clone</value></data><data name="MainForm.groupBox3.Text" xml:space="preserve"><value>Restock Bags</value></data><data name="MainForm.label59.Text" xml:space="preserve"><value>Destination:</value></data><data name="MainForm.label58.Text" xml:space="preserve"><value>Source:</value></data><data name="MainForm.restockSetSourceButton.Text" xml:space="preserve"><value>Set Bag</value></data><data name="MainForm.restockSourceLabel.Text" xml:space="preserve"><value>0x00000000</value></data><data name="MainForm.restockDestinationLabel.Text" xml:space="preserve"><value>0x00000000</value></data><data name="MainForm.restockSetDestinationButton.Text" xml:space="preserve"><value>Set Bag</value></data><data name="MainForm.groupBox2.Text" xml:space="preserve"><value>Restock Log</value></data><data name="MainForm.label13.Text" xml:space="preserve"><value>Drag Item Delay (ms)</value></data><data name="MainForm.label7.Text" xml:space="preserve"><value>Restock List:</value></data><data name="MainForm.restockAddTargetButton.Text" xml:space="preserve"><value>Add Item</value></data><data name="MainForm.restockRemoveListB.Text" xml:space="preserve"><value>Remove</value></data><data name="MainForm.restockAddListB.Text" xml:space="preserve"><value>Add</value></data><data name="MainForm.bandageheal.Text" xml:space="preserve"><value>Bandage Heal</value></data><data name="MainForm.BandageHealSettingsBox.Text" xml:space="preserve"><value>Settings</value></data><data name="MainForm.bandagehealAutostartCheckBox.Text" xml:space="preserve"><value>Autostart OnLogin</value></data><data name="MainForm.bandageHealIgnoreCount.Text" xml:space="preserve"><value>Ignore Count</value></data><data name="MainForm.bandagehealTimeWithBufCheckBox.Text" xml:space="preserve"><value>Time with Buff</value></data><data name="MainForm.label78.Text" xml:space="preserve"><value>Other:</value></data><data name="MainForm.bandagehealenableCheckBox.Text" xml:space="preserve"><value>Enable Bandage Heal</value></data><data name="MainForm.label77.Text" xml:space="preserve"><value>Self:</value></data><data name="MainForm.bandagehealusetextContent.Text" xml:space="preserve"><value>[band</value></data><data name="MainForm.bandagehealusetextSelfContent.Text" xml:space="preserve"><value>[bandself</value></data><data name="MainForm.bandagehealusetext.Text" xml:space="preserve"><value>Send text for self heal</value></data><data name="MainForm.bandagehealusetarget.Text" xml:space="preserve"><value>Use Normal Target</value></data><data name="MainForm.label46.Text" xml:space="preserve"><value>Max Range:</value></data><data name="MainForm.bandagehealcountdownCheckBox.Text" xml:space="preserve"><value>Show Heal Countdown</value></data><data name="MainForm.bandagehealhiddedCheckBox.Text" xml:space="preserve"><value>Block heal if Hidden</value></data><data name="MainForm.bandagehealmortalCheckBox.Text" xml:space="preserve"><value>Block heal if Mortalled</value></data><data name="MainForm.bandagehealpoisonCheckBox.Text" xml:space="preserve"><value>Block heal if Poisoned</value></data><data name="MainForm.label33.Text" xml:space="preserve"><value>% hits</value></data><data name="MainForm.label32.Text" xml:space="preserve"><value>Start Below:</value></data><data name="MainForm.label31.Text" xml:space="preserve"><value>Custom Delay:</value></data><data name="MainForm.bandagehealdexformulaCheckBox.Text" xml:space="preserve"><value>Use DEX formula delay</value></data><data name="MainForm.label30.Text" xml:space="preserve"><value>Color:</value></data><data name="MainForm.label19.Text" xml:space="preserve"><value>ID:</value></data><data name="MainForm.bandagehealcustomCheckBox.Text" xml:space="preserve"><value>Use Custom Bandage</value></data><data name="MainForm.bandagehealtargetLabel.Text" xml:space="preserve"><value>Null (0x00000000)</value></data><data name="MainForm.label15.Text" xml:space="preserve"><value>Target:</value></data><data name="MainForm.bandagehealsettargetButton.Text" xml:space="preserve"><value>Set Target</value></data><data name="MainForm.label14.Text" xml:space="preserve"><value>Heal Target:</value></data><data name="MainForm.groupBox5.Text" xml:space="preserve"><value>Bandage Heal Log</value></data><data name="MainForm.tabPage2.Text" xml:space="preserve"><value>Counter / Stat Bar</value></data><data name="MainForm.groupBox39.Text" xml:space="preserve"><value>Opacity</value></data><data name="MainForm.toolbar_opacity_label.Text" xml:space="preserve"><value>100%</value></data><data name="MainForm.groupBox25.Text" xml:space="preserve"><value>General</value></data><data name="MainForm.lockToolBarCheckBox.Text" xml:space="preserve"><value>Lock ToolBar</value></data><data name="MainForm.autoopenToolBarCheckBox.Text" xml:space="preserve"><value>Open On Login</value></data><data name="MainForm.locationToolBarLabel.Text" xml:space="preserve"><value>X:0 Y:0</value></data><data name="MainForm.closeToolBarButton.Text" xml:space="preserve"><value>Close</value></data><data name="MainForm.openToolBarButton.Text" xml:space="preserve"><value>Open</value></data><data name="MainForm.groupBox4.Text" xml:space="preserve"><value>Layout</value></data><data name="MainForm.showtitheToolBarCheckBox.Text" xml:space="preserve"><value>Show Tithe</value></data><data name="MainForm.toolbarremoveslotButton.Text" xml:space="preserve"><value>-</value></data><data name="MainForm.toolbaraddslotButton.Text" xml:space="preserve"><value>+</value></data><data name="MainForm.toolbarslot_label.Text" xml:space="preserve"><value>0</value></data><data name="MainForm.label43.Text" xml:space="preserve"><value>Slots:</value></data><data name="MainForm.label41.Text" xml:space="preserve"><value>Size:</value></data><data name="MainForm.showfollowerToolBarCheckBox.Text" xml:space="preserve"><value>Show Follower</value></data><data name="MainForm.showweightToolBarCheckBox.Text" xml:space="preserve"><value>Show Weight</value></data><data name="MainForm.showmanaToolBarCheckBox.Text" xml:space="preserve"><value>Show Mana</value></data><data name="MainForm.showstaminaToolBarCheckBox.Text" xml:space="preserve"><value>Show Stamina</value></data><data name="MainForm.showhitsToolBarCheckBox.Text" xml:space="preserve"><value>Show Hits</value></data><data name="MainForm.label2.Text" xml:space="preserve"><value>Style:</value></data><data name="MainForm.groupBox26.Text" xml:space="preserve"><value>Item Count</value></data><data name="MainForm.label38.Text" xml:space="preserve"><value>-1 for all</value></data><data name="MainForm.label37.Text" xml:space="preserve"><value>Name:</value></data><data name="MainForm.toolboxcountClearButton.Text" xml:space="preserve"><value>Clear Slot</value></data><data name="MainForm.toolboxcountTargetButton.Text" xml:space="preserve"><value>Get Data</value></data><data name="MainForm.label36.Text" xml:space="preserve"><value>Warning:</value></data><data name="MainForm.toolboxcountHueWarningCheckBox.Text" xml:space="preserve"><value>Show Warning</value></data><data name="MainForm.label35.Text" xml:space="preserve"><value>Color:</value></data><data name="MainForm.label18.Text" xml:space="preserve"><value>Graphics:</value></data><data name="MainForm.tabPage3.Text" xml:space="preserve"><value>Spell Grid</value></data><data name="MainForm.groupBox38.Text" xml:space="preserve"><value>Opacity</value></data><data name="MainForm.spellgrid_opacity_label.Text" xml:space="preserve"><value>100%</value></data><data name="MainForm.groupBox37.Text" xml:space="preserve"><value>Layout</value></data><data name="MainForm.label80.Text" xml:space="preserve"><value>Style:</value></data><data name="MainForm.gridhslotremove_button.Text" xml:space="preserve"><value>-</value></data><data name="MainForm.gridhslotadd_button.Text" xml:space="preserve"><value>+</value></data><data name="MainForm.gridhslot_textbox.Text" xml:space="preserve"><value>0</value></data><data name="MainForm.label53.Text" xml:space="preserve"><value>Slots H:</value></data><data name="MainForm.gridvslotremove_button.Text" xml:space="preserve"><value>-</value></data><data name="MainForm.gridvslotadd_button.Text" xml:space="preserve"><value>+</value></data><data name="MainForm.gridvslot_textbox.Text" xml:space="preserve"><value>0</value></data><data name="MainForm.label49.Text" xml:space="preserve"><value>Slots V:</value></data><data name="MainForm.groupBox36.Text" xml:space="preserve"><value>Grid Item</value></data><data name="MainForm.label65.Text" xml:space="preserve"><value>Script</value></data><data name="MainForm.label44.Text" xml:space="preserve"><value>Border: </value></data><data name="MainForm.label52.Text" xml:space="preserve"><value>Abilitie/Spell:</value></data><data name="MainForm.label51.Text" xml:space="preserve"><value>Slot:</value></data><data name="MainForm.label45.Text" xml:space="preserve"><value>Group:</value></data><data name="MainForm.groupBox35.Text" xml:space="preserve"><value>General</value></data><data name="MainForm.setSpellBarOrigin.Text" xml:space="preserve"><value>Set Origin</value></data><data name="MainForm.gridlock_CheckBox.Text" xml:space="preserve"><value>Lock Grid</value></data><data name="MainForm.gridopenlogin_CheckBox.Text" xml:space="preserve"><value>Open On Login</value></data><data name="MainForm.gridlocation_label.Text" xml:space="preserve"><value>X:0 Y:0</value></data><data name="MainForm.gridclose_button.Text" xml:space="preserve"><value>Close</value></data><data name="MainForm.gridopen_button.Text" xml:space="preserve"><value>Open</value></data><data name="MainForm.dispDelta.Text" xml:space="preserve"><value>Display Changes</value></data><data name="MainForm.skillCopyAll.Text" xml:space="preserve"><value>Copy All</value></data><data name="MainForm.skillCopySel.Text" xml:space="preserve"><value>Copy Selected</value></data><data name="MainForm.label1.Text" xml:space="preserve"><value>Base Total:</value></data><data name="MainForm.setlocks.Text" xml:space="preserve"><value>Set all locks:</value></data><data name="MainForm.resetDelta.Text" xml:space="preserve"><value>Reset  +/-</value></data><data name="MainForm.skillHDRName.Text" xml:space="preserve"><value>Skill Name</value></data><data name="MainForm.skillHDRvalue.Text" xml:space="preserve"><value>Value</value></data><data name="MainForm.skillHDRbase.Text" xml:space="preserve"><value>Base</value></data><data name="MainForm.skillHDRdelta.Text" xml:space="preserve"><value>+/-</value></data><data name="MainForm.skillHDRcap.Text" xml:space="preserve"><value>Cap</value></data><data name="MainForm.skillHDRlock.Text" xml:space="preserve"><value>Lock</value></data><data name="MainForm.groupBox8.Text" xml:space="preserve"><value>Master Key</value></data><data name="MainForm.hotkeyMasterClearButton.Text" xml:space="preserve"><value>Clear</value></data><data name="MainForm.hotkeyMasterSetButton.Text" xml:space="preserve"><value>Set</value></data><data name="MainForm.label42.Text" xml:space="preserve"><value>Key:</value></data><data name="MainForm.groupBox28.Text" xml:space="preserve"><value>General</value></data><data name="MainForm.hotkeyMDisableButton.Text" xml:space="preserve"><value>Disable</value></data><data name="MainForm.hotkeyMEnableButton.Text" xml:space="preserve"><value>Enable</value></data><data name="MainForm.hotkeyKeyMasterLabel.Text" xml:space="preserve"><value>ON/OFF Key: None</value></data><data name="MainForm.hotkeyStatusLabel.Text" xml:space="preserve"><value>Status: Enabled</value></data><data name="MainForm.groupBox27.Text" xml:space="preserve"><value>Modify Key</value></data><data name="MainForm.hotkeypassCheckBox.Text" xml:space="preserve"><value>Pass Key to UO</value></data><data name="MainForm.hotkeyClearButton.Text" xml:space="preserve"><value>Clear</value></data><data name="MainForm.hotkeySetButton.Text" xml:space="preserve"><value>Set</value></data><data name="MainForm.label39.Text" xml:space="preserve"><value>Key:</value></data><data name="MainForm.label79.Text" xml:space="preserve"><value>X</value></data><data name="MainForm.openchangelogButton.Text" xml:space="preserve"><value>Changelog</value></data><data name="MainForm.profilesCloneButton.Text" xml:space="preserve"><value>Clone</value></data><data name="MainForm.profilesRenameButton.Text" xml:space="preserve"><value>Rename</value></data><data name="MainForm.profilesUnlinkButton.Text" xml:space="preserve"><value>UnLink</value></data><data name="MainForm.profilesLinkButton.Text" xml:space="preserve"><value>Link</value></data><data name="MainForm.profilelinklabel.Text" xml:space="preserve"><value>Linked to: None</value></data><data name="MainForm.profilesDeleteButton.Text" xml:space="preserve"><value>Delete</value></data><data name="MainForm.profilesAddButton.Text" xml:space="preserve"><value>Add</value></data><data name="MainForm.gameSize.Text" xml:space="preserve"><value>Force Game Size:</value></data><data name="MainForm.rememberPwds.Text" xml:space="preserve"><value>Remember passwords </value></data><data name="MainForm.systray.Text" xml:space="preserve"><value>System Tray</value></data><data name="MainForm.taskbar.Text" xml:space="preserve"><value>Taskbar</value></data><data name="MainForm.label11.Text" xml:space="preserve"><value>Show in:</value></data><data name="MainForm.opacityLabel.Text" xml:space="preserve"><value>Opacity: 100%</value></data><data name="MainForm.label9.Text" xml:space="preserve"><value>Default Client Priority:</value></data><data name="MainForm.remoteControl.Text" xml:space="preserve"><value>Enable Remote Control</value></data><data name="MainForm.ChkForUpdate.Text" xml:space="preserve"><value>Check For Updates</value></data><data name="MainForm.advertisementLink.Text" xml:space="preserve"><value>UO Eventine</value></data><data name="MainForm.advertisementDiscordLink.Text" xml:space="preserve"><value>UO Eventine Discord</value></data><data name="MainForm.discordrazorButton.Text" xml:space="preserve"><value>TM Razor Discord</value></data><data name="MainForm.razorButtonWiki.Text" xml:space="preserve"><value>TM Razor wiki</value></data><data name="MainForm.razorButtonSource.Text" xml:space="preserve"><value>TM Razor Source</value></data><data name="MainForm.razorButtonWebsite.Text" xml:space="preserve"><value>TM Razor Website</value></data><data name="MainForm.label12.Text" xml:space="preserve"><value>Image Format:</value></data><data name="MainForm.capNow.Text" xml:space="preserve"><value>Take Screen Shot Now</value></data><data name="MainForm.radioUO.Text" xml:space="preserve"><value>UO Only</value></data><data name="MainForm.radioFull.Text" xml:space="preserve"><value>Full Screen</value></data><data name="MainForm.screenAutoCap.Text" xml:space="preserve"><value>Auto Death Screen Capture</value></data><data name="MainForm.setScnPath.Text" xml:space="preserve"><value>...</value></data><data name="MainForm.dispTime.Text" xml:space="preserve"><value>Include Timestamp on images</value></data><data name="MainForm.videoRecStatuslabel.Text" xml:space="preserve"><value>Idle</value></data><data name="MainForm.label64.Text" xml:space="preserve"><value>Rec Status:</value></data><data name="MainForm.groupBox40.Text" xml:space="preserve"><value>Playback</value></data><data name="MainForm.videoSourcePlayer.Text" xml:space="preserve"><value>videoSourcePlayer</value></data><data name="MainForm.videosettinggroupBox.Text" xml:space="preserve"><value>Video Settings</value></data><data name="MainForm.label63.Text" xml:space="preserve"><value>Codec:</value></data><data name="MainForm.label62.Text" xml:space="preserve"><value>FPS: </value></data><data name="MainForm.groupBox15.Text" xml:space="preserve"><value>File</value></data><data name="MainForm.videoPathButton.Text" xml:space="preserve"><value>...</value></data><data name="MainForm.DPStabPage.Text" xml:space="preserve"><value>DPS Meter</value></data><data name="MainForm.filtergroup.Text" xml:space="preserve"><value>Filter</value></data><data name="MainForm.DPSMeterClearFilterButton.Text" xml:space="preserve"><value>Clear</value></data><data name="MainForm.DPSMeterApplyFilterButton.Text" xml:space="preserve"><value>Apply</value></data><data name="MainForm.label70.Text" xml:space="preserve"><value>Name:</value></data><data name="MainForm.label69.Text" xml:space="preserve"><value>Serial:</value></data><data name="MainForm.label68.Text" xml:space="preserve"><value>Damage Max:</value></data><data name="MainForm.label66.Text" xml:space="preserve"><value>Damage Min:</value></data><data name="MainForm.DPSMeterStatusLabel.Text" xml:space="preserve"><value>Idle</value></data><data name="MainForm.label67.Text" xml:space="preserve"><value>Status:</value></data><data name="MainForm.DPSMeterPauseButton.Text" xml:space="preserve"><value>Pause</value></data><data name="MainForm.DPSMeterStopButton.Text" xml:space="preserve"><value>Stop</value></data><data name="MainForm.DPSMeterStartButton.Text" xml:space="preserve"><value>Start</value></data><data name="MainForm.DPSMeterClearButton.Text" xml:space="preserve"><value>Clear</value></data><data name="MainForm.label71.Text" xml:space="preserve"><value>Many thanks also for developer of UO.DLL and ULTIMA.DLL</value></data><data name="MainForm.m_NotifyIcon.Text" xml:space="preserve"><value>TM Razor</value></data><data name="MainForm.modifyToolStripMenuItem.Text" xml:space="preserve"><value>Modify</value></data><data name="MainForm.addToolStripMenuItem.Text" xml:space="preserve"><value>Add</value></data><data name="MainForm.removeToolStripMenuItem.Text" xml:space="preserve"><value>Remove</value></data><data name="MainForm.openToolStripMenuItem.Text" xml:space="preserve"><value>Open</value></data><data name="MainForm.moveUpToolStripMenuItem.Text" xml:space="preserve"><value>Move Up</value></data><data name="MainForm.moveDownToolStripMenuItem.Text" xml:space="preserve"><value>Move Down</value></data><data name="MainForm.moveToToolStripMenuItem.Text" xml:space="preserve"><value>Move To</value></data><data name="MainForm.flagsToolStripMenuItem.Text" xml:space="preserve"><value>Flags</value></data><data name="MainForm.loopModeToolStripMenuItem.Text" xml:space="preserve"><value>Loop Mode</value></data><data name="MainForm.preloadToolStripMenuItem.Text" xml:space="preserve"><value>Preload</value></data><data name="MainForm.waitBeforeInterruptToolStripMenuItem.Text" xml:space="preserve"><value>Wait Before Interrupt</value></data><data name="MainForm.autoStartAtLoginToolStripMenuItem.Text" xml:space="preserve"><value>AutoStart at Login</value></data><data name="MainForm.playToolStripMenuItem.Text" xml:space="preserve"><value>Play</value></data><data name="MainForm.stopToolStripMenuItem.Text" xml:space="preserve"><value>Stop</value></data>
+  <data name="MainForm.columnHeader28.Text" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.columnHeader29.Text" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="MainForm.columnHeader30.Text" xml:space="preserve">
+    <value>Serial</value>
+  </data>
+  <data name="MainForm.columnHeader63.Text" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.columnHeader64.Text" xml:space="preserve">
+    <value>Guild</value>
+  </data>
+  <data name="MainForm.groupBox1.Text" xml:space="preserve">
+    <value>Filters</value>
+  </data>
+  <data name="MainForm.morefilterLabel.Text" xml:space="preserve">
+    <value>More Filters:</value>
+  </data>
+  <data name="MainForm.filterNPC.Text" xml:space="preserve">
+    <value>Monster Messages</value>
+  </data>
+  <data name="MainForm.filterPoison.Text" xml:space="preserve">
+    <value>Poison Messages</value>
+  </data>
+  <data name="MainForm.filterSnoop.Text" xml:space="preserve">
+    <value>Snooping Messages</value>
+  </data>
+  <data name="MainForm.spamFilter.Text" xml:space="preserve">
+    <value>Repeating Sys Messages</value>
+  </data>
+  <data name="MainForm.JournalFilterPage.Text" xml:space="preserve">
+    <value>Virtual</value>
+  </data>
+  <data name="MainForm.deleteRowToolStripMenuItem.Text" xml:space="preserve">
+    <value>Delete Row</value>
+  </data>
+  <data name="MainForm.targettingTab.Text" xml:space="preserve">
+    <value>Targetting</value>
+  </data>
+  <data name="MainForm.groupBox43.Text" xml:space="preserve">
+    <value>Shortcut</value>
+  </data>
+  <data name="MainForm.label76.Text" xml:space="preserve">
+    <value>Name:</value>
+  </data>
+  <data name="MainForm.targetremoveButton.Text" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="MainForm.targetaddButton.Text" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="MainForm.groupBox44.Text" xml:space="preserve">
+    <value>Body Filter</value>
+  </data>
+  <data name="MainForm.targetChoseBody.Text" xml:space="preserve">
+    <value>Target Body ID</value>
+  </data>
+  <data name="MainForm.targetbodyCheckBox.Text" xml:space="preserve">
+    <value>Enable</value>
+  </data>
+  <data name="MainForm.groupBox45.Text" xml:space="preserve">
+    <value>Color Filter</value>
+  </data>
+  <data name="MainForm.targetChoseHue.Text" xml:space="preserve">
+    <value>Target Hue ID</value>
+  </data>
+  <data name="MainForm.targetcoloCheckBox.Text" xml:space="preserve">
+    <value>Enable</value>
+  </data>
+  <data name="MainForm.groupBox48.Text" xml:space="preserve">
+    <value>Range</value>
+  </data>
+  <data name="MainForm.label73.Text" xml:space="preserve">
+    <value>Set -1 for no limit</value>
+  </data>
+  <data name="MainForm.label74.Text" xml:space="preserve">
+    <value>Max:</value>
+  </data>
+  <data name="MainForm.targetRangeMaxTextBox.Text" xml:space="preserve">
+    <value>-1</value>
+  </data>
+  <data name="MainForm.label75.Text" xml:space="preserve">
+    <value>Min:</value>
+  </data>
+  <data name="MainForm.targetRangeMinTextBox.Text" xml:space="preserve">
+    <value>-1</value>
+  </data>
+  <data name="MainForm.groupBox57.Text" xml:space="preserve">
+    <value>Notoriety Color</value>
+  </data>
+  <data name="MainForm.targetYellowCheckBox.Text" xml:space="preserve">
+    <value>Yellow</value>
+  </data>
+  <data name="MainForm.targetRedCheckBox.Text" xml:space="preserve">
+    <value>Red</value>
+  </data>
+  <data name="MainForm.targetOrangeCheckBox.Text" xml:space="preserve">
+    <value>Orange</value>
+  </data>
+  <data name="MainForm.targetCriminalCheckBox.Text" xml:space="preserve">
+    <value>Grey (Aggro)</value>
+  </data>
+  <data name="MainForm.targetGreyCheckBox.Text" xml:space="preserve">
+    <value>Grey</value>
+  </data>
+  <data name="MainForm.targetGreenCheckBox.Text" xml:space="preserve">
+    <value>Green</value>
+  </data>
+  <data name="MainForm.targetBlueCheckBox.Text" xml:space="preserve">
+    <value>Blue</value>
+  </data>
+  <data name="MainForm.groupBox46.Text" xml:space="preserve">
+    <value>Flags</value>
+  </data>
+  <data name="MainForm.groupBox47.Text" xml:space="preserve">
+    <value>Paralized</value>
+  </data>
+  <data name="MainForm.paralizedBoth.Text" xml:space="preserve">
+    <value>Both</value>
+  </data>
+  <data name="MainForm.paralizedOff.Text" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="MainForm.paralizedOn.Text" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="MainForm.groupBox49.Text" xml:space="preserve">
+    <value>Friend</value>
+  </data>
+  <data name="MainForm.friendOn.Text" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="MainForm.friendBoth.Text" xml:space="preserve">
+    <value>Both</value>
+  </data>
+  <data name="MainForm.friendOff.Text" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="MainForm.groupBox50.Text" xml:space="preserve">
+    <value>Warmode</value>
+  </data>
+  <data name="MainForm.warmodeOn.Text" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="MainForm.warmodeBoth.Text" xml:space="preserve">
+    <value>Both</value>
+  </data>
+  <data name="MainForm.warmodeOff.Text" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="MainForm.groupBox51.Text" xml:space="preserve">
+    <value>Ghost</value>
+  </data>
+  <data name="MainForm.ghostOn.Text" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="MainForm.ghostBoth.Text" xml:space="preserve">
+    <value>Both</value>
+  </data>
+  <data name="MainForm.ghostOff.Text" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="MainForm.groupBox52.Text" xml:space="preserve">
+    <value>Human</value>
+  </data>
+  <data name="MainForm.humanOn.Text" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="MainForm.humanOff.Text" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="MainForm.humanBoth.Text" xml:space="preserve">
+    <value>Both</value>
+  </data>
+  <data name="MainForm.groupBox53.Text" xml:space="preserve">
+    <value>Yellow Hits</value>
+  </data>
+  <data name="MainForm.blessedOn.Text" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="MainForm.blessedOff.Text" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="MainForm.blessedBoth.Text" xml:space="preserve">
+    <value>Both</value>
+  </data>
+  <data name="MainForm.groupBox54.Text" xml:space="preserve">
+    <value>Poisoned</value>
+  </data>
+  <data name="MainForm.poisonedOn.Text" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="MainForm.poisonedOff.Text" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="MainForm.poisonedBoth.Text" xml:space="preserve">
+    <value>Both</value>
+  </data>
+  <data name="MainForm.groupBox56.Text" xml:space="preserve">
+    <value>Selector</value>
+  </data>
+  <data name="MainForm.groupBox55.Text" xml:space="preserve">
+    <value>Target (Char/Mob) Name</value>
+  </data>
+  <data name="MainForm.targetTestButton.Text" xml:space="preserve">
+    <value>Test Target</value>
+  </data>
+  <data name="MainForm.targetsaveButton.Text" xml:space="preserve">
+    <value>Save Change</value>
+  </data>
+  <data name="MainForm.MiscFilterPage.Text" xml:space="preserve">
+    <value>Misc</value>
+  </data>
+  <data name="MainForm.groupBox24.Text" xml:space="preserve">
+    <value>Misc</value>
+  </data>
+  <data name="MainForm.colorflagsselfHighlightCheckBox.Text" xml:space="preserve">
+    <value>Color Flag Self Highlight</value>
+  </data>
+  <data name="MainForm.showagentmessageCheckBox.Text" xml:space="preserve">
+    <value>Show Agent Message</value>
+  </data>
+  <data name="MainForm.showmessagefieldCheckBox.Text" xml:space="preserve">
+    <value>Show Filed Message</value>
+  </data>
+  <data name="MainForm.colorflagsHighlightCheckBox.Text" xml:space="preserve">
+    <value>Color Flag Highlight</value>
+  </data>
+  <data name="MainForm.blockchivalryhealCheckBox.Text" xml:space="preserve">
+    <value>Block ChivaHeal if no need</value>
+  </data>
+  <data name="MainForm.blockbighealCheckBox.Text" xml:space="preserve">
+    <value>Block BigHeal if no need</value>
+  </data>
+  <data name="MainForm.blockminihealCheckBox.Text" xml:space="preserve">
+    <value>Block MiniHeal if no need</value>
+  </data>
+  <data name="MainForm.blockhealpoisonCheckBox.Text" xml:space="preserve">
+    <value>Block Heal if Poison/Mortal</value>
+  </data>
+  <data name="MainForm.showheadtargetCheckBox.Text" xml:space="preserve">
+    <value>Show Target on Head</value>
+  </data>
+  <data name="MainForm.blockpartyinviteCheckBox.Text" xml:space="preserve">
+    <value>Block Party Invite</value>
+  </data>
+  <data name="MainForm.blocktraderequestCheckBox.Text" xml:space="preserve">
+    <value>Block Trade Request</value>
+  </data>
+  <data name="MainForm.highlighttargetCheckBox.Text" xml:space="preserve">
+    <value>Text Current Target</value>
+  </data>
+  <data name="MainForm.flagsHighlightCheckBox.Text" xml:space="preserve">
+    <value>Text Flags Highlight</value>
+  </data>
+  <data name="MainForm.showstaticfieldCheckBox.Text" xml:space="preserve">
+    <value>Show Static Field</value>
+  </data>
+  <data name="MainForm.groupBox23.Text" xml:space="preserve">
+    <value>Mobile Graphics Change Filter</value>
+  </data>
+  <data name="MainForm.mobfilterCheckBox.Text" xml:space="preserve">
+    <value>Enable</value>
+  </data>
+  <data name="MainForm.uomodgroupbox.Text" xml:space="preserve">
+    <value>UoMod (Client &gt; 7.0.0.0)</value>
+  </data>
+  <data name="MainForm.uomodpaperdollCheckBox.Text" xml:space="preserve">
+    <value>Show Paperdoll Slot</value>
+  </data>
+  <data name="MainForm.uomodglobalsoundCheckBox.Text" xml:space="preserve">
+    <value>Global Sound</value>
+  </data>
+  <data name="MainForm.uomodFPSCheckBox.Text" xml:space="preserve">
+    <value>Increase FPS</value>
+  </data>
+  <data name="MainForm.groupBox10.Text" xml:space="preserve">
+    <value>Auto Carver</value>
+  </data>
+  <data name="MainForm.autocarverbladeLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.label34.Text" xml:space="preserve">
+    <value>Blade Serial:</value>
+  </data>
+  <data name="MainForm.autocarverrazorButton.Text" xml:space="preserve">
+    <value>Set Blade</value>
+  </data>
+  <data name="MainForm.autocarverCheckBox.Text" xml:space="preserve">
+    <value>Enable</value>
+  </data>
+  <data name="MainForm.groupBox9.Text" xml:space="preserve">
+    <value>Bone Cutter</value>
+  </data>
+  <data name="MainForm.bonebladeLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.label16.Text" xml:space="preserve">
+    <value>Blade Serial:</value>
+  </data>
+  <data name="MainForm.boneCutterrazorButton.Text" xml:space="preserve">
+    <value>Set Blade</value>
+  </data>
+  <data name="MainForm.bonecutterCheckBox.Text" xml:space="preserve">
+    <value>Enable</value>
+  </data>
+  <data name="MainForm.groupBox32.Text" xml:space="preserve">
+    <value>Auto Remount</value>
+  </data>
+  <data name="MainForm.label48.Text" xml:space="preserve">
+    <value>Ethereal Delay:</value>
+  </data>
+  <data name="MainForm.label40.Text" xml:space="preserve">
+    <value>Mount Delay:</value>
+  </data>
+  <data name="MainForm.remountseriallabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.label47.Text" xml:space="preserve">
+    <value>Mount Serial:</value>
+  </data>
+  <data name="MainForm.remountsetbutton.Text" xml:space="preserve">
+    <value>Set Mount</value>
+  </data>
+  <data name="MainForm.remountcheckbox.Text" xml:space="preserve">
+    <value>Enable</value>
+  </data>
+  <data name="MainForm.DmgDsplyGroup.Text" xml:space="preserve">
+    <value>Damage Display</value>
+  </data>
+  <data name="MainForm.label81.Text" xml:space="preserve">
+    <value>Min Dmg:</value>
+  </data>
+  <data name="MainForm.limitDamageDisplayEnable.Text" xml:space="preserve">
+    <value>Suppress Dmg Display</value>
+  </data>
+  <data name="MainForm.pythonScriptingTab.Text" xml:space="preserve">
+    <value>Python</value>
+  </data>
+  <data name="MainForm.filename.Text" xml:space="preserve">
+    <value>Filename</value>
+  </data>
+  <data name="MainForm.status.Text" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="MainForm.loop.Text" xml:space="preserve">
+    <value>Loop</value>
+  </data>
+  <data name="MainForm.autostart.Text" xml:space="preserve">
+    <value>A.S.</value>
+  </data>
+  <data name="MainForm.wait.Text" xml:space="preserve">
+    <value>Wait</value>
+  </data>
+  <data name="MainForm.hotkey.Text" xml:space="preserve">
+    <value>Hot Keys</value>
+  </data>
+  <data name="MainForm.heypass.Text" xml:space="preserve">
+    <value>KeyPass</value>
+  </data>
+  <data name="MainForm.index.Text" xml:space="preserve">
+    <value>#</value>
+  </data>
+  <data name="MainForm.preload.Text" xml:space="preserve">
+    <value>Preload</value>
+  </data>
+  <data name="MainForm.fullFilePath.Text" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="MainForm.uosScriptingTab.Text" xml:space="preserve">
+    <value>UOS</value>
+  </data>
+  <data name="MainForm.columnHeader1.Text" xml:space="preserve">
+    <value>Filename</value>
+  </data>
+  <data name="MainForm.columnHeader2.Text" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="MainForm.columnHeader3.Text" xml:space="preserve">
+    <value>Loop</value>
+  </data>
+  <data name="MainForm.columnHeader4.Text" xml:space="preserve">
+    <value>A.S.</value>
+  </data>
+  <data name="MainForm.columnHeader5.Text" xml:space="preserve">
+    <value>Wait</value>
+  </data>
+  <data name="MainForm.columnHeader6.Text" xml:space="preserve">
+    <value>Hot Keys</value>
+  </data>
+  <data name="MainForm.columnHeader7.Text" xml:space="preserve">
+    <value>KeyPass</value>
+  </data>
+  <data name="MainForm.columnHeader8.Text" xml:space="preserve">
+    <value>#</value>
+  </data>
+  <data name="MainForm.columnHeader19.Text" xml:space="preserve">
+    <value>Preload</value>
+  </data>
+  <data name="MainForm.columnHeader9.Text" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="MainForm.csScriptingTab.Text" xml:space="preserve">
+    <value>C#</value>
+  </data>
+  <data name="MainForm.columnHeader10.Text" xml:space="preserve">
+    <value>Filename</value>
+  </data>
+  <data name="MainForm.columnHeader11.Text" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="MainForm.columnHeader12.Text" xml:space="preserve">
+    <value>Loop</value>
+  </data>
+  <data name="MainForm.columnHeader13.Text" xml:space="preserve">
+    <value>A.S.</value>
+  </data>
+  <data name="MainForm.columnHeader14.Text" xml:space="preserve">
+    <value>Wait</value>
+  </data>
+  <data name="MainForm.columnHeader15.Text" xml:space="preserve">
+    <value>Hot Keys</value>
+  </data>
+  <data name="MainForm.columnHeader16.Text" xml:space="preserve">
+    <value>KeyPass</value>
+  </data>
+  <data name="MainForm.columnHeader17.Text" xml:space="preserve">
+    <value>#</value>
+  </data>
+  <data name="MainForm.columnHeader20.Text" xml:space="preserve">
+    <value>Preload</value>
+  </data>
+  <data name="MainForm.columnHeader18.Text" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="MainForm.autoScriptReload.Text" xml:space="preserve">
+    <value>Auto Script Reload</value>
+  </data>
+  <data name="MainForm.scriptPacketLogCheckBox.Text" xml:space="preserve">
+    <value>Enable Packet Logging</value>
+  </data>
+  <data name="MainForm.InspectGumpsButton.Text" xml:space="preserve">
+    <value> Gump</value>
+  </data>
+  <data name="MainForm.InspectContextButton.Text" xml:space="preserve">
+    <value> Inspect</value>
+  </data>
+  <data name="MainForm.scriptshowStartStopCheckBox.Text" xml:space="preserve">
+    <value>Show Start/Stop Msg</value>
+  </data>
+  <data name="MainForm.groupBox30.Text" xml:space="preserve">
+    <value>  Script Info</value>
+  </data>
+  <data name="MainForm.scriptpreload.Text" xml:space="preserve">
+    <value>Preload</value>
+  </data>
+  <data name="MainForm.scriptautostartcheckbox.Text" xml:space="preserve">
+    <value>AutoStart</value>
+  </data>
+  <data name="MainForm.scriptwaitmodecheckbox.Text" xml:space="preserve">
+    <value>Wait</value>
+  </data>
+  <data name="MainForm.scriptloopmodecheckbox.Text" xml:space="preserve">
+    <value>Loop</value>
+  </data>
+  <data name="MainForm.groupBox42.Text" xml:space="preserve">
+    <value>  Search</value>
+  </data>
+  <data name="MainForm.scripterrorlogCheckBox.Text" xml:space="preserve">
+    <value>Log Script Error</value>
+  </data>
+  <data name="MainForm.scriptOperationsBox.Text" xml:space="preserve">
+    <value>  Operations</value>
+  </data>
+  <data name="MainForm.buttonScriptTo.Text" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="MainForm.buttonScriptEditorNew.Text" xml:space="preserve">
+    <value> New</value>
+  </data>
+  <data name="MainForm.buttonAddScript.Text" xml:space="preserve">
+    <value> Add</value>
+  </data>
+  <data name="MainForm.buttonRemoveScript.Text" xml:space="preserve">
+    <value> Rem</value>
+  </data>
+  <data name="MainForm.buttonScriptDown.Text" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="MainForm.textBoxDelay.Text" xml:space="preserve">
+    <value>100</value>
+  </data>
+  <data name="MainForm.buttonScriptUp.Text" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="MainForm.buttonScriptEditor.Text" xml:space="preserve">
+    <value> Edit</value>
+  </data>
+  <data name="MainForm.showscriptmessageCheckBox.Text" xml:space="preserve">
+    <value>Show Script Error Msg</value>
+  </data>
+  <data name="MainForm.eautoloot.Text" xml:space="preserve">
+    <value>Autoloot</value>
+  </data>
+  <data name="MainForm.allowHiddenLooting.Text" xml:space="preserve">
+    <value>Allow looting while hidden</value>
+  </data>
+  <data name="MainForm.autoLootButtonListClone.Text" xml:space="preserve">
+    <value>Clone</value>
+  </data>
+  <data name="MainForm.autolootautostartCheckBox.Text" xml:space="preserve">
+    <value>Autostart OnLogin</value>
+  </data>
+  <data name="MainForm.label60.Text" xml:space="preserve">
+    <value>Max Range</value>
+  </data>
+  <data name="MainForm.autolootItemPropsB.Text" xml:space="preserve">
+    <value>Edit Props</value>
+  </data>
+  <data name="MainForm.groupBox14.Text" xml:space="preserve">
+    <value>AutoLoot Bag</value>
+  </data>
+  <data name="MainForm.label55.Text" xml:space="preserve">
+    <value>Serial:</value>
+  </data>
+  <data name="MainForm.autolootContainerLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.autolootContainerButton.Text" xml:space="preserve">
+    <value>Set Bag</value>
+  </data>
+  <data name="MainForm.autolootAddItemBTarget.Text" xml:space="preserve">
+    <value>Add Item</value>
+  </data>
+  <data name="MainForm.autoLootnoopenCheckBox.Text" xml:space="preserve">
+    <value>No Open Corpse</value>
+  </data>
+  <data name="MainForm.label21.Text" xml:space="preserve">
+    <value>Delay (ms)</value>
+  </data>
+  <data name="MainForm.autoLootButtonRemoveList.Text" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="MainForm.autolootButtonAddList.Text" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="MainForm.label20.Text" xml:space="preserve">
+    <value>Autoloot List:</value>
+  </data>
+  <data name="MainForm.groupBox13.Text" xml:space="preserve">
+    <value>Autoloot Log</value>
+  </data>
+  <data name="MainForm.autoLootCheckBox.Text" xml:space="preserve">
+    <value>Enable autoloot</value>
+  </data>
+  <data name="MainForm.escavenger.Text" xml:space="preserve">
+    <value>Scavenger</value>
+  </data>
+  <data name="MainForm.scavengerButtonClone.Text" xml:space="preserve">
+    <value>Clone</value>
+  </data>
+  <data name="MainForm.scavengerautostartCheckBox.Text" xml:space="preserve">
+    <value>Autostart OnLogin</value>
+  </data>
+  <data name="MainForm.label61.Text" xml:space="preserve">
+    <value>Max Range</value>
+  </data>
+  <data name="MainForm.groupBox41.Text" xml:space="preserve">
+    <value>Scavenger Bag</value>
+  </data>
+  <data name="MainForm.label54.Text" xml:space="preserve">
+    <value>Serial:</value>
+  </data>
+  <data name="MainForm.scavengerContainerLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.scavengerButtonSetContainer.Text" xml:space="preserve">
+    <value>Set Bag</value>
+  </data>
+  <data name="MainForm.groupBox12.Text" xml:space="preserve">
+    <value>Scavenger Log</value>
+  </data>
+  <data name="MainForm.label23.Text" xml:space="preserve">
+    <value>Delay (ms)</value>
+  </data>
+  <data name="MainForm.label22.Text" xml:space="preserve">
+    <value>Scavenger List:</value>
+  </data>
+  <data name="MainForm.scavengerButtonEditProps.Text" xml:space="preserve">
+    <value>Edit Props</value>
+  </data>
+  <data name="MainForm.scavengerButtonAddTarget.Text" xml:space="preserve">
+    <value>Add Item</value>
+  </data>
+  <data name="MainForm.scavengerCheckBox.Text" xml:space="preserve">
+    <value>Enable scavenger</value>
+  </data>
+  <data name="MainForm.scavengerButtonRemoveList.Text" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="MainForm.scavengerButtonAddList.Text" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="MainForm.organizer.Text" xml:space="preserve">
+    <value>Organizer</value>
+  </data>
+  <data name="MainForm.organizerCloneListB.Text" xml:space="preserve">
+    <value>Clone</value>
+  </data>
+  <data name="MainForm.groupBox11.Text" xml:space="preserve">
+    <value>Organizer Bags</value>
+  </data>
+  <data name="MainForm.label57.Text" xml:space="preserve">
+    <value>Destination:</value>
+  </data>
+  <data name="MainForm.label56.Text" xml:space="preserve">
+    <value>Source:</value>
+  </data>
+  <data name="MainForm.organizerSetSourceB.Text" xml:space="preserve">
+    <value>Set Source</value>
+  </data>
+  <data name="MainForm.organizerSetDestinationB.Text" xml:space="preserve">
+    <value>Set Dest</value>
+  </data>
+  <data name="MainForm.organizerSourceLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.groupBox16.Text" xml:space="preserve">
+    <value>Organizer Log</value>
+  </data>
+  <data name="MainForm.label27.Text" xml:space="preserve">
+    <value>Drag Item Delay (ms)</value>
+  </data>
+  <data name="MainForm.label24.Text" xml:space="preserve">
+    <value>Organizer List:</value>
+  </data>
+  <data name="MainForm.organizerAddTargetB.Text" xml:space="preserve">
+    <value>Add Item</value>
+  </data>
+  <data name="MainForm.organizerRemoveListB.Text" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="MainForm.organizerAddListB.Text" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="MainForm.VendorBuy.Text" xml:space="preserve">
+    <value>Vendor Buy</value>
+  </data>
+  <data name="MainForm.buyToCompleteAmount.Text" xml:space="preserve">
+    <value>Restock</value>
+  </data>
+  <data name="MainForm.buyCompareNameCheckBox.Text" xml:space="preserve">
+    <value>Compare Item Name</value>
+  </data>
+  <data name="MainForm.buyCloneButton.Text" xml:space="preserve">
+    <value>Clone</value>
+  </data>
+  <data name="MainForm.groupBox18.Text" xml:space="preserve">
+    <value>Buy Log</value>
+  </data>
+  <data name="MainForm.label25.Text" xml:space="preserve">
+    <value>Vendor Buy:</value>
+  </data>
+  <data name="MainForm.buyAddTargetB.Text" xml:space="preserve">
+    <value>Add Item</value>
+  </data>
+  <data name="MainForm.buyEnableCheckBox.Text" xml:space="preserve">
+    <value>Enable Buy List</value>
+  </data>
+  <data name="MainForm.buyRemoveListButton.Text" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="MainForm.buyAddListButton.Text" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="MainForm.VendorSell.Text" xml:space="preserve">
+    <value>Vendor Sell</value>
+  </data>
+  <data name="MainForm.sellCloneListButton.Text" xml:space="preserve">
+    <value>Clone</value>
+  </data>
+  <data name="MainForm.groupBox19.Text" xml:space="preserve">
+    <value>Sell Bag</value>
+  </data>
+  <data name="MainForm.sellSetBagButton.Text" xml:space="preserve">
+    <value>Set Bag</value>
+  </data>
+  <data name="MainForm.label50.Text" xml:space="preserve">
+    <value>Serial:</value>
+  </data>
+  <data name="MainForm.sellBagLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.groupBox20.Text" xml:space="preserve">
+    <value>Sell Log</value>
+  </data>
+  <data name="MainForm.label26.Text" xml:space="preserve">
+    <value>Vendor Sell:</value>
+  </data>
+  <data name="MainForm.sellAddTargerButton.Text" xml:space="preserve">
+    <value>Add Item</value>
+  </data>
+  <data name="MainForm.sellEnableCheckBox.Text" xml:space="preserve">
+    <value>Enable Sell List</value>
+  </data>
+  <data name="MainForm.sellRemoveListButton.Text" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="MainForm.sellAddListButton.Text" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="MainForm.Dress.Text" xml:space="preserve">
+    <value>Dress / Arm</value>
+  </data>
+  <data name="MainForm.useUo3D.Text" xml:space="preserve">
+    <value>Use UO3D Equip and UnEquip</value>
+  </data>
+  <data name="MainForm.dressStopButton.Text" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="MainForm.dressConflictCheckB.Text" xml:space="preserve">
+    <value>Remove Conflict Item</value>
+  </data>
+  <data name="MainForm.dressBagLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.groupBox22.Text" xml:space="preserve">
+    <value>Item List</value>
+  </data>
+  <data name="MainForm.dressAddTargetB.Text" xml:space="preserve">
+    <value>Add Target</value>
+  </data>
+  <data name="MainForm.dressAddManualB.Text" xml:space="preserve">
+    <value>Add Clear Layer</value>
+  </data>
+  <data name="MainForm.dressRemoveB.Text" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="MainForm.dressClearListB.Text" xml:space="preserve">
+    <value>ClearList</value>
+  </data>
+  <data name="MainForm.dressReadB.Text" xml:space="preserve">
+    <value>Read Current</value>
+  </data>
+  <data name="MainForm.label29.Text" xml:space="preserve">
+    <value>Drag Item Delay (ms)</value>
+  </data>
+  <data name="MainForm.groupBox21.Text" xml:space="preserve">
+    <value>Organizer Log</value>
+  </data>
+  <data name="MainForm.dressSetBagB.Text" xml:space="preserve">
+    <value>Undress Bag</value>
+  </data>
+  <data name="MainForm.undressExecuteButton.Text" xml:space="preserve">
+    <value>Undres</value>
+  </data>
+  <data name="MainForm.dressExecuteButton.Text" xml:space="preserve">
+    <value>Dress</value>
+  </data>
+  <data name="MainForm.columnHeader24.Text" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.columnHeader25.Text" xml:space="preserve">
+    <value>Layer</value>
+  </data>
+  <data name="MainForm.columnHeader26.Text" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="MainForm.columnHeader27.Text" xml:space="preserve">
+    <value>Serial</value>
+  </data>
+  <data name="MainForm.label28.Text" xml:space="preserve">
+    <value>Dress List:</value>
+  </data>
+  <data name="MainForm.dressRemoveListB.Text" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="MainForm.dressAddListB.Text" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="MainForm.friends.Text" xml:space="preserve">
+    <value>Friends</value>
+  </data>
+  <data name="MainForm.groupBox34.Text" xml:space="preserve">
+    <value>Guild Friend</value>
+  </data>
+  <data name="MainForm.FriendGuildAddButton.Text" xml:space="preserve">
+    <value>Add Manual</value>
+  </data>
+  <data name="MainForm.FriendGuildRemoveButton.Text" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="MainForm.groupBox33.Text" xml:space="preserve">
+    <value>Faction Friend</value>
+  </data>
+  <data name="MainForm.MINfriendCheckBox.Text" xml:space="preserve">
+    <value>MIN</value>
+  </data>
+  <data name="MainForm.SLfriendCheckBox.Text" xml:space="preserve">
+    <value>SL</value>
+  </data>
+  <data name="MainForm.TBfriendCheckBox.Text" xml:space="preserve">
+    <value>TB</value>
+  </data>
+  <data name="MainForm.COMfriendCheckBox.Text" xml:space="preserve">
+    <value>CoM</value>
+  </data>
+  <data name="MainForm.friendGroupBox.Text" xml:space="preserve">
+    <value>User Friend</value>
+  </data>
+  <data name="MainForm.friendAddTargetButton.Text" xml:space="preserve">
+    <value>Add Target</value>
+  </data>
+  <data name="MainForm.friendRemoveButton.Text" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="MainForm.friendAddButton.Text" xml:space="preserve">
+    <value>Add Manual</value>
+  </data>
+  <data name="MainForm.friendloggroupBox.Text" xml:space="preserve">
+    <value>Friend Log</value>
+  </data>
+  <data name="MainForm.friendIncludePartyCheckBox.Text" xml:space="preserve">
+    <value>Include party member in Friend List</value>
+  </data>
+  <data name="MainForm.friendAttackCheckBox.Text" xml:space="preserve">
+    <value>Prevent attacking friends in warmode</value>
+  </data>
+  <data name="MainForm.friendPartyCheckBox.Text" xml:space="preserve">
+    <value>Autoaccept party from Friends</value>
+  </data>
+  <data name="MainForm.labelfriend.Text" xml:space="preserve">
+    <value>Friend List:</value>
+  </data>
+  <data name="MainForm.friendButtonRemoveList.Text" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="MainForm.friendButtonAddList.Text" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="MainForm.restock.Text" xml:space="preserve">
+    <value>Restock</value>
+  </data>
+  <data name="MainForm.restockCloneListB.Text" xml:space="preserve">
+    <value>Clone</value>
+  </data>
+  <data name="MainForm.groupBox3.Text" xml:space="preserve">
+    <value>Restock Bags</value>
+  </data>
+  <data name="MainForm.label59.Text" xml:space="preserve">
+    <value>Destination:</value>
+  </data>
+  <data name="MainForm.label58.Text" xml:space="preserve">
+    <value>Source:</value>
+  </data>
+  <data name="MainForm.restockSetSourceButton.Text" xml:space="preserve">
+    <value>Set Bag</value>
+  </data>
+  <data name="MainForm.restockSourceLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.restockDestinationLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.restockSetDestinationButton.Text" xml:space="preserve">
+    <value>Set Bag</value>
+  </data>
+  <data name="MainForm.groupBox2.Text" xml:space="preserve">
+    <value>Restock Log</value>
+  </data>
+  <data name="MainForm.label13.Text" xml:space="preserve">
+    <value>Drag Item Delay (ms)</value>
+  </data>
+  <data name="MainForm.label7.Text" xml:space="preserve">
+    <value>Restock List:</value>
+  </data>
+  <data name="MainForm.restockAddTargetButton.Text" xml:space="preserve">
+    <value>Add Item</value>
+  </data>
+  <data name="MainForm.restockRemoveListB.Text" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="MainForm.restockAddListB.Text" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="MainForm.bandageheal.Text" xml:space="preserve">
+    <value>Bandage Heal</value>
+  </data>
+  <data name="MainForm.BandageHealSettingsBox.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="MainForm.bandagehealAutostartCheckBox.Text" xml:space="preserve">
+    <value>Autostart OnLogin</value>
+  </data>
+  <data name="MainForm.bandageHealIgnoreCount.Text" xml:space="preserve">
+    <value>Ignore Count</value>
+  </data>
+  <data name="MainForm.bandagehealTimeWithBufCheckBox.Text" xml:space="preserve">
+    <value>Time with Buff</value>
+  </data>
+  <data name="MainForm.label78.Text" xml:space="preserve">
+    <value>Other:</value>
+  </data>
+  <data name="MainForm.bandagehealenableCheckBox.Text" xml:space="preserve">
+    <value>Enable Bandage Heal</value>
+  </data>
+  <data name="MainForm.label77.Text" xml:space="preserve">
+    <value>Self:</value>
+  </data>
+  <data name="MainForm.bandagehealusetextContent.Text" xml:space="preserve">
+    <value>[band</value>
+  </data>
+  <data name="MainForm.bandagehealusetextSelfContent.Text" xml:space="preserve">
+    <value>[bandself</value>
+  </data>
+  <data name="MainForm.bandagehealusetext.Text" xml:space="preserve">
+    <value>Send text for self heal</value>
+  </data>
+  <data name="MainForm.bandagehealusetarget.Text" xml:space="preserve">
+    <value>Use Normal Target</value>
+  </data>
+  <data name="MainForm.label46.Text" xml:space="preserve">
+    <value>Max Range:</value>
+  </data>
+  <data name="MainForm.bandagehealcountdownCheckBox.Text" xml:space="preserve">
+    <value>Show Heal Countdown</value>
+  </data>
+  <data name="MainForm.bandagehealhiddedCheckBox.Text" xml:space="preserve">
+    <value>Block heal if Hidden</value>
+  </data>
+  <data name="MainForm.bandagehealmortalCheckBox.Text" xml:space="preserve">
+    <value>Block heal if Mortalled</value>
+  </data>
+  <data name="MainForm.bandagehealpoisonCheckBox.Text" xml:space="preserve">
+    <value>Block heal if Poisoned</value>
+  </data>
+  <data name="MainForm.label33.Text" xml:space="preserve">
+    <value>% hits</value>
+  </data>
+  <data name="MainForm.label32.Text" xml:space="preserve">
+    <value>Start Below:</value>
+  </data>
+  <data name="MainForm.label31.Text" xml:space="preserve">
+    <value>Custom Delay:</value>
+  </data>
+  <data name="MainForm.bandagehealdexformulaCheckBox.Text" xml:space="preserve">
+    <value>Use DEX formula delay</value>
+  </data>
+  <data name="MainForm.label30.Text" xml:space="preserve">
+    <value>Color:</value>
+  </data>
+  <data name="MainForm.label19.Text" xml:space="preserve">
+    <value>ID:</value>
+  </data>
+  <data name="MainForm.bandagehealcustomCheckBox.Text" xml:space="preserve">
+    <value>Use Custom Bandage</value>
+  </data>
+  <data name="MainForm.bandagehealtargetLabel.Text" xml:space="preserve">
+    <value>Null (0x00000000)</value>
+  </data>
+  <data name="MainForm.label15.Text" xml:space="preserve">
+    <value>Target:</value>
+  </data>
+  <data name="MainForm.bandagehealsettargetButton.Text" xml:space="preserve">
+    <value>Set Target</value>
+  </data>
+  <data name="MainForm.label14.Text" xml:space="preserve">
+    <value>Heal Target:</value>
+  </data>
+  <data name="MainForm.groupBox5.Text" xml:space="preserve">
+    <value>Bandage Heal Log</value>
+  </data>
   <data name="MainForm.skillActionsCard.Text" xml:space="preserve">
     <value>Actions</value>
   </data>
@@ -511,5 +1485,191 @@
   </data>
   <data name="HotKey.Category.Other" xml:space="preserve">
     <value>Other</value>
+  </data>
+  <data name="MainForm.autolootConfigCard.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="MainForm.scavengerConfigCard.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="MainForm.AutolootColumnX.HeaderText" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.AutolootColumnItemName.HeaderText" xml:space="preserve">
+    <value>Item Name</value>
+  </data>
+  <data name="MainForm.AutolootColumnItemID.HeaderText" xml:space="preserve">
+    <value>Graphics</value>
+  </data>
+  <data name="MainForm.AutolootColumnColor.HeaderText" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="MainForm.AutolootColumnProps.HeaderText" xml:space="preserve">
+    <value>Props</value>
+  </data>
+  <data name="MainForm.organizerConfigCard.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="MainForm.organizerExecuteButton.Text" xml:space="preserve">
+    <value>Execute</value>
+  </data>
+  <data name="MainForm.organizerStopButton.Text" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="MainForm.OrganizerColumnX.HeaderText" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.OrganizerColumnItemName.HeaderText" xml:space="preserve">
+    <value>Item Name</value>
+  </data>
+  <data name="MainForm.OrganizerColumnGraphics.HeaderText" xml:space="preserve">
+    <value>Graphics</value>
+  </data>
+  <data name="MainForm.OrganizerColumnColor.HeaderText" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="MainForm.OrganizerColumnAmount.HeaderText" xml:space="preserve">
+    <value>Amount</value>
+  </data>
+  <data name="MainForm.vendorbuyItemsCard.Text" xml:space="preserve">
+    <value>Vendor Buy</value>
+  </data>
+  <data name="MainForm.vendorbuyConfigCard.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnX.HeaderText" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnName.HeaderText" xml:space="preserve">
+    <value>Item Name</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnGraphics.HeaderText" xml:space="preserve">
+    <value>Graphics</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnAmount.HeaderText" xml:space="preserve">
+    <value>Amount</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnColor.HeaderText" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="MainForm.dressItemsCard.Text" xml:space="preserve">
+    <value>Dress / Arm</value>
+  </data>
+  <data name="MainForm.dressConfigCard.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="MainForm.dressConfigCard.Log" xml:space="preserve">
+    <value>Dress Log</value>
+  </data>
+  <data name="sellListLabel" xml:space="preserve">
+    <value>List:</value>
+  </data>
+  <data name="sellAddListButton" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="sellRemoveListButton" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="sellCloneListButton" xml:space="preserve">
+    <value>Clone</value>
+  </data>
+  <data name="vendorSellDataGridX" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="vendorSellDataGridItemName" xml:space="preserve">
+    <value>Item Name</value>
+  </data>
+  <data name="vendorSellDataGridGraphics" xml:space="preserve">
+    <value>Graphics</value>
+  </data>
+  <data name="vendorSellDataGridAmount" xml:space="preserve">
+    <value>Amount</value>
+  </data>
+  <data name="vendorSellDataGridColor" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="sellAddItemButton" xml:space="preserve">
+    <value>Add Item</value>
+  </data>
+  <data name="sellSettingsCard" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="sellEnableCheckBox" xml:space="preserve">
+    <value>Enable Sell List</value>
+  </data>
+  <data name="sellBagLabel" xml:space="preserve">
+    <value>Sell Bag</value>
+  </data>
+  <data name="sellSetBagButton" xml:space="preserve">
+    <value>Set Bag</value>
+  </data>
+  <data name="sellLogLabel" xml:space="preserve">
+    <value>Sell Log</value>
+  </data>
+  <data name="MainForm.vendorsellItemsCard.Text" xml:space="preserve">
+    <value>Vendor Sales</value>
+  </data>
+  <data name="MainForm.friends.Text" xml:space="preserve">
+    <value>Friends</value>
+  </data>
+  <data name="MainForm.friendsConfigCard.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="restockAddListButton" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="restockRemoveListButton" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="restockCloneListButton" xml:space="preserve">
+    <value>Clone</value>
+  </data>
+  <data name="restockDataGridX" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="restockDataGridItemName" xml:space="preserve">
+    <value>Item Name</value>
+  </data>
+  <data name="restockDataGridGraphics" xml:space="preserve">
+    <value>Graphics</value>
+  </data>
+  <data name="restockDataGridColor" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="restockDataGridLimit" xml:space="preserve">
+    <value>Limit</value>
+  </data>
+  <data name="restockAddItemButton" xml:space="preserve">
+    <value>Add Item</value>
+  </data>
+  <data name="restockConfigCard" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="restockBagsLabel" xml:space="preserve">
+    <value>Restock Bags</value>
+  </data>
+  <data name="restockSourceLabel" xml:space="preserve">
+    <value>Source:</value>
+  </data>
+  <data name="restockSetSourceButton" xml:space="preserve">
+    <value>Set Source</value>
+  </data>
+  <data name="restockDestinationLabel" xml:space="preserve">
+    <value>Destination:</value>
+  </data>
+  <data name="restockSetDestinationButton" xml:space="preserve">
+    <value>Set Destination</value>
+  </data>
+  <data name="restockExecuteButton" xml:space="preserve">
+    <value>Execute</value>
+  </data>
+  <data name="restockStopButton" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="restockDragDelayLabel" xml:space="preserve">
+    <value>Drag Item Delay (ms)</value>
+  </data>
+  <data name="restockLogLabel" xml:space="preserve">
+    <value>Restock Log</value>
   </data>
 </root>

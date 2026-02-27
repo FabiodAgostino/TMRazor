@@ -5,13 +5,24 @@ using System.Windows.Forms;
 
 namespace Assistant.UI.Controls
 {
+    public enum RazorButtonStyle
+    {
+        Default,
+        Danger
+    }
+
     public class RazorButton : Button
     {
+        private RazorButtonStyle _style = RazorButtonStyle.Default;
         private Color _primaryColor = RazorTheme.Colors.Primary;
-        private Color _hoverColor = ColorTranslator.FromHtml("#EA580C"); // orange-600
-        private Color _pressedColor = ColorTranslator.FromHtml("#C2410C"); // orange-700
         private Color? _overrideCustomColor = null;
         private bool _isPressed = false;
+
+        public RazorButtonStyle Style
+        {
+            get => _style;
+            set { _style = value; this.Invalidate(); }
+        }
 
         public Color? OverrideCustomColor
         {
@@ -29,6 +40,30 @@ namespace Assistant.UI.Controls
             this.Cursor = Cursors.Hand;
             this.Size = new Size(130, 40);
             this.DoubleBuffered = true;
+        }
+
+        protected override void OnTextChanged(EventArgs e)
+        {
+            base.OnTextChanged(e);
+            AutoDetectStyle();
+        }
+
+        private void AutoDetectStyle()
+        {
+            if (string.IsNullOrEmpty(this.Text)) return;
+
+            string text = this.Text.ToLower();
+            if (text.Contains("remove") || text.Contains("rimuovi") ||
+                text.Contains("close") || text.Contains("chiudi") ||
+                text.Contains("disable") || text.Contains("disabilita"))
+            {
+                _style = RazorButtonStyle.Danger;
+            }
+            else
+            {
+                _style = RazorButtonStyle.Default;
+            }
+            this.Invalidate();
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
@@ -61,7 +96,7 @@ namespace Assistant.UI.Controls
             int radius = 6;
             Rectangle rect = new Rectangle(0, 0, this.Width - 1, this.Height - 1);
             
-            Color baseColor = _overrideCustomColor ?? _primaryColor;
+            Color baseColor = _style == RazorButtonStyle.Danger ? RazorTheme.Colors.Danger : (_overrideCustomColor ?? _primaryColor);
             Color backColor;
 
             if (!this.Enabled)
@@ -70,11 +105,11 @@ namespace Assistant.UI.Controls
             }
             else if (_isPressed)
             {
-                backColor = _pressedColor;
+                backColor = DarkenColor(baseColor, 0.25f);
             }
             else if (this.ClientRectangle.Contains(this.PointToClient(Cursor.Position)))
             {
-                backColor = _hoverColor;
+                backColor = _style == RazorButtonStyle.Danger ? RazorTheme.Colors.DangerHover : DarkenColor(baseColor, 0.15f);
             }
             else
             {
@@ -128,6 +163,14 @@ namespace Assistant.UI.Controls
             TextRenderer.DrawText(g, this.Text, this.Font, rect, this.ForeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
         }
 
+        private static Color DarkenColor(Color color, float amount)
+        {
+            float r = Math.Max(0, color.R * (1f - amount));
+            float g = Math.Max(0, color.G * (1f - amount));
+            float b = Math.Max(0, color.B * (1f - amount));
+            return Color.FromArgb(color.A, (int)r, (int)g, (int)b);
+        }
+
         private GraphicsPath GetRoundedPath(Rectangle rect, int radius)
         {
             GraphicsPath path = new GraphicsPath();
@@ -139,7 +182,7 @@ namespace Assistant.UI.Controls
             path.CloseFigure();
             return path;
         }
-        
+
         protected override void OnMouseEnter(EventArgs e)
         {
             base.OnMouseEnter(e);

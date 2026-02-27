@@ -1,3 +1,5 @@
+using Assistant.UI.Controls;
+
 namespace RazorEnhanced.UI
 {
     partial class EnhancedFriendAddPlayerManual
@@ -35,7 +37,7 @@ namespace RazorEnhanced.UI
             this.tSerial = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.tName = new System.Windows.Forms.TextBox();
-            this.bAddPlayer = new System.Windows.Forms.Button();
+            this.bAddPlayer = new RazorButton();
             this.bClose = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -109,6 +111,7 @@ namespace RazorEnhanced.UI
             this.bAddPlayer.Size = new System.Drawing.Size(57, 20);
             this.bAddPlayer.TabIndex = 2;
             this.bAddPlayer.Text = "Add";
+            this.bAddPlayer.OverrideCustomColor = Assistant.UI.Controls.RazorTheme.Colors.Success;
             this.bAddPlayer.UseVisualStyleBackColor = true;
             this.bAddPlayer.Click += new System.EventHandler(this.bAddPlayer_Click);
             // 
@@ -151,7 +154,7 @@ namespace RazorEnhanced.UI
         private System.Windows.Forms.TextBox tSerial;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox tName;
-        private System.Windows.Forms.Button bAddPlayer;
+        private RazorButton bAddPlayer;
         private System.Windows.Forms.Button bClose;
 
     }

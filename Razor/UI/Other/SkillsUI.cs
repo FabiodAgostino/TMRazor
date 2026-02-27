@@ -101,7 +101,8 @@ namespace Assistant
                 Name = "resetDelta",
                 Text = LanguageHelper.GetString("MainForm.resetDelta.Text") ?? "Reset  +/-",
                 Location = new Point(btnX, y),
-                Size = new Size(btnW, 30)
+                Size = new Size(btnW, 30),
+                OverrideCustomColor = RazorTheme.Colors.Success
             };
             resetDelta.Click += new EventHandler(OnResetSkillDelta);
             y += 38;
@@ -115,7 +116,8 @@ namespace Assistant
                 Name = "skillCopySel",
                 Text = LanguageHelper.GetString("MainForm.skillCopySel.Text") ?? "Copy Selected",
                 Location = new Point(btnX, y),
-                Size = new Size(btnW, 30)
+                Size = new Size(btnW, 30),
+                OverrideCustomColor = RazorTheme.Colors.Success
             };
             skillCopySel.Click += new EventHandler(skillCopySel_Click);
             y += 38;
@@ -126,7 +128,8 @@ namespace Assistant
                 Name = "skillCopyAll",
                 Text = LanguageHelper.GetString("MainForm.skillCopyAll.Text") ?? "Copy All",
                 Location = new Point(btnX, y),
-                Size = new Size(btnW, 30)
+                Size = new Size(btnW, 30),
+                OverrideCustomColor = RazorTheme.Colors.Success
             };
             skillCopyAll.Click += new EventHandler(skillCopyAll_Click);
             y += 38;
@@ -201,7 +204,8 @@ namespace Assistant
                 Name = "setlocks",
                 Text = LanguageHelper.GetString("MainForm.setlocks.Text") ?? "Set all locks",
                 Location = new Point(btnX, y),
-                Size = new Size(btnW, 30)
+                Size = new Size(btnW, 30),
+                OverrideCustomColor = RazorTheme.Colors.Success
             };
             setlocks.Click += new EventHandler(OnSetSkillLocks);
 

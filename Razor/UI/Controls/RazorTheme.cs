@@ -10,7 +10,7 @@ namespace Assistant.UI.Controls
 
         public static class Colors
         {
-            public static Color Primary => ColorTranslator.FromHtml("#F97316"); // Orange
+            public static Color Primary => ColorTranslator.FromHtml("#14532d"); // Professional dark green
             public static Color BackgroundLight => ColorTranslator.FromHtml("#F3F4F6");
             public static Color BackgroundDark => ColorTranslator.FromHtml("#152331"); // Deep Blue Grey
             public static Color GradientEndDark => ColorTranslator.FromHtml("#000000"); // Pure Black
@@ -26,9 +26,15 @@ namespace Assistant.UI.Controls
             public static Color TextSecondaryDark => ColorTranslator.FromHtml("#9CA3AF");
 
             // Semantic colors
-            public static Color Success => Color.FromArgb(34, 197, 94);
-            public static Color Danger => Color.FromArgb(239, 44, 44);
-            public static Color Warning => Color.FromArgb(234, 179, 8);
+            public static Color Success => ColorTranslator.FromHtml("#14532d"); // Professional dark green
+            public static Color SuccessHover => ColorTranslator.FromHtml("#166534"); // Lighter hover green
+            public static Color New => ColorTranslator.FromHtml("#ff3900");
+            public static Color NewHover => ColorTranslator.FromHtml("#e03100");
+            public static Color Warning => ColorTranslator.FromHtml("#FFD700");
+            public static Color WarningHover => ColorTranslator.FromHtml("#DAA520");
+            public static Color Danger => ColorTranslator.FromHtml("#B31B1B");
+            public static Color DangerHover => ColorTranslator.FromHtml("#8E1515");
+            public static Color FocusOutline => ColorTranslator.FromHtml("#22c55e");
 
             // Helper for current theme
             public static Color CurrentBackground => IsDark ? BackgroundDark : BackgroundLight;
@@ -68,6 +74,14 @@ namespace Assistant.UI.Controls
             }
 
             ApplyThemeToControls(form.Controls);
+        }
+
+        public static Color DarkenColor(Color color, float amount)
+        {
+            float r = Math.Max(0, color.R * (1f - amount));
+            float g = Math.Max(0, color.G * (1f - amount));
+            float b = Math.Max(0, color.B * (1f - amount));
+            return Color.FromArgb(color.A, (int)r, (int)g, (int)b);
         }
 
         [System.Runtime.InteropServices.DllImport("dwmapi.dll")]
@@ -110,7 +124,11 @@ namespace Assistant.UI.Controls
         {
             foreach (Control control in controls)
             {
-                if (control is Assistant.UI.Controls.RazorButton || control is Assistant.UI.Controls.RazorCard)
+                if (control is Assistant.UI.Controls.RazorButton rb)
+                {
+                    // RazorButton has its own auto-detection logic
+                }
+                else if (control is Assistant.UI.Controls.RazorCard)
                 {
                     // Managed controls
                 }
@@ -136,9 +154,24 @@ namespace Assistant.UI.Controls
                     }
                     else if (control is Button btn)
                     {
-                        btn.BackColor = Colors.Primary;
+                        string text = btn.Text.ToLower();
+                        if (text.Contains("remove") || text.Contains("rimuovi") ||
+                            text.Contains("close") || text.Contains("chiudi") ||
+                            text.Contains("disable") || text.Contains("disabilita"))
+                        {
+                            btn.BackColor = Colors.Danger;
+                            btn.FlatAppearance.MouseOverBackColor = Colors.DangerHover;
+                            btn.FlatAppearance.MouseDownBackColor = DarkenColor(Colors.Danger, 0.25f);
+                        }
+                        else
+                        {
+                            btn.BackColor = Colors.Primary;
+                            btn.FlatAppearance.MouseOverBackColor = DarkenColor(Colors.Primary, 0.15f);
+                        }
+
                         btn.ForeColor = Color.White;
                         btn.FlatStyle = FlatStyle.Flat;
+                        btn.FlatAppearance.BorderSize = 0;
                     }
                 }
 

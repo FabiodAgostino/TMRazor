@@ -1,3 +1,5 @@
+using Assistant.UI.Controls;
+
 namespace RazorEnhanced.UI
 {
     partial class RE_MessageBox
@@ -28,22 +30,22 @@ namespace RazorEnhanced.UI
         /// </summary>
         private void InitializeComponent()
         {
-            this.okButton = new System.Windows.Forms.Button();
+            this.okButton = new RazorButton();
             this.webLink = new System.Windows.Forms.LinkLabel();
             this.message = new System.Windows.Forms.Label();
-            this.cancelButton = new System.Windows.Forms.Button();
-            this.noButton = new System.Windows.Forms.Button();
+            this.cancelButton = new RazorButton();
+            this.noButton = new RazorButton();
             this.SuspendLayout();
             // 
             // okButton
             // 
             this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.okButton.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.okButton.Location = new System.Drawing.Point(12, 79);
             this.okButton.Name = "okButton";
             this.okButton.Size = new System.Drawing.Size(75, 25);
             this.okButton.TabIndex = 0;
             this.okButton.Text = "OK";
+            this.okButton.OverrideCustomColor = RazorTheme.Colors.Success;
             this.okButton.UseVisualStyleBackColor = true;
             // 
             // webLink
@@ -70,24 +72,24 @@ namespace RazorEnhanced.UI
             // cancelButton
             // 
             this.cancelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.cancelButton.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.cancelButton.Location = new System.Drawing.Point(264, 79);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(75, 25);
             this.cancelButton.TabIndex = 3;
             this.cancelButton.Text = "Cancel";
+            this.cancelButton.OverrideCustomColor = RazorTheme.Colors.Danger;
             this.cancelButton.UseVisualStyleBackColor = true;
             // 
             // noButton
             // 
             this.noButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.noButton.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.noButton.Location = new System.Drawing.Point(133, 79);
             this.noButton.MinimumSize = new System.Drawing.Size(75, 25);
             this.noButton.Name = "noButton";
             this.noButton.Size = new System.Drawing.Size(75, 25);
             this.noButton.TabIndex = 4;
             this.noButton.Text = "No";
+            this.noButton.OverrideCustomColor = RazorTheme.Colors.Danger;
             this.noButton.UseVisualStyleBackColor = true;
             // 
             // RE_MessageBox
@@ -113,10 +115,10 @@ namespace RazorEnhanced.UI
 
         #endregion
 
-        private System.Windows.Forms.Button okButton;
+        private RazorButton okButton;
         private System.Windows.Forms.LinkLabel webLink;
         private System.Windows.Forms.Label message;
-        private System.Windows.Forms.Button cancelButton;
-        private System.Windows.Forms.Button noButton;
+        private RazorButton cancelButton;
+        private RazorButton noButton;
     }
 }

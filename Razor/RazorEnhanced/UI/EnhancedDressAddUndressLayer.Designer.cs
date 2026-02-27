@@ -1,3 +1,5 @@
+using Assistant.UI.Controls;
+
 namespace RazorEnhanced.UI
 {
     partial class EnhancedDressAddUndressLayer
@@ -34,7 +36,7 @@ namespace RazorEnhanced.UI
             this.layerlist = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
             this.bClose = new System.Windows.Forms.Button();
-            this.bAddItem = new System.Windows.Forms.Button();
+            this.bAddItem = new RazorButton();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -88,6 +90,7 @@ namespace RazorEnhanced.UI
             this.bAddItem.Size = new System.Drawing.Size(57, 20);
             this.bAddItem.TabIndex = 2;
             this.bAddItem.Text = "Add";
+            this.bAddItem.OverrideCustomColor = Assistant.UI.Controls.RazorTheme.Colors.Success;
             this.bAddItem.UseVisualStyleBackColor = true;
             this.bAddItem.Click += new System.EventHandler(this.bAddItem_Click);
             // 
@@ -115,7 +118,7 @@ namespace RazorEnhanced.UI
 
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.Button bAddItem;
+        private RazorButton bAddItem;
         private System.Windows.Forms.Button bClose;
         private System.Windows.Forms.ComboBox layerlist;
         private System.Windows.Forms.Label label1;

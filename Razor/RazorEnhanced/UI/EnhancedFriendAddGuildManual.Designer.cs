@@ -1,3 +1,5 @@
+using Assistant.UI.Controls;
+
 namespace RazorEnhanced.UI
 {
     partial class EnhancedFriendAddGuildManual
@@ -34,7 +36,7 @@ namespace RazorEnhanced.UI
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.tName = new System.Windows.Forms.TextBox();
             this.bClose = new System.Windows.Forms.Button();
-            this.bAddPlayer = new System.Windows.Forms.Button();
+            this.bAddPlayer = new RazorButton();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -93,6 +95,7 @@ namespace RazorEnhanced.UI
             this.bAddPlayer.Size = new System.Drawing.Size(57, 20);
             this.bAddPlayer.TabIndex = 2;
             this.bAddPlayer.Text = "Add";
+            this.bAddPlayer.OverrideCustomColor = Assistant.UI.Controls.RazorTheme.Colors.Success;
             this.bAddPlayer.UseVisualStyleBackColor = true;
             this.bAddPlayer.Click += new System.EventHandler(this.bAddPlayer_Click);
             // 
@@ -122,7 +125,7 @@ namespace RazorEnhanced.UI
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.TextBox tName;
-        private System.Windows.Forms.Button bAddPlayer;
+        private RazorButton bAddPlayer;
         private System.Windows.Forms.Button bClose;
 
     }

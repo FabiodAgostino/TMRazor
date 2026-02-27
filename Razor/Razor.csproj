@@ -768,7 +768,13 @@
     <Compile Include="UI\Agent\AutoLoot.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="UI\Agent\AutoLootUI.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="UI\Agent\BandageHeal.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\BandageHealUI.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="UI\Agent\Dress.cs">
@@ -785,6 +791,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="UI\Agent\Friends.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\FriendsUI.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="UI\Filter\Filters.cs">
@@ -837,7 +846,22 @@
     <Compile Include="UI\Agent\Restock.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="UI\Agent\RestockUI.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="UI\Agent\Scavenger.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\ScavengerUI.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\OrganizerUI.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\VendorBuyUI.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\DressUI.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="UI\Grids-Bars\SpellGrid.cs">
@@ -880,6 +904,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="UI\Agent\VendorSell.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Agent\VendorSellUI.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="UI\Video-Screen\VideoRecorder.cs">
@@ -946,7 +973,9 @@
       <Culture>it</Culture>
       <LogicalName>Assistant.RazorEnhanced.UI.Strings.resources</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="RazorEnhanced\UI\Strings.resx" />
+    <EmbeddedResource Include="RazorEnhanced\UI\Strings.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="RazorEnhanced\UI\EnhancedScriptEditor.resx">
       <DependentUpon>EnhancedScriptEditor.cs</DependentUpon>
       <SubType>Designer</SubType>

@@ -1098,7 +1098,7 @@ namespace RazorEnhanced
         /// <summary>
         /// Get durations from buff actived by buff name.
         /// </summary>
-        /// <param name="buffname">
+        /// <param name="buffname"></param>
         /// <returns>Duration</returns>
         public static int BuffTime(string buffname)
         {

@@ -472,8 +472,8 @@ namespace RazorEnhanced
             /// <summary>
             /// A special field which has subfields, useful for displaying stucts. 
             /// 'fields' is mandatory, 'type' must be set to 'for'.
-            /// 'length' > 0: subfields are collected in sequence, a fixed number of times. 
-            /// 'length' <= 0: subfields are collected in sequence, until the end of the packet.
+            /// 'length' &gt; 0: subfields are collected in sequence, a fixed number of times. 
+            /// 'length' &lt;= 0: subfields are collected in sequence, until the end of the packet.
             /// 
             /// Example:
             /// {'name':'House tiles', 'type':'for',
