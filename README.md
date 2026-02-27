@@ -9,7 +9,7 @@
 
 ### La versione di Razor Enhanced pensata per **The Miracle Shard**
 
-*Un fork di [Razor Enhanced](https://github.com/RazorEnhanced/RazorEnhanced) completamente reimmaginato per l'esperienza di gioco su The Miracle — lo shard italiano di Ultima Online.*
+*Un fork di [Razor Enhanced](https://github.com/RazorEnhanced/RazorEnhanced) completamente reimmaginato per l'esperienza di gioco su The Miracle.*
 
 </div>
 
@@ -30,45 +30,15 @@ Razor Enhanced nasce come evoluzione di Razor, il celebre tool di Bryan Pass ("Z
 
 ## ✨ Modifiche specifiche per The Miracle
 
-TM Razor introduce una serie di modifiche mirate, pensate per integrarsi perfettamente con il client e le regole del server **The Miracle Shard**.
+TM Razor introduce una serie di modifiche mirate, pensate per integrarsi perfettamente con il client **The Miracle Shard**.
 
 ---
 
-### 🛡️ 1. Macro Check — Controllo delle Macro lato server
-
-Razor Enhanced supporta un meccanismo di **feature flags** negoziato direttamente con il server: in fase di connessione, il server può abilitare o disabilitare specifiche funzionalità del client tramite il sistema `FeatureBit` / `AllowBit`.
-
-TM Razor estende e integra questo sistema per rispettare le politiche di The Miracle:
-
-- **Validazione delle azioni di macro**: le azioni registrate o eseguite vengono verificate rispetto alle funzionalità permesse dal server al momento della connessione.
-- **Blocco automatico delle funzioni non consentite**: se il server non autorizza una determinata funzione (es. `AutoPotionEquip`), l'interfaccia viene aggiornata di conseguenza e l'azione non viene eseguita.
-- **Rispetto delle regole dello shard**: il tool è progettato per non concedere vantaggi sleali, operando sempre entro i limiti stabiliti dagli amministratori di The Miracle.
-- **Trasparenza per il giocatore**: le funzioni bloccate dal server vengono disabilitate visivamente nell'interfaccia, così l'utente sa sempre cosa è consentito.
-
-Questo garantisce un ambiente di gioco equo mantenendo comunque la comodità offerta da uno strumento come Razor Enhanced.
+### 🛡️ 1. Anti Macro Check 
 
 ---
 
-### 🌍 2. Gestione della Lingua — Italiano e Inglese
-
-TM Razor introduce un sistema completo di **gestione della lingua dell'interfaccia**, con supporto nativo all'**italiano** come lingua predefinita, e la possibilità di passare all'inglese in qualsiasi momento.
-
-**Come funziona:**
-
-- La lingua viene salvata nel profilo di configurazione dello shard (`RazorEnhanced.shards`) e ripristinata ad ogni avvio.
-- La lingua predefinita è **Italiano** (`"it"`), in linea con la community italiana di The Miracle.
-- Il cambio lingua è disponibile direttamente nel **Launcher** di TM Razor tramite un menu a tendina, senza necessità di riavviare l'applicazione.
-- Il sistema utilizza una **satellite assembly** (`it/RazorEnhanced.resources.dll`) per i testi in italiano, seguendo lo standard .NET per la localizzazione internazionale.
-
-```
-Lingue supportate:
-  🇮🇹  Italiano (predefinito per The Miracle)
-  🇬🇧  English
-```
-
----
-
-### 🗣️ 3. Traduzione dell'Interfaccia
+### 🗣️ 2. Traduzione dell'Interfaccia
 
 Tutta l'interfaccia utente di TM Razor è stata tradotta in **italiano** tramite il componente `LanguageHelper`, un sistema di traduzione dinamica che:
 
@@ -82,7 +52,7 @@ Il risultato è un'interfaccia completamente in italiano, familiare e immediata 
 
 ---
 
-### 🎨 4. Refactoring Grafico Totale — Design Moderno e Accattivante
+### 🎨 3. Refactoring Grafico Totale — Design Moderno e Accattivante
 
 TM Razor introduce un **redesign completo dell'interfaccia grafica**, ispirato ai moderni design system con un'estetica dark, pulita e professionale. L'obiettivo era trasformare l'aspetto classico di Razor Enhanced (basato su form WinForms standard) in qualcosa di visivamente all'altezza di un tool del 2020s.
 
@@ -131,11 +101,10 @@ TM Razor introduce un **redesign completo dell'interfaccia grafica**, ispirato a
 
 Nella sezione [**Releases**](../../releases) di questa repository è disponibile il **TM Razor Patcher**, un eseguibile Windows che si occupa di:
 
-1. **Rilevare automaticamente la cartella di installazione** del client The Miracle sul tuo PC.
+1. **Rilevare la cartella di installazione** del client The Miracle sul tuo PC.
 2. **Creare una copia clonata** della cartella di The Miracle — il tuo originale rimane **intatto e funzionante** esattamente come prima.
-3. **Integrare il plugin TM Razor** nella copia clonata, copiando `RazorEnhanced.exe` e tutte le DLL necessarie.
+3. **Integrare il plugin TM Razor** nella copia clonata, copiando `RazorEnhanced.exe`, tutte le DLL necessarie, patchando il client per adattarsi alla modifica.
 4. **Configurare ClassicUO** modificando `settings.json` affinché carichi automaticamente TM Razor come plugin ad ogni avvio.
-5. **Pre-configurare il profilo** con i parametri di The Miracle (host, porta, lingua italiana).
 
 ### Procedura di installazione
 
