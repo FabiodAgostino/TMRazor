@@ -1,4 +1,4 @@
-﻿namespace Ultima
+namespace Ultima
 {
     public enum WaveFormat
     {

@@ -9,7 +9,7 @@
 //  *
 //  ***************************************************************************/
 
-using System.Drawing;
+using Ultima.Data;
 
 namespace Ultima.Helpers
 {

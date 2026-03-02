@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
+using Ultima.Data;
+using Ultima.Data.Imaging;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 

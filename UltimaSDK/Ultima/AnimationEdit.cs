@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
+using System.Collections.Generic;
+using Ultima.Data;
+using Ultima.Data.Imaging;
 using System.IO;
 
 namespace Ultima
