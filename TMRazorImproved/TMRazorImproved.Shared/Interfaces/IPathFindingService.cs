@@ -15,7 +15,8 @@ namespace TMRazorImproved.Shared.Interfaces
         /// <param name="destY">Destination Y coordinate.</param>
         /// <param name="mapId">Map ID.</param>
         /// <param name="ignoreMobiles">Whether to ignore mobiles (living entities) during pathfinding.</param>
+        /// <param name="ignoreDoors">Whether to ignore door tiles during pathfinding (useful for script navigation).</param>
         /// <returns>A list of coordinates representing the path, or null if no path could be found.</returns>
-        List<(int X, int Y)>? GetPath(int startX, int startY, int startZ, int destX, int destY, int mapId, bool ignoreMobiles = false);
+        List<(int X, int Y)>? GetPath(int startX, int startY, int startZ, int destX, int destY, int mapId, bool ignoreMobiles = false, bool ignoreDoors = false);
     }
 }

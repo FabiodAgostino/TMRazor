@@ -104,9 +104,10 @@ namespace TMRazorImproved.Core.Services
             BinaryPrimitives.WriteUInt16BigEndian(lift.AsSpan(5), 1);
             _packetService.SendToServer(lift);
 
-            // 2. Richiesta Equipaggiamento (0x05)
+            // 2. WearItem Request (0x13): cmd(1) itemSerial(4) layer(1) mobileSerial(4)
+            // FIX BUG-C01: 0x05 era Attack Request, il corretto pacchetto di equip è 0x13
             byte[] equip = new byte[10];
-            equip[0] = 0x05;
+            equip[0] = 0x13;
             BinaryPrimitives.WriteUInt32BigEndian(equip.AsSpan(1), serial);
             equip[5] = layer;
             BinaryPrimitives.WriteUInt32BigEndian(equip.AsSpan(6), _worldService.Player?.Serial ?? 0);

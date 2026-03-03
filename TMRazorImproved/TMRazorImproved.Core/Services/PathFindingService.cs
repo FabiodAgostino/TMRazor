@@ -28,7 +28,7 @@ namespace TMRazorImproved.Core.Services
             _logger = logger;
         }
 
-        public List<(int X, int Y)>? GetPath(int startX, int startY, int startZ, int destX, int destY, int mapId, bool ignoreMobiles = false)
+        public List<(int X, int Y)>? GetPath(int startX, int startY, int startZ, int destX, int destY, int mapId, bool ignoreMobiles = false, bool ignoreDoors = false)
         {
             Map map = GetMap(mapId);
             if (map == null) return null;
@@ -69,7 +69,7 @@ namespace TMRazorImproved.Core.Services
                     if (next.X < bounds.MinX || next.X > bounds.MaxX || next.Y < bounds.MinY || next.Y > bounds.MaxY)
                         continue;
 
-                    int cost = GetMoveCost(itemsOnGround, current, map, next, ignoreMobiles, out int nextZ);
+                    int cost = GetMoveCost(itemsOnGround, current, map, next, ignoreMobiles, ignoreDoors, out int nextZ);
                     
                     if (cost < BigCost)
                     {
@@ -90,19 +90,19 @@ namespace TMRazorImproved.Core.Services
             if (!cameFrom.ContainsKey(goal))
                 return null;
 
+            // FIX BUG-P1-01: ricostruzione corretta del path senza duplicare il goal.
+            // Il goal viene aggiunto per primo poi si risale fino allo start e si inverte.
             var path = new List<(int X, int Y)>();
             var currNode = goal;
-            path.Add(currNode);
 
             while (currNode != start)
             {
+                path.Add(currNode);
                 currNode = cameFrom[currNode];
-                if (currNode != start)
-                    path.Add(currNode);
             }
-            
+            // Aggiungi lo start solo se il path è non vuoto (evita path di sola start=goal)
+            if (path.Count > 0) path.Add(start);
             path.Reverse();
-            path.Add(goal); // Ensure goal is always explicitly in path if we moved
             return path;
         }
 
@@ -125,15 +125,15 @@ namespace TMRazorImproved.Core.Services
             };
         }
 
-        private int GetMoveCost(List<TMRazorImproved.Shared.Models.Item> items, (int X, int Y, int Z) loc, Map map, (int X, int Y) b, bool ignoreMobiles, out int bZ)
+        private int GetMoveCost(List<TMRazorImproved.Shared.Models.Item> items, (int X, int Y, int Z) loc, Map map, (int X, int Y) b, bool ignoreMobiles, bool ignoreDoors, out int bZ)
         {
             int xForward = b.X, yForward = b.Y;
             int newZ = 0;
             int cost = 1;
-            
+
             GetStartZ(loc, map, items.Where(x => x.X == loc.X && x.Y == loc.Y), out int startZ, out int startTop);
-            
-            bool moveIsOk = Check(map, items.Where(x => x.X == xForward && x.Y == yForward), xForward, yForward, startTop, startZ, ignoreMobiles, out newZ);
+
+            bool moveIsOk = Check(map, items.Where(x => x.X == xForward && x.Y == yForward), xForward, yForward, startTop, startZ, ignoreMobiles, ignoreDoors, out newZ);
             
             if (moveIsOk)
             {
@@ -145,8 +145,9 @@ namespace TMRazorImproved.Core.Services
             return BigCost;
         }
 
-        private bool Check(Map map, IEnumerable<TMRazorImproved.Shared.Models.Item> items, int x, int y, int startTop, int startZ, bool ignoreMobiles, out int newZ)
+        private bool Check(Map map, IEnumerable<TMRazorImproved.Shared.Models.Item> items, int x, int y, int startTop, int startZ, bool ignoreMobiles, bool ignoreDoors, out int newZ)
         {
+            // FIX BUG-P2-04: ignoreDoors ora è un parametro configurabile (non hardcoded a false)
             newZ = 0;
             var landTile = map.Tiles.GetLandTile(x, y);
             var landData = TileData.LandTable[landTile.Id & (TileData.LandTable.Length - 1)];
@@ -159,7 +160,6 @@ namespace TMRazorImproved.Core.Services
             bool moveIsOk = false;
             int stepTop = startTop + StepHeight;
             int checkTop = startZ + PersonHeight;
-            bool ignoreDoors = false;
             bool ignoreSpellFields = true;
 
             if (!ignoreMobiles)

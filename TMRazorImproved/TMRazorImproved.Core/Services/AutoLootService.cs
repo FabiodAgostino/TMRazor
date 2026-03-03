@@ -23,7 +23,8 @@ namespace TMRazorImproved.Core.Services
         private readonly IMessenger _messenger;
 
         private readonly ConcurrentQueue<uint> _lootQueue = new();
-        private readonly HashSet<uint> _processedSerials = new();
+        // FIX BUG-C03: HashSet<uint> non thread-safe → ConcurrentDictionary<uint,byte>
+        private readonly ConcurrentDictionary<uint, byte> _processedSerials = new();
 
         public AutoLootService(
             IPacketService packetService, 
@@ -63,13 +64,13 @@ namespace TMRazorImproved.Core.Services
             foreach (var item in message.Value.Items)
             {
                 bool shouldLoot = config.ItemList.Any(li => li.IsEnabled && li.Graphic == item.Graphic);
-                if (shouldLoot && !_processedSerials.Contains(item.Serial))
+                if (shouldLoot && !_processedSerials.ContainsKey(item.Serial))
                 {
                     if (config.NoOpenCorpse && IsCorpse(message.Value.ContainerSerial))
                         continue;
 
                     _lootQueue.Enqueue(item.Serial);
-                    _processedSerials.Add(item.Serial);
+                    _processedSerials.TryAdd(item.Serial, 0);
                 }
             }
         }
@@ -83,13 +84,13 @@ namespace TMRazorImproved.Core.Services
             if (item == null) return;
 
             bool shouldLoot = config.ItemList.Any(li => li.IsEnabled && li.Graphic == item.Graphic);
-            if (shouldLoot && !_processedSerials.Contains(item.Serial))
+            if (shouldLoot && !_processedSerials.ContainsKey(item.Serial))
             {
                 if (config.NoOpenCorpse && IsCorpse(message.Value.ContainerSerial))
                     return;
 
                 _lootQueue.Enqueue(item.Serial);
-                _processedSerials.Add(item.Serial);
+                _processedSerials.TryAdd(item.Serial, 0);
             }
         }
 
@@ -104,7 +105,7 @@ namespace TMRazorImproved.Core.Services
         protected override async Task AgentLoopAsync(CancellationToken token)
         {
             _logger.LogInformation("AutoLoot agent loop started");
-            _processedSerials.Clear();
+            _processedSerials.Clear(); // ConcurrentDictionary.Clear() è thread-safe
 
             while (!token.IsCancellationRequested)
             {
@@ -133,7 +134,7 @@ namespace TMRazorImproved.Core.Services
                         if (dist > config.MaxRange)
                         {
                             _logger.LogDebug("Item 0x{Serial:X} out of range ({Dist} > {MaxRange}), will retry when closer", serial, dist, config.MaxRange);
-                            _processedSerials.Remove(serial);
+                            _processedSerials.TryRemove(serial, out _);
                             continue;
                         }
                     }
