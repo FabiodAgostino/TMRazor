@@ -12,14 +12,23 @@ namespace TMRazorImproved.UI
     {
         private readonly INavigationService _navigationService;
         private readonly IPacketService _packetService;
+        private readonly ITitleBarService _titleBarService;
+        private readonly ISnackbarService _snackbarService;
+        private readonly IScriptingService _scriptingService;
 
         public MainWindow(
             INavigationService navigationService,
             IPageService pageService,
-            IPacketService packetService)
+            IPacketService packetService,
+            ITitleBarService titleBarService,
+            ISnackbarService snackbarService,
+            IScriptingService scriptingService)
         {
             _navigationService = navigationService;
             _packetService = packetService;
+            _titleBarService = titleBarService;
+            _snackbarService = snackbarService;
+            _scriptingService = scriptingService;
 
             InitializeComponent();
 
@@ -27,7 +36,69 @@ namespace TMRazorImproved.UI
             _navigationService.SetNavigationControl(RootNavigation);
             RootNavigation.SetPageService(pageService);
 
+            // Collega lo SnackbarService al presentatore definito nel file XAML
+            _snackbarService.SetSnackbarPresenter(SnackbarPresenter);
+
+            // Sottoscrizione agli aggiornamenti del titolo dinamico
+            _titleBarService.TitleChanged += OnTitleChanged;
+
+            // Sottoscrizione agli eventi di scripting per notifiche UI
+            _scriptingService.ErrorReceived += OnScriptError;
+            _scriptingService.ScriptCompleted += OnScriptCompleted;
+
             Loaded += OnLoaded;
+            Unloaded += OnUnloaded;
+        }
+
+        private void OnScriptError(string message)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                _snackbarService.Show(
+                    "Script Error",
+                    message,
+                    ControlAppearance.Danger,
+                    new SymbolIcon(SymbolRegular.ErrorCircle24),
+                    TimeSpan.FromSeconds(5));
+            });
+        }
+
+        private void OnScriptCompleted(ScriptCompletionInfo info)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                var title = info.WasCancelled ? "Script Stopped" : "Script Completed";
+                var message = info.WasCancelled 
+                    ? $"The script '{info.ScriptName}' was manually stopped." 
+                    : $"The script '{info.ScriptName}' finished in {info.Elapsed.TotalSeconds:F2}s.";
+                
+                var appearance = info.WasCancelled ? ControlAppearance.Info : ControlAppearance.Success;
+                var icon = info.WasCancelled ? SymbolRegular.Stop24 : SymbolRegular.CheckmarkCircle24;
+
+                _snackbarService.Show(
+                    title,
+                    message,
+                    appearance,
+                    new SymbolIcon(icon),
+                    TimeSpan.FromSeconds(3));
+            });
+        }
+
+        private void OnTitleChanged(string newTitle)
+        {
+            // Il servizio gira su un background thread, l'aggiornamento UI deve avvenire sul Dispatcher
+            Dispatcher.InvokeAsync(() =>
+            {
+                AppTitleBar.Title = newTitle;
+                this.Title = newTitle; // Aggiorna anche il titolo della finestra per la taskbar
+            });
+        }
+
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            _titleBarService.TitleChanged -= OnTitleChanged;
+            _scriptingService.ErrorReceived -= OnScriptError;
+            _scriptingService.ScriptCompleted -= OnScriptCompleted;
         }
 
         protected override void OnSourceInitialized(EventArgs e)

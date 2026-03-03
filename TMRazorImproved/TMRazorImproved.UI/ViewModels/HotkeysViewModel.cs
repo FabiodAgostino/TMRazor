@@ -34,6 +34,9 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty]
         private string _selectedActionName = "None";
 
+        [ObservableProperty]
+        private bool _selectedHotkeyPassThrough;
+
         public HotkeysViewModel(IConfigService configService, IHotkeyService hotkeyService, ILanguageService languageService)
         {
             _configService = configService;
@@ -80,6 +83,23 @@ namespace TMRazorImproved.UI.ViewModels
             if (_configService.CurrentProfile != null)
             {
                 CurrentHotkeys = new ObservableCollection<HotkeyDefinition>(_configService.CurrentProfile.Hotkeys);
+            }
+        }
+
+        partial void OnSelectedHotkeyChanged(HotkeyDefinition? value)
+        {
+            if (value != null)
+            {
+                SelectedHotkeyPassThrough = value.PassThrough;
+            }
+        }
+
+        partial void OnSelectedHotkeyPassThroughChanged(bool value)
+        {
+            if (SelectedHotkey != null && SelectedHotkey.PassThrough != value)
+            {
+                SelectedHotkey.PassThrough = value;
+                _configService.Save();
             }
         }
 

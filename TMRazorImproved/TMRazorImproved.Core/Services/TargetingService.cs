@@ -15,6 +15,7 @@ namespace TMRazorImproved.Core.Services
         private readonly IPacketService _packetService;
         private readonly IConfigService _configService;
         private readonly IWorldService _worldService;
+        private readonly IFriendsService _friendsService;
         private readonly ILogger<TargetingService> _logger;
 
         private uint _lastTarget;
@@ -34,11 +35,13 @@ namespace TMRazorImproved.Core.Services
             IConfigService configService,
             IWorldService worldService,
             IHotkeyService hotkeyService,
+            IFriendsService friendsService,
             ILogger<TargetingService> logger)
         {
             _packetService = packetService;
             _configService = configService;
             _worldService = worldService;
+            _friendsService = friendsService;
             _logger = logger;
 
             // Registrazione Handlers Pacchetti Client->Server
@@ -141,19 +144,61 @@ namespace TMRazorImproved.Core.Services
 
         public void SendTarget(uint serial)
         {
+            SendTarget(serial, 0, 0, 0, 0);
+        }
+
+        public void SendTarget(uint serial, ushort x, ushort y, sbyte z, ushort graphic)
+        {
             // Invia il pacchetto 0x6C (Target) al server
             byte[] packet = new byte[19];
             packet[0] = 0x6C;
-            packet[1] = 0x01; // Object
+            packet[1] = (serial == 0) ? (byte)0x00 : (byte)0x01; // 0=Loc, 1=Obj
             BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(2), 0); // Cursor ID
             packet[6] = 0x00; // Action: Target
             BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(7), serial);
-            BinaryPrimitives.WriteUInt16BigEndian(packet.AsSpan(11), 0); // X
-            BinaryPrimitives.WriteUInt16BigEndian(packet.AsSpan(13), 0); // Y
-            packet[15] = 0; // Z
-            BinaryPrimitives.WriteUInt16BigEndian(packet.AsSpan(16), 0); // Graphic (ItemID)
+            BinaryPrimitives.WriteUInt16BigEndian(packet.AsSpan(11), x);
+            BinaryPrimitives.WriteUInt16BigEndian(packet.AsSpan(13), y);
+            packet[15] = (byte)z;
+            BinaryPrimitives.WriteUInt16BigEndian(packet.AsSpan(16), graphic);
 
             _packetService.SendToServer(packet);
+        }
+
+        public void CancelTarget()
+        {
+            byte[] packet = new byte[19];
+            packet[0] = 0x6C;
+            packet[6] = 0x01; // Action: Cancel
+            _packetService.SendToServer(packet);
+        }
+
+        public async Task<uint> AcquireTargetAsync()
+        {
+            var tcs = new TaskCompletionSource<uint>();
+
+            void OnTarget(uint serial)
+            {
+                tcs.TrySetResult(serial);
+            }
+
+            TargetReceived += OnTarget;
+            RequestTarget();
+
+            try
+            {
+                // Timeout dopo 30 secondi se l'utente non seleziona nulla
+                var delayTask = Task.Delay(TimeSpan.FromSeconds(30));
+                var completedTask = await Task.WhenAny(tcs.Task, delayTask);
+
+                if (completedTask == delayTask)
+                    return 0;
+
+                return await tcs.Task;
+            }
+            finally
+            {
+                TargetReceived -= OnTarget;
+            }
         }
 
         public void SetLastTarget(uint serial)
@@ -167,8 +212,10 @@ namespace TMRazorImproved.Core.Services
         {
             if (_worldService.Player == null) return new List<Mobile>();
 
-            var config = _configService.CurrentProfile.Targeting;
-            var friends = _configService.CurrentProfile.Friends;
+            var profile = _configService.CurrentProfile;
+            if (profile == null) return new List<Mobile>();
+
+            var config = profile.Targeting;
 
             return _worldService.Mobiles
                 .Where(m => m.Serial != _worldService.Player.Serial)
@@ -176,7 +223,7 @@ namespace TMRazorImproved.Core.Services
                 .Where(m => 
                 {
                     // Filtro Amici
-                    if (friends.Contains(m.Serial)) return config.TargetFriends;
+                    if (_friendsService.IsFriend(m.Serial)) return config.TargetFriends;
                     
                     // Filtro Innocenti (Blu)
                     if (m.Notoriety == 1) return config.TargetInnocents;

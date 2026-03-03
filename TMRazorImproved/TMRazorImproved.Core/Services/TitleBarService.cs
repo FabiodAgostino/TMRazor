@@ -19,6 +19,8 @@ namespace TMRazorImproved.Core.Services
         public bool IsEnabled { get; set; } = true;
         public string Template { get; set; } = "UO - {char} [HP: {hp}/{hpmax}] [MP: {mp}/{mpmax}] [SP: {sp}/{spmax}]";
 
+        public event Action<string>? TitleChanged;
+
         public TitleBarService(
             IClientInteropService interop,
             IWorldService worldService,
@@ -70,22 +72,33 @@ namespace TMRazorImproved.Core.Services
 
         private void UpdateTitle()
         {
-            IntPtr hwnd = _interop.FindUOWindow();
-            if (hwnd == IntPtr.Zero) return;
-
             var player = _worldService.Player;
-            if (player == null) return;
+            string charName = player?.Name ?? "Unknown";
+            string hp = player?.Hits.ToString() ?? "0";
+            string hpmax = player?.HitsMax.ToString() ?? "0";
+            string mp = player?.Mana.ToString() ?? "0";
+            string mpmax = player?.ManaMax.ToString() ?? "0";
+            string sp = player?.Stam.ToString() ?? "0";
+            string spmax = player?.StamMax.ToString() ?? "0";
 
             string title = Template
-                .Replace("{char}", player.Name ?? "Unknown")
-                .Replace("{hp}", player.Hits.ToString())
-                .Replace("{hpmax}", player.HitsMax.ToString())
-                .Replace("{mp}", player.Mana.ToString())
-                .Replace("{mpmax}", player.ManaMax.ToString())
-                .Replace("{sp}", player.Stam.ToString())
-                .Replace("{spmax}", player.StamMax.ToString());
+                .Replace("{char}", charName)
+                .Replace("{hp}", hp)
+                .Replace("{hpmax}", hpmax)
+                .Replace("{mp}", mp)
+                .Replace("{mpmax}", mpmax)
+                .Replace("{sp}", sp)
+                .Replace("{spmax}", spmax);
 
-            _interop.SetWindowText(hwnd, title);
+            // Aggiorna finestra UO
+            IntPtr hwnd = _interop.FindUOWindow();
+            if (hwnd != IntPtr.Zero)
+            {
+                _interop.SetWindowText(hwnd, title);
+            }
+
+            // Notifica UI
+            TitleChanged?.Invoke(title);
         }
 
         public void Dispose()

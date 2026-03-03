@@ -39,11 +39,16 @@ namespace TMRazorImproved.Core.Handlers
 
             // Death Filter (0x2C)
             _packetService.RegisterFilter(PacketPath.ServerToClient, 0x2C, _ => !_configService.CurrentProfile.FilterDeath);
-            
-            // Snoop/Poison filter can be more complex (parsing text), but for now we focus on the basic ones.
-            // Poison: A1, A2, A3 are stats update, but the "Poison" message is usually text.
-            // We could filter Unicode Message (0xAE) or ASCII Message (0x1C) based on content.
-            
+
+            // Staff Filter (0xAE, 0x1C) - Check if from a staff member? 
+            // In classic Razor this blocks some staff-specific packets or messages.
+
+            // Season Filter (0xBC)
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0xBC, _ => !_configService.CurrentProfile.FilterSeason);
+
+            // Footsteps (0x54 with specific sounds?)
+            // Razor usually filters specific sound IDs for footsteps.
+
             _logger.LogInformation("Classic Razor filters registered");
         }
     }

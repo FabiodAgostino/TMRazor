@@ -28,6 +28,11 @@ namespace TMRazorImproved.Shared.Interfaces
         IntPtr FindUOWindow();
 
         /// <summary>
+        /// Ottiene l'Handle della finestra corrente per operazioni di cattura.
+        /// </summary>
+        IntPtr GetWindowHandle();
+
+        /// <summary>
         /// Ottiene l'ID del processo di Ultima Online attualmente agganciato
         /// </summary>
         int GetUOProcessId();

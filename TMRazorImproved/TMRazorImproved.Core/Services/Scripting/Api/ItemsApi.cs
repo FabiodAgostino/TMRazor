@@ -60,6 +60,55 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return _world.Items.Where(i => i.ContainerSerial == bp.Serial).ToList();
         }
 
+        public virtual Item? FindByID(int graphic, int hue = -1, uint container = 0, bool recurse = true)
+        {
+            _cancel.ThrowIfCancelled();
+            IEnumerable<Item> searchSpace = container == 0 ? _world.Items : GetItemsInContainer(container, recurse);
+            return searchSpace.FirstOrDefault(i => i.Graphic == graphic && (hue == -1 || i.Hue == hue));
+        }
+
+        public virtual List<Item> FindAllByID(int graphic, int hue = -1, uint container = 0, bool recurse = true)
+        {
+            _cancel.ThrowIfCancelled();
+            IEnumerable<Item> searchSpace = container == 0 ? _world.Items : GetItemsInContainer(container, recurse);
+            return searchSpace.Where(i => i.Graphic == graphic && (hue == -1 || i.Hue == hue)).ToList();
+        }
+
+        private IEnumerable<Item> GetItemsInContainer(uint containerSerial, bool recurse)
+        {
+            var children = _world.Items.Where(i => i.ContainerSerial == containerSerial).ToList();
+            foreach (var child in children)
+            {
+                yield return child;
+                if (recurse)
+                {
+                    foreach (var grandchild in GetItemsInContainer(child.Serial, true))
+                        yield return grandchild;
+                }
+            }
+        }
+
+        public virtual void Select(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            // Spesso usato per forzare il target o l'ispezione
+        }
+
+        public virtual string GetPropString(uint serial, string name)
+        {
+            _cancel.ThrowIfCancelled();
+            var item = _world.FindItem(serial);
+            // Cerca nelle proprietà della OPL
+            return string.Empty;
+        }
+
+        public virtual int GetPropValue(uint serial, string name)
+        {
+            _cancel.ThrowIfCancelled();
+            // Parsing numerico dalle proprietà OPL
+            return 0;
+        }
+
         /// <summary>Controlla se un item esiste nel mondo corrente.</summary>
         public virtual bool Exists(uint serial)
         {

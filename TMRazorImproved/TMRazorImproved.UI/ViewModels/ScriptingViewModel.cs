@@ -2,10 +2,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using TMRazorImproved.Shared.Enums;
 using TMRazorImproved.Shared.Interfaces;
 
 namespace TMRazorImproved.UI.ViewModels
@@ -38,6 +41,12 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty]
         private string _statusText = "Pronto";
 
+        [ObservableProperty]
+        private ScriptLanguage _selectedLanguage = ScriptLanguage.Python;
+
+        public IEnumerable<ScriptLanguage> AvailableLanguages => 
+            Enum.GetValues(typeof(ScriptLanguage)).Cast<ScriptLanguage>();
+
         public ObservableCollection<ScriptLogEntry> LogEntries { get; } = new();
 
         public IAsyncRelayCommand RunScriptCommand  { get; }
@@ -64,6 +73,21 @@ namespace TMRazorImproved.UI.ViewModels
             _scriptingService.ScriptCompleted += OnScriptCompleted;
         }
 
+        partial void OnSelectedLanguageChanged(ScriptLanguage value)
+        {
+            // Aggiorna l'estensione suggerita se è uno script nuovo
+            if (ScriptName.StartsWith("nuovo_script"))
+            {
+                ScriptName = value switch
+                {
+                    ScriptLanguage.Python => "nuovo_script.py",
+                    ScriptLanguage.UOSteam => "nuovo_script.uos",
+                    ScriptLanguage.CSharp => "nuovo_script.cs",
+                    _ => ScriptName
+                };
+            }
+        }
+
         // ------------------------------------------------------------------
         // Commands
         // ------------------------------------------------------------------
@@ -72,12 +96,12 @@ namespace TMRazorImproved.UI.ViewModels
         {
             if (string.IsNullOrWhiteSpace(ScriptCode)) return;
 
-            AddLog($"--- Avvio '{ScriptName}' ---", ScriptLogType.System);
+            AddLog($"--- Avvio '{ScriptName}' [{SelectedLanguage}] ---", ScriptLogType.System);
             IsRunning = true;
             StatusText = $"Esecuzione: {ScriptName}";
             NotifyCommandsCanExecuteChanged();
 
-            await _scriptingService.RunAsync(ScriptCode, ScriptName);
+            await _scriptingService.RunAsync(ScriptCode, SelectedLanguage, ScriptName);
         }
 
         private async Task StopScriptAsync()
@@ -93,8 +117,22 @@ namespace TMRazorImproved.UI.ViewModels
 
         private void NewScript()
         {
-            ScriptCode = "# Nuovo script\n";
-            ScriptName = "nuovo_script.py";
+            ScriptCode = SelectedLanguage switch
+            {
+                ScriptLanguage.Python => "# Nuovo script Python\n",
+                ScriptLanguage.UOSteam => "// Nuovo script UOSteam\n",
+                ScriptLanguage.CSharp => "// Nuovo script C#\n",
+                _ => ""
+            };
+            
+            ScriptName = SelectedLanguage switch
+            {
+                ScriptLanguage.Python => "nuovo_script.py",
+                ScriptLanguage.UOSteam => "nuovo_script.uos",
+                ScriptLanguage.CSharp => "nuovo_script.cs",
+                _ => "nuovo_script"
+            };
+
             ClearLog();
             StatusText = "Pronto";
         }
@@ -103,16 +141,37 @@ namespace TMRazorImproved.UI.ViewModels
         {
             var dialog = new OpenFileDialog
             {
-                Filter = "Script Python (*.py)|*.py|Tutti i file (*.*)|*.*",
+                Filter = "Script Python (*.py)|*.py|Script UOSteam (*.uos)|*.uos|Script C# (*.cs)|*.cs|Tutti i file (*.*)|*.*",
                 Title  = "Apri Script"
             };
+            
+            // Suggerisce il filtro basato sul linguaggio selezionato
+            dialog.FilterIndex = SelectedLanguage switch
+            {
+                ScriptLanguage.Python => 1,
+                ScriptLanguage.UOSteam => 2,
+                ScriptLanguage.CSharp => 3,
+                _ => 4
+            };
+
             if (dialog.ShowDialog() != true) return;
 
             try
             {
                 ScriptCode = File.ReadAllText(dialog.FileName);
                 ScriptName = Path.GetFileName(dialog.FileName);
-                AddLog($"Caricato: {dialog.FileName}", ScriptLogType.System);
+                
+                // Tenta di auto-selezionare il linguaggio dall'estensione
+                var ext = Path.GetExtension(dialog.FileName).ToLower();
+                SelectedLanguage = ext switch
+                {
+                    ".py" => ScriptLanguage.Python,
+                    ".uos" or ".txt" => ScriptLanguage.UOSteam,
+                    ".cs" => ScriptLanguage.CSharp,
+                    _ => SelectedLanguage
+                };
+
+                AddLog($"Caricato: {dialog.FileName} ({SelectedLanguage})", ScriptLogType.System);
             }
             catch (Exception ex)
             {
@@ -124,10 +183,19 @@ namespace TMRazorImproved.UI.ViewModels
         {
             var dialog = new SaveFileDialog
             {
-                Filter   = "Script Python (*.py)|*.py|Tutti i file (*.*)|*.*",
+                Filter   = "Script Python (*.py)|*.py|Script UOSteam (*.uos)|*.uos|Script C# (*.cs)|*.cs|Tutti i file (*.*)|*.*",
                 FileName = ScriptName,
                 Title    = "Salva Script"
             };
+
+            dialog.FilterIndex = SelectedLanguage switch
+            {
+                ScriptLanguage.Python => 1,
+                ScriptLanguage.UOSteam => 2,
+                ScriptLanguage.CSharp => 3,
+                _ => 4
+            };
+
             if (dialog.ShowDialog() != true) return;
 
             try

@@ -11,80 +11,138 @@ using TMRazorImproved.Shared.Messages;
 
 namespace TMRazorImproved.Core.Services
 {
-    public class VendorService : AgentServiceBase, IVendorService, IRecipient<UOPacketMessage>
+    public class VendorService : AgentServiceBase, IVendorService, IRecipient<VendorBuyMessage>, IRecipient<VendorSellMessage>
     {
         private readonly IPacketService _packetService;
         private readonly IConfigService _configService;
+        private readonly IWorldService _worldService;
         private readonly ILogger<VendorService> _logger;
         private readonly IMessenger _messenger;
 
         public VendorService(
             IPacketService packetService, 
             IConfigService configService,
+            IWorldService worldService,
             IMessenger messenger,
             ILogger<VendorService> logger)
         {
             _packetService = packetService;
             _configService = configService;
+            _worldService = worldService;
             _messenger = messenger;
             _logger = logger;
 
-            _messenger.Register<UOPacketMessage>(this);
+            _messenger.Register<VendorBuyMessage>(this);
+            _messenger.Register<VendorSellMessage>(this);
         }
 
-        public void Receive(UOPacketMessage message)
+        private VendorConfig GetActiveConfig()
         {
-            if (message.Path != Shared.Enums.PacketPath.ServerToClient) return;
-
-            byte[] data = message.Value.Data;
-            if (data.Length == 0) return;
-
-            if (data[0] == 0x24 && _configService.CurrentProfile.Vendor.BuyEnabled)
-            {
-                HandleBuyMenu(data);
-            }
-            else if (data[0] == 0x9E && _configService.CurrentProfile.Vendor.SellEnabled)
-            {
-                HandleSellMenu(data);
-            }
+            var profile = _configService.CurrentProfile;
+            if (profile == null) return null;
+            return profile.VendorLists.FirstOrDefault(l => l.Name == profile.ActiveVendorList) 
+                   ?? profile.VendorLists.FirstOrDefault();
         }
 
-        private void HandleBuyMenu(byte[] data)
+        public void Receive(VendorBuyMessage message)
         {
-            _logger.LogInformation("Vendor Buy Menu detected");
-            var reader = new UOBufferReader(data);
-            reader.ReadByte(); // 0x24
-            reader.ReadUInt16(); // length
-            uint vendorSerial = reader.ReadUInt32();
-            byte count = reader.ReadByte();
+            var config = GetActiveConfig();
+            if (config == null || !config.BuyEnabled) return;
 
-            var buyList = _configService.CurrentProfile.Vendor.BuyList;
+            _logger.LogInformation("Vendor Buy Menu detected, generating response...");
+            
             var toBuy = new List<(uint Serial, ushort Amount)>();
 
-            for (int i = 0; i < count; i++)
+            // Basic placeholder implementation: we need the items container to get serials.
+            // Normally UO sends a 0x3C container content before 0x74.
+            // Assuming the container is on the vendor.
+            var vendor = _worldService.FindMobile(message.Value.VendorSerial);
+            if (vendor == null) return;
+            
+            // Trova gli oggetti del vendor (approssimazione in base a container serials ricevuti di recente)
+            var itemsInWorld = _worldService.Items.Where(i => i.Container != 0 && i.Container != _worldService.Player?.Serial).ToList();
+
+            foreach (var buyReq in config.BuyList)
             {
-                uint price = reader.ReadUInt32();
-                byte nameLen = reader.ReadByte();
-                string name = reader.ReadString(nameLen);
+                if (!buyReq.IsEnabled) continue;
                 
-                // In 0x24 il seriale e il graphic dell'item sono in pacchetti container 
-                // che arrivano subito dopo o sono già nel world.
-                // Questa è un'implementazione semplificata che richiede il matching per nome o ID.
-                // Per ora simuliamo la logica di TMRazor.
+                // Cerca matching
+                var match = itemsInWorld.FirstOrDefault(i => i.Graphic == buyReq.Graphic);
+                if (match != null)
+                {
+                    toBuy.Add((match.Serial, (ushort)(buyReq.Amount > 0 ? buyReq.Amount : 1)));
+                }
             }
 
-            // TODO: Implementare il parsing completo della lista oggetti e l'invio di 0x3B
+            if (toBuy.Count > 0)
+            {
+                SendBuyResponse(message.Value.VendorSerial, toBuy);
+            }
         }
 
-        private void HandleSellMenu(byte[] data)
+        public void Receive(VendorSellMessage message)
         {
-            _logger.LogInformation("Vendor Sell Menu detected");
-            // Simile a buy, analizza 0x9E e invia 0x9F
+            var config = GetActiveConfig();
+            if (config == null || !config.SellEnabled) return;
+
+            _logger.LogInformation("Vendor Sell Menu detected, generating response...");
+
+            var toSell = new List<(uint Serial, ushort Amount)>();
+
+            foreach (var vendorItem in message.Value.Items)
+            {
+                var match = config.SellList.FirstOrDefault(l => l.IsEnabled && l.Graphic == vendorItem.Graphic);
+                if (match != null)
+                {
+                    toSell.Add((vendorItem.Serial, vendorItem.Amount));
+                }
+            }
+
+            if (toSell.Count > 0)
+            {
+                SendSellResponse(message.Value.VendorSerial, toSell);
+            }
+        }
+
+        private void SendBuyResponse(uint vendorSerial, List<(uint Serial, ushort Amount)> toBuy)
+        {
+            int len = 8 + (toBuy.Count * 7);
+            byte[] data = new byte[len];
+            data[0] = 0x3B;
+            BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(1), (ushort)len);
+            BinaryPrimitives.WriteUInt32BigEndian(data.AsSpan(3), vendorSerial);
+            data[7] = 0x02; // flag (0x02 indicates list)
+            int offset = 8;
+            foreach (var item in toBuy)
+            {
+                data[offset] = 0x1A; // layer usually 0x1A for buy list
+                BinaryPrimitives.WriteUInt32BigEndian(data.AsSpan(offset + 1), item.Serial);
+                BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(offset + 5), item.Amount);
+                offset += 7;
+            }
+            _packetService.SendToServer(data);
+        }
+
+        private void SendSellResponse(uint vendorSerial, List<(uint Serial, ushort Amount)> toSell)
+        {
+            int len = 9 + (toSell.Count * 6);
+            byte[] data = new byte[len];
+            data[0] = 0x9F;
+            BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(1), (ushort)len);
+            BinaryPrimitives.WriteUInt32BigEndian(data.AsSpan(3), vendorSerial);
+            BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(7), (ushort)toSell.Count);
+            int offset = 9;
+            foreach (var item in toSell)
+            {
+                BinaryPrimitives.WriteUInt32BigEndian(data.AsSpan(offset), item.Serial);
+                BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(offset + 4), item.Amount);
+                offset += 6;
+            }
+            _packetService.SendToServer(data);
         }
 
         protected override async System.Threading.Tasks.Task AgentLoopAsync(System.Threading.CancellationToken token)
         {
-            // Il Vendor Agent è reattivo ai pacchetti, non richiede un loop continuo
             await System.Threading.Tasks.Task.Delay(-1, token);
         }
     }

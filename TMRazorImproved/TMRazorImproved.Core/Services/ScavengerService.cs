@@ -14,7 +14,7 @@ using System.Buffers.Binary;
 
 namespace TMRazorImproved.Core.Services
 {
-    public class ScavengerService : AgentServiceBase, IScavengerService, IRecipient<UOPacketMessage>
+    public class ScavengerService : AgentServiceBase, IScavengerService, IRecipient<WorldItemMessage>
     {
         private readonly IPacketService _packetService;
         private readonly IConfigService _configService;
@@ -39,54 +39,38 @@ namespace TMRazorImproved.Core.Services
             _messenger = messenger;
             _logger = logger;
 
-            _messenger.Register<UOPacketMessage>(this);
+            _messenger.Register<WorldItemMessage>(this);
 
             hotkeyService.RegisterAction("Scavenger Start", () => Start());
             hotkeyService.RegisterAction("Scavenger Stop", () => _ = StopAsync());
             hotkeyService.RegisterAction("Scavenger Toggle", () => { if (IsRunning) _ = StopAsync(); else Start(); });
         }
 
-        public void Receive(UOPacketMessage message)
+        private ScavengerConfig GetActiveConfig()
         {
-            if (!IsRunning) return;
-            if (message.Path != Shared.Enums.PacketPath.ServerToClient) return;
-
-            byte[] data = message.Value.Data;
-            if (data.Length == 0) return;
-
-            if (data[0] == 0x1A) // World Item
-            {
-                HandleWorldItem(data);
-            }
+            var profile = _configService.CurrentProfile;
+            if (profile == null) return null;
+            return profile.ScavengerLists.FirstOrDefault(l => l.Name == profile.ActiveScavengerList) 
+                   ?? profile.ScavengerLists.FirstOrDefault();
         }
 
-        private void HandleWorldItem(byte[] data)
+        public void Receive(WorldItemMessage message)
         {
-            var reader = new UOBufferReader(data);
-            reader.ReadByte(); // 0x1A
-            reader.ReadUInt16(); // length
-            uint serial = reader.ReadUInt32() & 0x7FFFFFFF;
-            ushort graphic = (ushort)(reader.ReadUInt16() & 0x7FFF);
+            var config = GetActiveConfig();
+            if (config == null || !config.Enabled || !IsRunning) return;
 
-            if ((serial & 0x80000000) != 0)
-                reader.ReadUInt16(); // amount
+            var item = message.Value;
+            bool shouldScavenge = config.ItemList.Count == 0 || config.ItemList.Any(i => i.IsEnabled && i.Graphic == item.Graphic);
 
-            ushort x = reader.ReadUInt16();
-            ushort y = reader.ReadUInt16();
-            sbyte z = reader.ReadSByte();
-
-            var config = _configService.CurrentProfile.Scavenger;
-            var lootList = new HashSet<uint>(config.ItemList);
-
-            if (lootList.Contains(graphic) && !_processedSerials.Contains(serial))
+            if (shouldScavenge && !_processedSerials.Contains(item.Serial))
             {
                 if (_worldService.Player != null)
                 {
-                    int dist = GetDistance(_worldService.Player.X, _worldService.Player.Y, x & 0x7FFF, y);
+                    int dist = GetDistance(_worldService.Player.X, _worldService.Player.Y, item.X, item.Y);
                     if (dist <= config.Range)
                     {
-                        _scavengeQueue.Enqueue(serial);
-                        _processedSerials.Add(serial);
+                        _scavengeQueue.Enqueue(item.Serial);
+                        _processedSerials.Add(item.Serial);
                     }
                 }
             }
@@ -104,16 +88,22 @@ namespace TMRazorImproved.Core.Services
 
             while (!token.IsCancellationRequested)
             {
+                var config = GetActiveConfig();
+                if (config == null || !config.Enabled)
+                {
+                    await Task.Delay(500, token);
+                    continue;
+                }
+
                 if (_scavengeQueue.TryDequeue(out uint serial))
                 {
-                    var config = _configService.CurrentProfile.Scavenger;
                     uint targetContainer = config.Container;
 
                     if (targetContainer != 0)
                     {
                         _logger.LogDebug("Scavenging item 0x{Serial:X}", serial);
                         MoveItem(serial, targetContainer);
-                        await Task.Delay(600, token); 
+                        await Task.Delay(Math.Max(100, config.Delay), token); 
                     }
                 }
                 else

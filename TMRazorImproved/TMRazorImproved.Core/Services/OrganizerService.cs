@@ -38,12 +38,20 @@ namespace TMRazorImproved.Core.Services
             hotkeyService.RegisterAction("Organizer Toggle", () => { if (IsRunning) _ = StopAsync(); else Start(); });
         }
 
+        private OrganizerConfig GetActiveConfig()
+        {
+            var profile = _configService.CurrentProfile;
+            if (profile == null) return null;
+            return profile.OrganizerLists.FirstOrDefault(l => l.Name == profile.ActiveOrganizerList) 
+                   ?? profile.OrganizerLists.FirstOrDefault();
+        }
+
         protected override async Task AgentLoopAsync(CancellationToken token)
         {
-            var config = _configService.CurrentProfile.Organizer;
-            if (config.Source == 0 || config.Destination == 0)
+            var config = GetActiveConfig();
+            if (config == null || config.Source == 0 || config.Destination == 0)
             {
-                _logger.LogWarning("Organizer failed: Source or Destination container not set.");
+                _logger.LogWarning("Organizer failed: Source or Destination container not set or config null.");
                 return;
             }
 
@@ -53,7 +61,7 @@ namespace TMRazorImproved.Core.Services
             // Filtriamo per quelli che hanno come container il source e il cui graphic è nella lista (se la lista non è vuota)
             var itemsToMove = _worldService.Items
                 .Where(i => i.Container == config.Source)
-                .Where(i => config.ItemList.Count == 0 || config.ItemList.Contains(i.Graphic))
+                .Where(i => config.ItemList.Count == 0 || config.ItemList.Any(li => li.IsEnabled && li.Graphic == (int)i.Graphic))
                 .ToList();
 
             if (itemsToMove.Count == 0)
@@ -74,7 +82,7 @@ namespace TMRazorImproved.Core.Services
                 MoveItem(item.Serial, item.Amount, config.Destination);
 
                 // Delay tra uno spostamento e l'altro (tipico di Razor)
-                await Task.Delay(600, token);
+                await Task.Delay(Math.Max(100, config.Delay), token);
             }
 
             _logger.LogInformation("Organizer completed.");

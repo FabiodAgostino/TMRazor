@@ -4,29 +4,93 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+      d:DataContext="{d:DesignInstance vm:DashboardViewModel}"
       mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
+      d:DesignHeight="600" d:DesignWidth="800"
       Title="Dashboard">
 
-    <Grid Margin="32">
+    <ScrollViewer Margin="24">
         <StackPanel>
-            <ui:TextBlock Text="Welcome to TMRazor Improved"
+            <ui:TextBlock Text="TMRazor Improved Dashboard"
                           FontWeight="Bold"
-                          FontSize="24"
-                          Margin="0,0,0,16" />
+                          FontSize="32"
+                          Margin="0,0,0,8" />
             
-            <ui:TextBlock Text="Select a category from the sidebar to begin."
+            <ui:TextBlock Text="Welcome back. All systems are operational."
                           Appearance="Secondary"
-                          Margin="0,0,0,16" />
+                          Margin="0,0,0,24" />
 
-            <ui:Card Margin="0,16,0,0">
-                <StackPanel>
-                    <ui:TextBlock Text="Status: Initializing .NET 10 Engine..." 
-                                  FontWeight="SemiBold"
-                                  Margin="0,0,0,8" />
-                    <ProgressBar IsIndeterminate="True" Height="4" />
-                </StackPanel>
-            </ui:Card>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- System Status -->
+                <ui:Card Grid.Column="0" Margin="0,0,8,0" VerticalAlignment="Top">
+                    <StackPanel>
+                        <ui:TextBlock Text="System Status" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                        
+                        <ui:InfoBar Title="Core Engine" Message="v10.0.0 (NET 10)" IsOpen="True" Severity="Success" Margin="0,0,0,8" />
+                        <ui:InfoBar Title="Network" Message="Connected to UO Client" IsOpen="True" Severity="Informational" Margin="0,0,0,8" />
+                        
+                        <ui:Button Content="Diagnostics" Icon="Pulse24" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- Media & Capture -->
+                <ui:Card Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Top">
+                    <StackPanel>
+                        <ui:TextBlock Text="Media &amp; Capture" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                        
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            
+                            <ui:Button Grid.Column="0" 
+                                       Content="Screenshot" 
+                                       Icon="Camera24" 
+                                       Command="{Binding TakeScreenshotCommand}"
+                                       Margin="0,0,4,0"
+                                       HorizontalAlignment="Stretch"/>
+                            
+                            <ui:Button Grid.Column="1" 
+                                       Content="Record Video" 
+                                       Icon="Video24" 
+                                       Command="{Binding ToggleRecordingCommand}"
+                                       Appearance="Secondary"
+                                       Margin="4,0,0,0"
+                                       HorizontalAlignment="Stretch"/>
+                        </Grid>
+
+                        <ui:TextBlock Text="Recent Captures" FontSize="14" FontWeight="Medium" Margin="0,0,0,8"/>
+                        
+                        <ItemsControl ItemsSource="{Binding RecentScreenshots}" Margin="0,0,0,8">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="2" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" CornerRadius="4" ClipToBounds="True">
+                                        <Image Source="{Binding}" Width="80" Height="60" Stretch="UniformToFill" ToolTip="{Binding}"/>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <ui:Button Content="Open Gallery Folder" 
+                                   Icon="Folder24" 
+                                   Command="{Binding OpenGalleryCommand}" 
+                                   Appearance="Secondary"
+                                   HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                </ui:Card>
+            </Grid>
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>

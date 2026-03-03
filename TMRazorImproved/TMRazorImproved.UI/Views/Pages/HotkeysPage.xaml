@@ -100,6 +100,11 @@
                                Command="{Binding StartCaptureCommand}"
                                Appearance="{Binding IsCapturing, Converter={StaticResource CaptureAppearanceConverter}}"/>
 
+                    <ui:ToggleSwitch Content="Pass-through to Client" 
+                                     IsChecked="{Binding SelectedHotkeyPassThrough, Mode=TwoWay}"
+                                     Margin="0,16,0,0"
+                                     ToolTip="If enabled, the key press is also sent to the game client."/>
+
                     <ui:TextBlock Text="{Binding CaptureStatus}" 
                                   Margin="0,12,0,0" HorizontalAlignment="Center"
                                   Appearance="Secondary" FontStyle="Italic"

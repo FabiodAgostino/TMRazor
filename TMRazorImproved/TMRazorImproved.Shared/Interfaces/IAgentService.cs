@@ -37,4 +37,9 @@ namespace TMRazorImproved.Shared.Interfaces
     public interface IVendorService : IAgentService
     {
     }
+
+    public interface IRestockService : IAgentService
+    {
+        event Action OnComplete;
+    }
 }

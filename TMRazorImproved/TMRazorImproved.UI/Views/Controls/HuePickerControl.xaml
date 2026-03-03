@@ -1,0 +1,40 @@
+<UserControl x:Class="TMRazorImproved.UI.Views.Controls.HuePickerControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d" 
+             d:DesignHeight="40" d:DesignWidth="300">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="60" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <ui:TextBox Grid.Column="0" 
+                    PlaceholderText="Hue ID" 
+                    Text="{Binding Hue, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" 
+                    Margin="0,0,8,0"/>
+
+        <Border Grid.Column="1" 
+                CornerRadius="4" 
+                BorderThickness="1" 
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                Background="{Binding PreviewBrush, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                Margin="0,0,8,0"
+                ToolTip="Hue Preview">
+            <ui:TextBlock Text="Color" 
+                         VerticalAlignment="Center" 
+                         HorizontalAlignment="Center" 
+                         FontSize="10"
+                         Foreground="{Binding PreviewForeground, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+        </Border>
+
+        <ui:Button Grid.Column="2" 
+                   Icon="{ui:SymbolIcon Target24}" 
+                   Command="{Binding PickInGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                   ToolTip="Pick Hue in Game"/>
+    </Grid>
+</UserControl>

@@ -1,0 +1,112 @@
+<?xml version="1.0"?>
+<SyntaxDefinition name="UOSteam" extensions=".uos"
+    xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+
+    <Color name="Comment"  foreground="#6A9955" fontStyle="italic"/>
+    <Color name="String"   foreground="#CE9178"/>
+    <Color name="Keyword"  foreground="#569CD6" fontWeight="bold"/>
+    <Color name="Action"   foreground="#DCDCAA" fontWeight="bold"/>
+    <Color name="Query"    foreground="#4EC9B0"/>
+    <Color name="Number"   foreground="#B5CEA8"/>
+    <Color name="Operator" foreground="#D4D4D4"/>
+
+    <RuleSet>
+        <!-- Comments (// or #) -->
+        <Span color="Comment">
+            <Begin>//</Begin>
+        </Span>
+        <Span color="Comment">
+            <Begin>#</Begin>
+        </Span>
+
+        <!-- Strings -->
+        <Span color="String">
+            <Begin>'</Begin>
+            <End>'</End>
+        </Span>
+        <Span color="String">
+            <Begin>"</Begin>
+            <End>"</End>
+        </Span>
+
+        <!-- Control Keywords -->
+        <Keywords color="Keyword">
+            <Word>if</Word>
+            <Word>else</Word>
+            <Word>elseif</Word>
+            <Word>endif</Word>
+            <Word>while</Word>
+            <Word>endwhile</Word>
+            <Word>for</Word>
+            <Word>endfor</Word>
+            <Word>break</Word>
+            <Word>continue</Word>
+            <Word>stop</Word>
+            <Word>replay</Word>
+        </Keywords>
+
+        <!-- Action Keywords -->
+        <Keywords color="Action">
+            <Word>msg</Word>
+            <Word>say</Word>
+            <Word>headmsg</Word>
+            <Word>sysmsg</Word>
+            <Word>cast</Word>
+            <Word>useobject</Word>
+            <Word>usetype</Word>
+            <Word>useonce</Word>
+            <Word>target</Word>
+            <Word>targetself</Word>
+            <Word>waitfortarget</Word>
+            <Word>getenemy</Word>
+            <Word>attack</Word>
+            <Word>clickobject</Word>
+            <Word>buy</Word>
+            <Word>sell</Word>
+            <Word>pause</Word>
+            <Word>wait</Word>
+            <Word>organizer</Word>
+            <Word>autoloot</Word>
+            <Word>scavenger</Word>
+            <Word>dress</Word>
+            <Word>undress</Word>
+        </Keywords>
+
+        <!-- Queries / Expressions -->
+        <Keywords color="Query">
+            <Word>hits</Word>
+            <Word>maxhits</Word>
+            <Word>mana</Word>
+            <Word>maxmana</Word>
+            <Word>stam</Word>
+            <Word>maxstam</Word>
+            <Word>diffhits</Word>
+            <Word>poisoned</Word>
+            <Word>paralyzed</Word>
+            <Word>mounted</Word>
+            <Word>hidden</Word>
+            <Word>dead</Word>
+            <Word>name</Word>
+            <Word>serial</Word>
+            <Word>graphic</Word>
+            <Word>hue</Word>
+            <Word>distance</Word>
+            <Word>findtype</Word>
+            <Word>findobject</Word>
+            <Word>counttype</Word>
+            <Word>count</Word>
+            <Word>inrange</Word>
+            <Word>infriendlist</Word>
+        </Keywords>
+
+        <!-- Operators -->
+        <Rule color="Operator">
+            [=]{1,2}|!=|&lt;=?|&gt;=?|&amp;&amp;|\|\|
+        </Rule>
+
+        <!-- Hex and Decimal Numbers -->
+        <Rule color="Number">\b[\d]+\b</Rule>
+        <Rule color="Number">\b0[xX][0-9a-fA-F]+\b</Rule>
+
+    </RuleSet>
+</SyntaxDefinition>

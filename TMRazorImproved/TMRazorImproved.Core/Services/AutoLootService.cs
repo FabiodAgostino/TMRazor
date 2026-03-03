@@ -14,7 +14,7 @@ using System.Buffers.Binary;
 
 namespace TMRazorImproved.Core.Services
 {
-    public class AutoLootService : AgentServiceBase, IAutoLootService, IRecipient<UOPacketMessage>
+    public class AutoLootService : AgentServiceBase, IAutoLootService, IRecipient<ContainerContentMessage>, IRecipient<ContainerItemAddedMessage>
     {
         private readonly IPacketService _packetService;
         private readonly IConfigService _configService;
@@ -39,79 +39,66 @@ namespace TMRazorImproved.Core.Services
             _messenger = messenger;
             _logger = logger;
 
-            _messenger.Register<UOPacketMessage>(this);
+            _messenger.Register<ContainerContentMessage>(this);
+            _messenger.Register<ContainerItemAddedMessage>(this);
 
             hotkeyService.RegisterAction("AutoLoot Start", () => Start());
             hotkeyService.RegisterAction("AutoLoot Stop", () => _ = StopAsync());
             hotkeyService.RegisterAction("AutoLoot Toggle", () => { if (IsRunning) _ = StopAsync(); else Start(); });
         }
 
-        public void Receive(UOPacketMessage message)
+        private AutoLootConfig GetActiveConfig()
         {
-            if (!IsRunning) return;
-            if (message.Path != Shared.Enums.PacketPath.ServerToClient) return;
-
-            byte[] data = message.Value.Data;
-            if (data.Length == 0) return;
-
-            if (data[0] == 0x3C) // Container Content
-            {
-                HandleContainerContent(data);
-            }
-            else if (data[0] == 0x25) // Container Item (Single)
-            {
-                HandleSingleItem(data);
-            }
+            var profile = _configService.CurrentProfile;
+            if (profile == null) return null;
+            return profile.AutoLootLists.FirstOrDefault(l => l.Name == profile.ActiveAutoLootList) 
+                   ?? profile.AutoLootLists.FirstOrDefault();
         }
 
-        private void HandleContainerContent(byte[] data)
+        public void Receive(ContainerContentMessage message)
         {
-            var reader = new UOBufferReader(data);
-            reader.ReadByte(); // 0x3C
-            reader.ReadUInt16(); // length
-            ushort count = reader.ReadUInt16();
+            var config = GetActiveConfig();
+            if (config == null || !config.Enabled || !IsRunning) return;
 
-            var config = _configService.CurrentProfile.AutoLoot;
-            var lootList = new HashSet<uint>(config.ItemList);
-
-            for (int i = 0; i < count; i++)
+            foreach (var item in message.Value.Items)
             {
-                uint serial = reader.ReadUInt32();
-                ushort graphic = reader.ReadUInt16();
-                reader.ReadByte(); // 0
-                ushort amount = reader.ReadUInt16();
-                ushort x = reader.ReadUInt16();
-                ushort y = reader.ReadUInt16();
-                uint containerSerial = reader.ReadUInt32();
-                ushort hue = reader.ReadUInt16();
-
-                if (lootList.Contains(graphic) && !_processedSerials.Contains(serial))
+                bool shouldLoot = config.ItemList.Any(li => li.IsEnabled && li.Graphic == item.Graphic);
+                if (shouldLoot && !_processedSerials.Contains(item.Serial))
                 {
-                    _lootQueue.Enqueue(serial);
-                    _processedSerials.Add(serial);
+                    if (config.NoOpenCorpse && IsCorpse(message.Value.ContainerSerial))
+                        continue;
+
+                    _lootQueue.Enqueue(item.Serial);
+                    _processedSerials.Add(item.Serial);
                 }
             }
         }
 
-        private void HandleSingleItem(byte[] data)
+        public void Receive(ContainerItemAddedMessage message)
         {
-            var reader = new UOBufferReader(data);
-            reader.ReadByte(); // 0x25
-            uint serial = reader.ReadUInt32();
-            ushort graphic = reader.ReadUInt16();
-            reader.ReadByte(); // 0
-            ushort amount = reader.ReadUInt16();
-            ushort x = reader.ReadUInt16();
-            ushort y = reader.ReadUInt16();
-            uint containerSerial = reader.ReadUInt32();
-            ushort hue = reader.ReadUInt16();
+            var config = GetActiveConfig();
+            if (config == null || !config.Enabled || !IsRunning) return;
 
-            var config = _configService.CurrentProfile.AutoLoot;
-            if (config.ItemList.Contains(graphic) && !_processedSerials.Contains(serial))
+            var item = _worldService.FindItem(message.Value.ItemSerial);
+            if (item == null) return;
+
+            bool shouldLoot = config.ItemList.Any(li => li.IsEnabled && li.Graphic == item.Graphic);
+            if (shouldLoot && !_processedSerials.Contains(item.Serial))
             {
-                _lootQueue.Enqueue(serial);
-                _processedSerials.Add(serial);
+                if (config.NoOpenCorpse && IsCorpse(message.Value.ContainerSerial))
+                    return;
+
+                _lootQueue.Enqueue(item.Serial);
+                _processedSerials.Add(item.Serial);
             }
+        }
+
+        private bool IsCorpse(uint serial)
+        {
+            // In UO i serial dei corpse iniziano solitamente con 0x40000000 e hanno un range specifico
+            // o possiamo interpellare il WorldService per il tipo di oggetto
+            var item = _worldService.FindItem(serial);
+            return item?.Graphic == 0x2006;
         }
 
         protected override async Task AgentLoopAsync(CancellationToken token)
@@ -121,16 +108,39 @@ namespace TMRazorImproved.Core.Services
 
             while (!token.IsCancellationRequested)
             {
+                var config = GetActiveConfig();
+                if (config == null || !config.Enabled)
+                {
+                    await Task.Delay(500, token);
+                    continue;
+                }
+
+                if (_worldService.Player != null && !config.AllowHidden && _worldService.Player.IsHidden)
+                {
+                    await Task.Delay(500, token);
+                    continue;
+                }
+
                 if (_lootQueue.TryDequeue(out uint serial))
                 {
-                    var config = _configService.CurrentProfile.AutoLoot;
                     uint targetContainer = config.Container;
-
-                    // Se non è impostato un container, usa il backpack del player
-                    if (targetContainer == 0 && _worldService.Player != null)
+                    
+                    // Verifica range
+                    var item = _worldService.FindItem(serial);
+                    if (item != null && config.MaxRange > 0)
                     {
-                        // In UO il backpack è solitamente un item con layer specifico o serial noto
-                        // Per ora assumiamo che l'utente debba settarlo o usiamo un fallback
+                        var dist = _worldService.Player?.DistanceTo(item) ?? 100;
+                        if (dist > config.MaxRange)
+                        {
+                            _logger.LogDebug("Item 0x{Serial:X} out of range ({Dist} > {MaxRange}), will retry when closer", serial, dist, config.MaxRange);
+                            _processedSerials.Remove(serial);
+                            continue;
+                        }
+                    }
+
+                    if (targetContainer == 0 && _worldService.Player != null && _worldService.Player.Backpack != null)
+                    {
+                        targetContainer = _worldService.Player.Backpack.Serial;
                     }
 
                     if (targetContainer != 0)
@@ -138,8 +148,7 @@ namespace TMRazorImproved.Core.Services
                         _logger.LogDebug("Looting item 0x{Serial:X}", serial);
                         MoveItem(serial, targetContainer);
                         
-                        // Delay per simulare il tempo di trascinamento e non floodare il server
-                        await Task.Delay(600, token); 
+                        await Task.Delay(Math.Max(100, config.Delay), token); 
                     }
                 }
                 else

@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="../UltimaSDK/Ultima.csproj" />
+  <Project Path="TMRazorImproved.Core/TMRazorImproved.Core.csproj" />
+  <Project Path="TMRazorImproved.Shared/TMRazorImproved.Shared.csproj" />
+  <Project Path="TMRazorImproved.Tests/TMRazorImproved.Tests.csproj" />
+  <Project Path="TMRazorImproved.UI/TMRazorImproved.UI.csproj" />
+</Solution>

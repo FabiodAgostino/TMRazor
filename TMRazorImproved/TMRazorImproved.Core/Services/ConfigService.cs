@@ -115,6 +115,52 @@ namespace TMRazorImproved.Core.Services
             SaveProfile(newProfile);
         }
 
+        public void CloneProfile(string sourceProfileName, string newProfileName)
+        {
+            if (string.IsNullOrWhiteSpace(sourceProfileName) || string.IsNullOrWhiteSpace(newProfileName)) return;
+            
+            _logger.LogInformation("Cloning profile {Source} to {Target}", sourceProfileName, newProfileName);
+            
+            string sourcePath = Path.Combine(AppContext.BaseDirectory, ConfigFolder, ProfilesFolder, $"{sourceProfileName}.json");
+            if (!File.Exists(sourcePath)) return;
+
+            var profile = SafeDeserialize<UserProfile>(sourcePath);
+            if (profile != null)
+            {
+                profile.Name = newProfileName;
+                SaveProfile(profile);
+            }
+        }
+
+        public void RenameProfile(string oldProfileName, string newProfileName)
+        {
+            if (string.IsNullOrWhiteSpace(oldProfileName) || string.IsNullOrWhiteSpace(newProfileName) || oldProfileName == "Default") return;
+
+            _logger.LogInformation("Renaming profile {Old} to {New}", oldProfileName, newProfileName);
+
+            string oldPath = Path.Combine(AppContext.BaseDirectory, ConfigFolder, ProfilesFolder, $"{oldProfileName}.json");
+            if (!File.Exists(oldPath)) return;
+
+            if (CurrentProfile.Name == oldProfileName)
+            {
+                CurrentProfile.Name = newProfileName;
+                SaveProfile(CurrentProfile);
+                Global.LastProfile = newProfileName;
+                SaveGlobal();
+            }
+            else
+            {
+                var profile = SafeDeserialize<UserProfile>(oldPath);
+                if (profile != null)
+                {
+                    profile.Name = newProfileName;
+                    SaveProfile(profile);
+                }
+            }
+
+            File.Delete(oldPath);
+        }
+
         public void DeleteProfile(string profileName)
         {
             if (profileName == "Default") return; // Non cancellare il default

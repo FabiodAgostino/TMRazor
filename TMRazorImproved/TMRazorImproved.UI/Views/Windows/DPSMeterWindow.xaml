@@ -1,0 +1,56 @@
+<Window x:Class="TMRazorImproved.UI.Views.Windows.DPSMeterWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+        mc:Ignorable="d"
+        Title="DPS Meter" Height="120" Width="200"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        d:DataContext="{d:DesignInstance vm:DPSMeterViewModel, IsDesignTimeCreatable=False}"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+
+    <Border CornerRadius="8" 
+            Background="#CC000000" 
+            BorderBrush="#40FFFFFF" 
+            BorderThickness="1"
+            Margin="4">
+        <StackPanel Margin="8">
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ui:TextBlock Text="DPS Meter" FontSize="12" FontWeight="Bold" Foreground="Gold"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <ui:Button Icon="{ui:SymbolIcon ArrowClockwise16}" Command="{Binding ResetCommand}" Padding="2" Margin="0,0,4,0" Appearance="Transparent"/>
+                    <ui:Button Icon="{ui:SymbolIcon Dismiss16}" Click="CloseButton_Click" Padding="2" Appearance="Transparent"/>
+                </StackPanel>
+            </Grid>
+
+            <UniformGrid Columns="2">
+                <StackPanel>
+                    <ui:TextBlock Text="DPS" FontSize="10" Appearance="Secondary"/>
+                    <ui:TextBlock Text="{Binding CurrentDPS, StringFormat={}{0:F1}}" FontSize="16" FontWeight="Bold"/>
+                </StackPanel>
+                <StackPanel>
+                    <ui:TextBlock Text="Max" FontSize="10" Appearance="Secondary"/>
+                    <ui:TextBlock Text="{Binding MaxDPS, StringFormat={}{0:F1}}" FontSize="16" FontWeight="Bold"/>
+                </StackPanel>
+                <StackPanel>
+                    <ui:TextBlock Text="Total" FontSize="10" Appearance="Secondary"/>
+                    <ui:TextBlock Text="{Binding TotalDamage}" FontSize="12"/>
+                </StackPanel>
+                <StackPanel>
+                    <ui:TextBlock Text="Time" FontSize="10" Appearance="Secondary"/>
+                    <ui:TextBlock Text="{Binding CombatTime}" FontSize="12"/>
+                </StackPanel>
+            </UniformGrid>
+        </StackPanel>
+    </Border>
+</Window>

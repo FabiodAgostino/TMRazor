@@ -6,6 +6,11 @@ namespace TMRazorImproved.Shared.Interfaces
     public interface IPacketService
     {
         /// <summary>
+        /// Evento scatenato per ogni pacchetto ricevuto o inviato, prima dei filtri.
+        /// </summary>
+        event Action<PacketPath, byte[]>? PacketReceived;
+
+        /// <summary>
         /// Invia un pacchetto al server
         /// </summary>
         void SendToServer(byte[] data);

@@ -22,29 +22,32 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
 
         public virtual uint CurrentID() => _world.CurrentGump?.GumpId ?? 0;
 
-        public virtual void SendAction(int buttonId)
+        public virtual void SendAction(int buttonId, int[]? switches = null)
         {
             _cancel.ThrowIfCancelled();
             var gump = _world.CurrentGump;
             if (gump == null) return;
 
-            // Pacchetto 0xB1: Gump Response
-            // [0] 0xB1
-            // [1-2] Length
-            // [3-6] Serial
-            // [7-10] GumpID
-            // [11-14] ButtonID
-            // [15-18] Switches Count (0 per ora)
-            // [19-22] Entries Count (0 per ora)
-
-            byte[] packet = new byte[23];
+            int switchesCount = switches?.Length ?? 0;
+            byte[] packet = new byte[23 + (switchesCount * 4)];
             packet[0] = 0xB1;
             BinaryPrimitives.WriteUInt16BigEndian(packet.AsSpan(1), (ushort)packet.Length);
             BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(3), gump.Serial);
             BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(7), gump.GumpId);
             BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(11), (uint)buttonId);
-            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(15), 0); // Switches count
-            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(19), 0); // Text entries count
+            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(15), (uint)switchesCount); // Switches count
+            
+            int offset = 19;
+            if (switches != null)
+            {
+                foreach (int sw in switches)
+                {
+                    BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(offset), (uint)sw);
+                    offset += 4;
+                }
+            }
+
+            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(offset), 0); // Text entries count
 
             _packet.SendToServer(packet);
             

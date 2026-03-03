@@ -1,0 +1,63 @@
+<Page x:Class="TMRazorImproved.UI.Views.Pages.CountersPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:local="clr-namespace:TMRazorImproved.UI.Views.Pages"
+      xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="800"
+      Title="Counters"
+      d:DataContext="{d:DesignInstance vm:CountersViewModel, IsDesignTimeCreatable=False}">
+
+    <Grid Margin="32">
+        <DockPanel>
+            <ui:TextBlock Text="Resource Counters" FontSize="28" FontWeight="Bold" Margin="0,0,0,24" DockPanel.Dock="Top"/>
+
+            <ui:Card Padding="16">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                        <ui:Button Content="Add New Counter" Icon="{ui:SymbolIcon Add24}" Command="{Binding AddCounterCommand}" Appearance="Primary" Margin="0,0,0,8" HorizontalAlignment="Stretch"/>
+                        <ui:Button Content="Recalculate All Now" Icon="{ui:SymbolIcon ArrowClockwise24}" Command="{Binding RecalculateCommand}" Appearance="Secondary" HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+
+                    <DataGrid ItemsSource="{Binding Counters}" 
+                              AutoGenerateColumns="False" 
+                              CanUserAddRows="False"
+                              HeadersVisibility="Column"
+                              Background="Transparent"
+                              BorderThickness="0">
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="En" Binding="{Binding Enabled}" Width="Auto"/>
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
+                            <DataGridTextColumn Header="Abbr" Binding="{Binding Abbreviation}" Width="60"/>
+                            <DataGridTextColumn Header="Graphic" Binding="{Binding Graphic, StringFormat=0x{0:X4}}" Width="Auto"/>
+                            <DataGridTextColumn Header="Hue" Binding="{Binding Hue, StringFormat=0x{0:X4}}" Width="Auto"/>
+                            <DataGridTemplateColumn Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:Button Icon="{ui:SymbolIcon Target24}" 
+                                                       Command="{Binding DataContext.SetCounterGraphicCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                       CommandParameter="{Binding}"
+                                                       Appearance="Secondary"
+                                                       Padding="4"
+                                                       Margin="0,0,4,0"
+                                                       ToolTip="Target item in game"/>
+                                            <ui:Button Icon="{ui:SymbolIcon Delete24}" 
+                                                       Command="{Binding DataContext.RemoveCounterCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                       CommandParameter="{Binding}"
+                                                       Appearance="Secondary"
+                                                       Padding="4"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </ui:Card>
+        </DockPanel>
+    </Grid>
+</Page>

@@ -7,53 +7,89 @@
       xmlns:local="clr-namespace:TMRazorImproved.UI.Views.Pages"
       xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       mc:Ignorable="d" 
-      d:DesignHeight="600" d:DesignWidth="800"
+      d:DesignHeight="800" d:DesignWidth="800"
       Title="Options">
 
     <ScrollViewer Margin="32">
         <StackPanel>
-            <ui:TextBlock Text="{loc:Loc Filters.Title}" FontSize="28" FontWeight="Bold" Margin="0,0,0,24"/>
+            <ui:TextBlock Text="General Options" FontSize="28" FontWeight="Bold" Margin="0,0,0,24"/>
 
-            <!-- Classic Filters Card -->
+            <!-- Tweaks & Display Card -->
             <ui:Card Margin="0,0,0,16">
                 <StackPanel>
-                    <ui:TextBlock Text="{loc:Loc Filters.Classic}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <ui:TextBlock Text="Display &amp; Tweaks" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
                     
-                    <ui:ToggleSwitch Content="{loc:Loc Filters.Light}" 
-                                     IsChecked="{Binding FilterLight, Mode=TwoWay}"
-                                     Margin="0,0,0,8"/>
-                    
-                    <ui:ToggleSwitch Content="{loc:Loc Filters.Weather}" 
-                                     IsChecked="{Binding FilterWeather, Mode=TwoWay}"
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBlock Text="Force Window Size" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <ui:NumberBox Value="{Binding ForceWidth, Mode=TwoWay}" PlaceholderText="Width" Width="100" Margin="0,0,8,0" />
+                            <ui:NumberBox Value="{Binding ForceHeight, Mode=TwoWay}" PlaceholderText="Height" Width="100" />
+                        </StackPanel>
+                    </Grid>
+
+                    <ui:ToggleSwitch Content="Scale Items" 
+                                     IsChecked="{Binding ScaleItems, Mode=TwoWay}"
                                      Margin="0,0,0,8"/>
 
-                    <ui:ToggleSwitch Content="{loc:Loc Filters.Sound}" 
-                                     IsChecked="{Binding FilterSound, Mode=TwoWay}"
+                    <ui:ToggleSwitch Content="Always on Top" 
+                                     IsChecked="{Binding AlwaysOnTop, Mode=TwoWay}"
                                      Margin="0,0,0,8"/>
 
-                    <ui:ToggleSwitch Content="{loc:Loc Filters.Death}" 
-                                     IsChecked="{Binding FilterDeath, Mode=TwoWay}"
-                                     Margin="0,0,0,8"/>
-
-                    <ui:ToggleSwitch Content="{loc:Loc Filters.Staff}" 
-                                     IsChecked="{Binding FilterStaff, Mode=TwoWay}"
-                                     Margin="0,0,0,8"/>
-                    
-                    <ui:ToggleSwitch Content="{loc:Loc Filters.Poison}" 
-                                     IsChecked="{Binding FilterPoison, Mode=TwoWay}"
-                                     Margin="0,0,0,8"/>
-
-                    <ui:ToggleSwitch Content="{loc:Loc Filters.Snoop}" 
-                                     IsChecked="{Binding FilterSnoop, Mode=TwoWay}"
-                                     Margin="0,0,0,8"/>
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="200" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBlock Text="UI Opacity" VerticalAlignment="Center" />
+                        <Slider Grid.Column="1" Minimum="0.2" Maximum="1.0" TickFrequency="0.05" IsSnapToTickEnabled="True"
+                                Value="{Binding UiOpacity, Mode=TwoWay}" />
+                    </Grid>
                 </StackPanel>
             </ui:Card>
 
-            <!-- Tweaks & Quality of Life Card (Placeholder) -->
-            <ui:Card>
+            <!-- Automation & Behaviors Card -->
+            <ui:Card Margin="0,0,0,16">
                 <StackPanel>
-                    <ui:TextBlock Text="Tweaks &amp; QoL" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
-                    <ui:TextBlock Text="Future tweaks will be added here." Appearance="Secondary" FontStyle="Italic"/>
+                    <ui:TextBlock Text="Automation &amp; Behaviors" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    
+                    <UniformGrid Columns="2">
+                        <StackPanel Margin="0,0,16,16">
+                            <ui:ToggleSwitch Content="Auto Carver" IsChecked="{Binding AutoCarver, Mode=TwoWay}" Margin="0,0,0,8"/>
+                            <StackPanel Orientation="Horizontal" IsEnabled="{Binding AutoCarver}">
+                                <ui:TextBlock Text="Blade: " VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <ui:TextBlock Text="{Binding AutoCarverBlade}" VerticalAlignment="Center" Width="80" Appearance="Secondary"/>
+                                <ui:Button Content="Set" Command="{Binding SetCarverBladeCommand}" Padding="8,4"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,0,16">
+                            <ui:ToggleSwitch Content="Bone Cutter" IsChecked="{Binding BoneCutter, Mode=TwoWay}" Margin="0,0,0,8"/>
+                            <StackPanel Orientation="Horizontal" IsEnabled="{Binding BoneCutter}">
+                                <ui:TextBlock Text="Blade: " VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <ui:TextBlock Text="{Binding BoneCutterBlade}" VerticalAlignment="Center" Width="80" Appearance="Secondary"/>
+                                <ui:Button Content="Set" Command="{Binding SetBoneCutterBladeCommand}" Padding="8,4"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,16,16">
+                            <ui:ToggleSwitch Content="Auto Remount" IsChecked="{Binding AutoRemount, Mode=TwoWay}" Margin="0,0,0,8"/>
+                            <StackPanel Orientation="Horizontal" IsEnabled="{Binding AutoRemount}">
+                                <ui:TextBlock Text="Mount: " VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <ui:TextBlock Text="{Binding RemountSerial}" VerticalAlignment="Center" Width="80" Appearance="Secondary"/>
+                                <ui:Button Content="Set" Command="{Binding SetMountCommand}" Padding="8,4"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,0,16">
+                            <ui:ToggleSwitch Content="Block Trade Requests" IsChecked="{Binding BlockTradeRequest, Mode=TwoWay}" Margin="0,0,0,8"/>
+                            <ui:ToggleSwitch Content="Block Party Invites" IsChecked="{Binding BlockPartyInvite, Mode=TwoWay}" Margin="0,0,0,8"/>
+                            <ui:ToggleSwitch Content="Auto Screenshot On Death" IsChecked="{Binding AutoScreenshotOnDeath, Mode=TwoWay}" Margin="0,0,0,8"/>
+                        </StackPanel>
+                    </UniformGrid>
                 </StackPanel>
             </ui:Card>
         </StackPanel>

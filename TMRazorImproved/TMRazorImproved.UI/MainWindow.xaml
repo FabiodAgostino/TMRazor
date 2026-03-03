@@ -6,6 +6,7 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:local="clr-namespace:TMRazorImproved.UI"
         xmlns:pages="clr-namespace:TMRazorImproved.UI.Views.Pages"
+        xmlns:agents="clr-namespace:TMRazorImproved.UI.Views.Pages.Agents"
         mc:Ignorable="d"
         Title="TMRazor Improved - .NET 10 Edition" Height="700" Width="1100"
         WindowStartupLocation="CenterScreen"
@@ -17,35 +18,57 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Title="TMRazor Improved" Grid.Row="0" />
+        <ui:TitleBar x:Name="AppTitleBar" Title="TMRazor Improved" Grid.Row="0" />
 
         <ui:NavigationView x:Name="RootNavigation"
                            Grid.Row="1"
                            PaneDisplayMode="Left"
                            OpenPaneLength="220">
             <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItem Content="General"   TargetPageType="{x:Type pages:GeneralPage}" />
-                <ui:NavigationViewItem Content="Options"   TargetPageType="{x:Type pages:OptionsPage}" />
-                <ui:NavigationViewItem Content="Hotkeys"   TargetPageType="{x:Type pages:HotkeysPage}" />
-                <ui:NavigationViewItem Content="Network" />
-                <ui:NavigationViewItem Content="Scripting" TargetPageType="{x:Type pages:ScriptingPage}" />
-                <ui:NavigationViewItem Content="Agents">
+                <ui:NavigationViewItem Content="Journal"   TargetPageType="{x:Type pages:JournalPage}" Icon="ReadingList24" />
+                <ui:NavigationViewItem Content="General"   TargetPageType="{x:Type pages:GeneralPage}" Icon="Settings24" />
+                <ui:NavigationViewItem Content="Options"   TargetPageType="{x:Type pages:OptionsPage}" Icon="Options24" />
+                <ui:NavigationViewItem Content="Display"   TargetPageType="{x:Type pages:DisplayPage}" Icon="Video24" />
+                <ui:NavigationViewItem Content="Hotkeys"   TargetPageType="{x:Type pages:HotkeysPage}" Icon="Keyboard24" />
+                <ui:NavigationViewItem Content="Network"   TargetPageType="{x:Type pages:PacketLoggerPage}" Icon="Broadcasting24">
                     <ui:NavigationViewItem.MenuItems>
-                        <ui:NavigationViewItem Content="AutoLoot" />
-                        <ui:NavigationViewItem Content="Scavenger" />
-                        <ui:NavigationViewItem Content="Organizer" />
+                        <ui:NavigationViewItem Content="Secure Trade" TargetPageType="{x:Type pages:SecureTradePage}" Icon="ArrowSwap24" />
                     </ui:NavigationViewItem.MenuItems>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="Macros" />
+                <ui:NavigationViewItem Content="Gallery"   TargetPageType="{x:Type pages:GalleryPage}" Icon="Collections24" />
+                <ui:NavigationViewItem Content="Scripting" TargetPageType="{x:Type pages:ScriptingPage}" Icon="Code24" />
+                
+                <ui:NavigationViewItem Content="Agents" Icon="PersonCall24">
+                    <ui:NavigationViewItem.MenuItems>
+                        <ui:NavigationViewItem Content="AutoLoot"     TargetPageType="{x:Type agents:AutoLootPage}"     Icon="Flash24" />
+                        <ui:NavigationViewItem Content="Scavenger"    TargetPageType="{x:Type agents:ScavengerPage}"    Icon="Hand24" />
+                        <ui:NavigationViewItem Content="Organizer"    TargetPageType="{x:Type agents:OrganizerPage}"    Icon="Layer24" />
+                        <ui:NavigationViewItem Content="Restock"      TargetPageType="{x:Type agents:RestockPage}"      Icon="ArrowRepeatAll24" />
+                        <ui:NavigationViewItem Content="Dress"        TargetPageType="{x:Type agents:DressPage}"        Icon="ShapeSubtract24" />
+                        <ui:NavigationViewItem Content="Bandage Heal" TargetPageType="{x:Type agents:BandageHealPage}" Icon="HeartPulse24" />
+                        <ui:NavigationViewItem Content="Targeting"    TargetPageType="{x:Type agents:TargetingPage}"    Icon="Target24" />
+                        <ui:NavigationViewItem Content="Vendor"       TargetPageType="{x:Type agents:VendorPage}"       Icon="Money24" />
+                        <ui:NavigationViewItem Content="Friends"      TargetPageType="{x:Type agents:FriendsPage}"      Icon="PeopleCommunity24" />
+                    </ui:NavigationViewItem.MenuItems>
+                </ui:NavigationViewItem>
+                
+                <ui:NavigationViewItem Content="Macros"     TargetPageType="{x:Type pages:MacrosPage}" Icon="History24" />
+                
                 <ui:NavigationViewItem Content="Tools" Icon="Toolbox24">
                     <ui:NavigationViewItem.MenuItems>
-                        <ui:NavigationViewItem Content="Object Inspector" TargetPageType="{x:Type pages:InspectorPage}" />
+                        <ui:NavigationViewItem Content="Object Inspector" TargetPageType="{x:Type pages:InspectorPage}" Icon="EyeShow24" />
                     </ui:NavigationViewItem.MenuItems>
                 </ui:NavigationViewItem>
             </ui:NavigationView.MenuItems>
 
             <ui:NavigationView.ContentOverlay>
-                <Frame x:Name="RootFrame" />
+                <Grid>
+                    <Frame x:Name="RootFrame" />
+                    <ui:SnackbarPresenter x:Name="SnackbarPresenter" 
+                                          HorizontalAlignment="Right" 
+                                          VerticalAlignment="Top" 
+                                          Margin="0,20,20,0" />
+                </Grid>
             </ui:NavigationView.ContentOverlay>
         </ui:NavigationView>
     </Grid>

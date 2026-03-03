@@ -1,11 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using TMRazorImproved.Shared.Enums;
 
 namespace TMRazorImproved.Shared.Interfaces
 {
     /// <summary>
-    /// Stato di completamento di uno script Python.
+    /// Stato di completamento di uno script.
     /// </summary>
     public record ScriptCompletionInfo(
         string ScriptName,
@@ -14,8 +16,8 @@ namespace TMRazorImproved.Shared.Interfaces
         TimeSpan Elapsed);
 
     /// <summary>
-    /// Servizio per l'esecuzione di script Python tramite IronPython.
-    /// Gestisce il ciclo di vita del motore, la cancellazione cooperativa via sys.settrace
+    /// Servizio per l'esecuzione di script (Python, UOSteam, C#).
+    /// Gestisce il ciclo di vita del motore, la cancellazione cooperativa
     /// e il reindirizzamento dell'output verso la UI.
     /// </summary>
     public interface IScriptingService
@@ -36,14 +38,23 @@ namespace TMRazorImproved.Shared.Interfaces
         event Action<ScriptCompletionInfo>? ScriptCompleted;
 
         /// <summary>
-        /// Avvia l'esecuzione asincrona di uno script Python.
-        /// Un solo script può girare alla volta; una seconda chiamata con script in
-        /// esecuzione viene rifiutata con un messaggio su ErrorReceived.
+        /// Avvia l'esecuzione asincrona di uno script nel linguaggio specificato.
+        /// Un solo script può girare alla volta.
         /// </summary>
-        Task RunAsync(string code, string scriptName = "unnamed",
+        Task RunAsync(string code, ScriptLanguage language = ScriptLanguage.Python,
+                      string scriptName = "unnamed",
                       CancellationToken externalToken = default);
 
         /// <summary>Richiede l'interruzione cooperativa dello script in corso.</summary>
         Task StopAsync();
+
+        /// <summary>Ritorna la lista dei nomi degli script caricati (es. nomi dei file).</summary>
+        IEnumerable<string> GetLoadedScripts();
+
+        /// <summary>Esegue uno script caricato cercandolo per nome.</summary>
+        Task RunScript(string name);
+
+        /// <summary>Esegue una scansione di sicurezza sul codice e ritorna eventuali avvisi.</summary>
+        IEnumerable<string> ValidateScript(string code, ScriptLanguage language);
     }
 }

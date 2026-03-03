@@ -39,7 +39,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             var m = _world.FindMobile(serial);
             var p = _world.Player;
             if (m == null || p == null) return 999;
-            return ManhattanDistance(m.X, m.Y, p.X, p.Y);
+            return m.DistanceTo(p);
         }
 
         /// <summary>
@@ -53,8 +53,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             if (player == null) return Enumerable.Empty<Mobile>();
 
             return _world.Mobiles
-                .Where(m => m.Serial != player.Serial &&
-                            ManhattanDistance(m.X, m.Y, player.X, player.Y) <= range)
+                .Where(m => m.Serial != player.Serial && m.DistanceTo(player) <= range)
                 .ToList();
         }
 
@@ -67,7 +66,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
 
             return _world.Mobiles
                 .Where(m => m.Serial != player.Serial)
-                .OrderBy(m => ManhattanDistance(m.X, m.Y, player.X, player.Y))
+                .OrderBy(m => m.DistanceTo(player))
                 .FirstOrDefault();
         }
 
@@ -79,7 +78,22 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return m != null && m.Hits > 0;
         }
 
-        private static int ManhattanDistance(int x1, int y1, int x2, int y2)
-            => System.Math.Abs(x1 - x2) + System.Math.Abs(y1 - y2);
+        public virtual IEnumerable<Mobile> FilterByNotoriety(int notoriety)
+        {
+            _cancel.ThrowIfCancelled();
+            return _world.Mobiles.Where(m => m.Notoriety == notoriety).ToList();
+        }
+
+        public virtual IEnumerable<Mobile> FilterByDistance(int minRange, int maxRange)
+        {
+            _cancel.ThrowIfCancelled();
+            var player = _world.Player;
+            if (player == null) return Enumerable.Empty<Mobile>();
+
+            return _world.Mobiles.Where(m => {
+                int dist = m.DistanceTo(player);
+                return dist >= minRange && dist <= maxRange;
+            }).ToList();
+        }
     }
 }

@@ -15,6 +15,8 @@ namespace TMRazorImproved.Shared.Interfaces
         
         void SwitchProfile(string profileName);
         void CreateProfile(string profileName);
+        void CloneProfile(string sourceProfileName, string newProfileName);
         void DeleteProfile(string profileName);
+        void RenameProfile(string oldProfileName, string newProfileName);
     }
 }

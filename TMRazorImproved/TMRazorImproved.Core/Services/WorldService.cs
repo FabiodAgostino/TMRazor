@@ -13,6 +13,7 @@ namespace TMRazorImproved.Core.Services
         
         public Mobile? Player { get; private set; }
         public UOGump? CurrentGump { get; private set; }
+        public uint LastOpenedContainer { get; private set; }
 
         public IEnumerable<Mobile> Mobiles => _mobiles.Values;
         public IEnumerable<Item> Items => _items.Values;
@@ -20,6 +21,11 @@ namespace TMRazorImproved.Core.Services
         public Mobile? FindMobile(uint serial) => _mobiles.GetValueOrDefault(serial);
         
         public Item? FindItem(uint serial) => _items.GetValueOrDefault(serial);
+
+        public IEnumerable<Item> GetItemsInContainer(uint containerSerial)
+        {
+            return _items.Values.Where(i => i.Container == containerSerial);
+        }
 
         public UOEntity? FindEntity(uint serial)
         {
@@ -56,6 +62,11 @@ namespace TMRazorImproved.Core.Services
         public void RemoveGump()
         {
             CurrentGump = null;
+        }
+
+        public void SetLastOpenedContainer(uint serial)
+        {
+            LastOpenedContainer = serial;
         }
 
         public void Clear()

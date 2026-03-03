@@ -1,0 +1,99 @@
+<Page x:Class="TMRazorImproved.UI.Views.Pages.SecureTradePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="800"
+      Title="Secure Trade"
+      d:DataContext="{d:DesignInstance vm:SecureTradeViewModel}">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock Text="Secure Trade Monitor" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="Monitor and control active trade sessions" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
+
+        <!-- Active Trades List -->
+        <ScrollViewer Grid.Row="1">
+            <ItemsControl ItemsSource="{Binding ActiveTrades}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ui:Card Margin="0,0,0,12" Padding="16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                        <ui:SymbolIcon Symbol="Person24" Margin="0,0,8,0" />
+                                        <TextBlock Text="{Binding TargetName}" FontWeight="Bold" FontSize="16" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Serial, StringFormat=' (ID: 0x{0:X8})'}" 
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" 
+                                                   VerticalAlignment="Center" FontSize="12" />
+                                    </StackPanel>
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- My Status -->
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Your Status" Style="{StaticResource CaptionTextBlockStyle}" Margin="0,0,0,4" />
+                                            <ui:InfoBar Title="You Accepted" IsOpen="{Binding MyAccepted}" Severity="Success" IsClosable="False" />
+                                            <ui:InfoBar Title="Waiting for you" IsOpen="{Binding MyAccepted, Converter={StaticResource BooleanInvertConverter}}" Severity="Informational" IsClosable="False" />
+                                        </StackPanel>
+
+                                        <!-- Their Status -->
+                                        <StackPanel Grid.Column="1" Margin="16,0,0,0">
+                                            <TextBlock Text="Their Status" Style="{StaticResource CaptionTextBlockStyle}" Margin="0,0,0,4" />
+                                            <ui:InfoBar Title="They Accepted" IsOpen="{Binding TheirAccepted}" Severity="Success" IsClosable="False" />
+                                            <ui:InfoBar Title="Waiting for them" IsOpen="{Binding TheirAccepted, Converter={StaticResource BooleanInvertConverter}}" Severity="Informational" IsClosable="False" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="24,0,0,0">
+                                    <ui:Button Content="Accept" 
+                                               Icon="Checkmark24" 
+                                               Appearance="Primary" 
+                                               Command="{Binding DataContext.AcceptCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                               CommandParameter="{Binding Serial}"
+                                               Margin="0,0,0,8" 
+                                               HorizontalAlignment="Stretch"/>
+                                    <ui:Button Content="Cancel" 
+                                               Icon="Dismiss24" 
+                                               Appearance="Secondary" 
+                                               Command="{Binding DataContext.CancelCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                               CommandParameter="{Binding Serial}"
+                                               HorizontalAlignment="Stretch"/>
+                                </StackPanel>
+                            </Grid>
+                        </ui:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Placeholder when no trades -->
+        <Grid Grid.Row="1" Visibility="{Binding ActiveTrades.Count, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter='0'}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <ui:SymbolIcon Symbol="ArrowSwap24" FontSize="48" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,16" />
+                <TextBlock Text="No active trade sessions" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="16" />
+                <TextBlock Text="Start a trade in-game by dropping an item on a character" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

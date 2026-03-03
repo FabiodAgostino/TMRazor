@@ -47,22 +47,25 @@ namespace TMRazorImproved.Shared.Models
         /// </summary>
         public static MobileSnapshot Snapshot(this Mobile m)
         {
-            return new MobileSnapshot(
-                m.Serial, 
-                m.Name,
-                m.X, 
-                m.Y, 
-                m.Z,
-                m.Graphic, 
-                m.Hue,
-                m.Hits, 
-                m.HitsMax,
-                m.Mana, 
-                m.ManaMax,
-                m.Stam, 
-                m.StamMax,
-                m.Notoriety, 
-                m.Direction);
+            lock (m.SyncRoot)
+            {
+                return new MobileSnapshot(
+                    m.Serial,
+                    m.Name,
+                    m.X,
+                    m.Y,
+                    m.Z,
+                    m.Graphic,
+                    m.Hue,
+                    m.Hits,
+                    m.HitsMax,
+                    m.Mana,
+                    m.ManaMax,
+                    m.Stam,
+                    m.StamMax,
+                    m.Notoriety,
+                    m.Direction);
+            }
         }
 
         /// <summary>
@@ -70,16 +73,19 @@ namespace TMRazorImproved.Shared.Models
         /// </summary>
         public static ItemSnapshot Snapshot(this Item i)
         {
-            return new ItemSnapshot(
-                i.Serial,
-                i.Graphic,
-                i.Hue,
-                i.X,
-                i.Y,
-                i.Z,
-                i.Amount,
-                i.Container,
-                i.Layer);
+            lock (i.SyncRoot)
+            {
+                return new ItemSnapshot(
+                    i.Serial,
+                    i.Graphic,
+                    i.Hue,
+                    i.X,
+                    i.Y,
+                    i.Z,
+                    i.Amount,
+                    i.Container,
+                    i.Layer);
+            }
         }
     }
 }

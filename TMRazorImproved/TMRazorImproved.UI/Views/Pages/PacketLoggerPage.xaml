@@ -1,0 +1,145 @@
+<Page x:Class="TMRazorImproved.UI.Views.Pages.PacketLoggerPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+      xmlns:enums="clr-namespace:TMRazorImproved.Shared.Enums;assembly=TMRazorImproved.Shared"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="1000"
+      Title="Packet Logger"
+      d:DataContext="{d:DesignInstance vm:PacketLoggerViewModel}">
+
+    <Page.Resources>
+        <Style x:Key="DirectionIconStyle" TargetType="ui:SymbolIcon">
+            <Setter Property="Symbol" Value="ArrowRight24" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Direction}" Value="{x:Static enums:PacketPath.ServerToClient}">
+                    <Setter Property="Symbol" Value="ArrowLeft24" />
+                    <Setter Property="Filled" Value="True" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Page.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <StackPanel Orientation="Horizontal">
+                <ui:Button Content="{Binding IsRecording, Converter={StaticResource BooleanToTextConverter}, ConverterParameter='Pause|Record'}" 
+                           Icon="{Binding IsRecording, Converter={StaticResource BooleanToIconConverter}, ConverterParameter='Pause24|Record24'}"
+                           Command="{Binding ToggleRecordingCommand}"
+                           Margin="0,0,8,0"
+                           Appearance="{Binding IsRecording, Converter={StaticResource BooleanToAppearanceConverter}, ConverterParameter='Secondary|Primary'}" />
+                
+                <ui:Button Content="Clear" Icon="Delete24" Command="{Binding ClearCommand}" Appearance="Secondary" Margin="0,0,8,0" />
+
+                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,0" />
+
+                <ui:TextBox PlaceholderText="Filter ID (hex)..." 
+                            Width="150" 
+                            Icon="Filter24"
+                            Margin="8,0,0,0"
+                            Text="{Binding FilterId, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            
+            <TextBlock Text="Packet Logger" VerticalAlignment="Center" HorizontalAlignment="Right" 
+                       Style="{StaticResource TitleTextBlockStyle}" FontSize="18" />
+        </Grid>
+
+        <!-- Content Area -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="3*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Packet List -->
+            <ui:ListView Grid.Column="0" 
+                         ItemsSource="{Binding Packets}" 
+                         SelectedItem="{Binding SelectedPacket}"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling">
+                <ui:ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Dir" Width="40">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ui:SymbolIcon Style="{StaticResource DirectionIconStyle}" FontSize="16" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="ID" Width="50">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Id, StringFormat='0x{0:X2}'}" FontWeight="SemiBold" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Len" Width="60" DisplayMemberBinding="{Binding Length}" />
+                        <GridViewColumn Header="Hex Preview" Width="200" DisplayMemberBinding="{Binding RawHex}" />
+                    </GridView>
+                </ui:ListView.View>
+            </ui:ListView>
+
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Center" Margin="8,0" Background="Transparent" />
+
+            <!-- Packet Inspector -->
+            <ui:Card Grid.Column="2" VerticalAlignment="Stretch" Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Packet Details" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,16" />
+                    
+                    <ScrollViewer Grid.Row="1">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,24,0">
+                                    <TextBlock Text="Timestamp:" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
+                                    <TextBlock Text="Direction:" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
+                                    <TextBlock Text="Length:" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding SelectedPacket.Timestamp, StringFormat='HH:mm:ss.fff'}" Margin="0,0,0,4" />
+                                    <TextBlock Text="{Binding SelectedPacket.Direction}" Margin="0,0,0,4" />
+                                    <TextBlock Text="{Binding SelectedPacket.Length}" Margin="0,0,0,4" />
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="Hex Dump" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" 
+                                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1" Padding="12" CornerRadius="4">
+                                <TextBlock Text="{Binding SelectedPacket.Hex}" 
+                                           FontFamily="Cascadia Mono, Consolas, Courier New" 
+                                           FontSize="12" />
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Placeholder -->
+                    <Grid Grid.Row="1" Visibility="{Binding SelectedPacket, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter='Invert'}">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <ui:SymbolIcon Symbol="Search24" FontSize="48" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,16" />
+                            <TextBlock Text="Select a packet to inspect details" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </ui:Card>
+        </Grid>
+    </Grid>
+</Page>

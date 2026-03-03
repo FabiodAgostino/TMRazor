@@ -34,6 +34,8 @@ namespace TMRazorImproved.Core.Services
         // Dizionari per gestire i filtri (bloccanti)
         private readonly ConcurrentDictionary<(PacketPath, int), List<Func<byte[], bool>>> _filters = new();
 
+        public event Action<PacketPath, byte[]>? PacketReceived;
+
         public PacketService(IMessenger messenger, IClientInteropService interop, ILogger<PacketService> logger)
         {
             _messenger = messenger;
@@ -116,6 +118,8 @@ namespace TMRazorImproved.Core.Services
         {
             if (data == null || data.Length == 0) return true;
 
+            PacketReceived?.Invoke(path, data);
+
             int packetId = data[0];
             var key = (path, packetId);
 
@@ -160,6 +164,9 @@ namespace TMRazorImproved.Core.Services
         public void SendToServer(byte[] data)
         {
             if (data == null || data.Length == 0) return;
+
+            PacketReceived?.Invoke(PacketPath.ClientToServer, data);
+
             EnsureInitialized();
             
             if (_outSend == null || _commMutex == null) return;
@@ -200,6 +207,9 @@ namespace TMRazorImproved.Core.Services
         public void SendToClient(byte[] data)
         {
             if (data == null || data.Length == 0) return;
+
+            PacketReceived?.Invoke(PacketPath.ServerToClient, data);
+
             EnsureInitialized();
 
             if (_outRecv == null || _commMutex == null) return;
@@ -271,7 +281,7 @@ namespace TMRazorImproved.Core.Services
 
         private void HandleComm(ClientInteropService.SharedBuffer* inBuff, ClientInteropService.SharedBuffer* outBuff, PacketPath path)
         {
-            if (inBuff == null || _commMutex == null) return;
+            if (inBuff == null || outBuff == null || _commMutex == null) return;
 
             try
             {
@@ -279,11 +289,29 @@ namespace TMRazorImproved.Core.Services
 
                 while (inBuff->Length > 0)
                 {
-                    byte* buffPtr = (&inBuff->Buff0) + inBuff->Start;
-                    int len = _interop.GetPacketLength(buffPtr, inBuff->Length);
-
-                    if (len > inBuff->Length || len <= 0)
+                    // FIX: Controllo che Start sia all'interno dei limiti del buffer
+                    if (inBuff->Start < 0 || inBuff->Start >= ClientInteropService.SHARED_BUFF_SIZE)
+                    {
+                        _logger.LogError("Critical: inBuff->Start ({Start}) out of bounds. Resetting buffer.", inBuff->Start);
+                        inBuff->Start = 0;
+                        inBuff->Length = 0;
                         break;
+                    }
+
+                    byte* buffPtr = (&inBuff->Buff0) + inBuff->Start;
+                    
+                    // FIX: Controllo che il puntatore non superi la fine del blocco di memoria allocato
+                    int remainingPhysical = ClientInteropService.SHARED_BUFF_SIZE - inBuff->Start;
+                    int bufLen = Math.Min(inBuff->Length, remainingPhysical);
+
+                    int len = _interop.GetPacketLength(buffPtr, bufLen);
+
+                    if (len > bufLen || len <= 0)
+                    {
+                        // Pacchetto incompleto o corrotto alla fine del buffer fisico
+                        if (len > bufLen) _logger.LogWarning("Packet truncated at buffer boundary on {Path}", path);
+                        break;
+                    }
 
                     // Estrae il pacchetto in un buffer gestito
                     byte[] packetData = new byte[len];
@@ -299,19 +327,28 @@ namespace TMRazorImproved.Core.Services
                     // Elabora il pacchetto
                     if (!OnPacketReceived(path, packetData))
                     {
-                        // Se il pacchetto è filtrato (bloccato), non lo aggiungiamo al buffer di uscita verso la destinazione originale
                         continue;
                     }
 
                     // Se non filtrato, lo scrive nel buffer di uscita per Crypt.dll
+                    if (outBuff->Start < 0 || outBuff->Start >= ClientInteropService.SHARED_BUFF_SIZE)
+                        outBuff->Start = 0;
+
                     int writeOffset = outBuff->Start + outBuff->Length;
                     if (writeOffset + len > ClientInteropService.SHARED_BUFF_SIZE)
                     {
-                        // Buffer di uscita saturo — non possiamo scrivere questo pacchetto.
-                        // Il pacchetto viene scartato. In condizioni normali questo non accade:
-                        // significa che Crypt.dll non sta consumando abbastanza velocemente.
-                        _logger.LogWarning("Output buffer saturated for path {Path}. Packet {PacketId:X2} (len: {Len}) discarded.", path, packetData[0], len);
-                        break;
+                        // Se il buffer ha spazio all'inizio ma non alla fine, resetta Start a 0 (Shift buffer)
+                        if (outBuff->Length + len <= ClientInteropService.SHARED_BUFF_SIZE)
+                        {
+                            _interop.CopyMemory(&outBuff->Buff0, (&outBuff->Buff0) + outBuff->Start, outBuff->Length);
+                            outBuff->Start = 0;
+                            writeOffset = outBuff->Length;
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Output buffer saturated for path {Path}. Packet discarded.", path);
+                            break;
+                        }
                     }
 
                     fixed (byte* pSrc = packetData)
@@ -321,6 +358,13 @@ namespace TMRazorImproved.Core.Services
                         outBuff->Length += len;
                     }
                 }
+
+                // Reset Start quando il buffer è vuoto per ottimizzare lo spazio
+                if (inBuff->Length == 0) inBuff->Start = 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, "Fatal error in HandleComm for path {Path}", path);
             }
             finally
             {

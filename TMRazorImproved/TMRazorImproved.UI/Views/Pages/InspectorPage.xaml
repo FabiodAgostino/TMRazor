@@ -5,82 +5,168 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:local="clr-namespace:TMRazorImproved.UI.Views.Pages"
+      xmlns:controls="clr-namespace:TMRazorImproved.UI.Views.Controls"
       xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="800"
       Title="Inspector">
 
-    <Grid Margin="32">
+    <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <DockPanel Grid.Row="0" Margin="0,0,0,24">
-            <ui:TextBlock Text="{loc:Loc Inspector.Title}" FontSize="28" FontWeight="Bold" VerticalAlignment="Center"/>
-            <ui:Button Content="{loc:Loc Inspector.InspectButton}" Icon="Eye24" 
-                       Command="{Binding StartInspectCommand}"
-                       Appearance="Primary" HorizontalAlignment="Right" Padding="16,8"/>
-        </DockPanel>
+        <ui:TextBlock Grid.Row="0" Text="{loc:Loc Inspector.Title}" FontSize="28" FontWeight="Bold" Margin="0,0,0,16"/>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="350"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <TabControl Grid.Row="1">
+            <!-- ENTITY TAB ... (no changes here) -->
+            <TabItem Header="Entity Inspector">
+                <Grid Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="350"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-            <!-- Basic Info Card -->
-            <ui:Card Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Top">
-                <StackPanel>
-                    <ui:TextBlock Text="{loc:Loc Inspector.BasicInfo}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                        <ui:Card Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <ui:TextBlock Text="Basic Info" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                                <ui:Button Content="Inspect Target" Icon="Eye24" Command="{Binding StartInspectCommand}" Appearance="Primary" HorizontalAlignment="Stretch" Margin="0,0,0,16"/>
+                                
+                                <ui:TextBlock Text="Serial" Appearance="Secondary" Margin="0,0,0,4"/>
+                                <ui:TextBlock Text="{Binding InspectedEntity.Serial, StringFormat=0x{0:X8}}" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                                <ui:TextBlock Text="Graphic" Appearance="Secondary" Margin="0,0,0,4"/>
+                                <ui:TextBlock Text="{Binding InspectedEntity.Graphic, StringFormat=0x{0:X4}}" FontSize="16" Margin="0,0,0,12"/>
+
+                                <ui:TextBlock Text="Position" Appearance="Secondary" Margin="0,0,0,4"/>
+                                <ui:TextBlock Margin="0,0,0,12">
+                                    <Run Text="{Binding InspectedEntity.X}" FontWeight="SemiBold"/>
+                                    <Run Text=", "/>
+                                    <Run Text="{Binding InspectedEntity.Y}" FontWeight="SemiBold"/>
+                                    <Run Text=", "/>
+                                    <Run Text="{Binding InspectedEntity.Z}" FontWeight="SemiBold"/>
+                                </ui:TextBlock>
+                            </StackPanel>
+                        </ui:Card>
+
+                        <ui:Card Padding="8">
+                            <StackPanel>
+                                <ui:TextBlock Text="Recent Targets" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <ListBox ItemsSource="{Binding RecentSerials}" Height="150" Background="Transparent" BorderThickness="0" FontSize="12"/>
+                            </StackPanel>
+                        </ui:Card>
+                    </StackPanel>
+
+                    <ui:Card Grid.Column="1" Padding="16">
+                        <DockPanel>
+                            <ui:TextBlock Text="Object Properties (OPL)" FontSize="18" FontWeight="SemiBold" DockPanel.Dock="Top" Margin="0,0,0,16"/>
+                            <ListView ItemsSource="{Binding InspectedEntity.Properties.Properties}" Background="Transparent" BorderThickness="0">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,4">
+                                            <ui:TextBlock Text="{Binding Text}" FontSize="13" FontWeight="Medium" TextWrapping="Wrap"/>
+                                            <ui:TextBlock Text="{Binding Cliloc, StringFormat=Cliloc: {0}}" FontSize="10" Appearance="Secondary"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </DockPanel>
+                    </ui:Card>
+                </Grid>
+            </TabItem>
+
+            <!-- GUMP TAB ... (keeping current improvements) -->
+            <TabItem Header="Gump Inspector">
+                <Grid Margin="0,12,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <ui:Card Grid.Row="0" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <ui:TextBlock Text="Current Gump Info" FontWeight="SemiBold" />
+                                <ui:TextBlock Text="{Binding GumpInfo}" Appearance="Secondary" FontSize="12"/>
+                            </StackPanel>
+                            <ui:Button Grid.Column="1" Content="Refresh / Inspect Gump" Icon="ArrowCounterclockwise24" Command="{Binding InspectGumpCommand}" Appearance="Primary" />
+                        </Grid>
+                    </ui:Card>
+
+                    <ui:Card Grid.Row="1" Padding="0">
+                        <DockPanel>
+                            <ui:TextBlock Text="Controls Tree" FontSize="16" FontWeight="SemiBold" Margin="16,12" DockPanel.Dock="Top"/>
+                            <ListView ItemsSource="{Binding GumpControls}" Background="Transparent" BorderThickness="0">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="4,2">
+                                            <Grid.ContextMenu>
+                                                <ContextMenu>
+                                                    <ui:MenuItem Header="Copy as Python" Icon="{ui:SymbolIcon Copy24}" 
+                                                                 Command="{Binding DataContext.CopyAsPythonCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                                 CommandParameter="{Binding}"/>
+                                                    <ui:MenuItem Header="Copy as C#" Icon="{ui:SymbolIcon Code24}" 
+                                                                 Command="{Binding DataContext.CopyAsCSharpCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                                 CommandParameter="{Binding}"/>
+                                                </ContextMenu>
+                                            </Grid.ContextMenu>
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="Component24" Margin="0,0,12,0" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                                                <StackPanel>
+                                                    <ui:TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
+                                                    <ui:TextBlock Text="{Binding Type}" FontSize="11" Appearance="Secondary"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </DockPanel>
+                    </ui:Card>
+                </Grid>
+            </TabItem>
+
+            <!-- MAP TAB -->
+            <TabItem Header="Map Inspector">
+                <Grid Margin="0,12,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
                     
-                    <ui:TextBlock Text="Serial" Appearance="Secondary" Margin="0,0,0,4"/>
-                    <ui:TextBlock Text="{Binding InspectedEntity.Serial, StringFormat=0x{0:X}}" FontSize="20" FontWeight="Bold" Margin="0,0,0,12"/>
+                    <ui:Card Grid.Row="0" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <ui:TextBlock Text="World Map" FontWeight="SemiBold" />
+                                <ui:TextBlock Text="{Binding MapInfo}" Appearance="Secondary" FontSize="12"/>
+                            </StackPanel>
+                            <ui:Button Grid.Column="1" Content="Refresh Position" Icon="MyLocation24" Command="{Binding RefreshMapCommand}" Appearance="Primary" />
+                        </Grid>
+                    </ui:Card>
 
-                    <ui:TextBlock Text="Graphic / Body" Appearance="Secondary" Margin="0,0,0,4"/>
-                    <ui:TextBlock Text="{Binding InspectedEntity.Graphic, StringFormat=0x{0:X}}" FontSize="18" Margin="0,0,0,12"/>
+                    <ui:Card Grid.Row="1" Padding="0">
+                        <controls:MapControl x:Name="WorldMap" 
+                                           MapId="{Binding MapId}" 
+                                           PlayerX="{Binding PlayerX}" 
+                                           PlayerY="{Binding PlayerY}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                    </ui:Card>
+                </Grid>
+            </TabItem>
+        </TabControl>
 
-                    <ui:TextBlock Text="Hue" Appearance="Secondary" Margin="0,0,0,4"/>
-                    <ui:TextBlock Text="{Binding InspectedEntity.Hue, StringFormat=0x{0:X}}" FontSize="18" Margin="0,0,0,12"/>
-
-                    <ui:TextBlock Text="Position" Appearance="Secondary" Margin="0,0,0,4"/>
-                    <ui:TextBlock Margin="0,0,0,12">
-                        <Run Text="{Binding InspectedEntity.X}" FontWeight="SemiBold"/>
-                        <Run Text=", "/>
-                        <Run Text="{Binding InspectedEntity.Y}" FontWeight="SemiBold"/>
-                        <Run Text=", "/>
-                        <Run Text="{Binding InspectedEntity.Z}" FontWeight="SemiBold"/>
-                    </ui:TextBlock>
-
-                    <ui:TextBlock Text="{Binding StatusMessage}" 
-                                  Appearance="Info" FontStyle="Italic" TextWrapping="Wrap"
-                                  Margin="0,16,0,0"/>
-                </StackPanel>
-            </ui:Card>
-
-            <!-- Properties Card (OPL) -->
-            <ui:Card Grid.Column="1" Padding="16">
-                <DockPanel>
-                    <ui:TextBlock Text="{loc:Loc Inspector.Properties}" FontSize="18" FontWeight="SemiBold" DockPanel.Dock="Top" Margin="0,0,0,16"/>
-                    
-                    <ui:TextBlock Text="No properties found for this entity." 
-                                  Visibility="{Binding InspectedEntity.Properties, Converter={StaticResource NotNullToVisibilityConverter}}"
-                                  Appearance="Secondary" FontStyle="Italic" HorizontalAlignment="Center" Margin="0,32,0,0"/>
-
-                    <ListView ItemsSource="{Binding InspectedEntity.Properties.Properties}" 
-                              Background="Transparent" BorderThickness="0"
-                              Visibility="{Binding InspectedEntity.Properties, Converter={StaticResource NullToVisibilityConverter}}">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Margin="0,4">
-                                    <ui:TextBlock Text="{Binding Text}" FontSize="14" FontWeight="Medium" TextWrapping="Wrap"/>
-                                    <ui:TextBlock Text="{Binding Cliloc, StringFormat=Cliloc: {0}}" FontSize="11" Appearance="Secondary"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </DockPanel>
-            </ui:Card>
-        </Grid>
+        <ui:InfoBar Grid.Row="2" Margin="0,12,0,0" Title="Status" Message="{Binding StatusMessage}" IsOpen="True" Severity="Informational" />
     </Grid>
 </Page>

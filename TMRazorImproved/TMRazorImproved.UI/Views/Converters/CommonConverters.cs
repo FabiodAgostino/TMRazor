@@ -71,4 +71,74 @@ namespace TMRazorImproved.UI.Views.Converters
             throw new NotImplementedException();
         }
     }
+
+    public class InvertBooleanConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool b) return !b;
+            return value;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool b) return !b;
+            return value;
+        }
+    }
+
+    public class SpellIconConverter : IValueConverter
+    {
+        private static TMRazorImproved.UI.Services.IUltimaImageCache? _cache;
+
+        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is not int spellId) return null;
+
+            int gumpId = 0;
+            if (spellId >= 1 && spellId <= 64) // Magery
+                gumpId = 0x8CA + (spellId - 1);
+            else if (spellId >= 101 && spellId <= 117) // Necro
+                gumpId = 0x5000 + (spellId - 101);
+            else if (spellId >= 201 && spellId <= 210) // Chivalry
+                gumpId = 0x5100 + (spellId - 201);
+            else if (spellId >= 401 && spellId <= 406) // Bushido
+                gumpId = 0x5400 + (spellId - 401);
+            else if (spellId >= 501 && spellId <= 508) // Ninjitsu
+                gumpId = 0x5300 + (spellId - 501);
+            else if (spellId >= 601 && spellId <= 616) // Spellweaving
+                gumpId = 0x59D0 + (spellId - 601);
+
+            if (gumpId == 0) return null;
+
+            _cache ??= App.GetService<TMRazorImproved.UI.Services.IUltimaImageCache>();
+            return _cache?.GetGump(gumpId);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class IntToBoolConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is int intValue && parameter is string paramValue && int.TryParse(paramValue, out int targetValue))
+            {
+                return intValue == targetValue;
+            }
+            return false;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue && boolValue && parameter is string paramValue && int.TryParse(paramValue, out int targetValue))
+            {
+                return targetValue;
+            }
+            return Binding.DoNothing;
+        }
+    }
 }

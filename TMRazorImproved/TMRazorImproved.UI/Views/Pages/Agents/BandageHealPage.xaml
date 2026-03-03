@@ -1,0 +1,203 @@
+<Page x:Class="TMRazorImproved.UI.Views.Pages.Agents.BandageHealPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels.Agents"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="800"
+      Title="BandageHeal">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <ui:TextBlock Text="Bandage Heal Agent" FontSize="24" FontWeight="Bold" Margin="0,0,0,8" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ui:ToggleSwitch IsChecked="{Binding ViewModel.IsEnabled, Mode=TwoWay}" 
+                                Content="Enable Bandage Heal" 
+                                OnContent="Enabled" OffContent="Disabled" />
+                <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding ViewModel.AutoStart, Mode=TwoWay}" 
+                                Content="Autostart" 
+                                OnContent="On" OffContent="Off" />
+            </Grid>
+        </StackPanel>
+
+        <!-- Configurazione -->
+        <ScrollViewer Grid.Row="1">
+            <StackPanel>
+                <!-- Target & Bende -->
+                <ui:Card Margin="0,0,0,12">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="200" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBlock Text="Target Mode" VerticalAlignment="Center" FontWeight="SemiBold" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding ViewModel.TargetTypes}" 
+                                      SelectedItem="{Binding ViewModel.TargetType, Mode=TwoWay}" />
+                        </Grid>
+                        
+                        <Separator Margin="0,0,0,12" />
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <ui:TextBlock Text="Bandages" FontWeight="SemiBold" />
+                                <ui:TextBlock Text="{Binding ViewModel.BandageName}" Appearance="Secondary" />
+                            </StackPanel>
+                            <ui:Button Grid.Column="1" 
+                                       Command="{Binding ViewModel.SetBandageCommand}" 
+                                       Content="Target Bandages" 
+                                       Icon="{ui:SymbolIcon Target24}" />
+                        </Grid>
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- Soglie e Opzioni -->
+                <ui:Card Margin="0,0,0,12">
+                    <StackPanel>
+                        <ui:TextBlock Text="Healing Options" FontWeight="SemiBold" Margin="0,0,0,12" />
+                        
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="150" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBlock Text="Start Healing at HP %" VerticalAlignment="Center" />
+                            <ui:NumberBox Grid.Column="1" Value="{Binding ViewModel.HpStart, Mode=TwoWay}" 
+                                         Minimum="1" Maximum="100" />
+                        </Grid>
+
+                        <UniformGrid Columns="2" Margin="0,0,0,12">
+                            <ui:ToggleSwitch IsChecked="{Binding ViewModel.PoisonPriority, Mode=TwoWay}" 
+                                            Content="Cure Poison First" />
+                            <ui:ToggleSwitch IsChecked="{Binding ViewModel.HealPoison, Mode=TwoWay}" 
+                                            Content="Heal while Poisoned" />
+                            <ui:ToggleSwitch IsChecked="{Binding ViewModel.HealMortal, Mode=TwoWay}" 
+                                            Content="Heal while Mortal" />
+                            <ui:ToggleSwitch IsChecked="{Binding ViewModel.HiddenStop, Mode=TwoWay}" 
+                                            Content="Stop if Hidden" />
+                            <ui:ToggleSwitch IsChecked="{Binding ViewModel.ShowCountdown, Mode=TwoWay}" 
+                                            Content="Show Countdown" />
+                            <ui:ToggleSwitch IsChecked="{Binding ViewModel.IgnoreCount, Mode=TwoWay}" 
+                                            Content="Ignore Count" />
+                            <ui:ToggleSwitch IsChecked="{Binding ViewModel.TimeWithBuff, Mode=TwoWay}" 
+                                            Content="Time With Buff" />
+                            <ui:ToggleSwitch IsChecked="{Binding ViewModel.UseNormalTarget, Mode=TwoWay}" 
+                                            Content="Use Normal Target" />
+                        </UniformGrid>
+
+                        <Separator Margin="0,0,0,12" />
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="150" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBlock Text="Max Range" VerticalAlignment="Center" />
+                            <ui:NumberBox Grid.Column="1" Value="{Binding ViewModel.MaxRange, Mode=TwoWay}" 
+                                         Minimum="1" Maximum="20" />
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="150" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <ui:TextBlock Text="Custom Delay (ms)" VerticalAlignment="Center" />
+                                <ui:TextBlock Text="0 = Auto (DEX based)" Appearance="Secondary" FontSize="11" />
+                            </StackPanel>
+                            <ui:NumberBox Grid.Column="1" Value="{Binding ViewModel.CustomDelay, Mode=TwoWay}" 
+                                         Minimum="0" Maximum="15000" SmallChange="100" />
+                        </Grid>
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- Custom Bandage & Text Heal -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <ui:Card Margin="0,0,6,12">
+                        <StackPanel>
+                            <ui:TextBlock Text="Custom Bandage" FontWeight="SemiBold" Margin="0,0,0,12" />
+                            <ui:ToggleSwitch IsChecked="{Binding ViewModel.UseCustomBandage, Mode=TwoWay}" 
+                                            Content="Use Custom Bandage" Margin="0,0,0,8" />
+                            <StackPanel IsEnabled="{Binding ViewModel.UseCustomBandage}">
+                                <ui:TextBlock Text="ID" Appearance="Secondary" FontSize="11" />
+                                <ui:TextBox Text="{Binding ViewModel.CustomBandageID, Mode=TwoWay}" Margin="0,0,0,8" />
+                                <ui:TextBlock Text="Color" Appearance="Secondary" FontSize="11" />
+                                <ui:TextBox Text="{Binding ViewModel.CustomBandageColor, Mode=TwoWay}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ui:Card>
+
+                    <ui:Card Grid.Column="1" Margin="6,0,0,12">
+                        <StackPanel>
+                            <ui:TextBlock Text="Send Text Heal" FontWeight="SemiBold" Margin="0,0,0,12" />
+                            <ui:ToggleSwitch IsChecked="{Binding ViewModel.SendTextMsg, Mode=TwoWay}" 
+                                            Content="Send text for heal" Margin="0,0,0,8" />
+                            <StackPanel IsEnabled="{Binding ViewModel.SendTextMsg}">
+                                <ui:TextBlock Text="Self Message" Appearance="Secondary" FontSize="11" />
+                                <ui:TextBox Text="{Binding ViewModel.TextMsgSelf, Mode=TwoWay}" Margin="0,0,0,8" />
+                                <ui:TextBlock Text="Target Message" Appearance="Secondary" FontSize="11" />
+                                <ui:TextBox Text="{Binding ViewModel.TextMsgTarget, Mode=TwoWay}" />
+                                <ui:TextBlock Text="Example: [band or [bandself" Appearance="Secondary" FontSize="10" FontStyle="Italic" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ui:Card>
+                </Grid>
+
+                <!-- Informazioni di Aiuto -->
+                <ui:InfoBar Title="Tip" 
+                           Message="Bandage Heal automatically calculates the delay based on your Dexterity. Use 'Custom Delay' only if you want to override it." 
+                           IsOpen="True" Severity="Informational" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Activity Log -->
+        <Expander Grid.Row="2" Margin="0,12,0,0" Header="Activity Log (History)" IsExpanded="False">
+            <ui:Card Padding="0" Margin="0,8,0,0">
+                <ListBox ItemsSource="{Binding ViewModel.Logs}" Height="150" Background="Transparent" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBlock Text="{Binding FormattedTime}" Appearance="Secondary" Margin="0,0,8,0" />
+                                <ui:TextBlock Grid.Column="1" Text="{Binding Message}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </ui:Card>
+        </Expander>
+
+        <!-- Status Bar -->
+        <ui:InfoBar Grid.Row="3" Margin="0,12,0,0"
+                   Title="Status" 
+                   Message="{Binding ViewModel.StatusText}" 
+                   IsOpen="True" 
+                   Severity="Informational" />
+    </Grid>
+</Page>

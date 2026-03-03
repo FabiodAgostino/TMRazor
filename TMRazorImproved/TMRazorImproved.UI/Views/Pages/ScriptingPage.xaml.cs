@@ -1,20 +1,25 @@
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
+using ICSharpCode.AvalonEdit.CodeCompletion;
+using ICSharpCode.AvalonEdit.Editing;
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Xml;
 using TMRazorImproved.UI.ViewModels;
+using TMRazorImproved.UI.Utilities;
 
 namespace TMRazorImproved.UI.Views.Pages
 {
     public partial class ScriptingPage : Page
     {
         private readonly ScriptingViewModel _viewModel;
-        private bool _syncingEditor;
         private bool _initialized;
+        private CompletionWindow? _completionWindow;
 
         public ScriptingPage(ScriptingViewModel viewModel)
         {
@@ -22,10 +27,11 @@ namespace TMRazorImproved.UI.Views.Pages
             _viewModel = viewModel;
             DataContext = viewModel;
 
-            // Wire editor changes → ViewModel (permanent, singleton lifecycle)
-            ScriptEditor.TextChanged += OnEditorTextChanged;
+            // Completion events
+            ScriptEditor.TextArea.TextEntering += OnTextEntering;
+            ScriptEditor.TextArea.TextEntered += OnTextEntered;
 
-            // Wire ViewModel code changes → editor (e.g. after file load)
+            // Wire ViewModel language changes → editor
             _viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
             // Auto-scroll log when new entries arrive
@@ -43,29 +49,94 @@ namespace TMRazorImproved.UI.Views.Pages
             if (_initialized) return;
             _initialized = true;
 
-            LoadSyntaxHighlighting();
+            CompletionService.Initialize();
+            LoadSyntaxHighlighting(_viewModel.SelectedLanguage);
 
             // Configure editor options
             ScriptEditor.Options.ConvertTabsToSpaces = true;
             ScriptEditor.Options.IndentationSize     = 4;
             ScriptEditor.WordWrap                    = false;
+        }
 
-            // Sync initial code from ViewModel → editor
-            _syncingEditor = true;
-            ScriptEditor.Text = _viewModel.ScriptCode;
-            _syncingEditor = false;
+        // ------------------------------------------------------------------
+        // Code Completion
+        // ------------------------------------------------------------------
+
+        private void OnTextEntering(object sender, TextCompositionEventArgs e)
+        {
+            if (e.Text.Length > 0 && _completionWindow != null)
+            {
+                if (!char.IsLetterOrDigit(e.Text[0]))
+                {
+                    // Whenever a non-letter is typed while the completion window is open,
+                    // insert the currently selected element.
+                    _completionWindow.CompletionList.RequestInsertion(e);
+                }
+            }
+            // Do not set e.Handled=true. We still want to insert the character that was typed.
+        }
+
+        private void OnTextEntered(object sender, TextCompositionEventArgs e)
+        {
+            if (e.Text == ".")
+            {
+                // Find the word before the dot
+                int offset = ScriptEditor.CaretOffset;
+                if (offset < 2) return;
+
+                int start = offset - 2;
+                while (start >= 0 && (char.IsLetterOrDigit(ScriptEditor.Document.GetCharAt(start)) || ScriptEditor.Document.GetCharAt(start) == '_'))
+                {
+                    start--;
+                }
+                start++;
+
+                string context = ScriptEditor.Document.GetText(start, offset - start - 1);
+                ShowCompletion(context);
+            }
+            else if (char.IsLetter(e.Text[0]) && _completionWindow == null)
+            {
+                // We could show global completion here, but it might be too noisy.
+                // ShowCompletion(null); 
+            }
+        }
+
+        private void ShowCompletion(string? context)
+        {
+            var completionData = CompletionService.GetCompletionData(context);
+            if (completionData == null || completionData.Count == 0) return;
+
+            _completionWindow = new CompletionWindow(ScriptEditor.TextArea);
+            IList<ICompletionData> data = _completionWindow.CompletionList.CompletionData;
+            foreach (var item in completionData)
+            {
+                data.Add(item);
+            }
+
+            _completionWindow.Show();
+            _completionWindow.Closed += (o, args) => _completionWindow = null;
         }
 
         // ------------------------------------------------------------------
         // Syntax highlighting
         // ------------------------------------------------------------------
 
-        private void LoadSyntaxHighlighting()
+        private void LoadSyntaxHighlighting(Shared.Enums.ScriptLanguage language)
         {
             try
             {
-                const string resourceName =
-                    "TMRazorImproved.UI.Resources.Highlighting.Python.xshd";
+                string resourceName = language switch
+                {
+                    Shared.Enums.ScriptLanguage.Python => "TMRazorImproved.UI.Resources.Highlighting.Python.xshd",
+                    Shared.Enums.ScriptLanguage.UOSteam => "TMRazorImproved.UI.Resources.Highlighting.UOSteam.xshd",
+                    _ => ""
+                };
+
+                if (string.IsNullOrEmpty(resourceName))
+                {
+                    ScriptEditor.SyntaxHighlighting = null;
+                    return;
+                }
 
                 using var stream = Assembly.GetExecutingAssembly()
                     .GetManifestResourceStream(resourceName);
@@ -82,27 +153,13 @@ namespace TMRazorImproved.UI.Views.Pages
             }
         }
 
-        // ------------------------------------------------------------------
-        // Editor ↔ ViewModel sync
-        // ------------------------------------------------------------------
-
-        private void OnEditorTextChanged(object? sender, EventArgs e)
-        {
-            if (_syncingEditor) return;
-            _syncingEditor = true;
-            _viewModel.ScriptCode = ScriptEditor.Text;
-            _syncingEditor = false;
-        }
-
         private void OnViewModelPropertyChanged(object? sender,
             System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (e.PropertyName != nameof(ScriptingViewModel.ScriptCode)) return;
-            if (_syncingEditor) return;
-
-            _syncingEditor = true;
-            ScriptEditor.Text = _viewModel.ScriptCode;
-            _syncingEditor = false;
+            if (e.PropertyName == nameof(ScriptingViewModel.SelectedLanguage))
+            {
+                LoadSyntaxHighlighting(_viewModel.SelectedLanguage);
+            }
         }
 
         // ------------------------------------------------------------------

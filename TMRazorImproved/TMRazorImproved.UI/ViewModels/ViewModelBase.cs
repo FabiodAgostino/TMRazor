@@ -3,28 +3,35 @@ using System;
 using System.Windows;
 using System.Windows.Data;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.Collections;
+using System.ComponentModel;
+using System.Linq;
 
 namespace TMRazorImproved.UI.ViewModels
 {
     /// <summary>
     /// Classe base per i ViewModel. Fornisce:
+    /// - Supporto alla validazione (ObservableValidator / INotifyDataErrorInfo)
     /// - Dispatching thread-safe verso il UI thread (RunOnUIThread)
     /// - Sincronizzazione ObservableCollection cross-thread (EnableThreadSafeCollection)
-    ///
-    /// Per aggiornamenti ad alta frequenza (HP, Mana, Stamina) usare UiThrottler
-    /// invece di RunOnUIThread diretto, per evitare di saturare il Dispatcher.
-    /// I ViewModel che usano UiThrottler devono implementare IDisposable.
     /// </summary>
-    public abstract class ViewModelBase : ObservableObject
+    public abstract partial class ViewModelBase : ObservableValidator
     {
+        [ObservableProperty]
+        private string _statusText = "Ready";
+
+        /// <summary>
+        /// Ritorna true se il ViewModel non ha errori di validazione.
+        /// </summary>
+        public bool IsValid => !HasErrors;
+
         /// <summary>
         /// Esegue in modo sicuro un'azione sul Dispatcher Thread della UI.
-        /// Da usare per aggiornamenti a bassa frequenza (eventi singoli, cambio stato).
-        /// Per aggiornamenti ad alta frequenza preferire UiThrottler.
         /// </summary>
         protected void RunOnUIThread(Action action)
         {
-            if (Application.Current != null && Application.Current.Dispatcher != null)
+            if (Application.Current?.Dispatcher != null)
             {
                 if (Application.Current.Dispatcher.CheckAccess())
                 {
@@ -37,18 +44,53 @@ namespace TMRazorImproved.UI.ViewModels
             }
             else
             {
-                // Fallback (utile in fase di startup o testing isolato)
                 action();
             }
         }
 
         /// <summary>
         /// Abilita la modifica thread-safe per una ObservableCollection.
-        /// Chiamare questo metodo nel costruttore del ViewModel passando la collezione e un lock object dedicato.
         /// </summary>
         protected void EnableThreadSafeCollection<T>(ObservableCollection<T> collection, object lockObject)
         {
             BindingOperations.EnableCollectionSynchronization(collection, lockObject);
+        }
+
+        /// <summary>
+        /// Forza la validazione di tutte le proprietà del ViewModel decorate con attributi di validazione.
+        /// </summary>
+        protected void ValidateAll()
+        {
+            ValidateAllProperties();
+        }
+
+        /// <summary>
+        /// Sincronizza una ObservableCollection con una lista sorgente in modo efficiente.
+        /// </summary>
+        protected void SyncCollection<T>(ObservableCollection<T> collection, IEnumerable<T> source, object lockObject)
+        {
+            lock (lockObject)
+            {
+                var sourceList = source.ToList();
+                
+                // Rimuovi elementi non più presenti
+                for (int i = collection.Count - 1; i >= 0; i--)
+                {
+                    if (!sourceList.Contains(collection[i]))
+                    {
+                        collection.RemoveAt(i);
+                    }
+                }
+
+                // Aggiungi elementi mancanti
+                foreach (var item in sourceList)
+                {
+                    if (!collection.Contains(item))
+                    {
+                        collection.Add(item);
+                    }
+                }
+            }
         }
     }
 }

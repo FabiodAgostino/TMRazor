@@ -1,0 +1,120 @@
+<Page x:Class="TMRazorImproved.UI.Views.Pages.FiltersPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:local="clr-namespace:TMRazorImproved.UI.Views.Pages"
+      xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+      mc:Ignorable="d" 
+      d:DesignHeight="800" d:DesignWidth="800"
+      Title="Filters"
+      d:DataContext="{d:DesignInstance vm:FiltersViewModel, IsDesignTimeCreatable=False}">
+
+    <ScrollViewer Margin="32">
+        <StackPanel>
+            <ui:TextBlock Text="Filters &amp; Tweaks" FontSize="28" FontWeight="Bold" Margin="0,0,0,24"/>
+
+            <!-- Classic Filters -->
+            <ui:Card Margin="0,0,0,16" Padding="16">
+                <StackPanel>
+                    <ui:TextBlock Text="Classic Razor Filters" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <UniformGrid Columns="2">
+                        <ui:ToggleSwitch Content="Light" IsChecked="{Binding FilterLight}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Weather" IsChecked="{Binding FilterWeather}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Sound" IsChecked="{Binding FilterSound}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Death" IsChecked="{Binding FilterDeath}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Staff" IsChecked="{Binding FilterStaff}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Poison" IsChecked="{Binding FilterPoison}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Snoop" IsChecked="{Binding FilterSnoop}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Bard Music" IsChecked="{Binding FilterBardMusic}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Footsteps" IsChecked="{Binding FilterFootsteps}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Karma/Fame" IsChecked="{Binding FilterKarmaFame}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Season" IsChecked="{Binding FilterSeason}" Margin="0,4"/>
+                    </UniformGrid>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- Advanced Filters -->
+            <ui:Card Margin="0,0,0,16" Padding="16">
+                <StackPanel>
+                    <ui:TextBlock Text="Advanced Visual Filters" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <UniformGrid Columns="2">
+                        <ui:ToggleSwitch Content="Highlight Flags ([Poisoned], etc)" IsChecked="{Binding HighlightFlags}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Colorize Mobile Flags" IsChecked="{Binding ColorizeFlags}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Colorize Self Flags" IsChecked="{Binding ColorizeSelfFlags}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Static Fields (Wall of Stone, etc)" IsChecked="{Binding StaticFields}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Block Trade Request" IsChecked="{Binding BlockTradeRequest}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Block Party Invite" IsChecked="{Binding BlockPartyInvite}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Enable Mob Filter" IsChecked="{Binding MobFilterEnabled}" Margin="0,4"/>
+                    </UniformGrid>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- Auto Agents -->
+            <ui:Card Margin="0,0,0,16" Padding="16">
+                <StackPanel>
+                    <ui:TextBlock Text="Built-in Auto Agents" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Auto Carver -->
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <ui:ToggleSwitch Content="Auto Carver" IsChecked="{Binding AutoCarver}" Margin="0,0,0,8"/>
+                            <ui:Button Content="{Binding AutoCarverBladeText}" Command="{Binding SetCarverBladeCommand}" HorizontalAlignment="Stretch" Appearance="Secondary"/>
+                        </StackPanel>
+
+                        <!-- Bone Cutter -->
+                        <StackPanel Grid.Column="1" Margin="8,0,8,0">
+                            <ui:ToggleSwitch Content="Bone Cutter" IsChecked="{Binding BoneCutter}" Margin="0,0,0,8"/>
+                            <ui:Button Content="{Binding BoneCutterBladeText}" Command="{Binding SetBoneBladeCommand}" HorizontalAlignment="Stretch" Appearance="Secondary"/>
+                        </StackPanel>
+
+                        <!-- Auto Remount -->
+                        <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                            <ui:ToggleSwitch Content="Auto Remount" IsChecked="{Binding AutoRemount}" Margin="0,0,0,8"/>
+                            <ui:Button Content="{Binding RemountSerialText}" Command="{Binding SetRemountSerialCommand}" HorizontalAlignment="Stretch" Appearance="Secondary"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- Graph Filters -->
+            <ui:Card Padding="16">
+                <DockPanel Height="300">
+                    <ui:TextBlock Text="Graph Filters (Morphing)" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" DockPanel.Dock="Top"/>
+                    <ui:Button Content="Add Morph Filter" Icon="{ui:SymbolIcon Add24}" Command="{Binding AddGraphFilterCommand}" DockPanel.Dock="Bottom" Margin="0,12,0,0" Appearance="Primary"/>
+                    
+                    <DataGrid ItemsSource="{Binding GraphFilters}" 
+                              AutoGenerateColumns="False" 
+                              CanUserAddRows="False"
+                              HeadersVisibility="Column"
+                              Background="Transparent"
+                              BorderThickness="0">
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="En" Binding="{Binding Enabled}" Width="Auto"/>
+                            <DataGridTextColumn Header="Real ID" Binding="{Binding RealID, StringFormat=0x{0:X4}}" Width="*"/>
+                            <DataGridTextColumn Header="New ID" Binding="{Binding NewID, StringFormat=0x{0:X4}}" Width="*"/>
+                            <DataGridTextColumn Header="New Hue" Binding="{Binding NewHue, StringFormat=0x{0:X4}}" Width="*"/>
+                            <DataGridTemplateColumn Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ui:Button Icon="{ui:SymbolIcon Delete24}" 
+                                                   Command="{Binding DataContext.RemoveGraphFilterCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                   CommandParameter="{Binding}"
+                                                   Appearance="Secondary"
+                                                   Padding="4"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </ui:Card>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

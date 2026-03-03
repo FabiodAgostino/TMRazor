@@ -1,0 +1,207 @@
+<Page x:Class="TMRazorImproved.UI.Views.Pages.Agents.RestockPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels.Agents"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="800"
+      Title="Restock">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header e Gestione Liste -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <ui:TextBlock Text="Restock Agent" FontSize="24" FontWeight="Bold" Margin="0,0,0,16" />
+            
+            <ui:Card Padding="12" Margin="0,0,0,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Orientation="Horizontal">
+                        <ui:TextBlock Text="Restock List:" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"/>
+                        <ComboBox Width="200" 
+                                  ItemsSource="{Binding ViewModel.Lists}" 
+                                  SelectedItem="{Binding ViewModel.SelectedList, Mode=TwoWay}"
+                                  DisplayMemberPath="Name"
+                                  VerticalAlignment="Center"/>
+                        
+                        <ui:Button Command="{Binding ViewModel.AddListCommand}" 
+                                   Icon="{ui:SymbolIcon Add24}" 
+                                   Margin="12,0,4,0" 
+                                   ToolTip="Add New List"/>
+                        <ui:Button Command="{Binding ViewModel.CloneListCommand}" 
+                                   Icon="{ui:SymbolIcon Copy24}" 
+                                   Margin="0,0,4,0" 
+                                   ToolTip="Clone Selected List"/>
+                        <ui:Button Command="{Binding ViewModel.RemoveListCommand}" 
+                                   Icon="{ui:SymbolIcon Delete24}" 
+                                   Appearance="Secondary" 
+                                   ToolTip="Remove Selected List"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <ui:ToggleSwitch IsChecked="{Binding ViewModel.IsEnabled, Mode=TwoWay}" 
+                                        Content="Enabled" 
+                                        OnContent="On" OffContent="Off" />
+                    </StackPanel>
+                </Grid>
+            </ui:Card>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <ui:Card Margin="0,0,6,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <ui:TextBlock Text="Source Container" FontWeight="SemiBold" />
+                            <ui:TextBlock Text="{Binding ViewModel.SourceName}" Appearance="Secondary" />
+                        </StackPanel>
+                        <ui:Button Grid.Column="1" Command="{Binding ViewModel.SetSourceCommand}" Icon="{ui:SymbolIcon Target24}" />
+                    </Grid>
+                </ui:Card>
+
+                <ui:Card Grid.Column="1" Margin="6,0,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <ui:TextBlock Text="Destination Container" FontWeight="SemiBold" />
+                            <ui:TextBlock Text="{Binding ViewModel.DestinationName}" Appearance="Secondary" />
+                        </StackPanel>
+                        <ui:Button Grid.Column="1" Command="{Binding ViewModel.SetDestinationCommand}" Icon="{ui:SymbolIcon Target24}" />
+                    </Grid>
+                </ui:Card>
+            </Grid>
+
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                <ui:Button Content="Start Restock" 
+                           Icon="{ui:SymbolIcon Play24}" 
+                           Appearance="Primary" 
+                           Command="{Binding ViewModel.StartCommand}" 
+                           IsEnabled="{Binding ViewModel.IsRunning, Converter={StaticResource InvertBooleanConverter}}"
+                           Margin="0,0,8,0" />
+                
+                <ui:Button Content="Stop" 
+                           Icon="{ui:SymbolIcon Stop24}" 
+                           Command="{Binding ViewModel.StopCommand}" 
+                           IsEnabled="{Binding ViewModel.IsRunning}" />
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                    <ui:TextBlock Text="Delay (ms): " VerticalAlignment="Center" Appearance="Secondary" />
+                    <ui:NumberBox Value="{Binding ViewModel.Delay, Mode=TwoWay}" Minimum="100" Maximum="5000" SmallChange="50" Width="120" />
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Lista Item -->
+        <ui:Card Grid.Row="1" Padding="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="8,4">
+                    <ui:Button Content="Add via Target" Icon="{ui:SymbolIcon Target24}" Command="{Binding ViewModel.AddItemCommand}" Margin="0,0,8,0" />
+                    <ui:Button Content="Add Manual" Icon="{ui:SymbolIcon Add24}" Command="{Binding ViewModel.AddManualItemCommand}" Margin="0,0,8,0" />
+                    <ui:Button Content="Clear List" Icon="{ui:SymbolIcon Delete24}" Command="{Binding ViewModel.ClearListCommand}" Appearance="Secondary" />
+                </StackPanel>
+
+                <ListView Grid.Row="1" ItemsSource="{Binding ViewModel.RestockItems}" BorderThickness="0">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="X" Width="40">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" HorizontalAlignment="Center" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="ID" Width="80">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding FormattedGraphic}" FontFamily="Consolas" VerticalAlignment="Center" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Color" Width="80">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding FormattedColor}" FontFamily="Consolas" VerticalAlignment="Center" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150" />
+                            <GridViewColumn Header="Amount" Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ui:NumberBox Value="{Binding Amount, Mode=TwoWay}" Minimum="1" Maximum="9999" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Props" DisplayMemberBinding="{Binding FormattedProperties}" Width="150" />
+                            <GridViewColumn Header="Actions" Width="80">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ui:Button Icon="{ui:SymbolIcon Delete24}" 
+                                                   Appearance="Transparent" 
+                                                   Padding="4"
+                                                   Command="{Binding DataContext.ViewModel.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                                   CommandParameter="{Binding}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </Grid>
+        </ui:Card>
+
+        <!-- Activity Log -->
+        <Expander Grid.Row="2" Margin="0,12,0,0" Header="Activity Log" IsExpanded="False">
+            <ui:Card Padding="0" Margin="0,8,0,0">
+                <ListBox ItemsSource="{Binding ViewModel.Logs}" Height="120" Background="Transparent" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBlock Text="{Binding FormattedTime}" Appearance="Secondary" Margin="0,0,8,0" />
+                                <ui:TextBlock Grid.Column="1" Text="{Binding Message}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </ui:Card>
+        </Expander>
+
+        <!-- Status Bar -->
+        <ui:InfoBar Grid.Row="3" Margin="0,12,0,0"
+                   Title="Status" 
+                   Message="{Binding ViewModel.StatusText}" 
+                   IsOpen="True" 
+                   Severity="Informational" />
+    </Grid>
+</Page>

@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\Highlighting\Python.xshd" />
+    <EmbeddedResource Include="Resources\Highlighting\UOSteam.xshd" />
   </ItemGroup>
 
   <ItemGroup>

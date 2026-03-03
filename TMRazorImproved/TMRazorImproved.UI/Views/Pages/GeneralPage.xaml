@@ -14,6 +14,44 @@
         <StackPanel>
             <ui:TextBlock Text="{loc:Loc EnhancedLauncher.groupBox2.Text}" FontSize="28" FontWeight="Bold" Margin="0,0,0,24"/>
 
+            <!-- Profile Management Card -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel>
+                    <ui:TextBlock Text="Profile Management" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TextBlock Text="Active Profile:" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"/>
+                            <ComboBox Width="250" 
+                                      ItemsSource="{Binding AvailableProfiles}" 
+                                      SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
+                                      VerticalAlignment="Center"/>
+                            
+                            <ui:Button Command="{Binding CreateProfileCommand}" 
+                                       Icon="{ui:SymbolIcon Add24}" 
+                                       Margin="12,0,4,0" 
+                                       ToolTip="Create New Profile"/>
+                            <ui:Button Command="{Binding CloneProfileCommand}" 
+                                       Icon="{ui:SymbolIcon Copy24}" 
+                                       Margin="0,0,4,0" 
+                                       ToolTip="Clone Current Profile"/>
+                            <ui:Button Command="{Binding RenameProfileCommand}" 
+                                       Icon="{ui:SymbolIcon Edit24}" 
+                                       Margin="0,0,4,0" 
+                                       ToolTip="Rename Current Profile"/>
+                            <ui:Button Command="{Binding DeleteProfileCommand}" 
+                                       Icon="{ui:SymbolIcon Delete24}" 
+                                       Appearance="Secondary" 
+                                       ToolTip="Delete Current Profile"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </ui:Card>
+
             <!-- Client Configuration Card -->
             <ui:Card Margin="0,0,0,16">
                 <StackPanel>
@@ -55,6 +93,27 @@
                 </StackPanel>
             </ui:Card>
 
+            <!-- Engine Patches Card -->
+            <ui:Card Margin="0,0,0,16" Padding="16">
+                <StackPanel>
+                    <ui:TextBlock Text="Engine Patches" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <UniformGrid Columns="2">
+                        <ui:ToggleSwitch Content="Patch Encryption" 
+                                         IsChecked="{Binding PatchEncryption, Mode=TwoWay}"
+                                         Margin="0,0,0,8" />
+                        <ui:ToggleSwitch Content="Allow Multi-Client" 
+                                         IsChecked="{Binding AllowMultiClient, Mode=TwoWay}"
+                                         Margin="0,0,0,8" />
+                        <ui:ToggleSwitch Content="Negotiate Features" 
+                                         IsChecked="{Binding NegotiateFeatures, Mode=TwoWay}"
+                                         Margin="0,0,0,8" />
+                        <ui:ToggleSwitch Content="Remove Stamina Check" 
+                                         IsChecked="{Binding RemoveStaminaCheck, Mode=TwoWay}"
+                                         Margin="0,0,0,8" />
+                    </UniformGrid>
+                </StackPanel>
+            </ui:Card>
+
             <!-- Actions Card -->
             <ui:Card>
                 <Grid>
@@ -68,11 +127,27 @@
                         <ui:TextBlock Text="{Binding StatusMessage}" Appearance="Secondary"/>
                     </StackPanel>
 
-                    <ui:Button Grid.Column="1" 
-                               Content="{loc:Loc EnhancedLauncher.launch.Text}" 
-                               Appearance="Primary" 
-                               Padding="32,8"
-                               Command="{Binding LaunchClientCommand}"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <ui:Button Content="Toolbar" 
+                                   Icon="{ui:SymbolIcon PanelLeft24}"
+                                   Command="{Binding ToggleToolbarCommand}"
+                                   Margin="0,0,8,0"/>
+
+                        <ui:Button Content="DPS Meter" 
+                                   Icon="{ui:SymbolIcon Timer24}"
+                                   Command="{Binding ToggleDPSMeterCommand}"
+                                   Margin="0,0,8,0"/>
+                        
+                        <ui:Button Content="Test SpellGrid" 
+                                   Icon="{ui:SymbolIcon Flash24}"
+                                   Command="{Binding ToggleSpellGridCommand}"
+                                   Margin="0,0,8,0"/>
+                        
+                        <ui:Button Content="{loc:Loc EnhancedLauncher.launch.Text}" 
+                                   Appearance="Primary" 
+                                   Padding="32,8"
+                                   Command="{Binding LaunchClientCommand}"/>
+                    </StackPanel>
                 </Grid>
             </ui:Card>
         </StackPanel>

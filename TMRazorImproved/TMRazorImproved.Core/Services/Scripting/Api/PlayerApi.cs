@@ -39,11 +39,32 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual int StamMax => P?.StamMax ?? 0;
 
         // ------------------------------------------------------------------
-        // Attributi base
+        // Attributi base e avanzati
         // ------------------------------------------------------------------
         public virtual int Str => P?.Str ?? 0;
         public virtual int Dex => P?.Dex ?? 0;
         public virtual int Int => P?.Int ?? 0;
+
+        public virtual int FireResist   => P?.FireResist   ?? 0;
+        public virtual int ColdResist   => P?.ColdResist   ?? 0;
+        public virtual int PoisonResist => P?.PoisonResist ?? 0;
+        public virtual int EnergyResist => P?.EnergyResist ?? 0;
+
+        public virtual int MinDamage => P?.MinDamage ?? 0;
+        public virtual int MaxDamage => P?.MaxDamage ?? 0;
+        public virtual int Luck      => P?.Luck      ?? 0;
+        public virtual int Tithe     => P?.Tithe     ?? 0;
+        public virtual int Followers    => P?.Followers    ?? 0;
+        public virtual int FollowersMax => P?.FollowersMax ?? 0;
+        
+        public virtual int Weight    => P?.Weight    ?? 0;
+        public virtual int MaxWeight => P?.MaxWeight ?? 0;
+        public virtual int Gold      => P?.Gold      ?? 0;
+        public virtual int Armor     => P?.Armor     ?? 0;
+
+        // Fame e Karma (TODO: Da estrarre tramite OPL o messaggi server)
+        public virtual int Karma => 0;
+        public virtual int Fame  => 0;
 
         // ------------------------------------------------------------------
         // Identificazione
@@ -123,6 +144,47 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             if (P == null) return;
             // Invia al client un messaggio locale sopra la testa del player
             // Pacchetto 0x1C (ASCII) o 0xAE (Unicode)
+            byte[] msgBytes = System.Text.Encoding.Unicode.GetBytes(message);
+            byte[] packet = new byte[12 + msgBytes.Length + 2];
+            packet[0] = 0xAE; // Unicode message
+            ushort len = (ushort)packet.Length;
+            packet[1] = (byte)(len >> 8);
+            packet[2] = (byte)(len & 0xff);
+            // Serial (Player)
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(3), Serial);
+            packet[7] = (byte)(P.Graphic >> 8); packet[8] = (byte)(P.Graphic & 0xff);
+            packet[9] = 0x00; // Type
+            packet[10] = (byte)(hue >> 8); packet[11] = (byte)(hue & 0xff);
+            // Font, Lang non necessari per 0xAE locale?
+            System.Array.Copy(msgBytes, 0, packet, 12, msgBytes.Length);
+            // Notifica al client (non al server)
+            _packet.SendToClient(packet);
+        }
+
+        public virtual void ChatSay(string message, int hue = 0)
+        {
+            _cancel.ThrowIfCancelled();
+            // Pacchetto 0xAD (Unicode Speech)
+            byte[] msgBytes = System.Text.Encoding.BigEndianUnicode.GetBytes(message);
+            byte[] packet = new byte[12 + msgBytes.Length + 2];
+            packet[0] = 0xAD;
+            ushort len = (ushort)packet.Length;
+            packet[1] = (byte)(len >> 8);
+            packet[2] = (byte)(len & 0xff);
+            packet[3] = 0x00; // Regular
+            packet[4] = (byte)(hue >> 8);
+            packet[5] = (byte)(hue & 0xff);
+            packet[6] = 0x00; packet[7] = 0x03; // Font
+            packet[8] = (byte)'e'; packet[9] = (byte)'n'; packet[10] = (byte)'u'; packet[11] = 0x00; // Lang
+            System.Array.Copy(msgBytes, 0, packet, 12, msgBytes.Length);
+            _packet.SendToServer(packet);
+        }
+
+        public virtual int GetSkillValue(string skillName)
+        {
+            _cancel.ThrowIfCancelled();
+            // TODO: Richiede tabella mapping skill name -> index e WorldService che traccia le skill
+            return 0;
         }
 
         public virtual void UseSkill(string skillName)
@@ -134,10 +196,69 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void Cast(string spellName)
         {
             _cancel.ThrowIfCancelled();
-            // TODO: Inviare comando cast
+            // TODO: Inviare comando cast (0xAD [speech] o macro client)
+        }
+
+        public virtual void UseItem(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            byte[] packet = new byte[5];
+            packet[0] = 0x06; // Double Click
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(1), serial);
+            _packet.SendToServer(packet);
         }
 
         public virtual void TargetSelf() => _targeting.TargetSelf();
         public virtual void TargetLast() => _targeting.SendTarget(_targeting.LastTarget);
+
+        // ------------------------------------------------------------------
+        // Mosse Speciali e Abilità
+        // ------------------------------------------------------------------
+        
+        public virtual void WeaponPrimary()
+        {
+            _cancel.ThrowIfCancelled();
+            // Client macro per Secondary Weapon / Primary Weapon
+            // Usa 0xD7 per mandare command o pacchetto specifico (es. 0xBF sub 0x24)
+            byte[] packet = new byte[7];
+            packet[0] = 0xBF;
+            packet[1] = 0x00; packet[2] = 0x07;
+            packet[3] = 0x00; packet[4] = 0x25; // Toggle Special Move
+            packet[5] = 0x00; packet[6] = 0x01; // Primary
+            _packet.SendToServer(packet);
+        }
+
+        public virtual void WeaponSecondary()
+        {
+            _cancel.ThrowIfCancelled();
+            byte[] packet = new byte[7];
+            packet[0] = 0xBF;
+            packet[1] = 0x00; packet[2] = 0x07;
+            packet[3] = 0x00; packet[4] = 0x25; // Toggle Special Move
+            packet[5] = 0x00; packet[6] = 0x02; // Secondary
+            _packet.SendToServer(packet);
+        }
+
+        public virtual void Stun()
+        {
+            _cancel.ThrowIfCancelled();
+            byte[] packet = new byte[7];
+            packet[0] = 0xBF;
+            packet[1] = 0x00; packet[2] = 0x07;
+            packet[3] = 0x00; packet[4] = 0x25;
+            packet[5] = 0x00; packet[6] = 0x03; // Stun (id arbitrario se mapta su special move stun)
+            _packet.SendToServer(packet);
+        }
+
+        public virtual void Disarm()
+        {
+            _cancel.ThrowIfCancelled();
+            byte[] packet = new byte[7];
+            packet[0] = 0xBF;
+            packet[1] = 0x00; packet[2] = 0x07;
+            packet[3] = 0x00; packet[4] = 0x25;
+            packet[5] = 0x00; packet[6] = 0x04; // Disarm
+            _packet.SendToServer(packet);
+        }
     }
 }

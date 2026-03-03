@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models.Config;
+using TMRazorImproved.Shared.Enums;
 
 namespace TMRazorImproved.Core.Services
 {
@@ -136,7 +137,7 @@ namespace TMRazorImproved.Core.Services
             if (_registeredActions.TryGetValue(actionName, out var action))
             {
                 _logger.LogDebug("Executing hotkey action: {ActionName}", actionName);
-                Task.Run(() => {
+                _ = Task.Run(() => {
                     try { action(); }
                     catch (Exception ex) { _logger.LogError(ex, "Error during hotkey action {ActionName}", actionName); }
                 });
@@ -152,7 +153,16 @@ namespace TMRazorImproved.Core.Services
                         {
                             var scriptingService = (IScriptingService)_serviceProvider.GetService(typeof(IScriptingService))!;
                             string code = await System.IO.File.ReadAllTextAsync(scriptPath);
-                            await scriptingService.RunAsync(code, System.IO.Path.GetFileName(scriptPath));
+                            
+                            var ext = System.IO.Path.GetExtension(scriptPath).ToLower();
+                            var lang = ext switch
+                            {
+                                ".uos" => ScriptLanguage.UOSteam,
+                                ".cs" => ScriptLanguage.CSharp,
+                                _ => ScriptLanguage.Python
+                            };
+
+                            await scriptingService.RunAsync(code, lang, System.IO.Path.GetFileName(scriptPath));
                         }
                         else
                         {

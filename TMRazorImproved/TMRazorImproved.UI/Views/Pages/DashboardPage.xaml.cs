@@ -2,19 +2,22 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using TMRazorImproved.Shared.Interfaces;
+using TMRazorImproved.UI.ViewModels;
 
 namespace TMRazorImproved.UI.Views.Pages
 {
     public partial class DashboardPage : Page
     {
         private readonly IClientInteropService _clientInterop;
+        private readonly DashboardViewModel _viewModel;
 
-        public DashboardPage()
+        public DashboardPage(DashboardViewModel viewModel, IClientInteropService clientInterop)
         {
-            InitializeComponent();
+            _viewModel = viewModel;
+            _clientInterop = clientInterop;
             
-            // Recuperiamo il servizio dal container DI tramite l'App (approccio rapido per test)
-            _clientInterop = App.GetService<IClientInteropService>();
+            DataContext = _viewModel;
+            InitializeComponent();
 
             Loaded += OnPageLoaded;
         }

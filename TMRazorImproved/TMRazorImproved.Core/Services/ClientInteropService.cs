@@ -111,6 +111,8 @@ namespace TMRazorImproved.Core.Services
             return hwnd;
         }
 
+        public IntPtr GetWindowHandle() => FindUOWindow();
+
         public int GetUOProcessId()
         {
             return NativeMethods.GetUOProcId();

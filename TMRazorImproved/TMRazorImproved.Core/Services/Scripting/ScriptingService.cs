@@ -2,11 +2,15 @@ using IronPython.Hosting;
 using IronPython.Runtime.Exceptions;
 using Microsoft.Scripting.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.Scripting;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using TMRazorImproved.Core.Services.Scripting.Api;
+using TMRazorImproved.Core.Services.Scripting.Engines;
 using TMRazorImproved.Shared.Interfaces;
+using TMRazorImproved.Shared.Enums;
 
 namespace TMRazorImproved.Core.Services.Scripting
 {
@@ -126,6 +130,8 @@ del _make_tracer_, _INTERVAL_, _sys_
         private readonly IPacketService _packetService;
         private readonly ITargetingService _targetingService;
         private readonly IJournalService _journalService;
+        private readonly ISkillsService _skillsService;
+        private readonly IConfigService _config;
         private readonly ILogger<ScriptingService> _logger;
 
         private volatile bool _isRunning;
@@ -151,20 +157,82 @@ del _make_tracer_, _INTERVAL_, _sys_
             IPacketService packetService, 
             ITargetingService targetingService, 
             IJournalService journalService,
+            ISkillsService skillsService,
+            IConfigService config,
             ILogger<ScriptingService> logger)
         {
             _world = world;
             _packetService = packetService;
             _targetingService = targetingService;
             _journalService = journalService;
+            _skillsService = skillsService;
+            _config = config;
             _logger = logger;
+        }
+
+        public IEnumerable<string> GetLoadedScripts()
+        {
+            var dir = _config.Global.ScriptsPath;
+            if (string.IsNullOrEmpty(dir) || !System.IO.Directory.Exists(dir)) return Enumerable.Empty<string>();
+            
+            return System.IO.Directory.GetFiles(dir, "*.*", System.IO.SearchOption.AllDirectories)
+                .Where(f => f.EndsWith(".py") || f.EndsWith(".uos") || f.EndsWith(".cs"))
+                .Select(f => System.IO.Path.GetFileName(f));
+        }
+
+        public async Task RunScript(string name)
+        {
+            var dir = _config.Global.ScriptsPath;
+            if (string.IsNullOrEmpty(dir) || !System.IO.Directory.Exists(dir)) return;
+
+            var files = System.IO.Directory.GetFiles(dir, name, System.IO.SearchOption.AllDirectories);
+            if (files.Length == 0) return;
+
+            var path = files[0];
+            var code = await System.IO.File.ReadAllTextAsync(path);
+            var lang = path.EndsWith(".py") ? ScriptLanguage.Python :
+                       path.EndsWith(".uos") ? ScriptLanguage.UOSteam : ScriptLanguage.CSharp;
+
+            await RunAsync(code, lang, name);
+        }
+
+        public IEnumerable<string> ValidateScript(string code, ScriptLanguage language)
+        {
+            var warnings = new List<string>();
+            if (string.IsNullOrWhiteSpace(code)) return warnings;
+
+            if (language == ScriptLanguage.Python)
+            {
+                string[] dangerousKeywords = { "import os", "import subprocess", "import shutil", "eval(", "exec(", "open(", "socket" };
+                foreach (var kw in dangerousKeywords)
+                {
+                    if (code.Contains(kw, StringComparison.OrdinalIgnoreCase))
+                    {
+                        warnings.Add($"ATTENZIONE: Lo script contiene chiamate potenzialmente pericolose: '{kw}'.");
+                    }
+                }
+            }
+            else if (language == ScriptLanguage.CSharp)
+            {
+                string[] dangerousKeywords = { "System.IO", "Process.", "Registry.", "Socket", "HttpClient" };
+                foreach (var kw in dangerousKeywords)
+                {
+                    if (code.Contains(kw, StringComparison.OrdinalIgnoreCase))
+                    {
+                        warnings.Add($"ATTENZIONE: Lo script C# utilizza API di sistema sensibili: '{kw}'.");
+                    }
+                }
+            }
+
+            return warnings;
         }
 
         // ------------------------------------------------------------------
         // Esecuzione pubblica
         // ------------------------------------------------------------------
 
-        public async Task RunAsync(string code, string scriptName = "unnamed",
+        public async Task RunAsync(string code, ScriptLanguage language = ScriptLanguage.Python, 
+                                   string scriptName = "unnamed",
                                    CancellationToken externalToken = default)
         {
             // Rifiuta se uno script è già in esecuzione (non-blocking check)
@@ -177,7 +245,7 @@ del _make_tracer_, _INTERVAL_, _sys_
                 return;
             }
 
-            _logger.LogInformation("Starting script: {ScriptName}", scriptName);
+            _logger.LogInformation("Starting script: {ScriptName} [{Language}]", scriptName, language);
 
             // Crea un CTS combinato: può essere cancellato dall'esterno o da StopAsync()
             var cts = CancellationTokenSource.CreateLinkedTokenSource(externalToken);
@@ -188,7 +256,24 @@ del _make_tracer_, _INTERVAL_, _sys_
 
             try
             {
-                await Task.Run(() => ExecuteInternal(code, scriptName, cts), externalToken);
+                await Task.Run(() => 
+                {
+                    switch (language)
+                    {
+                        case ScriptLanguage.Python:
+                            ExecutePythonInternal(code, scriptName, cts);
+                            break;
+                        case ScriptLanguage.UOSteam:
+                            ExecuteUOSteamInternal(code, scriptName, cts);
+                            break;
+                        case ScriptLanguage.CSharp:
+                            ExecuteCSharpInternal(code, scriptName, cts);
+                            break;
+                        default:
+                            throw new NotSupportedException($"Linguaggio {language} non supportato.");
+                    }
+                }, externalToken);
+
                 _logger.LogInformation("Script '{ScriptName}' completed successfully in {Duration}", scriptName, DateTime.UtcNow - start);
                 ScriptCompleted?.Invoke(new ScriptCompletionInfo(
                     scriptName, false, null, DateTime.UtcNow - start));
@@ -201,8 +286,6 @@ del _make_tracer_, _INTERVAL_, _sys_
             }
             catch (ThreadInterruptedException)
             {
-                // Fallback: ThreadInterruptedException non convertita in ExecuteInternal
-                // (es. uscita dal finally). Trattata come cancellazione.
                 _logger.LogInformation("Script '{ScriptName}' was interrupted after {Duration}", scriptName, DateTime.UtcNow - start);
                 ScriptCompleted?.Invoke(new ScriptCompletionInfo(
                     scriptName, true, null, DateTime.UtcNow - start));
@@ -223,7 +306,7 @@ del _make_tracer_, _INTERVAL_, _sys_
                 cts.Dispose();
                 
                 try { _executionLock.Release(); }
-                catch (SemaphoreFullException) { /* Lo stato è stato già resettato da StopAsync timeout */ }
+                catch (SemaphoreFullException) { }
             }
         }
 
@@ -234,17 +317,10 @@ del _make_tracer_, _INTERVAL_, _sys_
 
             _logger.LogInformation("Stopping current script: {ScriptName}", _currentScriptName);
 
-            // LIVELLO 0+2: segnala al ScriptCancellationController.
-            // - Le API (Misc.Pause, ecc.) lo leggono e lanciano OperationCanceledException.
-            // - Il trace handler Python lo legge ogni TraceInterval statement.
+            // Segnala la cancellazione al CTS (letto da Python trace e Roslyn token)
             cts.Cancel();
 
-            // LIVELLO 1: Thread.Interrupt() per uscire immediatamente da qualsiasi
-            // wait nativo (Thread.Sleep, Monitor.Wait, WaitHandle, ecc.).
-            // In .NET 5+ è sicuro: lancia ThreadInterruptedException solo una volta,
-            // solo quando il thread è in uno stato di attesa bloccante.
-            // Non ha effetto su thread in esecuzione attiva (CPU-bound) — in quel
-            // caso il Livello 2 (settrace) lo cattura al prossimo check.
+            // Interrupt per blocchi nativi (.NET Wait, Sleep, ecc.)
             _scriptThread?.Interrupt();
 
             // Attende fino a 5s che il task termini
@@ -252,23 +328,16 @@ del _make_tracer_, _INTERVAL_, _sys_
 
             if (acquired)
             {
-                // Lo script è terminato normalmente entro il timeout.
                 _executionLock.Release();
                 _logger.LogDebug("Script stopped normally within timeout.");
             }
             else
             {
-                // TIMEOUT: Lo script è diventato zombie.
                 _logger.LogWarning("Script '{ScriptName}' failed to stop within 5s and is now a zombie.", _currentScriptName);
-
-                // Forza il reset dello stato per permettere una nuova esecuzione.
-                // Lo script zombie terminerà eventualmente quando incontra il
-                // prossimo check di cancellazione (settrace o API call).
                 _isRunning = false;
                 _currentScriptName = null;
                 _activeCts = null;
 
-                // Notifica l'errore
                 ErrorReceived?.Invoke(
                     "[ScriptingService] Lo script non ha risposto entro 5 secondi. " +
                     "Lo stato è stato resettato. Lo script zombie terminerà al prossimo check di cancellazione.");
@@ -279,18 +348,15 @@ del _make_tracer_, _INTERVAL_, _sys_
         }
 
         // ------------------------------------------------------------------
-        // Esecuzione interna (gira su Task.Run, thread pool)
+        // Esecuzione Python (IronPython)
         // ------------------------------------------------------------------
 
-        private void ExecuteInternal(string code, string scriptName, CancellationTokenSource cts)
+        private void ExecutePythonInternal(string code, string scriptName, CancellationTokenSource cts)
         {
-            // Registra il thread corrente per Thread.Interrupt() in StopAsync().
             _scriptThread = Thread.CurrentThread;
-
-            // Engine isolato per questa run — NON condiviso per evitare problemi
-            // di import concorrenti (IronPython issue #1826).
             _logger.LogDebug("Creating new IronPython engine for script: {ScriptName}", scriptName);
-            var engine = Python.CreateEngine();
+            
+            var engine = IronPython.Hosting.Python.CreateEngine();
             var scope  = engine.CreateScope();
 
             var stdout = new ScriptOutputWriter(line => OutputReceived?.Invoke(line));
@@ -299,65 +365,123 @@ del _make_tracer_, _INTERVAL_, _sys_
             var cancelCtrl = new ScriptCancellationController(cts.Token);
             var miscApi    = new MiscApi(_world, cancelCtrl, line => OutputReceived?.Invoke(line));
 
-            // Scope variables iniettate e usate dal TracePreamble
             scope.SetVariable("__stdout__",        stdout);
             scope.SetVariable("__stderr__",        stderr);
             scope.SetVariable("__cancel__",        cancelCtrl);
             scope.SetVariable("__trace_interval__", TraceInterval);
-            scope.SetVariable("Misc",              miscApi);  // usato dall'override time.sleep
-
-            // API di gioco
+            scope.SetVariable("Misc",              miscApi);
             scope.SetVariable("Items",   new ItemsApi(_world, _packetService, cancelCtrl));
             scope.SetVariable("Mobiles", new MobilesApi(_world, cancelCtrl));
             scope.SetVariable("Player",  new PlayerApi(_world, _packetService, _targetingService, cancelCtrl));
             scope.SetVariable("Journal", new JournalApi(_journalService, cancelCtrl));
             scope.SetVariable("Gumps",   new GumpsApi(_world, _packetService, cancelCtrl));
-            scope.SetVariable("__script_name__", scriptName);
+            scope.SetVariable("Target",  new TargetApi(_targetingService, cancelCtrl));
+            scope.SetVariable("Skills",  new SkillsApi(_skillsService, _packetService, cancelCtrl));
+            scope.SetVariable("Spells",  new SpellsApi(_packetService, cancelCtrl));
+            scope.SetVariable("Statics", new StaticsApi(cancelCtrl));
+            scope.SetVariable("Friend",  new FriendApi(cancelCtrl));
+            scope.SetVariable("Filters", new FiltersApi(cancelCtrl));
 
-            // Installa redirect output + override time.sleep + settrace periodico
             engine.Execute(TracePreamble, scope);
 
             try
             {
-                _logger.LogDebug("Executing script code...");
                 engine.Execute(code, scope);
             }
-            catch (SystemExitException)
+            catch (IronPython.Runtime.Exceptions.SystemExitException)
             {
-                // Livello 2: trace handler ha lanciato SystemExit (cancellazione Python pura)
                 throw new OperationCanceledException("Script interrotto via sys.settrace.");
             }
-            catch (ThreadInterruptedException)
+            finally
             {
-                // Livello 1: Thread.Interrupt() da StopAsync() ha interrotto un wait nativo
-                // (es. Thread.Sleep, time.sleep senza override, socket wait, ecc.).
-                // Il flag interrupt è già consumato — non si ripropaga nel finally.
-                throw new OperationCanceledException("Script interrotto via Thread.Interrupt.");
+                _scriptThread = null;
+                try { engine.Execute(TraceCleanup, scope); } catch { }
+                stdout.Dispose();
+                stderr.Dispose();
             }
-            catch (OperationCanceledException)
+        }
+
+        // ------------------------------------------------------------------
+        // Esecuzione UOSteam
+        // ------------------------------------------------------------------
+
+        private void ExecuteUOSteamInternal(string code, string scriptName, CancellationTokenSource cts)
+        {
+            _scriptThread = Thread.CurrentThread;
+            
+            var cancelCtrl = new ScriptCancellationController(cts.Token);
+            var miscApi    = new MiscApi(_world, cancelCtrl, line => OutputReceived?.Invoke(line));
+            var itemsApi   = new ItemsApi(_world, _packetService, cancelCtrl);
+            var mobilesApi = new MobilesApi(_world, cancelCtrl);
+            var playerApi  = new PlayerApi(_world, _packetService, _targetingService, cancelCtrl);
+            
+            var interpreter = new UOSteamInterpreter(
+                miscApi, 
+                playerApi, 
+                itemsApi, 
+                mobilesApi, 
+                cancelCtrl, 
+                line => OutputReceived?.Invoke(line));
+
+            interpreter.Execute(code);
+        }
+
+        // ------------------------------------------------------------------
+        // Esecuzione C# (Roslyn)
+        // ------------------------------------------------------------------
+
+        private void ExecuteCSharpInternal(string code, string scriptName, CancellationTokenSource cts)
+        {
+            _scriptThread = Thread.CurrentThread;
+            _logger.LogDebug("Starting Roslyn C# script execution: {ScriptName}", scriptName);
+
+            var cancelCtrl = new ScriptCancellationController(cts.Token);
+            var globals = new ScriptGlobals
             {
-                // Livello 0: lanciato da un metodo API (Misc.Pause, WaitFor, ecc.)
+                Player   = new PlayerApi(_world, _packetService, _targetingService, cancelCtrl),
+                Items    = new ItemsApi(_world, _packetService, cancelCtrl),
+                Mobiles  = new MobilesApi(_world, cancelCtrl),
+                Misc     = new MiscApi(_world, cancelCtrl, line => OutputReceived?.Invoke(line)),
+                Journal  = new JournalApi(_journalService, cancelCtrl),
+                Gumps    = new GumpsApi(_world, _packetService, cancelCtrl),
+                Target   = new TargetApi(_targetingService, cancelCtrl),
+                Skills   = new SkillsApi(_skillsService, _packetService, cancelCtrl),
+                Spells   = new SpellsApi(_packetService, cancelCtrl),
+                Statics  = new StaticsApi(cancelCtrl),
+                Friend   = new FriendApi(cancelCtrl),
+                Filters  = new FiltersApi(cancelCtrl)
+            };
+
+            var options = ScriptOptions.Default
+                .WithReferences(
+                    typeof(ScriptGlobals).Assembly,
+                    typeof(ScriptLanguage).Assembly,
+                    typeof(object).Assembly,
+                    typeof(System.Linq.Enumerable).Assembly,
+                    typeof(System.Collections.Generic.List<>).Assembly)
+                .WithImports(
+                    "System",
+                    "System.Collections.Generic",
+                    "System.Linq",
+                    "System.Threading.Tasks",
+                    "TMRazorImproved.Core.Services.Scripting.Api",
+                    "TMRazorImproved.Shared.Models");
+
+            try
+            {
+                // Esecuzione sincrona del task asincrono Roslyn all'interno del thread worker dello script
+                CSharpScript.RunAsync(code, options, globals, typeof(ScriptGlobals), cts.Token).Wait();
+            }
+            catch (AggregateException aggEx)
+            {
+                // Roslyn wrappa le eccezioni in AggregateException
+                if (aggEx.InnerException != null)
+                    throw aggEx.InnerException;
                 throw;
             }
             finally
             {
                 _scriptThread = null;
-
-                _logger.LogDebug("Cleaning up script engine...");
-
-                // Rimuove il trace handler (best-effort: il thread potrebbe essere
-                // già in cleanup, eventuali eccezioni qui vanno silenziate)
-                try { engine.Execute(TraceCleanup, scope); } catch { /* best-effort */ }
-
-                // Shutdown del runtime DLR: rilascia ScriptRuntime, PythonContext,
-                // compilation cache e moduli importati. Senza questo, ogni esecuzione
-                // lascia ~2-5 MB di oggetti DLR raggiungibili fino al prossimo GC Gen2.
-                try { engine.Runtime.Shutdown(); } catch { /* best-effort */ }
-
-                stdout.Flush();
-                stderr.Flush();
-                stdout.Dispose();
-                stderr.Dispose();
             }
         }
 
