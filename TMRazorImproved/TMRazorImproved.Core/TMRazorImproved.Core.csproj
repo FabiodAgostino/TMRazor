@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\TMRazorImproved.Shared\TMRazorImproved.Shared.csproj" />
+    <ProjectReference Include="..\..\UltimaSDK\Ultima.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- IronPython 3.4.2: ultima versione stabile (dic 2024). Supporta net8.0 esplicitamente.
+         Su net10.0 NuGet carica il target net8.0 tramite forward-compat (funziona in JIT mode).
+         NON compatibile con NativeAOT (usa System.Reflection.Emit/LCG). -->
+    <PackageReference Include="IronPython" Version="3.4.2" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="5.3.15" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>x86</PlatformTarget>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+</Project>

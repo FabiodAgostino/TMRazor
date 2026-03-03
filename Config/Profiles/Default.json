@@ -1,0 +1,16 @@
+{
+  "Name": "Default",
+  "FiltersEnabled": true,
+  "ActiveFilters": [],
+  "AutoLoot": {
+    "Enabled": false,
+    "Container": 0,
+    "ItemList": []
+  },
+  "Scavenger": {
+    "Enabled": false,
+    "Container": 0,
+    "ItemList": []
+  },
+  "Hotkeys": []
+}

@@ -1,0 +1,80 @@
+<Page x:Class="TMRazorImproved.UI.Views.Pages.GeneralPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:local="clr-namespace:TMRazorImproved.UI.Views.Pages"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="800"
+      Title="General">
+
+    <ScrollViewer Margin="32">
+        <StackPanel>
+            <ui:TextBlock Text="{loc:Loc EnhancedLauncher.groupBox2.Text}" FontSize="28" FontWeight="Bold" Margin="0,0,0,24"/>
+
+            <!-- Client Configuration Card -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel>
+                    <ui:TextBlock Text="{loc:Loc EnhancedLauncher.groupBox2.Text}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Grid.Column="0" 
+                                    PlaceholderText="{loc:Loc EnhancedLauncher.label2.Text}" 
+                                    Text="{Binding ClientPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <ui:Button Grid.Column="1" Content="{loc:Loc EnhancedLauncher.addShard.Text}" Margin="8,0,0,0" Command="{Binding BrowseClientCommand}"/>
+                    </Grid>
+
+                    <ui:TextBox PlaceholderText="{loc:Loc EnhancedLauncher.label5.Text}" 
+                                Text="{Binding DataPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                Margin="0,0,0,12"/>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- Connection Card -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel>
+                    <ui:TextBlock Text="{loc:Loc EnhancedLauncher.groupBox1.Text}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="120" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Grid.Column="0" PlaceholderText="{loc:Loc EnhancedLauncher.label6.Text}" 
+                                    Text="{Binding ServerAddress}" 
+                                    Margin="0,0,8,0"/>
+                        <ui:TextBox Grid.Column="1" PlaceholderText="{loc:Loc EnhancedLauncher.label7.Text}" 
+                                    Text="{Binding ServerPort}" />
+                    </Grid>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- Actions Card -->
+            <ui:Card>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <ui:TextBlock Text="Engine Status" FontWeight="SemiBold"/>
+                        <ui:TextBlock Text="{Binding StatusMessage}" Appearance="Secondary"/>
+                    </StackPanel>
+
+                    <ui:Button Grid.Column="1" 
+                               Content="{loc:Loc EnhancedLauncher.launch.Text}" 
+                               Appearance="Primary" 
+                               Padding="32,8"
+                               Command="{Binding LaunchClientCommand}"/>
+                </Grid>
+            </ui:Card>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

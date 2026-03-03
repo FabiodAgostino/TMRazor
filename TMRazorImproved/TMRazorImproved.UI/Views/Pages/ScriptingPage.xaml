@@ -1,0 +1,193 @@
+<Page x:Class="TMRazorImproved.UI.Views.Pages.ScriptingPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
+      xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
+      mc:Ignorable="d"
+      d:DesignHeight="700" d:DesignWidth="1000"
+      Title="Scripting">
+
+    <Grid Margin="16,8,16,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ===== TOOLBAR ===== -->
+        <ui:Card Grid.Row="0" Margin="0,0,0,8" Padding="10,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: file operations + script name -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:Button Content="{loc:Loc Scripting.New}" Command="{Binding NewScriptCommand}"
+                               Margin="0,0,4,0" ToolTip="Nuovo script vuoto"/>
+                    <ui:Button Content="{loc:Loc Scripting.Open}"  Command="{Binding OpenScriptCommand}"
+                               Margin="0,0,4,0" ToolTip="Apri file .py"/>
+                    <ui:Button Content="{loc:Loc Scripting.Save}" Command="{Binding SaveScriptCommand}"
+                               Margin="0,0,12,0" ToolTip="Salva script su file"/>
+
+                    <Border Width="1" Background="{DynamicResource ControlBorderColorBrush}"
+                            Margin="0,4,12,4"/>
+
+                    <ui:TextBlock Text="Script:" VerticalAlignment="Center" Margin="0,0,6,0"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <ui:TextBox Width="200"
+                                Text="{Binding ScriptName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                PlaceholderText="nome_script.py"
+                                VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Right: Run / Stop + status -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:TextBlock Text="{Binding StatusText}"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  VerticalAlignment="Center"
+                                  Margin="0,0,16,0" FontSize="12"/>
+
+                    <ui:Button Content="{loc:Loc Scripting.Run}"
+                               Appearance="Primary"
+                               Command="{Binding RunScriptCommand}"
+                               Padding="16,6"
+                               Margin="0,0,6,0"
+                               ToolTip="Esegui lo script (F5)"/>
+
+                    <ui:Button Content="{loc:Loc Scripting.Stop}"
+                               Appearance="Danger"
+                               Command="{Binding StopScriptCommand}"
+                               Padding="16,6"
+                               ToolTip="Interrompi lo script"/>
+                </StackPanel>
+            </Grid>
+        </ui:Card>
+
+        <!-- ===== EDITOR + CONSOLE PANEL ===== -->
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="2*" MinHeight="120"/>
+                <RowDefinition Height="6"/>
+                <RowDefinition Height="1*" MinHeight="80"/>
+            </Grid.RowDefinitions>
+
+            <!-- ── Code Editor ── -->
+            <Border Grid.Row="0"
+                    Background="#1E1E1E"
+                    BorderBrush="{DynamicResource ControlBorderColorBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4">
+                <avalonedit:TextEditor
+                    x:Name="ScriptEditor"
+                    ShowLineNumbers="True"
+                    FontFamily="Consolas, 'Courier New', monospace"
+                    FontSize="13"
+                    Background="#1E1E1E"
+                    Foreground="#D4D4D4"
+                    LineNumbersForeground="#858585"
+                    Padding="4,4,4,4"
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Auto"/>
+            </Border>
+
+            <!-- ── GridSplitter ── -->
+            <GridSplitter Grid.Row="1"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Background="{DynamicResource ControlBorderColorBrush}"
+                          ResizeBehavior="PreviousAndNext"
+                          Cursor="SizeNS"/>
+
+            <!-- ── Output Console ── -->
+            <Border Grid.Row="2"
+                    Background="#141414"
+                    BorderBrush="{DynamicResource ControlBorderColorBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Console header bar -->
+                    <Border Grid.Row="0"
+                            Background="#252526"
+                            BorderBrush="{DynamicResource ControlBorderColorBrush}"
+                            BorderThickness="0,0,0,1"
+                            Padding="10,4">
+                        <Grid>
+                            <ui:TextBlock Text="Output"
+                                          FontWeight="SemiBold"
+                                          FontSize="12"
+                                          Foreground="#CCCCCC"
+                                          VerticalAlignment="Center"/>
+                            <ui:Button Content="Pulisci"
+                                       HorizontalAlignment="Right"
+                                       Appearance="Secondary"
+                                       Padding="10,2"
+                                       FontSize="11"
+                                       Command="{Binding ClearLogCommand}"
+                                       ToolTip="Pulisci output"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Log entries -->
+                    <ListBox x:Name="LogListBox"
+                             Grid.Row="1"
+                             ItemsSource="{Binding LogEntries}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Padding="4,2"
+                             VirtualizingPanel.IsVirtualizing="True"
+                             VirtualizingPanel.VirtualizationMode="Recycling"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.CanContentScroll="True">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="2,1"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:ScriptLogEntry}">
+                                <TextBlock FontFamily="Consolas, 'Courier New', monospace"
+                                           FontSize="12"
+                                           TextWrapping="NoWrap">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <!-- default: normal output (light gray) -->
+                                            <Setter Property="Foreground" Value="#D4D4D4"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Type}"
+                                                             Value="{x:Static vm:ScriptLogType.Error}">
+                                                    <Setter Property="Foreground" Value="#F44747"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Type}"
+                                                             Value="{x:Static vm:ScriptLogType.System}">
+                                                    <Setter Property="Foreground" Value="#DCDCAA"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                    <Run Text="{Binding FormattedTime, Mode=OneWay}"
+                                         Foreground="#858585"/>
+                                    <Run Text=" "/>
+                                    <Run Text="{Binding Text, Mode=OneWay}"/>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>

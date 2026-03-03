@@ -1,0 +1,111 @@
+<Page x:Class="TMRazorImproved.UI.Views.Pages.HotkeysPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:local="clr-namespace:TMRazorImproved.UI.Views.Pages"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
+      xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="1000"
+      Title="Hotkeys"
+      PreviewKeyDown="Page_PreviewKeyDown">
+
+    <Grid Margin="32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <ui:TextBlock Text="{loc:Loc Hotkeys.Title}" FontSize="28" FontWeight="Bold" Margin="0,0,0,24"/>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Actions Tree -->
+            <ui:Card Grid.Column="0" Padding="8">
+                <DockPanel>
+                    <ui:TextBlock Text="{loc:Loc Hotkeys.AvailableActions}" FontSize="18" FontWeight="SemiBold" DockPanel.Dock="Top" Margin="0,0,0,12"/>
+                    <TreeView ItemsSource="{Binding ActionTree}" 
+                              SelectedItemChanged="TreeView_SelectedItemChanged"
+                              Background="Transparent" BorderThickness="0">
+                        <TreeView.ItemTemplate>
+                            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Code24" Margin="0,0,8,0" Visibility="{Binding Action, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                    <ui:SymbolIcon Symbol="Folder24" Margin="0,0,8,0" Visibility="{Binding Action, Converter={StaticResource NotNullToVisibilityConverter}}"/>
+                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </HierarchicalDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </DockPanel>
+            </ui:Card>
+
+            <GridSplitter Grid.Column="1" Width="12" HorizontalAlignment="Center" Background="Transparent"/>
+
+            <!-- Hotkeys List -->
+            <ui:Card Grid.Column="2" Padding="8">
+                <DockPanel>
+                    <ui:TextBlock Text="{loc:Loc Hotkeys.CurrentHotkeys}" FontSize="18" FontWeight="SemiBold" DockPanel.Dock="Top" Margin="0,0,0,12"/>
+                    
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                        <ui:Button Content="{loc:Loc EnhancedAgentAddList.agentaddItemList.Text}" Icon="Add24" Command="{Binding AddHotkeyCommand}" Margin="0,0,8,0"/>
+                        <ui:Button Content="{loc:Loc MainForm.targetremoveButton.Text}" Icon="Delete24" Command="{Binding RemoveHotkeyCommand}" Appearance="Danger"/>
+                    </StackPanel>
+
+                    <ListView ItemsSource="{Binding CurrentHotkeys}" 
+                              SelectedItem="{Binding SelectedHotkey}"
+                              Background="Transparent" BorderThickness="0">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Action" DisplayMemberBinding="{Binding Action}" Width="200"/>
+                                <GridViewColumn Header="Key Combination">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Converter={StaticResource HotkeyDisplayConverter}}"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </DockPanel>
+            </ui:Card>
+
+            <GridSplitter Grid.Column="3" Width="12" HorizontalAlignment="Center" Background="Transparent"/>
+
+            <!-- Hotkey Edit Panel -->
+            <ui:Card Grid.Column="4" Padding="16" Visibility="{Binding SelectedHotkey, Converter={StaticResource NullToVisibilityConverter}}">
+                <StackPanel>
+                    <ui:TextBlock Text="{loc:Loc Hotkeys.Edit}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    
+                    <ui:TextBlock Text="Action:" Appearance="Secondary" Margin="0,0,0,4"/>
+                    <ui:TextBlock Text="{Binding SelectedHotkey.Action}" FontWeight="Bold" Margin="0,0,0,16"/>
+
+                    <ui:TextBlock Text="Current Binding:" Appearance="Secondary" Margin="0,0,0,4"/>
+                    <ui:TextBlock Text="{Binding SelectedHotkey, Converter={StaticResource HotkeyDisplayConverter}}" 
+                                  FontSize="20" FontWeight="Bold" Foreground="{ui:ThemeResource SystemAccentColorPrimaryBrush}"
+                                  Margin="0,0,0,24" HorizontalAlignment="Center"/>
+
+                    <ui:Button Content="{loc:Loc Hotkeys.Set}" Icon="Keyboard24" 
+                               HorizontalAlignment="Stretch" Padding="12"
+                               Command="{Binding StartCaptureCommand}"
+                               Appearance="{Binding IsCapturing, Converter={StaticResource CaptureAppearanceConverter}}"/>
+
+                    <ui:TextBlock Text="{Binding CaptureStatus}" 
+                                  Margin="0,12,0,0" HorizontalAlignment="Center"
+                                  Appearance="Secondary" FontStyle="Italic"
+                                  Visibility="{Binding IsCapturing, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </StackPanel>
+            </ui:Card>
+        </Grid>
+    </Grid>
+</Page>

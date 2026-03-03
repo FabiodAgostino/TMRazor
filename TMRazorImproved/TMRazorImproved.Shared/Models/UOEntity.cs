@@ -1,0 +1,71 @@
+using System;
+
+namespace TMRazorImproved.Shared.Models
+{
+    /// <summary>
+    /// Classe base per ogni entità in gioco (Mobile o Item).
+    /// </summary>
+    public abstract class UOEntity
+    {
+        public uint Serial { get; }
+        public ushort Graphic { get; set; }
+        public ushort Hue { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int Z { get; set; }
+        public UOPropertyList? Properties { get; set; }
+
+        protected UOEntity(uint serial)
+        {
+            Serial = serial;
+        }
+
+        public override bool Equals(object? obj) => obj is UOEntity entity && Serial == entity.Serial;
+        public override int GetHashCode() => Serial.GetHashCode();
+    }
+
+    /// <summary>
+    /// Rappresenta un personaggio (giocatore, NPC o mostro).
+    /// </summary>
+    public class Mobile : UOEntity
+    {
+        public string Name { get; set; } = "Unknown";
+        
+        // Stats
+        public ushort Hits { get; set; }
+        public ushort HitsMax { get; set; }
+        public ushort Mana { get; set; }
+        public ushort ManaMax { get; set; }
+        public ushort Stam { get; set; }
+        public ushort StamMax { get; set; }
+        
+        public ushort Str { get; set; }
+        public ushort Dex { get; set; }
+        public ushort Int { get; set; }
+
+        public bool IsPoisoned { get; set; }
+        public bool IsYellowHits { get; set; }
+        public byte Notoriety { get; set; }
+        public byte Direction { get; set; }
+
+        /// <summary>Item che rappresenta il backpack del giocatore (null se non ancora rilevato).</summary>
+        public Item? Backpack { get; set; }
+
+        public Mobile(uint serial) : base(serial) { }
+    }
+
+    /// <summary>
+    /// Rappresenta un oggetto (nel mondo o nei contenitori).
+    /// </summary>
+    public class Item : UOEntity
+    {
+        public ushort Amount { get; set; }
+        public uint Container { get; set; }
+        /// <summary>Alias per Container — usato dalle API di scripting.</summary>
+        public uint ContainerSerial { get => Container; set => Container = value; }
+        public byte Layer { get; set; }
+        public uint RootContainer { get; set; }
+
+        public Item(uint serial) : base(serial) { }
+    }
+}
