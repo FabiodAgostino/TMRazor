@@ -10,8 +10,11 @@ namespace TMRazorImproved.Core.Services
     {
         private readonly ConcurrentDictionary<uint, Mobile> _mobiles = new();
         private readonly ConcurrentDictionary<uint, Item> _items = new();
-        
-        public Mobile? Player { get; private set; }
+
+        // FIX BUG-C04: campo volatile garantisce visibilità cross-thread senza lock.
+        private volatile Mobile? _player;
+        public Mobile? Player => _player;
+
         public UOGump? CurrentGump { get; private set; }
         public uint LastOpenedContainer { get; private set; }
 
@@ -50,7 +53,7 @@ namespace TMRazorImproved.Core.Services
 
         public void SetPlayer(Mobile player)
         {
-            Player = player;
+            _player = player;
             AddMobile(player);
         }
 
@@ -73,7 +76,7 @@ namespace TMRazorImproved.Core.Services
         {
             _mobiles.Clear();
             _items.Clear();
-            Player = null;
+            _player = null;
             CurrentGump = null;
         }
     }

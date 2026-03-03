@@ -131,6 +131,7 @@ del _make_tracer_, _INTERVAL_, _sys_
         private readonly ITargetingService _targetingService;
         private readonly IJournalService _journalService;
         private readonly ISkillsService _skillsService;
+        private readonly IFriendsService _friendsService;
         private readonly IConfigService _config;
         private readonly ILogger<ScriptingService> _logger;
 
@@ -153,11 +154,12 @@ del _make_tracer_, _INTERVAL_, _sys_
         public event Action<ScriptCompletionInfo>? ScriptCompleted;
 
         public ScriptingService(
-            IWorldService world, 
-            IPacketService packetService, 
-            ITargetingService targetingService, 
+            IWorldService world,
+            IPacketService packetService,
+            ITargetingService targetingService,
             IJournalService journalService,
             ISkillsService skillsService,
+            IFriendsService friendsService,
             IConfigService config,
             ILogger<ScriptingService> logger)
         {
@@ -166,6 +168,7 @@ del _make_tracer_, _INTERVAL_, _sys_
             _targetingService = targetingService;
             _journalService = journalService;
             _skillsService = skillsService;
+            _friendsService = friendsService;
             _config = config;
             _logger = logger;
         }
@@ -372,15 +375,15 @@ del _make_tracer_, _INTERVAL_, _sys_
             scope.SetVariable("Misc",              miscApi);
             scope.SetVariable("Items",   new ItemsApi(_world, _packetService, cancelCtrl));
             scope.SetVariable("Mobiles", new MobilesApi(_world, cancelCtrl));
-            scope.SetVariable("Player",  new PlayerApi(_world, _packetService, _targetingService, cancelCtrl));
+            scope.SetVariable("Player",  new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl));
             scope.SetVariable("Journal", new JournalApi(_journalService, cancelCtrl));
             scope.SetVariable("Gumps",   new GumpsApi(_world, _packetService, cancelCtrl));
             scope.SetVariable("Target",  new TargetApi(_targetingService, cancelCtrl));
             scope.SetVariable("Skills",  new SkillsApi(_skillsService, _packetService, cancelCtrl));
             scope.SetVariable("Spells",  new SpellsApi(_packetService, cancelCtrl));
             scope.SetVariable("Statics", new StaticsApi(cancelCtrl));
-            scope.SetVariable("Friend",  new FriendApi(cancelCtrl));
-            scope.SetVariable("Filters", new FiltersApi(cancelCtrl));
+            scope.SetVariable("Friend",  new FriendApi(_friendsService, cancelCtrl));
+            scope.SetVariable("Filters", new FiltersApi(_config, cancelCtrl));
 
             engine.Execute(TracePreamble, scope);
 
@@ -396,6 +399,9 @@ del _make_tracer_, _INTERVAL_, _sys_
             {
                 _scriptThread = null;
                 try { engine.Execute(TraceCleanup, scope); } catch { }
+                // FIX BUG-C02: dispose esplicito del runtime IronPython per evitare memory leak
+                try { engine.Runtime.Shutdown(); } catch { }
+                try { (engine as IDisposable)?.Dispose(); } catch { }
                 stdout.Dispose();
                 stderr.Dispose();
             }
@@ -413,7 +419,7 @@ del _make_tracer_, _INTERVAL_, _sys_
             var miscApi    = new MiscApi(_world, cancelCtrl, line => OutputReceived?.Invoke(line));
             var itemsApi   = new ItemsApi(_world, _packetService, cancelCtrl);
             var mobilesApi = new MobilesApi(_world, cancelCtrl);
-            var playerApi  = new PlayerApi(_world, _packetService, _targetingService, cancelCtrl);
+            var playerApi  = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl);
             
             var interpreter = new UOSteamInterpreter(
                 miscApi, 
@@ -438,7 +444,7 @@ del _make_tracer_, _INTERVAL_, _sys_
             var cancelCtrl = new ScriptCancellationController(cts.Token);
             var globals = new ScriptGlobals
             {
-                Player   = new PlayerApi(_world, _packetService, _targetingService, cancelCtrl),
+                Player   = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl),
                 Items    = new ItemsApi(_world, _packetService, cancelCtrl),
                 Mobiles  = new MobilesApi(_world, cancelCtrl),
                 Misc     = new MiscApi(_world, cancelCtrl, line => OutputReceived?.Invoke(line)),
@@ -448,8 +454,8 @@ del _make_tracer_, _INTERVAL_, _sys_
                 Skills   = new SkillsApi(_skillsService, _packetService, cancelCtrl),
                 Spells   = new SpellsApi(_packetService, cancelCtrl),
                 Statics  = new StaticsApi(cancelCtrl),
-                Friend   = new FriendApi(cancelCtrl),
-                Filters  = new FiltersApi(cancelCtrl)
+                Friend   = new FriendApi(_friendsService, cancelCtrl),
+                Filters  = new FiltersApi(_config, cancelCtrl)
             };
 
             var options = ScriptOptions.Default

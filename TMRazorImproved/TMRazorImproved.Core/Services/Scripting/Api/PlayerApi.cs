@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+using System.Text;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
 
@@ -16,13 +19,21 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         private readonly IWorldService _world;
         private readonly IPacketService _packet;
         private readonly ITargetingService _targeting;
+        // FIX BUG-P2-01: iniettato ISkillsService per implementare GetSkillValue e UseSkill
+        private readonly ISkillsService _skills;
         private readonly ScriptCancellationController _cancel;
 
-        public PlayerApi(IWorldService world, IPacketService packet, ITargetingService targeting, ScriptCancellationController cancel)
+        public PlayerApi(
+            IWorldService world,
+            IPacketService packet,
+            ITargetingService targeting,
+            ISkillsService skills,
+            ScriptCancellationController cancel)
         {
             _world = world;
             _packet = packet;
             _targeting = targeting;
+            _skills = skills;
             _cancel = cancel;
         }
 
@@ -180,23 +191,49 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _packet.SendToServer(packet);
         }
 
-        public virtual int GetSkillValue(string skillName)
+        // FIX BUG-P2-01: delega a ISkillsService (stessa logica di SkillsApi)
+        public virtual double GetSkillValue(string skillName)
         {
             _cancel.ThrowIfCancelled();
-            // TODO: Richiede tabella mapping skill name -> index e WorldService che traccia le skill
-            return 0;
+            var skill = _skills.Skills.FirstOrDefault(s => s.Name.Equals(skillName, StringComparison.OrdinalIgnoreCase));
+            return skill?.Value ?? 0;
         }
 
         public virtual void UseSkill(string skillName)
         {
             _cancel.ThrowIfCancelled();
-            // TODO: Mappare skillName a ID ed inviare pacchetto 0x12
+            var skill = _skills.Skills.FirstOrDefault(s => s.Name.Equals(skillName, StringComparison.OrdinalIgnoreCase));
+            if (skill == null) return;
+            string cmd = $"{skill.ID + 1} 0";
+            byte[] cmdBytes = Encoding.ASCII.GetBytes(cmd);
+            byte[] packet = new byte[3 + 1 + cmdBytes.Length + 1];
+            packet[0] = 0x12;
+            ushort len = (ushort)packet.Length;
+            packet[1] = (byte)(len >> 8);
+            packet[2] = (byte)(len & 0xff);
+            packet[3] = 0x24; // UseSkill
+            Array.Copy(cmdBytes, 0, packet, 4, cmdBytes.Length);
+            packet[packet.Length - 1] = 0x00;
+            _packet.SendToServer(packet);
         }
 
         public virtual void Cast(string spellName)
         {
             _cancel.ThrowIfCancelled();
-            // TODO: Inviare comando cast (0xAD [speech] o macro client)
+            // Delega a SpellsApi (via Cast int tramite il dictionary di SpellsApi)
+            // Costruiamo il pacchetto direttamente per evitare dipendenza circolare
+            if (!SpellsApi.TryGetSpellId(spellName, out int spellId)) return;
+            string cmd = spellId.ToString();
+            byte[] cmdBytes = Encoding.ASCII.GetBytes(cmd);
+            byte[] packet = new byte[3 + 1 + cmdBytes.Length + 1];
+            packet[0] = 0x12;
+            ushort len = (ushort)packet.Length;
+            packet[1] = (byte)(len >> 8);
+            packet[2] = (byte)(len & 0xff);
+            packet[3] = 0x56; // CastSpell
+            Array.Copy(cmdBytes, 0, packet, 4, cmdBytes.Length);
+            packet[packet.Length - 1] = 0x00;
+            _packet.SendToServer(packet);
         }
 
         public virtual void UseItem(uint serial)

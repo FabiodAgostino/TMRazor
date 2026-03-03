@@ -49,28 +49,43 @@ namespace TMRazorImproved.Core.Services
             var config = GetActiveConfig();
             if (config == null || !config.BuyEnabled) return;
 
-            _logger.LogInformation("Vendor Buy Menu detected, generating response...");
-            
-            var toBuy = new List<(uint Serial, ushort Amount)>();
+            _logger.LogInformation("Vendor Buy Menu detected for vendor 0x{VendorSerial:X}", message.Value.VendorSerial);
 
-            // Basic placeholder implementation: we need the items container to get serials.
-            // Normally UO sends a 0x3C container content before 0x74.
-            // Assuming the container is on the vendor.
-            var vendor = _worldService.FindMobile(message.Value.VendorSerial);
-            if (vendor == null) return;
-            
-            // Trova gli oggetti del vendor (approssimazione in base a container serials ricevuti di recente)
-            var itemsInWorld = _worldService.Items.Where(i => i.Container != 0 && i.Container != _worldService.Player?.Serial).ToList();
+            // FIX BUG-P1-03: Il server invia sempre 0x3C (container content) PRIMA di 0x74 (buy window).
+            // WorldService.LastOpenedContainer contiene il serial del container aperto più di recente,
+            // che corrisponde al contenitore buy del vendor. I suoi item (con Serial e Graphic reali)
+            // sono già stati aggiunti al WorldService dalla ContainerContentMessage.
+            uint vendorContainerSerial = _worldService.LastOpenedContainer;
+            if (vendorContainerSerial == 0)
+            {
+                _logger.LogWarning("VendorBuy: LastOpenedContainer is 0, cannot determine vendor container serial. Buy aborted.");
+                return;
+            }
+
+            var vendorItems = _worldService.GetItemsInContainer(vendorContainerSerial).ToList();
+            if (vendorItems.Count == 0)
+            {
+                _logger.LogWarning("VendorBuy: No items found in vendor container 0x{Container:X}", vendorContainerSerial);
+                return;
+            }
+
+            var toBuy = new List<(uint Serial, ushort Amount)>();
 
             foreach (var buyReq in config.BuyList)
             {
                 if (!buyReq.IsEnabled) continue;
-                
-                // Cerca matching
-                var match = itemsInWorld.FirstOrDefault(i => i.Graphic == buyReq.Graphic);
+
+                // Cerca per Graphic nell'inventario reale del vendor (con serial corretti da 0x3C)
+                var match = vendorItems.FirstOrDefault(i => i.Graphic == buyReq.Graphic);
                 if (match != null)
                 {
-                    toBuy.Add((match.Serial, (ushort)(buyReq.Amount > 0 ? buyReq.Amount : 1)));
+                    ushort qty = (ushort)Math.Min(buyReq.Amount > 0 ? buyReq.Amount : 1, match.Amount);
+                    toBuy.Add((match.Serial, qty));
+                    _logger.LogDebug("VendorBuy: queued 0x{Graphic:X} x{Amount} (serial 0x{Serial:X})", buyReq.Graphic, qty, match.Serial);
+                }
+                else
+                {
+                    _logger.LogDebug("VendorBuy: item 0x{Graphic:X} not found in vendor inventory", buyReq.Graphic);
                 }
             }
 

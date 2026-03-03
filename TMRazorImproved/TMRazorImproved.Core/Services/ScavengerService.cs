@@ -23,7 +23,8 @@ namespace TMRazorImproved.Core.Services
         private readonly IMessenger _messenger;
 
         private readonly ConcurrentQueue<uint> _scavengeQueue = new();
-        private readonly HashSet<uint> _processedSerials = new();
+        // FIX BUG-C03: HashSet<uint> non thread-safe → ConcurrentDictionary<uint,byte>
+        private readonly ConcurrentDictionary<uint, byte> _processedSerials = new();
 
         public ScavengerService(
             IPacketService packetService, 
@@ -62,7 +63,7 @@ namespace TMRazorImproved.Core.Services
             var item = message.Value;
             bool shouldScavenge = config.ItemList.Count == 0 || config.ItemList.Any(i => i.IsEnabled && i.Graphic == item.Graphic);
 
-            if (shouldScavenge && !_processedSerials.Contains(item.Serial))
+            if (shouldScavenge && !_processedSerials.ContainsKey(item.Serial))
             {
                 if (_worldService.Player != null)
                 {
@@ -70,7 +71,7 @@ namespace TMRazorImproved.Core.Services
                     if (dist <= config.Range)
                     {
                         _scavengeQueue.Enqueue(item.Serial);
-                        _processedSerials.Add(item.Serial);
+                        _processedSerials.TryAdd(item.Serial, 0);
                     }
                 }
             }

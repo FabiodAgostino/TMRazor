@@ -60,22 +60,28 @@ namespace TMRazorImproved.Core.Services
 
         /// <summary>
         /// Metodo di arresto sincrono per retrocompatibilità, sebbene StopAsync sia preferito.
+        /// FIX BUG-P1-07: Wait() con timeout per evitare deadlock in contesti async.
         /// </summary>
         public void Stop()
         {
             if (!IsRunning || _cts == null) return;
-            
+
             _cts.Cancel();
             try
             {
                 if (_agentTask != null)
                 {
-                    _agentTask.Wait();
+                    // Timeout di 2 secondi: evita blocco indefinito se il loop non risponde
+                    _agentTask.Wait(TimeSpan.FromSeconds(2));
                 }
             }
             catch (AggregateException ex) when (ex.InnerException is OperationCanceledException)
             {
-                // Gestione prevista
+                // Gestione prevista: task cancellato correttamente
+            }
+            catch (Exception)
+            {
+                // Timeout o altra eccezione: procedi comunque con la pulizia
             }
             finally
             {

@@ -39,7 +39,15 @@ namespace TMRazorImproved.Core.Services
 
             while (!token.IsCancellationRequested)
             {
-                var config = _configService.CurrentProfile.BandageHeal;
+                // FIX BUG-C06: null check su CurrentProfile prima di accedere a BandageHeal
+                var profile = _configService.CurrentProfile;
+                if (profile == null)
+                {
+                    await Task.Delay(500, token);
+                    continue;
+                }
+
+                var config = profile.BandageHeal;
                 var player = _worldService.Player;
 
                 if (player != null && config.BandageSerial != 0)

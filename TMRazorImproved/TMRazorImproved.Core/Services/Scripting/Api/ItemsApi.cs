@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
 
@@ -94,19 +96,28 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             // Spesso usato per forzare il target o l'ispezione
         }
 
+        // FIX BUG-P2-05: implementate tramite UOPropertyList (OPL) già presente sull'entità
         public virtual string GetPropString(uint serial, string name)
         {
             _cancel.ThrowIfCancelled();
-            var item = _world.FindItem(serial);
-            // Cerca nelle proprietà della OPL
-            return string.Empty;
+            var entity = _world.FindItem(serial) as TMRazorImproved.Shared.Models.UOEntity
+                      ?? _world.FindMobile(serial) as TMRazorImproved.Shared.Models.UOEntity;
+            if (entity?.Properties == null) return string.Empty;
+
+            // Cerca la property che contiene il nome cercato negli Arguments (case-insensitive)
+            var entry = entity.Properties.Properties.FirstOrDefault(p =>
+                p.Arguments.Contains(name, StringComparison.OrdinalIgnoreCase));
+            return entry?.Arguments ?? string.Empty;
         }
 
         public virtual int GetPropValue(uint serial, string name)
         {
             _cancel.ThrowIfCancelled();
-            // Parsing numerico dalle proprietà OPL
-            return 0;
+            string text = GetPropString(serial, name);
+            if (string.IsNullOrEmpty(text)) return 0;
+            // Estrae il primo numero intero dal testo della proprietà
+            var match = Regex.Match(text, @"\d+");
+            return match.Success ? int.Parse(match.Value) : 0;
         }
 
         /// <summary>Controlla se un item esiste nel mondo corrente.</summary>
