@@ -65,13 +65,10 @@
             </ui:NavigationView.MenuItems>
 
             <ui:NavigationView.ContentOverlay>
-                <Grid>
-                    <Frame x:Name="RootFrame" />
-                    <ui:SnackbarPresenter x:Name="SnackbarPresenter" 
-                                          HorizontalAlignment="Right" 
-                                          VerticalAlignment="Top" 
-                                          Margin="0,20,20,0" />
-                </Grid>
+                <ui:SnackbarPresenter x:Name="SnackbarPresenter" 
+                                      HorizontalAlignment="Right" 
+                                      VerticalAlignment="Top" 
+                                      Margin="0,20,20,0" />
             </ui:NavigationView.ContentOverlay>
         </ui:NavigationView>
     </Grid>
