@@ -129,9 +129,9 @@ namespace TMRazorImproved.Shared.Messages
     }
 
     /// <summary>Inviato quando il server invia/aggiorna una richiesta di scambio (0x6F).</summary>
-    public class TradeMessage : ValueChangedMessage<(uint Serial, byte Action)>
+    public class TradeMessage : ValueChangedMessage<(byte Action, uint Serial, TradeData? Data)>
     {
-        public TradeMessage(uint serial, byte action) : base((serial, action)) { }
+        public TradeMessage(byte action, uint serial, TradeData? data = null) : base((action, serial, data)) { }
     }
 
     /// <summary>Inviato quando il server cambia la posizione del giocatore dopo un map change (0x76).</summary>
@@ -156,5 +156,58 @@ namespace TMRazorImproved.Shared.Messages
     public class FeaturesMessage : ValueChangedMessage<ushort>
     {
         public FeaturesMessage(ushort features) : base(features) { }
+    }
+
+    /// <summary>
+    /// Tipo di messaggio overhead UO (da pacchetti 0x1C / 0xAE).
+    /// </summary>
+    public enum OverheadMessageType : byte
+    {
+        Regular = 0x00,
+        System  = 0x01,
+        Emote   = 0x02,
+        Label   = 0x06,
+        Focus   = 0x07,
+        Whisper = 0x08,
+        Yell    = 0x09,
+        Spell   = 0x0A,
+        Guild   = 0x0D,
+        Alliance = 0x0E,
+        Command = 0x0F,
+    }
+
+    /// <summary>
+    /// Inviato quando arriva un messaggio speech/overhead dal server (0x1C ASCII / 0xAE Unicode).
+    /// Usato dall'OverheadMessageOverlay per visualizzare i messaggi sopra i personaggi.
+    /// </summary>
+    public class OverheadMessageMessage : ValueChangedMessage<(uint Serial, string Name, string Text, ushort Hue, OverheadMessageType MessageType)>
+    {
+        public OverheadMessageMessage(uint serial, string name, string text, ushort hue, OverheadMessageType messageType)
+            : base((serial, name, text, hue, messageType)) { }
+    }
+
+    /// <summary>Inviato quando un gump viene ricevuto dal server (0xB0/0xDD).</summary>
+    public class GumpMessage : ValueChangedMessage<UOGump>
+    {
+        public GumpMessage(UOGump gump) : base(gump) { }
+    }
+
+    /// <summary>Inviato quando un gump viene chiuso (0xB1 C2S o 0xBF.04 S2C).</summary>
+    public class GumpClosedMessage : ValueChangedMessage<uint>
+    {
+        public GumpClosedMessage(uint gumpId) : base(gumpId) { }
+    }
+
+    /// <summary>Inviato quando un mobile esegue un'animazione (0x6E).</summary>
+    public class CharacterAnimationMessage : ValueChangedMessage<(uint Serial, ushort Action, ushort FrameCount, ushort RepeatCount, bool Forward, bool Repeat, byte Delay)>
+    {
+        public CharacterAnimationMessage(uint serial, ushort action, ushort frameCount, ushort repeatCount, bool forward, bool repeat, byte delay)
+            : base((serial, action, frameCount, repeatCount, forward, repeat, delay)) { }
+    }
+
+    /// <summary>Inviato quando il meteo cambia (0x65).</summary>
+    public class WeatherMessage : ValueChangedMessage<(byte Type, byte Count, byte Temperature)>
+    {
+        public WeatherMessage(byte type, byte count, byte temperature) : base((type, count, temperature)) { }
     }
 }

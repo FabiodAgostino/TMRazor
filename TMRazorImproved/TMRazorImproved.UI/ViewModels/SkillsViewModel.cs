@@ -1,15 +1,18 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.ObjectModel;
 using System.Linq;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
+using TMRazorImproved.Shared.Messages;
 
 namespace TMRazorImproved.UI.ViewModels
 {
-    public sealed partial class SkillsViewModel : ViewModelBase
+    public sealed partial class SkillsViewModel : ViewModelBase, IRecipient<SkillsUpdatedMessage>
     {
         private readonly ISkillsService _skillsService;
+        private readonly IMessenger _messenger;
         private readonly object _skillsLock = new();
 
         [ObservableProperty]
@@ -26,27 +29,52 @@ namespace TMRazorImproved.UI.ViewModels
 
         public ObservableCollection<SkillInfo> Skills { get; } = new();
         public ObservableCollection<SkillLock> LockOptions { get; } = new() { SkillLock.Up, SkillLock.Down, SkillLock.Lock };
+        public ObservableCollection<SkillGainRecord> GainHistory { get; } = new();
 
         public IRelayCommand ResetDeltaCommand { get; }
         public IRelayCommand SetAllLocksCommand { get; }
         public IRelayCommand CopyAllCommand { get; }
 
-        public SkillsViewModel(ISkillsService skillsService)
+        public SkillsViewModel(ISkillsService skillsService, IMessenger messenger)
         {
             _skillsService = skillsService;
+            _messenger = messenger;
             ResetDeltaCommand = new RelayCommand(() => _skillsService.ResetDelta());
             SetAllLocksCommand = new RelayCommand(SetAllLocks);
             CopyAllCommand = new RelayCommand(CopyAll);
 
             EnableThreadSafeCollection(Skills, _skillsLock);
-            RefreshSkills();
+            EnableThreadSafeCollection(GainHistory, new object());
 
+            RefreshSkills();
+            RefreshHistory();
             UpdateTotals();
+
+            _messenger.Register<SkillsUpdatedMessage>(this);
+        }
+
+        public void Receive(SkillsUpdatedMessage message)
+        {
+            RunOnUIThread(() =>
+            {
+                UpdateTotals();
+                RefreshHistory();
+            });
         }
 
         private void RefreshSkills()
         {
             SyncCollection(Skills, _skillsService.Skills, _skillsLock);
+        }
+
+        private void RefreshHistory()
+        {
+            // Ottimizzazione: aggiorna solo i nuovi record
+            var newRecords = _skillsService.GainHistory.Skip(GainHistory.Count).ToList();
+            foreach (var rec in newRecords)
+            {
+                GainHistory.Insert(0, rec); // Inserisci in cima per vederli subito
+            }
         }
 
         private void SetAllLocks()

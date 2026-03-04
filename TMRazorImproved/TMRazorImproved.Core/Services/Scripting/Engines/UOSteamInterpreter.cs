@@ -12,10 +12,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
         private readonly PlayerApi _player;
         private readonly ItemsApi _items;
         private readonly MobilesApi _mobiles;
+        private readonly JournalApi _journal;
         private readonly ScriptCancellationController _cancel;
         private readonly Action<string> _output;
 
         private readonly Dictionary<string, uint> _aliases = new();
+        private readonly Dictionary<string, List<uint>> _lists = new();
+        private readonly Dictionary<string, long> _timers = new();
+        private readonly Dictionary<string, string> _variables = new();
         private readonly Stack<int> _loopStack = new();
         private int _currentLineIndex;
         private string[] _lines = Array.Empty<string>();
@@ -25,6 +29,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             PlayerApi player, 
             ItemsApi items, 
             MobilesApi mobiles,
+            JournalApi journal,
             ScriptCancellationController cancel,
             Action<string> output)
         {
@@ -32,6 +37,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             _player = player;
             _items = items;
             _mobiles = mobiles;
+            _journal = journal;
             _cancel = cancel;
             _output = output;
 
@@ -64,6 +70,15 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
 
         private void ExecuteLine(string line)
         {
+            // Sostituzione variabili prima di eseguire la riga
+            foreach (var kvp in _variables)
+            {
+                if (line.Contains(kvp.Key, StringComparison.OrdinalIgnoreCase))
+                {
+                    line = Regex.Replace(line, $@"\b{Regex.Escape(kvp.Key)}\b", kvp.Value, RegexOptions.IgnoreCase);
+                }
+            }
+
             // Regex migliorata per gestire 'stringhe' e "stringhe"
             var matches = Regex.Matches(line, @"(?<match>'[^']*')|(?<match>""[^""]*"")|(?<match>[^ ]+)");
             if (matches.Count == 0) return;
@@ -83,15 +98,12 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                         HandleIf(args);
                         break;
                     case "elseif":
-                        // Se arriviamo qui durante l'esecuzione normale, significa che il corpo dell'if precedente 
-                        // è stato eseguito, quindi dobbiamo saltare all'endif.
                         SkipToBlockEnd("if", "endif");
                         break;
                     case "else":
                         SkipToBlockEnd("if", "endif");
                         break;
                     case "endif":
-                        // NOP - fine blocco
                         break;
                     case "while":
                         HandleWhile(args);
@@ -99,14 +111,74 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                     case "endwhile":
                         if (_loopStack.Count > 0)
                         {
-                            _currentLineIndex = _loopStack.Pop() - 1; // Torna al while (verrà incrementato dal loop principale)
+                            _currentLineIndex = _loopStack.Pop() - 1; 
                         }
+                        break;
+                    case "setvar":
+                        if (args.Length >= 2) _variables[args[0].ToLower()] = args[1];
+                        break;
+                    case "clearvar":
+                        if (args.Length > 0) _variables.Remove(args[0].ToLower());
                         break;
                     case "setalias":
                         if (args.Length >= 2) _aliases[args[0].ToLower()] = ParseSerial(args[1]);
                         break;
                     case "unsetalias":
                         if (args.Length > 0) _aliases.Remove(args[0].ToLower());
+                        break;
+                    case "pushlist":
+                        if (args.Length >= 2)
+                        {
+                            var listName = args[0].ToLower();
+                            if (!_lists.ContainsKey(listName)) _lists[listName] = new List<uint>();
+                            _lists[listName].Add(ParseSerial(args[1]));
+                        }
+                        break;
+                    case "poplist":
+                        if (args.Length >= 2)
+                        {
+                            var listName = args[0].ToLower();
+                            var destAlias = args[1].ToLower();
+                            if (_lists.ContainsKey(listName) && _lists[listName].Count > 0)
+                            {
+                                _aliases[destAlias] = _lists[listName][0];
+                                _lists[listName].RemoveAt(0);
+                            }
+                        }
+                        break;
+                    case "removelist":
+                        if (args.Length > 0) _lists.Remove(args[0].ToLower());
+                        break;
+                    case "clearlist":
+                        if (args.Length > 0 && _lists.ContainsKey(args[0].ToLower())) _lists[args[0].ToLower()].Clear();
+                        break;
+                    case "createtimer":
+                        if (args.Length > 0) _timers[args[0].ToLower()] = Environment.TickCount64;
+                        break;
+                    case "settimer":
+                        if (args.Length >= 2) _timers[args[0].ToLower()] = Environment.TickCount64 - ParseInt(args[1]);
+                        break;
+                    case "clearjournal":
+                    case "clearsysmsg":
+                        _journal.Clear();
+                        break;
+                    case "setability":
+                        if (args.Length > 0) _player.SetAbility(args[0]);
+                        break;
+                    case "interrupt":
+                        _player.Cast("clumsy"); // Un hack tipico per resettare il casting o target
+                        break;
+                    case "setoption":
+                        if (args.Length >= 2) _variables[args[0].ToLower()] = args[1];
+                        break;
+                    case "overhead":
+                        if (args.Length >= 1)
+                        {
+                            string msg = args[0];
+                            int color = args.Length > 1 ? ParseInt(args[1]) : 945;
+                            uint serial = args.Length > 2 ? ParseSerial(args[2]) : _player.Serial;
+                            if (serial == _player.Serial) _player.HeadMsg(msg, color);
+                        }
                         break;
                     case "msg":
                     case "say":
@@ -139,7 +211,6 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                         _currentLineIndex = _lines.Length; // Termina
                         break;
                     default:
-                        // Se non è un comando, potrebbe essere un'espressione booleana solitaria (es. per debug)
                         EvaluateExpression(line);
                         break;
                 }

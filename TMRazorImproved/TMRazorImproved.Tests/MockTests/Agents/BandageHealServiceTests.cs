@@ -14,6 +14,8 @@ namespace TMRazorImproved.Tests.MockTests.Agents
         private readonly Mock<IPacketService> _packetServiceMock = new();
         private readonly Mock<IConfigService> _configServiceMock = new();
         private readonly Mock<IWorldService> _worldServiceMock = new();
+        private readonly Mock<ITargetingService> _targetingServiceMock = new();
+        private readonly Mock<IFriendsService> _friendsServiceMock = new();
         private readonly Mock<IHotkeyService> _hotkeyServiceMock = new();
         private readonly Mock<ILogger<BandageHealService>> _loggerMock = new();
         private readonly UserProfile _profile = new();
@@ -23,10 +25,14 @@ namespace TMRazorImproved.Tests.MockTests.Agents
         {
             _configServiceMock.Setup(c => c.CurrentProfile).Returns(_profile);
             _worldServiceMock.Setup(w => w.Player).Returns(_player);
+            _worldServiceMock.Setup(w => w.FindMobile(_player.Serial)).Returns(_player);
             
             _profile.BandageHeal.BandageSerial = 0x44444444;
             _profile.BandageHeal.HpStart = 80;
             _profile.BandageHeal.CustomDelay = 100; // Fast delay for testing
+            _profile.BandageHeal.TargetType = "Self";
+            _profile.BandageHeal.HealMortal = true;
+            _profile.BandageHeal.HealPoison = true;
         }
 
         [Fact]
@@ -37,6 +43,8 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _packetServiceMock.Object,
                 _configServiceMock.Object,
                 _worldServiceMock.Object,
+                _targetingServiceMock.Object,
+                _friendsServiceMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 
@@ -63,6 +71,8 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _packetServiceMock.Object,
                 _configServiceMock.Object,
                 _worldServiceMock.Object,
+                _targetingServiceMock.Object,
+                _friendsServiceMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 
@@ -88,6 +98,8 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _packetServiceMock.Object,
                 _configServiceMock.Object,
                 _worldServiceMock.Object,
+                _targetingServiceMock.Object,
+                _friendsServiceMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 
@@ -118,6 +130,8 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _packetServiceMock.Object,
                 _configServiceMock.Object,
                 _worldServiceMock.Object,
+                _targetingServiceMock.Object,
+                _friendsServiceMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 
@@ -141,6 +155,8 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _packetServiceMock.Object,
                 _configServiceMock.Object,
                 _worldServiceMock.Object,
+                _targetingServiceMock.Object,
+                _friendsServiceMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 
@@ -165,6 +181,8 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _packetServiceMock.Object,
                 _configServiceMock.Object,
                 _worldServiceMock.Object,
+                _targetingServiceMock.Object,
+                _friendsServiceMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 

@@ -7,25 +7,33 @@ using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
 using TMRazorImproved.Shared.Messages;
 using System.Buffers.Binary;
+using TMRazorImproved.Core.Utilities;
 
 namespace TMRazorImproved.Core.Services
 {
-    public class SkillsService : ISkillsService, IRecipient<UOPacketMessage>
+    // FIX P0-02: cambiato da IRecipient<UOPacketMessage> a IRecipient<SkillsUpdatedMessage>.
+    // In precedenza SkillsService ascoltava UOPacketMessage raw e filtrava per 0x3A,
+    // ma WorldPacketHandler.HandleSkillsUpdate invia SkillsUpdatedMessage — architettura duplicata
+    // e non allineata. Ora SkillsService riceve il messaggio tipizzato corretto.
+    public class SkillsService : ISkillsService, IRecipient<SkillsUpdatedMessage>
     {
         private readonly List<SkillInfo> _skills = new();
+        private readonly List<SkillGainRecord> _gainHistory = new();
+        private readonly object _skillsLock = new(); // FIX P2-01: protezione thread-safety
         private readonly IPacketService _packetService;
         private readonly ILogger<SkillsService> _logger;
 
-        public IReadOnlyList<SkillInfo> Skills => _skills;
+        public IReadOnlyList<SkillInfo> Skills { get { lock (_skillsLock) return _skills.AsReadOnly(); } }
+        public IReadOnlyList<SkillGainRecord> GainHistory { get { lock (_skillsLock) return _gainHistory.AsReadOnly(); } }
 
-        public double TotalReal => _skills.Sum(s => s.Value);
-        public double TotalBase => _skills.Sum(s => s.BaseValue);
+        public double TotalReal { get { lock (_skillsLock) return _skills.Sum(s => s.Value); } }
+        public double TotalBase { get { lock (_skillsLock) return _skills.Sum(s => s.BaseValue); } }
 
         public SkillsService(IPacketService packetService, IMessenger messenger, ILogger<SkillsService> logger)
         {
             _packetService = packetService;
             _logger = logger;
-            messenger.Register<UOPacketMessage>(this);
+            messenger.Register<SkillsUpdatedMessage>(this);
 
             InitializeSkills();
         }
@@ -47,15 +55,11 @@ namespace TMRazorImproved.Core.Services
             }
         }
 
-        public void Receive(UOPacketMessage message)
+        public void Receive(SkillsUpdatedMessage message)
         {
-            if (message.Path != Shared.Enums.PacketPath.ServerToClient) return;
-            byte[] data = message.Value.Data;
-
-            if (data.Length > 0 && data[0] == 0x3A) // Skill Update
-            {
+            byte[] data = message.Value;
+            if (data.Length > 0 && data[0] == 0x3A)
                 HandleSkillUpdate(data);
-            }
         }
 
         private void HandleSkillUpdate(byte[] data)
@@ -65,24 +69,36 @@ namespace TMRazorImproved.Core.Services
             ushort length = reader.ReadUInt16();
             byte type = reader.ReadByte();
 
-            if (type == 0xFF) // Full list
+            lock (_skillsLock) // FIX P2-01: lock su tutta la sequenza di aggiornamento
             {
-                for (int i = 0; i < _skills.Count; i++)
+                if (type == 0xFF) // Full list — ogni entry è (skillId 1-based, val, baseVal, lock, cap), terminata da skillId=0
                 {
-                    ushort skillId = reader.ReadUInt16();
-                    if (skillId > 0 && skillId <= _skills.Count)
+                    while (reader.Remaining >= 2)
                     {
-                        var skill = _skills[skillId - 1];
-                        UpdateSkill(skill, reader);
+                        ushort skillId = reader.ReadUInt16();
+                        if (skillId == 0) break; // terminator
+
+                        if (reader.Remaining < 7) break; // packet troncato
+
+                        int idx = skillId - 1; // converti da 1-based a 0-based
+                        if (idx >= 0 && idx < _skills.Count)
+                        {
+                            UpdateSkill(_skills[idx], reader);
+                        }
+                        else
+                        {
+                            // skill fuori range: salta i 7 byte del body (val+baseVal+lock+cap)
+                            reader.Skip(7);
+                        }
                     }
                 }
-            }
-            else // Single skill
-            {
-                ushort skillId = reader.ReadUInt16();
-                if (skillId >= 0 && skillId < _skills.Count)
+                else // Single skill — skillId 0-based
                 {
-                    UpdateSkill(_skills[skillId], reader);
+                    ushort skillId = reader.ReadUInt16();
+                    if (skillId < _skills.Count)
+                    {
+                        UpdateSkill(_skills[skillId], reader);
+                    }
                 }
             }
         }
@@ -100,6 +116,11 @@ namespace TMRazorImproved.Core.Services
             if (skill.Value != 0 && newValue != skill.Value)
             {
                 skill.Delta += (newValue - skill.Value);
+
+                if (newValue > skill.Value)
+                {
+                    _gainHistory.Add(new SkillGainRecord(DateTime.Now, skill.Name, skill.Value, newValue));
+                }
             }
 
             skill.Value = newValue;
@@ -110,16 +131,24 @@ namespace TMRazorImproved.Core.Services
 
         public void ResetDelta()
         {
-            foreach (var s in _skills) s.Delta = 0;
+            lock (_skillsLock)
+            {
+                foreach (var s in _skills) s.Delta = 0;
+            }
         }
 
         public void SetLock(int skillId, SkillLock lockType)
         {
-            // Pacchetto 0x3A per settare il lock lato server
-            byte[] packet = new byte[6];
-            packet[0] = 0x3A;
-            // ... pacchetto specifico per il client ...
-            // In una implementazione reale, qui invieremmo il pacchetto tramite IPacketService
+            SkillInfo? skill;
+            lock (_skillsLock)
+            {
+                if (skillId < 0 || skillId >= _skills.Count) return;
+                skill = _skills[skillId];
+                skill.Lock = lockType;
+            }
+
+            _logger.LogDebug("Setting Skill Lock: {SkillName} to {LockType}", skill.Name, lockType);
+            _packetService.SendToServer(PacketBuilder.SetSkillLock(skillId, (byte)lockType));
         }
     }
 }

@@ -405,5 +405,34 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 _packet.SendToServer(PacketBuilder.DoubleClick(P.Serial));
             }
         }
+
+        /// <summary>
+        /// Imposta la weapon ability primaria o secondaria.
+        /// abilityName: "primary" | "secondary" | "clear" (o indice numerico).
+        /// Invia 0xBF extended sub 0x14 (ToggleSpecialAbility) al server.
+        /// </summary>
+        public virtual void SetAbility(string abilityName)
+        {
+            _cancel.ThrowIfCancelled();
+            // 0xBF extended — sub 0x14 Toggle Special Move (AOS+)
+            // arg: 0 = clear, 1 = primary, 2 = secondary
+            int ability = abilityName?.ToLowerInvariant() switch
+            {
+                "primary"   => 1,
+                "secondary" => 2,
+                "clear"     => 0,
+                _           => int.TryParse(abilityName, out int n) ? n : 0
+            };
+
+            // Packet 0xBF sub 0x14: cmd(1) len(2) sub(2) abilityId(2)
+            byte[] data = new byte[7];
+            data[0] = 0xBF;
+            data[1] = 0x00; data[2] = 0x07;   // length = 7
+            data[3] = 0x00; data[4] = 0x14;   // sub = 0x0014
+            data[5] = (byte)(ability >> 8);
+            data[6] = (byte)ability;
+            _packet.SendToServer(data);
+            _logger?.LogDebug("SetAbility: {Name} ({Id})", abilityName, ability);
+        }
     }
 }

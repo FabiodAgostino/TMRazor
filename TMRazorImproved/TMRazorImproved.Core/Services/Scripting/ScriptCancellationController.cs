@@ -20,9 +20,11 @@ namespace TMRazorImproved.Core.Services.Scripting
     public sealed class ScriptCancellationController
     {
         private volatile bool _cancelled;
+        public CancellationToken Token { get; }
 
         public ScriptCancellationController(CancellationToken token)
         {
+            Token = token;
             // Collega la cancellazione .NET a questo controller
             token.Register(() => _cancelled = true);
         }

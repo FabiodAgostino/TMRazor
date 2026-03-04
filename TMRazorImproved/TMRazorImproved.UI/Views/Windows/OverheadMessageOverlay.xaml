@@ -1,0 +1,66 @@
+<Window x:Class="TMRazorImproved.UI.Views.Windows.OverheadMessageOverlay"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+        mc:Ignorable="d"
+        Title="Overhead Messages"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        IsHitTestVisible="False"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        d:DataContext="{d:DesignInstance vm:OverheadMessageOverlayViewModel, IsDesignTimeCreatable=False}">
+
+    <!--
+        Overlay trasparente che mostra i messaggi overhead in un pannello ancorato
+        in basso-sinistra sopra il client UO. Ogni messaggio mostra nome + testo
+        e svanisce con fade-out automatico dopo MessageDisplaySeconds.
+    -->
+    <Grid>
+        <!-- Pannello messaggi in basso-sinistra, al di sopra del client -->
+        <Border VerticalAlignment="Bottom"
+                HorizontalAlignment="Left"
+                Margin="8,0,0,8"
+                MaxWidth="420"
+                Background="#99000000"
+                CornerRadius="6"
+                Padding="8,6"
+                Visibility="{Binding Messages.Count, Converter={StaticResource CountToVisibilityConverter}}">
+            <ItemsControl ItemsSource="{Binding Messages}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:OverheadEntry}">
+                        <Border Opacity="{Binding Opacity}"
+                                Margin="0,2">
+                            <StackPanel Orientation="Horizontal" FlowDirection="LeftToRight">
+                                <!-- Nome mittente -->
+                                <TextBlock Text="{Binding SenderName}"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#FFCC99"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,4,0"/>
+                                <TextBlock Text=":"
+                                           FontSize="12"
+                                           Foreground="#FFCC99"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,6,0"/>
+                                <!-- Testo del messaggio -->
+                                <TextBlock Text="{Binding Text}"
+                                           FontSize="12"
+                                           Foreground="{Binding TextBrush}"
+                                           TextWrapping="Wrap"
+                                           MaxWidth="280"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+    </Grid>
+</Window>

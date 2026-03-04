@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
+using CommunityToolkit.Mvvm.Messaging;
 using TMRazorImproved.Core.Utilities;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
+using TMRazorImproved.Shared.Messages;
 
 namespace TMRazorImproved.Core.Services.Scripting.Api
 {
@@ -23,13 +25,18 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         private readonly IPacketService _packet;
         private readonly ScriptCancellationController _cancel;
         private readonly ILogger<ItemsApi>? _logger;
+        // FIX P1-01: messenger iniettato invece di WeakReferenceMessenger.Default
+        // per correttezza nei test unitari e per rispettare la DI chain.
+        private readonly IMessenger _messenger;
 
-        public ItemsApi(IWorldService world, IPacketService packet, ScriptCancellationController cancel, ILogger<ItemsApi>? logger = null)
+        public ItemsApi(IWorldService world, IPacketService packet, ScriptCancellationController cancel,
+            ILogger<ItemsApi>? logger = null, IMessenger? messenger = null)
         {
             _world = world;
             _packet = packet;
             _cancel = cancel;
             _logger = logger;
+            _messenger = messenger ?? WeakReferenceMessenger.Default;
         }
 
         // ------------------------------------------------------------------
@@ -80,6 +87,66 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return searchSpace.Where(i => i.Graphic == graphic && (hue == -1 || i.Hue == hue)).ToList();
         }
 
+        /// <summary>Cerca il primo item con uno dei graphic ID specificati.</summary>
+        public virtual Item? FindByID(System.Collections.IEnumerable graphics, int hue = -1, uint container = 0, bool recurse = true)
+        {
+            _cancel.ThrowIfCancelled();
+            var ids = ConvertToList(graphics);
+            IEnumerable<Item> searchSpace = container == 0 ? _world.Items : GetItemsInContainer(container, recurse);
+            return searchSpace.FirstOrDefault(i => ids.Contains(i.Graphic) && (hue == -1 || i.Hue == hue));
+        }
+
+        /// <summary>Ritorna tutti gli item con uno dei graphic ID specificati.</summary>
+        public virtual List<Item> FindAllByID(System.Collections.IEnumerable graphics, int hue = -1, uint container = 0, bool recurse = true)
+        {
+            _cancel.ThrowIfCancelled();
+            var ids = ConvertToList(graphics);
+            IEnumerable<Item> searchSpace = container == 0 ? _world.Items : GetItemsInContainer(container, recurse);
+            return searchSpace.Where(i => ids.Contains(i.Graphic) && (hue == -1 || i.Hue == hue)).ToList();
+        }
+
+        private List<int> ConvertToList(System.Collections.IEnumerable input)
+        {
+            var list = new List<int>();
+            foreach (var item in input)
+            {
+                if (item is int i) list.Add(i);
+                else if (item is IConvertible c) list.Add(Convert.ToInt32(c));
+            }
+            return list;
+        }
+
+        /// <summary>Attende che il server invii il contenuto del contenitore (pacchetto 0x3C).</summary>
+        public virtual bool WaitForContents(uint serial, int timeout = 5000)
+        {
+            _cancel.ThrowIfCancelled();
+            var deadline = Environment.TickCount64 + timeout;
+            
+            // In RazorEnhanced, WaitForContents aspetta che arrivi il pacchetto 0x3C.
+            // Possiamo usare il Messenger per ricevere la notifica del ContainerContentMessage.
+            // FIX P1-01: usa il messenger iniettato anziché WeakReferenceMessenger.Default
+            bool received = false;
+            _messenger.Register<ItemsApi, ContainerContentMessage>(this, (r, m) =>
+            {
+                if (m.Value.ContainerSerial == serial) received = true;
+            });
+
+            try
+            {
+                while (Environment.TickCount64 < deadline)
+                {
+                    _cancel.ThrowIfCancelled();
+                    if (received) return true;
+                    System.Threading.Thread.Sleep(50);
+                }
+                return false;
+            }
+            finally
+            {
+                _messenger.Unregister<ContainerContentMessage>(this);
+            }
+        }
+
         private IEnumerable<Item> GetItemsInContainer(uint containerSerial, bool recurse)
         {
             var children = _world.Items.Where(i => i.ContainerSerial == containerSerial).ToList();
@@ -119,9 +186,16 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             string text = GetPropString(serial, name);
             if (string.IsNullOrEmpty(text)) return 0;
-            // Estrae il primo numero intero dal testo della proprietà
-            var match = Regex.Match(text, @"\d+");
-            return match.Success ? int.Parse(match.Value) : 0;
+            
+            // Regex migliorata per gestire "45 / 50" (estrae 45), "+15%" (estrae 15), "10" (estrae 10)
+            // Cerca il primo gruppo di cifre, potenzialmente preceduto da + o seguito da /
+            var match = Regex.Match(text, @"([-+]?\d+)(?:\s*/\s*\d+)?");
+            if (match.Success)
+            {
+                if (int.TryParse(match.Groups[1].Value, out int val))
+                    return val;
+            }
+            return 0;
         }
 
         /// <summary>Controlla se un item esiste nel mondo corrente.</summary>
@@ -153,6 +227,46 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         // ------------------------------------------------------------------
         // Azioni
         // ------------------------------------------------------------------
+
+        /// <summary>Ritorna tutti gli item entro il range dal giocatore (solo item a terra).</summary>
+        public virtual IEnumerable<Item> FindAllInRange(int range)
+        {
+            _cancel.ThrowIfCancelled();
+            var player = _world.Player;
+            if (player == null) return Enumerable.Empty<Item>();
+
+            return _world.Items
+                .Where(i => i.ContainerSerial == 0 && i.DistanceTo(player) <= range)
+                .ToList();
+        }
+
+        public virtual IEnumerable<Item> FilterByGraphic(int graphic)
+        {
+            _cancel.ThrowIfCancelled();
+            return _world.Items.Where(i => i.Graphic == (ushort)graphic).ToList();
+        }
+
+        public virtual IEnumerable<Item> FilterByHue(int hue)
+        {
+            _cancel.ThrowIfCancelled();
+            return _world.Items.Where(i => i.Hue == (ushort)hue).ToList();
+        }
+
+        /// <summary>Cerca il primo item con il graphic specificato nel backpack e lo usa.</summary>
+        public virtual void UseType(int graphic, int hue = -1)
+        {
+            _cancel.ThrowIfCancelled();
+            var bp = _world.Player?.Backpack;
+            if (bp == null) return;
+
+            var item = _world.Items.FirstOrDefault(i => 
+                i.ContainerSerial == bp.Serial && 
+                i.Graphic == (ushort)graphic && 
+                (hue == -1 || i.Hue == (ushort)hue));
+
+            if (item != null)
+                UseItem(item.Serial);
+        }
 
         public virtual void UseItem(uint serial)
         {

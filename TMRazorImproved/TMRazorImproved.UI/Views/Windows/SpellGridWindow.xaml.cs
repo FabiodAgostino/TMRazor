@@ -1,25 +1,25 @@
 using System.Windows;
 using System.Windows.Input;
 using TMRazorImproved.UI.ViewModels;
+using Wpf.Ui.Controls;
 
 namespace TMRazorImproved.UI.Views.Windows
 {
-    public partial class SpellGridWindow : Window
+    public partial class SpellGridWindow : FluentWindow
     {
-        public SpellGridViewModel ViewModel { get; }
-
         public SpellGridWindow(SpellGridViewModel viewModel)
         {
-            ViewModel = viewModel;
-            DataContext = this;
-
+            DataContext = viewModel;
             InitializeComponent();
-        }
 
-        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton == MouseButton.Left)
-                this.DragMove();
+            // Abilita trascinamento della finestra
+            RootGrid.MouseDown += (s, e) => {
+                if (e.ChangedButton == MouseButton.Left)
+                    DragMove();
+            };
+
+            // Dispone il ViewModel (ferma il timer cooldown) quando la finestra viene chiusa
+            Closed += (_, _) => viewModel.Dispose();
         }
     }
 }

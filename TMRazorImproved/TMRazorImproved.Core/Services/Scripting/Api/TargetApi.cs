@@ -1,3 +1,5 @@
+using System;
+using System.Threading;
 using TMRazorImproved.Shared.Interfaces;
 
 namespace TMRazorImproved.Core.Services.Scripting.Api
@@ -13,19 +15,105 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel = cancel;
         }
 
-        public virtual void Self() => _targeting.TargetSelf();
-        public virtual void Last() => _targeting.SendTarget(_targeting.LastTarget);
-        public virtual void Cancel() => _targeting.CancelTarget();
-        public virtual void WaitForTarget(int timeout = 5000)
+        public virtual void Self()
         {
-            // Attesa bloccante (gestita in MiscApi)
+            _cancel.ThrowIfCancelled();
+            _targeting.TargetSelf();
         }
 
+        public virtual void Last()
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.SendTarget(_targeting.LastTarget);
+        }
+
+        public virtual void Cancel()
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.CancelTarget();
+        }
+
+        /// <summary>
+        /// Attende che il server invii un target cursor (0x6C S2C) fino a <paramref name="timeout"/> ms.
+        /// Ritorna true se il cursor è arrivato, false se scaduto il timeout.
+        /// </summary>
+        public virtual bool WaitForTarget(int timeout = 5000)
+        {
+            _cancel.ThrowIfCancelled();
+
+            // Il cursore è già pendente — ritorna subito
+            if (_targeting.HasTargetCursor) return true;
+
+            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            Action<uint> handler = _ => tcs.TrySetResult(true);
+
+            _targeting.TargetCursorRequested += handler;
+            try
+            {
+                var deadline = Environment.TickCount64 + timeout;
+                while (Environment.TickCount64 < deadline)
+                {
+                    _cancel.ThrowIfCancelled();
+                    if (_targeting.HasTargetCursor || tcs.Task.IsCompleted) return true;
+                    Thread.Sleep(50);
+                }
+                return _targeting.HasTargetCursor;
+            }
+            finally
+            {
+                _targeting.TargetCursorRequested -= handler;
+            }
+        }
+
+        /// <summary>Ritorna true se c'è un target cursor S2C attivo inviato dal server e non ancora consumato.</summary>
+        public virtual bool HasTarget() => _targeting.HasTargetCursor;
+
         public virtual uint GetLast() => _targeting.LastTarget;
-        public virtual bool HasTarget() => false; // TODO: Implementare flag in targeting service
-        
-        public virtual void TargetExecute(uint serial) => _targeting.SendTarget(serial);
-        public virtual void TargetExecute(int x, int y, int z, int graphic) 
-            => _targeting.SendTarget(0, (ushort)x, (ushort)y, (sbyte)z, (ushort)graphic);
+        public virtual void SetLastTarget(uint serial) => _targeting.LastTarget = serial;
+
+        public virtual void TargetExecute(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.SendTarget(serial);
+        }
+
+        public virtual void TargetExecute(int x, int y, int z, int graphic)
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.SendTarget(0, (ushort)x, (ushort)y, (sbyte)z, (ushort)graphic);
+        }
+
+        public virtual bool HasPrompt() => _targeting.HasPrompt;
+
+        public virtual bool WaitForPrompt(int timeout = 5000)
+        {
+            if (_targeting.HasPrompt) return true;
+
+            var tcs = new TaskCompletionSource<bool>();
+            Action<bool> handler = (hasPrompt) => { if (hasPrompt) tcs.TrySetResult(true); };
+
+            _targeting.PromptChanged += handler;
+            try
+            {
+                var deadline = Environment.TickCount64 + timeout;
+                while (Environment.TickCount64 < deadline)
+                {
+                    _cancel.ThrowIfCancelled();
+                    if (_targeting.HasPrompt) return true;
+                    Thread.Sleep(50);
+                }
+                return _targeting.HasPrompt;
+            }
+            finally
+            {
+                _targeting.PromptChanged -= handler;
+            }
+        }
+
+        public virtual void SendPrompt(string text)
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.SendPrompt(text);
+        }
     }
 }

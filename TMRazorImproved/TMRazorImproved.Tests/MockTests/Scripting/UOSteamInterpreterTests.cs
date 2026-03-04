@@ -12,6 +12,8 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         private readonly Mock<IWorldService> _worldMock = new();
         private readonly Mock<IPacketService> _packetMock = new();
         private readonly Mock<ITargetingService> _targetingMock = new();
+        private readonly Mock<ISkillsService> _skillsMock = new();
+        private readonly Mock<IFriendsService> _friendsMock = new();
         private readonly ScriptCancellationController _cancel;
         private readonly List<string> _outputLog = new();
 
@@ -22,18 +24,20 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
 
         private UOSteamInterpreter CreateInterpreter(PlayerApi playerApi)
         {
-            var misc = new MiscApi(_worldMock.Object, _cancel);
-            var items = new ItemsApi(_worldMock.Object, _packetMock.Object, _cancel);
-            var mobiles = new MobilesApi(_worldMock.Object, _cancel);
-            
-            return new UOSteamInterpreter(misc, playerApi, items, mobiles, _cancel, s => _outputLog.Add(s));
+            var misc    = new MiscApi(_worldMock.Object, _cancel);
+            var items   = new ItemsApi(_worldMock.Object, _packetMock.Object, _cancel);
+            var mobiles = new MobilesApi(_worldMock.Object, _friendsMock.Object, _cancel);
+            var journalMock = new Mock<IJournalService>();
+            var journal = new JournalApi(journalMock.Object, _cancel);
+
+            return new UOSteamInterpreter(misc, playerApi, items, mobiles, journal, _cancel, s => _outputLog.Add(s));
         }
 
         [Fact]
         public void Execute_SimpleMsg_ShouldCallPlayerChatSay()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _cancel);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null);
             var interpreter = CreateInterpreter(playerMock.Object);
             string code = "msg 'hello world'";
 
@@ -48,7 +52,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         public void Execute_IfCondition_ShouldWork()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _cancel);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null);
             playerMock.Setup(p => p.Hits).Returns(50);
             var interpreter = CreateInterpreter(playerMock.Object);
             
@@ -71,7 +75,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         public void Execute_WhileLoop_ShouldExecuteMultipleTimes()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _cancel);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null);
             
             // Simula hits che scendono ogni volta che viene letto
             int callCount = 0;
@@ -95,7 +99,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         public void Execute_SetAlias_ShouldPersist()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _cancel);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null);
             var interpreter = CreateInterpreter(playerMock.Object);
             
             string code = @"

@@ -83,13 +83,12 @@ namespace TMRazorImproved.Core.Services
             Bitmap bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
             using (Graphics gfx = Graphics.FromImage(bmp))
             {
-                IntPtr hdcSrc = GetWindowDC(hWnd);
                 IntPtr hdcDest = gfx.GetHdc();
 
-                BitBlt(hdcDest, 0, 0, width, height, hdcSrc, 0, 0, SRCCOPY);
+                // PW_RENDERFULLCONTENT (0x00000002) is important for capturing hardware accelerated windows like UO
+                bool success = PrintWindow(hWnd, hdcDest, 0x00000002);
 
                 gfx.ReleaseHdc(hdcDest);
-                ReleaseDC(hWnd, hdcSrc);
             }
 
             return bmp;
@@ -108,16 +107,10 @@ namespace TMRazorImproved.Core.Services
         }
 
         [DllImport("user32.dll")]
-        private static extern IntPtr GetWindowDC(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr ReleaseDC(IntPtr hWnd, IntPtr hDC);
-
-        [DllImport("user32.dll")]
         private static extern IntPtr GetWindowRect(IntPtr hWnd, ref RECT rect);
 
-        [DllImport("gdi32.dll")]
-        private static extern bool BitBlt(IntPtr hObject, int nXDest, int nYDest, int nWidth, int nHeight, IntPtr hObjectSource, int nXSrc, int nYSrc, int dwRop);
+        [DllImport("user32.dll")]
+        private static extern bool PrintWindow(IntPtr hWnd, IntPtr hdcBlt, uint nFlags);
         #endregion
     }
 }

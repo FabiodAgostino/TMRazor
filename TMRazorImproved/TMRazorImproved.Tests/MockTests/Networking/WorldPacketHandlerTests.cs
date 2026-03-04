@@ -20,6 +20,7 @@ namespace TMRazorImproved.Tests.MockTests.Networking
         private readonly Mock<IFriendsService> _friendsServiceMock = new();
         private readonly Mock<IConfigService> _configServiceMock = new();
         private readonly Mock<IScreenCaptureService> _screenCaptureMock = new();
+        private readonly Mock<ITargetingService> _targetingServiceMock = new();
         private readonly Mock<IMessenger> _messengerMock = new();
         private readonly WorldPacketHandler _handler;
 
@@ -33,6 +34,7 @@ namespace TMRazorImproved.Tests.MockTests.Networking
                 _friendsServiceMock.Object,
                 _configServiceMock.Object,
                 _screenCaptureMock.Object,
+                _targetingServiceMock.Object,
                 _messengerMock.Object);
         }
 
@@ -58,7 +60,7 @@ namespace TMRazorImproved.Tests.MockTests.Networking
 
             // Act
             // Troviamo la callback registrata per 0x78 ed eseguiamola
-            var callback = ExtractCallback(0x78);
+            var callback = ExtractFilterCallback(0x78);
             callback(packet);
 
             // Assert
@@ -89,10 +91,14 @@ namespace TMRazorImproved.Tests.MockTests.Networking
             packet[39] = 0; packet[40] = 100;
             // type=1 (stats complete)
             packet[42] = 1;
-            // Str=120, Dex=100, Int=100
-            packet[43] = 0; packet[44] = 120;
-            packet[45] = 0; packet[46] = 100;
-            packet[47] = 0; packet[48] = 100;
+            // offset 43: isFemale (byte)
+            packet[43] = 0;
+            // offset 44: Str=120 (ushort)
+            packet[44] = 0; packet[45] = 120;
+            // offset 46: Dex=100 (ushort)
+            packet[46] = 0; packet[47] = 100;
+            // offset 48: Int=100 (ushort)
+            packet[48] = 0; packet[49] = 100;
 
             // Act
             var callback = ExtractCallback(0x11);
@@ -111,6 +117,14 @@ namespace TMRazorImproved.Tests.MockTests.Networking
             // Dobbiamo estrarre l'argomento passato alla chiamata RegisterViewer
             var invocation = _packetServiceMock.Invocations.First(i => i.Method.Name == "RegisterViewer" && (int)i.Arguments[1] == packetId);
             return (Action<byte[]>)invocation.Arguments[2];
+        }
+
+        private Func<byte[], bool> ExtractFilterCallback(int packetId)
+        {
+            _packetServiceMock.Verify(p => p.RegisterFilter(PacketPath.ServerToClient, packetId, It.IsAny<Func<byte[], bool>>()));
+            
+            var invocation = _packetServiceMock.Invocations.First(i => i.Method.Name == "RegisterFilter" && (int)i.Arguments[1] == packetId);
+            return (Func<byte[], bool>)invocation.Arguments[2];
         }
     }
 }

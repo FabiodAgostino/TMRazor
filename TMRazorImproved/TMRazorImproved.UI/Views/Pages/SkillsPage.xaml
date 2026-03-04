@@ -4,98 +4,180 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:converters="clr-namespace:TMRazorImproved.UI.Converters"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="800"
       Title="Skills">
+
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:GainToHeightConverter x:Key="GainToHeightConverter" />
+    </Page.Resources>
 
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <ui:TextBlock Text="Skills" FontSize="28" FontWeight="Bold" Margin="0,0,0,16" Grid.Row="0" />
 
-        <!-- Header Actions -->
-        <ui:Card Grid.Row="0" Margin="0,48,0,12" Padding="8">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                
-                <StackPanel Orientation="Horizontal">
-                    <ui:TextBlock Text="Set All Locks:" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"/>
-                    <ComboBox Width="100" 
-                              ItemsSource="{Binding ViewModel.LockOptions}" 
-                              SelectedItem="{Binding ViewModel.SelectedLockAll, Mode=TwoWay}"
-                              VerticalAlignment="Center"/>
-                    <ui:Button Command="{Binding ViewModel.SetAllLocksCommand}" 
-                               Icon="{ui:SymbolIcon Checkmark24}" 
-                               Margin="8,0,0,0" 
-                               ToolTip="Apply to all skills"/>
-                </StackPanel>
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+            <!-- SKILLS LIST TAB -->
+            <TabItem Header="Skills List">
+                <Grid Margin="0,12,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                <ui:ToggleSwitch Grid.Column="1" 
-                                IsChecked="{Binding ViewModel.DisplayChanges, Mode=TwoWay}" 
-                                Content="Display Changes" 
-                                VerticalAlignment="Center" />
-            </Grid>
-        </ui:Card>
+                    <!-- Header Actions -->
+                    <ui:Card Grid.Row="0" Margin="0,0,0,12" Padding="8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Orientation="Horizontal">
+                                <ui:TextBlock Text="Set All Locks:" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"/>
+                                <ComboBox Width="100" 
+                                          ItemsSource="{Binding ViewModel.LockOptions}" 
+                                          SelectedItem="{Binding ViewModel.SelectedLockAll, Mode=TwoWay}"
+                                          VerticalAlignment="Center"/>
+                                <ui:Button Command="{Binding ViewModel.SetAllLocksCommand}" 
+                                           Icon="{ui:SymbolIcon Checkmark24}" 
+                                           Margin="8,0,0,0" 
+                                           ToolTip="Apply to all skills"/>
+                            </StackPanel>
 
-        <ui:Card Grid.Row="1" Padding="0">
-            <DataGrid ItemsSource="{Binding ViewModel.Skills}" 
-                      AutoGenerateColumns="False" 
-                      CanUserAddRows="False" 
-                      Background="Transparent" 
-                      BorderThickness="0"
-                      HeadersVisibility="Column"
-                      GridLinesVisibility="Horizontal">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Skill Name" Binding="{Binding Name}" Width="*" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Real" Binding="{Binding Value, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Base" Binding="{Binding BaseValue, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Cap" Binding="{Binding Cap, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Delta" Binding="{Binding Delta, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="{Binding DataContext.ViewModel.DisplayChanges, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-                    <DataGridTemplateColumn Header="Lock" Width="100">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <ComboBox SelectedItem="{Binding Lock, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                          ItemsSource="{Binding DataContext.ViewModel.LockOptions, RelativeSource={RelativeSource AncestorType=Page}}"
-                                          BorderThickness="0" Background="Transparent" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
-        </ui:Card>
+                            <ui:ToggleSwitch Grid.Column="1" 
+                                            IsChecked="{Binding ViewModel.DisplayChanges, Mode=TwoWay}" 
+                                            Content="Display Changes" 
+                                            VerticalAlignment="Center" />
+                        </Grid>
+                    </ui:Card>
 
-        <ui:Card Grid.Row="2" Margin="0,12,0,0" Padding="12">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+                    <ui:Card Grid.Row="1" Padding="0">
+                        <DataGrid ItemsSource="{Binding ViewModel.Skills}" 
+                                  AutoGenerateColumns="False" 
+                                  CanUserAddRows="False" 
+                                  Background="Transparent" 
+                                  BorderThickness="0"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Skill Name" Binding="{Binding Name}" Width="*" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Real" Binding="{Binding Value, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Base" Binding="{Binding BaseValue, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Cap" Binding="{Binding Cap, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True" />
+                                <DataGridTextColumn Header="Delta" Binding="{Binding Delta, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="{Binding DataContext.ViewModel.DisplayChanges, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTemplateColumn Header="Lock" Width="100">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ComboBox SelectedItem="{Binding Lock, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                      ItemsSource="{Binding DataContext.ViewModel.LockOptions, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                      BorderThickness="0" Background="Transparent" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </ui:Card>
 
-                <StackPanel Orientation="Horizontal">
-                    <ui:TextBlock Text="Total Real: " Appearance="Secondary" VerticalAlignment="Center" />
-                    <ui:TextBlock Text="{Binding ViewModel.TotalReal, StringFormat={}{0:F1}}" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,24,0" />
-                    <ui:TextBlock Text="Total Base: " Appearance="Secondary" VerticalAlignment="Center" />
-                    <ui:TextBlock Text="{Binding ViewModel.TotalBase, StringFormat={}{0:F1}}" FontWeight="Bold" VerticalAlignment="Center" />
-                </StackPanel>
+                    <ui:Card Grid.Row="2" Margin="0,12,0,0" Padding="12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <ui:Button Content="Copy List" Icon="{ui:SymbolIcon Copy24}" Command="{Binding ViewModel.CopyAllCommand}" Margin="0,0,8,0" />
-                    <ui:Button Content="Reset Delta" Icon="{ui:SymbolIcon History24}" Command="{Binding ViewModel.ResetDeltaCommand}" />
-                </StackPanel>
-            </Grid>
-        </ui:Card>
+                            <StackPanel Orientation="Horizontal">
+                                <ui:TextBlock Text="Total Real: " Appearance="Secondary" VerticalAlignment="Center" />
+                                <ui:TextBlock Text="{Binding ViewModel.TotalReal, StringFormat={}{0:F1}}" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,24,0" />
+                                <ui:TextBlock Text="Total Base: " Appearance="Secondary" VerticalAlignment="Center" />
+                                <ui:TextBlock Text="{Binding ViewModel.TotalBase, StringFormat={}{0:F1}}" FontWeight="Bold" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <ui:Button Content="Copy List" Icon="{ui:SymbolIcon Copy24}" Command="{Binding ViewModel.CopyAllCommand}" Margin="0,0,8,0" />
+                                <ui:Button Content="Reset Delta" Icon="{ui:SymbolIcon History24}" Command="{Binding ViewModel.ResetDeltaCommand}" />
+                            </StackPanel>
+                        </Grid>
+                    </ui:Card>
+                </Grid>
+            </TabItem>
+
+            <!-- SKILL GAIN HISTORY TAB -->
+            <TabItem Header="Gain History">
+                <Grid Margin="0,12,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <ui:Card Grid.Row="0" Margin="0,0,0,12">
+                        <ui:TextBlock Text="History of Skill Gains" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </ui:Card>
+
+                    <ui:Card Grid.Row="1" Padding="0" Margin="0,0,0,12">
+                        <!-- Utilizzo di DataGrid per mostrare lo storico dei gain -->
+                        <DataGrid ItemsSource="{Binding ViewModel.GainHistory}" 
+                                  AutoGenerateColumns="False" 
+                                  CanUserAddRows="False" 
+                                  Background="Transparent" 
+                                  BorderThickness="0"
+                                  IsReadOnly="True"
+                                  MaxHeight="300"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat={}{0:HH:mm:ss}}" Width="100" />
+                                <DataGridTextColumn Header="Skill Name" Binding="{Binding SkillName}" Width="*" />
+                                <DataGridTextColumn Header="Old Value" Binding="{Binding OldValue, StringFormat={}{0:F1}}" Width="100" />
+                                <DataGridTextColumn Header="New Value" Binding="{Binding NewValue, StringFormat={}{0:F1}}" Width="100" />
+                                <DataGridTextColumn Header="Gain" Binding="{Binding Gain, StringFormat={}+{0:F1}}" Width="100" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="LimeGreen" />
+                                            <Setter Property="FontWeight" Value="Bold" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </ui:Card>
+
+                    <!-- Grafico Semplice -->
+                    <ui:Card Grid.Row="2" Padding="12" VerticalAlignment="Bottom">
+                        <Grid Height="150">
+                            <ui:TextBlock Text="Gain History Chart" Appearance="Secondary" VerticalAlignment="Top" HorizontalAlignment="Left" />
+                            <ItemsControl ItemsSource="{Binding ViewModel.GainHistory}" Margin="0,20,0,0">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid VerticalAlignment="Bottom" Margin="1,0,1,0" ToolTip="{Binding SkillName}">
+                                            <!-- Moltiplichiamo il gain per un fattore per renderlo visibile (es. x100) -->
+                                            <Rectangle Width="10" Fill="LimeGreen" Height="{Binding Gain, Converter={StaticResource GainToHeightConverter}}" RadiusX="2" RadiusY="2" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </ui:Card>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Page>

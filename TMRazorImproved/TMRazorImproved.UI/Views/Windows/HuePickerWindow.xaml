@@ -1,0 +1,84 @@
+<ui:FluentWindow x:Class="TMRazorImproved.UI.Views.Windows.HuePickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+        mc:Ignorable="d"
+        Title="Hue Picker" Height="600" Width="400"
+        WindowStartupLocation="CenterOwner"
+        WindowBackdropType="Mica">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="Hue Picker" Icon="{ui:SymbolIcon Color24}" />
+
+        <ui:TextBox Grid.Row="1" 
+                    Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    PlaceholderText="Search by name or index..."
+                    Icon="{ui:SymbolIcon Search24}"
+                    Margin="0,12" />
+
+        <ui:ListView Grid.Row="2" 
+                    ItemsSource="{Binding Hues}" 
+                    SelectedItem="{Binding SelectedHue, Mode=TwoWay}"
+                    VirtualizingStackPanel.IsVirtualizing="True"
+                    VirtualizingStackPanel.VirtualizationMode="Recycling">
+            <ui:ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="40" />
+                            <ColumnDefinition Width="60" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        
+                        <Border Width="30" Height="30" CornerRadius="4" 
+                                Background="{Binding PreviewBrush}" 
+                                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                                BorderThickness="1" />
+                        
+                        <TextBlock Grid.Column="1" 
+                                   Text="{Binding Index, StringFormat=0x{0:X4}}" 
+                                   VerticalAlignment="Center" 
+                                   Margin="8,0" 
+                                   FontFamily="Consolas" />
+                        
+                        <TextBlock Grid.Column="2" 
+                                   Text="{Binding Name}" 
+                                   VerticalAlignment="Center" 
+                                   FontWeight="SemiBold" />
+                    </Grid>
+                </DataTemplate>
+            </ui:ListView.ItemTemplate>
+        </ui:ListView>
+
+        <Grid Grid.Row="3" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            
+            <ui:Button Grid.Column="0" 
+                       Content="Cancel" 
+                       HorizontalAlignment="Stretch" 
+                       Margin="0,0,6,0"
+                       Click="Cancel_Click" />
+            
+            <ui:Button Grid.Column="1" 
+                       Content="Select" 
+                       Appearance="Primary"
+                       HorizontalAlignment="Stretch" 
+                       Margin="6,0,0,0"
+                       IsEnabled="{Binding SelectedHue, Converter={StaticResource NullToVisibilityConverter}}"
+                       Click="Select_Click" />
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

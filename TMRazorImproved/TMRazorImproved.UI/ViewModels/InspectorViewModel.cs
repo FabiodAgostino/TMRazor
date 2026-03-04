@@ -15,6 +15,7 @@ namespace TMRazorImproved.UI.ViewModels
         private readonly ITargetingService _targetingService;
         private readonly IWorldService _worldService;
         private readonly ILanguageService _languageService;
+        private readonly IPacketService _packetService;
 
         [ObservableProperty]
         private UOEntity? _inspectedEntity;
@@ -47,20 +48,25 @@ namespace TMRazorImproved.UI.ViewModels
 
         public ObservableCollection<GumpControl> GumpControls { get; } = new();
 
-        public InspectorViewModel(ITargetingService targetingService, IWorldService worldService, ILanguageService languageService)
+        public ObservableCollection<UOGump> OpenGumps { get; } = new();
+
+        public InspectorViewModel(ITargetingService targetingService, IWorldService worldService, ILanguageService languageService, IPacketService packetService)
         {
             _targetingService = targetingService;
             _worldService = worldService;
             _languageService = languageService;
+            _packetService = packetService;
 
             _statusMessage = _languageService.GetString("Inspector.Status.ClickInspect");
             _targetingService.TargetReceived += OnTargetReceived;
             
             EnableThreadSafeCollection(RecentSerials, new object());
             EnableThreadSafeCollection(GumpControls, new object());
+            EnableThreadSafeCollection(OpenGumps, new object());
 
             // Inizializza posizione iniziale
             UpdatePlayerPosition();
+            RefreshGumpsList();
         }
 
         private void UpdatePlayerPosition()
@@ -79,6 +85,40 @@ namespace TMRazorImproved.UI.ViewModels
         {
             UpdatePlayerPosition();
             StatusMessage = "Mappa aggiornata alla posizione attuale.";
+        }
+
+        [RelayCommand]
+        private void RefreshGumpsList()
+        {
+            RunOnUIThread(() => {
+                OpenGumps.Clear();
+                foreach (var gump in _worldService.OpenGumps.Values)
+                {
+                    OpenGumps.Add(gump);
+                }
+                StatusMessage = $"Lista Gump aggiornata. Trovati: {OpenGumps.Count}";
+            });
+        }
+
+        [RelayCommand]
+        private void InspectSpecificGump(UOGump? gump)
+        {
+            if (gump == null) return;
+            
+            RunOnUIThread(() => {
+                InspectedGump = gump;
+                GumpControls.Clear();
+                
+                GumpInfo = $"Gump ID: 0x{gump.GumpId:X8} | Serial: 0x{gump.Serial:X8}";
+                foreach (var control in gump.Controls)
+                {
+                    GumpControls.Add(control);
+                }
+                StatusMessage = $"Gump 0x{gump.GumpId:X8} ispezionato.";
+            });
+
+            // Cambia la selezione del tab corrente se necessario (potrebbe richiedere binding sul TabControl, 
+            // ma l'utente può cliccarlo manualmente)
         }
 
         [RelayCommand]
@@ -115,6 +155,23 @@ namespace TMRazorImproved.UI.ViewModels
                     StatusMessage = "Nessun Gump trovato.";
                 }
             });
+        }
+
+        [RelayCommand]
+        private void ExecuteGumpAction(GumpControl? control)
+        {
+            if (InspectedGump == null || control == null) return;
+
+            if (control is GumpButton btn)
+            {
+                byte[] pkt = TMRazorImproved.Core.Utilities.PacketBuilder.RespondGump(InspectedGump.Serial, InspectedGump.GumpId, btn.ButtonId);
+                _packetService.SendToServer(pkt);
+                StatusMessage = $"Inviata risposta Gump: Button {btn.ButtonId}";
+            }
+            else
+            {
+                StatusMessage = "Questo controllo non supporta azioni dirette.";
+            }
         }
 
         [RelayCommand]

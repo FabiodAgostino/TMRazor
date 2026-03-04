@@ -26,17 +26,20 @@ namespace TMRazorImproved.Core.Utilities
         }
 
         /// <summary>
-        /// Drop Request 0x08: deposita un item in un container.
+        /// Drop Request 0x08 (SA format, 15 byte): deposita un item in un container.
         /// x/y/z = 0xFFFF/0xFFFF/0 = posizione casuale all'interno del container.
+        /// FIX P1-04: layout esplicito SA — byte[10]=grid (0=slot casuale/nessuna preferenza).
+        /// Layout: cmd(1) serial(4) x(2) y(2) z(1) grid(1) container(4).
         /// </summary>
-        public static byte[] DropToContainer(uint serial, uint containerSerial)
+        public static byte[] DropToContainer(uint serial, uint containerSerial, byte grid = 0)
         {
             byte[] pkt = new byte[15];
             pkt[0] = 0x08;
             BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(1), serial);
-            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(5), 0xFFFF); // X
-            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(7), 0xFFFF); // Y
-            pkt[9] = 0;                                                    // Z
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(5), 0xFFFF); // X (random)
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(7), 0xFFFF); // Y (random)
+            pkt[9]  = 0;                                                   // Z
+            pkt[10] = grid;                                                // Grid slot (SA)
             BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(11), containerSerial);
             return pkt;
         }
@@ -112,6 +115,20 @@ namespace TMRazorImproved.Core.Utilities
             BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), (ushort)pkt.Length);
             pkt[3] = 0x24; // UseSkill type
             Array.Copy(skillBytes, 0, pkt, 4, skillBytes.Length);
+            return pkt;
+        }
+
+        /// <summary>Set Skill Lock via 0x3A: cambia lo stato del lock (Up/Down/Locked) di una skill.</summary>
+        public static byte[] SetSkillLock(int skillId, byte lockType)
+        {
+            // Packet 0x3A single skill update (client->server lock change)
+            // Format: cmd(1) len(2) type(1) skillID(2) lock(1)
+            byte[] pkt = new byte[7];
+            pkt[0] = 0x3A;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), 7);
+            pkt[3] = 0xDF; // Single skill lock change
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(4), (ushort)skillId);
+            pkt[6] = lockType;
             return pkt;
         }
 

@@ -13,12 +13,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
     public class MobilesApi
     {
         private readonly IWorldService _world;
+        private readonly IFriendsService _friends;
         private readonly ScriptCancellationController _cancel;
         private readonly ILogger<MobilesApi>? _logger;
 
-        public MobilesApi(IWorldService world, ScriptCancellationController cancel, ILogger<MobilesApi>? logger = null)
+        public MobilesApi(IWorldService world, IFriendsService friends, ScriptCancellationController cancel, ILogger<MobilesApi>? logger = null)
         {
             _world = world;
+            _friends = friends;
             _cancel = cancel;
             _logger = logger;
         }
@@ -36,6 +38,17 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         {
             _cancel.ThrowIfCancelled();
             return _world.Mobiles.FirstOrDefault(m => m.Graphic == graphic);
+        }
+
+        /// <summary>Ritorna tutti i mobile con il graphic specificato entro il range dal giocatore.</summary>
+        public virtual IEnumerable<Mobile> FindAllByID(int graphic, int range = -1)
+        {
+            _cancel.ThrowIfCancelled();
+            var player = _world.Player;
+            return _world.Mobiles
+                .Where(m => m.Graphic == (ushort)graphic)
+                .Where(m => range == -1 || (player != null && m.DistanceTo(player) <= range))
+                .ToList();
         }
 
         public virtual int GetDistance(uint serial)
@@ -75,12 +88,70 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 .FirstOrDefault();
         }
 
+        /// <summary>Ritorna il nemico più vicino (Notoriety: 3, 4, 5, 6).</summary>
+        public virtual Mobile? FindNearestEnemy()
+        {
+            _cancel.ThrowIfCancelled();
+            var player = _world.Player;
+            if (player == null) return null;
+
+            return _world.Mobiles
+                .Where(m => m.Serial != player.Serial && (m.Notoriety >= 3 && m.Notoriety <= 6))
+                .OrderBy(m => m.DistanceTo(player))
+                .FirstOrDefault();
+        }
+
+        /// <summary>Ritorna il mobile amico più vicino (in lista amici o Notoriety: 1, 2).</summary>
+        public virtual Mobile? FindNearestFriend()
+        {
+            _cancel.ThrowIfCancelled();
+            var player = _world.Player;
+            if (player == null) return null;
+
+            return _world.Mobiles
+                .Where(m => m.Serial != player.Serial && (_friends.IsFriend(m.Serial) || m.Notoriety == 1 || m.Notoriety == 2))
+                .OrderBy(m => m.DistanceTo(player))
+                .FirstOrDefault();
+        }
+
+        /// <summary>Filtra i mobile per graphic ID (body).</summary>
+        public virtual IEnumerable<Mobile> FilterByBody(int body)
+        {
+            _cancel.ThrowIfCancelled();
+            return _world.Mobiles.Where(m => m.Graphic == (ushort)body).ToList();
+        }
+
         /// <summary>Controlla se un mobile esiste e non è morto.</summary>
         public virtual bool IsAlive(uint serial)
         {
             _cancel.ThrowIfCancelled();
             var m = _world.FindMobile(serial);
             return m != null && m.Hits > 0;
+        }
+
+        /// <summary>Controlla se un mobile è morto (Hits <= 0 o non trovato).</summary>
+        public virtual bool IsDead(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            var m = _world.FindMobile(serial);
+            if (m == null) return true;
+            return m.Hits <= 0;
+        }
+
+        /// <summary>Controlla se il mobile è nella lista amici.</summary>
+        public virtual bool IsFriend(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            return _friends.IsFriend(serial);
+        }
+
+        /// <summary>Ritorna la percentuale di HP (0-100).</summary>
+        public virtual int GetHealthPercent(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            var m = _world.FindMobile(serial);
+            if (m == null || m.HitsMax <= 0) return 0;
+            return (int)((m.Hits * 100.0) / m.HitsMax);
         }
 
         public virtual IEnumerable<Mobile> FilterByNotoriety(int notoriety)

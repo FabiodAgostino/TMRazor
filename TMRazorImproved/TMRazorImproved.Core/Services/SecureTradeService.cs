@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using TMRazorImproved.Shared.Interfaces;
 using CommunityToolkit.Mvvm.Messaging;
 using TMRazorImproved.Shared.Messages;
-using System.Linq;
+using TMRazorImproved.Shared.Models;
 
 namespace TMRazorImproved.Core.Services
 {
@@ -12,13 +13,15 @@ namespace TMRazorImproved.Core.Services
     {
         private readonly IPacketService _packetService;
         private readonly ILogger<SecureTradeService> _logger;
-        private readonly List<uint> _activeTrades = new();
+        private readonly Dictionary<uint, TradeData> _trades = new();
 
         public event Action<uint>? TradeStarted;
         public event Action<uint>? TradeUpdated;
         public event Action<uint>? TradeClosed;
 
-        public IReadOnlyList<uint> ActiveTrades => _activeTrades.AsReadOnly();
+        public IReadOnlyList<uint> ActiveTrades => _trades.Keys.ToList().AsReadOnly();
+
+        public TradeData? GetTrade(uint tradeSerial) => _trades.GetValueOrDefault(tradeSerial);
 
         public SecureTradeService(IPacketService packetService, IMessenger messenger, ILogger<SecureTradeService> logger)
         {
@@ -30,6 +33,7 @@ namespace TMRazorImproved.Core.Services
         public void StartTrade(uint targetSerial)
         {
             _logger.LogInformation("Starting secure trade with serial {Serial}", targetSerial);
+            // Non si manda un 0x6F per avviare il trade, si apre droppando un item su di un player.
         }
 
         public void AcceptTrade(uint tradeSerial)
@@ -44,8 +48,10 @@ namespace TMRazorImproved.Core.Services
             pkt[5] = (byte)(tradeSerial >> 16);
             pkt[6] = (byte)(tradeSerial >> 8);
             pkt[7] = (byte)tradeSerial;
-            pkt[8] = 0x00; // Type?
-            pkt[9] = 0x01; // 1 = accepted
+            pkt[8] = 0x00;
+            pkt[9] = 0x00;
+            pkt[10] = 0x00;
+            pkt[11] = 0x01; // 1 = accepted
             _packetService.SendToServer(pkt);
         }
 
@@ -63,34 +69,68 @@ namespace TMRazorImproved.Core.Services
             pkt[7] = (byte)tradeSerial;
             _packetService.SendToServer(pkt);
             
-            if (_activeTrades.Contains(tradeSerial))
+            if (_trades.ContainsKey(tradeSerial))
             {
-                _activeTrades.Remove(tradeSerial);
+                _trades.Remove(tradeSerial);
                 TradeClosed?.Invoke(tradeSerial);
             }
         }
 
         public void Receive(TradeMessage message)
         {
-            // 0=Start, 1=Cancel, 2=Update
-            var (serial, action) = message.Value;
+            var (action, serial, data) = message.Value;
 
-            if (action == 0 && !_activeTrades.Contains(serial))
+            if (action == 0 && data != null) // Start
             {
-                _activeTrades.Add(serial);
-                _logger.LogInformation("Trade opened with {Serial}", serial);
+                _trades[serial] = data;
+                _logger.LogInformation("Trade opened with {Serial}, Name: {Name}", serial, data.NameTrader);
                 TradeStarted?.Invoke(serial);
             }
-            else if (action == 1 && _activeTrades.Contains(serial))
+            else if (action == 1) // Cancel
             {
-                _activeTrades.Remove(serial);
-                _logger.LogInformation("Trade cancelled/closed with {Serial}", serial);
-                TradeClosed?.Invoke(serial);
+                if (_trades.Remove(serial))
+                {
+                    _logger.LogInformation("Trade cancelled/closed with {Serial}", serial);
+                    TradeClosed?.Invoke(serial);
+                }
             }
-            else if (action == 2 && _activeTrades.Contains(serial))
+            else if (action == 2 && data != null) // Update
             {
-                _logger.LogInformation("Trade updated for {Serial}", serial);
-                TradeUpdated?.Invoke(serial);
+                if (_trades.TryGetValue(serial, out var existing))
+                {
+                    existing.AcceptMe = data.AcceptMe;
+                    existing.AcceptTrader = data.AcceptTrader;
+                    _logger.LogInformation("Trade updated for {Serial}. AcceptMe: {Me}, AcceptTrader: {Trader}", serial, existing.AcceptMe, existing.AcceptTrader);
+                    TradeUpdated?.Invoke(serial);
+                }
+            }
+            else if (action == 3 && data != null) // MoneyUpdate
+            {
+                if (_trades.TryGetValue(serial, out var existing))
+                {
+                    // Server o Client? Dipende da dove è stato parsato.
+                    // Il WorldPacketHandler ora lo fa sia C2S che S2C, popolando i rispettivi campi
+                    if (data.GoldTrader > 0 || data.PlatinumTrader > 0)
+                    {
+                        existing.GoldTrader = data.GoldTrader;
+                        existing.PlatinumTrader = data.PlatinumTrader;
+                    }
+                    if (data.GoldMe > 0 || data.PlatinumMe > 0)
+                    {
+                        existing.GoldMe = data.GoldMe;
+                        existing.PlatinumMe = data.PlatinumMe;
+                    }
+                    TradeUpdated?.Invoke(serial);
+                }
+            }
+            else if (action == 4 && data != null) // MoneyLimit
+            {
+                if (_trades.TryGetValue(serial, out var existing))
+                {
+                    existing.GoldMax = data.GoldMax;
+                    existing.PlatinumMax = data.PlatinumMax;
+                    TradeUpdated?.Invoke(serial);
+                }
             }
         }
     }

@@ -43,6 +43,62 @@
                                                    VerticalAlignment="Center" FontSize="12" />
                                     </StackPanel>
 
+                                    <Grid Margin="0,8,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- My Side -->
+                                        <Border Grid.Column="0" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="8">
+                                            <StackPanel>
+                                                <TextBlock Text="You Offer" FontWeight="SemiBold" Margin="0,0,0,8" />
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                    <ui:SymbolIcon Symbol="Money24" Foreground="Gold" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="{Binding MyGold}" VerticalAlignment="Center"/>
+                                                    <TextBlock Text=" Gold" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,12,0"/>
+                                                    
+                                                    <ui:SymbolIcon Symbol="Money24" Foreground="LightGray" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="{Binding MyPlatinum}" VerticalAlignment="Center"/>
+                                                    <TextBlock Text=" Plat" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                </StackPanel>
+                                                <TextBlock Text="Items:" Margin="0,8,0,4" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                <ItemsControl ItemsSource="{Binding MyItems}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock Text="{Binding Amount, StringFormat={}{0}x Item}" FontSize="11" />
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Their Side -->
+                                        <Border Grid.Column="2" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="8">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding TargetName, StringFormat={}{0} Offers}" FontWeight="SemiBold" Margin="0,0,0,8" />
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                    <ui:SymbolIcon Symbol="Money24" Foreground="Gold" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="{Binding TheirGold}" VerticalAlignment="Center"/>
+                                                    <TextBlock Text=" Gold" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,12,0"/>
+                                                    
+                                                    <ui:SymbolIcon Symbol="Money24" Foreground="LightGray" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="{Binding TheirPlatinum}" VerticalAlignment="Center"/>
+                                                    <TextBlock Text=" Plat" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                </StackPanel>
+                                                <TextBlock Text="Items:" Margin="0,8,0,4" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                <ItemsControl ItemsSource="{Binding TheirItems}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock Text="{Binding Amount, StringFormat={}{0}x Item}" FontSize="11" />
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />

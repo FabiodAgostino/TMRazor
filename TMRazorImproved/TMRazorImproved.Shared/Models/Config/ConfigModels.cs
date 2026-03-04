@@ -109,6 +109,8 @@ namespace TMRazorImproved.Shared.Models.Config
         
         public List<FriendsConfig> FriendsLists { get; set; } = new() { new FriendsConfig { Name = "Default" } };
         public string ActiveFriendsList { get; set; } = "Default";
+
+        public SpellGridConfig SpellGrid { get; set; } = new();
         
         // Hotkeys
         public List<HotkeyDefinition> Hotkeys { get; set; } = new();

@@ -21,6 +21,7 @@ namespace TMRazorImproved.Core.Handlers
         private readonly IFriendsService _friendsService;
         private readonly IConfigService _configService;
         private readonly IScreenCaptureService _screenCapture;
+        private readonly ITargetingService _targetingService;
         private readonly IMessenger _messenger;
 
         public WorldPacketHandler(
@@ -31,6 +32,7 @@ namespace TMRazorImproved.Core.Handlers
             IFriendsService friendsService,
             IConfigService configService,
             IScreenCaptureService screenCapture,
+            ITargetingService targetingService,
             IMessenger messenger)
         {
             _packetService = packetService;
@@ -40,6 +42,7 @@ namespace TMRazorImproved.Core.Handlers
             _friendsService = friendsService;
             _configService = configService;
             _screenCapture = screenCapture;
+            _targetingService = targetingService;
             _messenger = messenger;
 
             RegisterHandlers();
@@ -156,8 +159,10 @@ namespace TMRazorImproved.Core.Handlers
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xC0, HandleGraphicalEffect);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0x6D, HandlePlayMusic);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0x54, HandlePlaySoundEffect);
+            _packetService.RegisterViewer(PacketPath.ServerToClient, 0x65, HandleWeather);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xDF, HandleBuffDebuff);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xE2, HandleTestAnimation);
+            _packetService.RegisterViewer(PacketPath.ServerToClient, 0x6E, HandleCharacterAnimation);
 
             // ── Filters ───────────────────────────────────────────────────────────────────
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0x4E, HandlePersonalLightLevel);
@@ -182,6 +187,7 @@ namespace TMRazorImproved.Core.Handlers
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xB8, HandleProfile);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xB9, HandleFeatures);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xBA, HandleTrackingArrow);
+            _packetService.RegisterViewer(PacketPath.ServerToClient, 0x83, HandleDeleteCharacter);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xBC, HandleChangeSeason);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xC8, HandleSetUpdateRange);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xD8, HandleCustomHouseInfo);
@@ -197,6 +203,7 @@ namespace TMRazorImproved.Core.Handlers
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x12, HandleClientTextCommand);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x13, HandleEquipRequest);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x75, HandleRenameMobile);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0xBF, HandleExtendedClientCommand);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0xD7, HandleClientEncodedPacket);
         }
 
@@ -254,7 +261,9 @@ namespace TMRazorImproved.Core.Handlers
             {
                 case 0x04: // Close Generic Gump — server chiude un gump aperto
                     // sub(2) gumpTypeSerial(2) gumpId(2)  – nota: in alcuni server sono 4 byte ognuno
+                    uint closedGumpId = _worldService.CurrentGump?.GumpId ?? 0;
                     _worldService.RemoveGump();
+                    _messenger.Send(new GumpClosedMessage(closedGumpId));
                     break;
 
                 case 0x06: // Party Messages
@@ -335,16 +344,32 @@ namespace TMRazorImproved.Core.Handlers
                     if (reader.Remaining >= 1)
                     {
                         byte count = reader.ReadByte();
+                        _worldService.ClearParty();
                         for (int i = 0; i < count && reader.Remaining >= 4; i++)
-                            reader.ReadUInt32(); // member serial
+                        {
+                            uint memberSerial = reader.ReadUInt32();
+                            _worldService.AddPartyMember(memberSerial);
+                        }
                     }
                     break;
 
                 case 0x02: // Remove member / re-list
                     if (reader.Remaining >= 5)
                     {
-                        reader.ReadByte();       // count
-                        reader.ReadUInt32();     // removed member serial
+                        byte count = reader.ReadByte();
+                        uint removedSerial = reader.ReadUInt32();
+                        _worldService.RemovePartyMember(removedSerial);
+
+                        // If party count is 0 or 1, maybe it disbanded? We'll rely on the server 0x01 or removing ourselves
+                        if (_worldService.Player != null && removedSerial == _worldService.Player.Serial)
+                        {
+                            _worldService.ClearParty();
+                        }
+                        else
+                        {
+                            // In some protocol versions, count might indicate remaining members.
+                            // The easiest is just to remove the specific serial.
+                        }
                     }
                     break;
 
@@ -360,7 +385,11 @@ namespace TMRazorImproved.Core.Handlers
 
                 case 0x07: // Party invite
                     if (reader.Remaining >= 4)
-                        reader.ReadUInt32(); // leader serial
+                    {
+                        uint leaderSerial = reader.ReadUInt32();
+                        // This packet is handled for auto-accept in FriendsHandler, 
+                        // and filtering for block party invite in FilterHandler.
+                    }
                     break;
             }
         }
@@ -1321,6 +1350,7 @@ namespace TMRazorImproved.Core.Handlers
             uint cursorId = reader.ReadUInt32();
             byte cursorType = reader.ReadByte();   // 0=neutro, 1=offensivo, 2=benefico
 
+            _worldService.IsCasting = false;
             _messenger.Send(new TargetCursorMessage(cursorId, targetType, cursorType));
         }
 
@@ -1366,6 +1396,7 @@ namespace TMRazorImproved.Core.Handlers
 
             gump.Freeze();
             _worldService.SetCurrentGump(gump);
+            _messenger.Send(new GumpMessage(gump));
         }
 
         private void HandleCompressedGump(byte[] data)
@@ -1441,12 +1472,15 @@ namespace TMRazorImproved.Core.Handlers
 
             gump.Freeze();
             _worldService.SetCurrentGump(gump);
+            _messenger.Send(new GumpMessage(gump));
         }
 
         private void HandleGumpResponse(byte[] data)
         {
             // 0xB1 C2S: il client risponde al gump, che si chiude nella maggior parte dei casi
+            uint closedGumpId = _worldService.CurrentGump?.GumpId ?? 0;
             _worldService.RemoveGump();
+            _messenger.Send(new GumpClosedMessage(closedGumpId));
         }
 
         private void HandleOpenMenu(byte[] data)
@@ -1471,14 +1505,88 @@ namespace TMRazorImproved.Core.Handlers
             reader.ReadByte();           // 0x6F
             byte action = reader.ReadByte();
             uint serial = reader.ReadUInt32();
+            
+            TradeData? tradeData = null;
 
-            _messenger.Send(new TradeMessage(serial, action));
+            if (action == 0 && reader.Remaining >= 8) // Start
+            {
+                tradeData = new TradeData
+                {
+                    TradeId = serial,
+                    ContainerMe = reader.ReadUInt32(),
+                    ContainerTrader = reader.ReadUInt32()
+                };
+                if (reader.Remaining > 0)
+                {
+                    bool hasName = reader.ReadByte() != 0;
+                    if (hasName && reader.Remaining > 0)
+                    {
+                        tradeData.NameTrader = reader.ReadString(reader.Remaining);
+                    }
+                }
+            }
+            else if (action == 2 && reader.Remaining >= 8) // Update
+            {
+                tradeData = new TradeData
+                {
+                    TradeId = serial,
+                    AcceptMe = reader.ReadUInt32() != 0,
+                    AcceptTrader = reader.ReadUInt32() != 0
+                };
+            }
+            else if (action == 3 && reader.Remaining >= 8) // MoneyUpdate
+            {
+                tradeData = new TradeData
+                {
+                    TradeId = serial,
+                    GoldTrader = reader.ReadUInt32(),
+                    PlatinumTrader = reader.ReadUInt32()
+                };
+            }
+            else if (action == 4 && reader.Remaining >= 8) // MoneyLimit
+            {
+                tradeData = new TradeData
+                {
+                    TradeId = serial,
+                    GoldMax = reader.ReadUInt32(),
+                    PlatinumMax = reader.ReadUInt32()
+                };
+            }
+
+            _messenger.Send(new TradeMessage(action, serial, tradeData));
         }
 
         private void HandleTradeRequestC2S(byte[] data)
         {
-            // 0x6F C2S: stesso formato, solo tracking
+            // 0x6F C2S: cmd(1) action(1) serial(4) ...
             if (data.Length < 6) return;
+            var reader = new UOBufferReader(data);
+            reader.ReadByte();           // 0x6F
+            byte action = reader.ReadByte();
+            uint serial = reader.ReadUInt32();
+            
+            TradeData? tradeData = null;
+
+            if (action == 2 && reader.Remaining >= 8) // Update
+            {
+                tradeData = new TradeData
+                {
+                    TradeId = serial,
+                    AcceptMe = reader.ReadUInt32() != 0,
+                    AcceptTrader = reader.ReadUInt32() != 0
+                };
+            }
+            else if (action == 3 && reader.Remaining >= 8) // MoneyUpdate
+            {
+                tradeData = new TradeData
+                {
+                    TradeId = serial,
+                    GoldMe = reader.ReadUInt32(),
+                    PlatinumMe = reader.ReadUInt32()
+                };
+            }
+
+            _messenger.Send(new TradeMessage(action, serial, tradeData));
         }
 
         #endregion
@@ -1548,13 +1656,19 @@ namespace TMRazorImproved.Core.Handlers
             reader.ReadUInt16();         // length
             uint serial = reader.ReadUInt32();
             reader.ReadUInt16();         // body
-            reader.ReadByte();           // type
+            byte msgType = reader.ReadByte();
             ushort hue = reader.ReadUInt16();
             reader.ReadUInt16();         // font
             string name = reader.ReadString(30);
             string text = reader.ReadString();
 
             _journalService.AddEntry(new JournalEntry(text, name, serial, hue));
+
+            // Pubblica solo messaggi overhead visibili (Regular, Emote, Yell, Whisper...)
+            // System (0x01) e Label (0x06) non hanno un'entità sorgente visibile
+            if (msgType != 0x01 && !string.IsNullOrEmpty(text))
+                _messenger.Send(new OverheadMessageMessage(serial, name, text, hue,
+                    (OverheadMessageType)msgType));
         }
 
         private void HandleUnicodeMessage(byte[] data)
@@ -1566,7 +1680,7 @@ namespace TMRazorImproved.Core.Handlers
             reader.ReadUInt16();         // length
             uint serial = reader.ReadUInt32();
             reader.ReadUInt16();         // body
-            reader.ReadByte();           // type
+            byte msgType = reader.ReadByte();
             ushort hue = reader.ReadUInt16();
             reader.ReadUInt16();         // font
             reader.ReadString(4);        // language
@@ -1574,6 +1688,10 @@ namespace TMRazorImproved.Core.Handlers
             string text = reader.ReadUnicodeString();
 
             _journalService.AddEntry(new JournalEntry(text, name, serial, hue));
+
+            if (msgType != 0x01 && !string.IsNullOrEmpty(text))
+                _messenger.Send(new OverheadMessageMessage(serial, name, text, hue,
+                    (OverheadMessageType)msgType));
         }
 
         private void HandleDeathAnimation(byte[] data)
@@ -1603,6 +1721,18 @@ namespace TMRazorImproved.Core.Handlers
             int cliloc = reader.ReadInt32();
             string name = reader.ReadString(30);
             string args = reader.ReadUnicodeString();
+
+            // Tracking IsCasting via clilocs
+            switch (cliloc)
+            {
+                case 502644: // You are already casting a spell.
+                case 502645: // You must wait for that spell to complete.
+                case 500641: // Your spell fizzles.
+                case 502632: // The spell fizzles.
+                case 500015: // You do not have that spell!
+                    _worldService.IsCasting = false;
+                    break;
+            }
 
             string text = _languageService.ClilocFormat(cliloc, args);
             _journalService.AddEntry(new JournalEntry(text, name, serial, hue));
@@ -1712,6 +1842,34 @@ namespace TMRazorImproved.Core.Handlers
             byte delay = reader.ReadByte();
 
             _messenger.Send(new AnimationMessage(serial, action, frameCount, delay));
+        }
+
+        private void HandleCharacterAnimation(byte[] data)
+        {
+            // 0x6E S2C: cmd(1) serial(4) action(2) frameCount(2) repeatCount(2) forward(1) repeat(1) delay(1)
+            if (data.Length < 14) return;
+            var reader = new UOBufferReader(data);
+            reader.ReadByte();           // 0x6E
+            uint serial = reader.ReadUInt32();
+            ushort action = reader.ReadUInt16();
+            ushort frameCount = reader.ReadUInt16();
+            ushort repeatCount = reader.ReadUInt16();
+            bool forward = reader.ReadByte() != 0;
+            bool repeat = reader.ReadByte() != 0;
+            byte delay = reader.ReadByte();
+
+            _messenger.Send(new CharacterAnimationMessage(serial, action, frameCount, repeatCount, forward, repeat, delay));
+        }
+
+        private void HandleWeather(byte[] data)
+        {
+            // 0x65: cmd(1) type(1) count(1) temp(1)
+            if (data.Length < 4) return;
+            byte type = data[1];
+            byte count = data[2];
+            byte temp = data[3];
+
+            _messenger.Send(new WeatherMessage(type, count, temp));
         }
 
         private void HandlePersonalLightLevel(byte[] data)
@@ -1900,6 +2058,7 @@ namespace TMRazorImproved.Core.Handlers
             // 0x9A S2C: cmd(1) serial(4) promptId(4) type(4)
             // Il server richiede input testuale ASCII — clearing lato client
             if (data.Length < 13) return;
+            _targetingService.SetPrompt(true);
             _messenger.Send(new AsciiPromptMessage(true));
         }
 
@@ -1974,6 +2133,12 @@ namespace TMRazorImproved.Core.Handlers
             uint targetSerial = reader.ReadUInt32();
 
             _messenger.Send(new TrackingArrowMessage(active, x, y, targetSerial));
+        }
+
+        private void HandleDeleteCharacter(byte[] data)
+        {
+            // 0x83: il server conferma la cancellazione di un personaggio. Azzeriamo il mondo.
+            _worldService.Clear();
         }
 
         private void HandleChangeSeason(byte[] data)
@@ -2133,6 +2298,10 @@ namespace TMRazorImproved.Core.Handlers
             reader.ReadByte();           // 0x12
             reader.ReadUInt16();         // length
             byte commandType = reader.ReadByte();
+
+            if (commandType == 0x27 || commandType == 0x56)
+                _worldService.IsCasting = true;
+
             // Tracking per script recorder (type 0x24 = skill ID, type 0x27 = spell ID)
         }
 
@@ -2152,6 +2321,39 @@ namespace TMRazorImproved.Core.Handlers
             uint serial = reader.ReadUInt32();
             string name = reader.ReadString(30);
             // Tracking per script recorder
+        }
+
+        private void HandleExtendedClientCommand(byte[] data)
+        {
+            // 0xBF C2S: cmd(1) len(2) sub(2) + dati
+            if (data.Length < 5) return;
+            var reader = new UOBufferReader(data);
+            reader.ReadByte();           // 0xBF
+            reader.ReadUInt16();         // length
+            ushort sub = reader.ReadUInt16();
+
+            switch (sub)
+            {
+                case 0x1C: // Cast Spell from Macro (AOS+)
+                    if (reader.Remaining >= 2)
+                    {
+                        ushort type = reader.ReadUInt16(); // 1 = with serial, 2 = just spell id
+                        if (type == 1 && reader.Remaining >= 6)
+                        {
+                            uint serial = reader.ReadUInt32();
+                            ushort spellId = reader.ReadUInt16();
+                            _worldService.IsCasting = true;
+                        }
+                        else if (type == 2 && reader.Remaining >= 2)
+                        {
+                            ushort spellId = reader.ReadUInt16();
+                            _worldService.IsCasting = true;
+                        }
+                    }
+                    break;
+
+                // Altri sub per C2S possono essere tracciati qui
+            }
         }
 
         private void HandleClientEncodedPacket(byte[] data)

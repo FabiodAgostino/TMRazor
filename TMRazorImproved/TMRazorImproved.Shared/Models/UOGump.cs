@@ -34,6 +34,27 @@ namespace TMRazorImproved.Shared.Models
         /// </summary>
         public IReadOnlyList<GumpControl> Controls => _frozenControls ?? _controls;
 
+        /// <summary>
+        /// Lista dei ButtonId presenti nel gump.
+        /// </summary>
+        public List<int> Buttons 
+        { 
+            get 
+            {
+                var list = new List<int>();
+                foreach (var c in Controls)
+                {
+                    if (c is GumpButton b) list.Add(b.ButtonId);
+                }
+                return list;
+            }
+        }
+
+        /// <summary>
+        /// Alias per Strings, usato per parità con GumpData di Razor Enhanced.
+        /// </summary>
+        public IReadOnlyList<string> Texts => Strings;
+
         public UOGump(uint serial, uint gumpId)
         {
             Serial = serial;

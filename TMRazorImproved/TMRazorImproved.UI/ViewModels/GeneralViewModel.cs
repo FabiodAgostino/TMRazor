@@ -21,6 +21,7 @@ namespace TMRazorImproved.UI.ViewModels
         private readonly IClientInteropService _clientInterop;
         private readonly IContentDialogService _dialogService;
         private readonly ISnackbarService _snackbarService;
+        private readonly IUOModService _uoModService;
 
         [ObservableProperty]
         private string _clientPath;
@@ -82,13 +83,15 @@ namespace TMRazorImproved.UI.ViewModels
             ILanguageService languageService,
             IClientInteropService clientInterop,
             IContentDialogService dialogService,
-            ISnackbarService snackbarService)
+            ISnackbarService snackbarService,
+            IUOModService uoModService)
         {
             _configService = configService;
             _languageService = languageService;
             _clientInterop = clientInterop;
             _dialogService = dialogService;
             _snackbarService = snackbarService;
+            _uoModService = uoModService;
 
             // Carica i dati iniziali dal file di configurazione globale
             _clientPath = _configService.Global.ClientPath;
@@ -246,7 +249,7 @@ namespace TMRazorImproved.UI.ViewModels
         }
 
         [RelayCommand]
-        private void LaunchClient()
+        private async Task LaunchClient()
         {
             if (string.IsNullOrEmpty(ClientPath))
             {
@@ -265,8 +268,46 @@ namespace TMRazorImproved.UI.ViewModels
             _configService.Global.RemoveStaminaCheck = RemoveStaminaCheck;
             _configService.Save();
 
-            // Logica di lancio tramite il servizio interop
-            _clientInterop.LaunchClient(ClientPath, "Crypt.dll");
+            try
+            {
+                // Logica di lancio tramite il servizio interop
+                uint pid = _clientInterop.LaunchClient(ClientPath, "Crypt.dll");
+
+                // Get MainWindow handle
+                IntPtr windowHandle = new System.Windows.Interop.WindowInteropHelper(System.Windows.Application.Current.MainWindow).Handle;
+
+                // Calcola le flag (features)
+                int flags = 0;
+                if (NegotiateFeatures)
+                    flags |= 0x04;
+                if (PatchEncryption)
+                    flags |= 0x08; // Client Encrypted bit
+
+                // TODO: Aggiungi ServerEncrypted se necessario (0x10)
+
+                // Esegui in background per non bloccare l'UI
+                await Task.Run(() =>
+                {
+                    _clientInterop.WaitForWindow(pid);
+                    _clientInterop.InstallLibrary(windowHandle, (int)pid, flags);
+
+                    // Inject UOMod.dll if any feature requires it
+                    // MultiClient requires injection
+                    if (AllowMultiClient) // O altre condizioni future per UOMod
+                    {
+                        _uoModService.InjectUoMod((int)pid);
+                        // Abilita la patch MultiUO (sebbene UOMod spesso l'abiliti di default se iniettata, 
+                        // mandiamo il comando per sicurezza).
+                        _uoModService.EnablePatch(UOPatchType.MultiUO, true);
+                    }
+                });
+
+                StatusMessage = _languageService.GetString("Status.ClientReady");
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Errore avvio: {ex.Message}";
+            }
         }
 
         [RelayCommand]

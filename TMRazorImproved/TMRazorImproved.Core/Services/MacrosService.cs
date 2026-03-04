@@ -22,9 +22,19 @@ namespace TMRazorImproved.Core.Services
         private readonly ITargetingService _targetingService;
         private readonly ILogger<MacrosService> _logger;
 
+        // FIX P0-04: cattura il SynchronizationContext del thread UI al momento della costruzione
+        // (App.xaml.cs esegue il costruttore sul thread UI) per poter aggiornare MacroList
+        // in modo thread-safe da thread background.
+        private readonly SynchronizationContext? _uiContext;
+
         public ObservableCollection<string> MacroList { get; } = new();
-        public bool IsRecording { get; private set; }
-        public bool IsPlaying { get; private set; }
+
+        // FIX P1-03: volatile per visibilità cross-thread (packet thread ↔ UI thread).
+        private volatile bool _isRecording;
+        private volatile bool _isPlaying;
+
+        public bool IsRecording => _isRecording;
+        public bool IsPlaying => _isPlaying;
         public string? ActiveMacro { get; private set; }
 
         private CancellationTokenSource? _playCts;
@@ -46,6 +56,9 @@ namespace TMRazorImproved.Core.Services
             _targetingService = targetingService;
             _logger = logger;
             _macrosPath = Path.Combine(AppContext.BaseDirectory, "Macros");
+            // FIX P0-04: cattura il contesto UI. Se siamo già sul thread UI (App startup), sarà
+            // il WPF SynchronizationContext; se null (unit test), le add vengono eseguite in-thread.
+            _uiContext = SynchronizationContext.Current;
 
             if (!Directory.Exists(_macrosPath))
                 Directory.CreateDirectory(_macrosPath);
@@ -63,8 +76,8 @@ namespace TMRazorImproved.Core.Services
 
         public void Play(string name)
         {
-            if (IsPlaying || IsRecording) return;
-            IsPlaying = true;
+            if (_isPlaying || _isRecording) return;
+            _isPlaying = true;
             ActiveMacro = name;
 
             var steps = GetSteps(name);
@@ -86,7 +99,7 @@ namespace TMRazorImproved.Core.Services
                 }
                 finally
                 {
-                    IsPlaying = false;
+                    _isPlaying = false;
                     ActiveMacro = null;
                 }
             });
@@ -427,7 +440,11 @@ namespace TMRazorImproved.Core.Services
 
                 case "TARGET":
                     if (uint.TryParse(args, out uint tSerial))
-                        _packetService.SendToServer(PacketBuilder.TargetObject(tSerial));
+                    {
+                        uint cursorId = _targetingService.PendingCursorId;
+                        _targetingService.ClearTargetCursor();
+                        _packetService.SendToServer(PacketBuilder.TargetObject(tSerial, cursorId));
+                    }
                     break;
 
                 case "CAST":
@@ -582,8 +599,8 @@ namespace TMRazorImproved.Core.Services
 
         public void Record(string name)
         {
-            if (IsPlaying || IsRecording) return;
-            IsRecording = true;
+            if (_isPlaying || _isRecording) return;
+            _isRecording = true;
             ActiveMacro = name;
             _recordingBuffer.Clear();
             _recordingUnsubscribers.Clear();
@@ -681,10 +698,10 @@ namespace TMRazorImproved.Core.Services
 
         public void Stop()
         {
-            if (IsPlaying && _playCts != null)
+            if (_isPlaying && _playCts != null)
                 _playCts.Cancel();
 
-            if (IsRecording)
+            if (_isRecording)
             {
                 foreach (var unsub in _recordingUnsubscribers) unsub();
                 _recordingUnsubscribers.Clear();
@@ -703,8 +720,8 @@ namespace TMRazorImproved.Core.Services
                 }
             }
 
-            IsPlaying = false;
-            IsRecording = false;
+            _isPlaying = false;
+            _isRecording = false;
             ActiveMacro = null;
         }
 
@@ -712,8 +729,15 @@ namespace TMRazorImproved.Core.Services
         {
             var path = Path.Combine(_macrosPath, $"{name}.macro");
             File.WriteAllLines(path, steps.Select(s => s.Command));
+            // FIX P0-04: MacroList è ObservableCollection — va modificata sul thread UI.
+            // Se _uiContext è null (test), aggiunge direttamente (nessun WPF).
             if (!MacroList.Contains(name))
-                MacroList.Add(name);
+            {
+                if (_uiContext != null)
+                    _uiContext.Post(_ => MacroList.Add(name), null);
+                else
+                    MacroList.Add(name);
+            }
         }
 
         public List<MacroStep> GetSteps(string name)
@@ -739,7 +763,10 @@ namespace TMRazorImproved.Core.Services
             if (File.Exists(path))
             {
                 File.Delete(path);
-                MacroList.Remove(name);
+                // FIX P0-04: thread-safe remove
+                void DoRemove() => MacroList.Remove(name);
+                if (_uiContext != null) _uiContext.Post(_ => DoRemove(), null);
+                else DoRemove();
             }
         }
 
@@ -750,9 +777,14 @@ namespace TMRazorImproved.Core.Services
             if (File.Exists(oldPath))
             {
                 File.Move(oldPath, newPath);
-                var index = MacroList.IndexOf(oldName);
-                if (index != -1)
-                    MacroList[index] = newName;
+                // FIX P0-04: thread-safe rename in collection
+                void DoRename()
+                {
+                    var index = MacroList.IndexOf(oldName);
+                    if (index != -1) MacroList[index] = newName;
+                }
+                if (_uiContext != null) _uiContext.Post(_ => DoRename(), null);
+                else DoRename();
             }
         }
     }

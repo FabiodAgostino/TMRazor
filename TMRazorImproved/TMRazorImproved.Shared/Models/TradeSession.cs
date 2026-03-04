@@ -1,25 +1,48 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TMRazorImproved.Shared.Models
 {
-    public class TradeSession
+    public partial class TradeSession : ObservableObject
     {
         public uint Serial { get; }
-        public uint TargetSerial { get; }
-        public string TargetName { get; set; } = "Unknown";
-        public bool MyAccepted { get; set; }
-        public bool TheirAccepted { get; set; }
+        
+        [ObservableProperty]
+        private string _targetName = "Unknown";
+        
+        [ObservableProperty]
+        private bool _myAccepted;
+        
+        [ObservableProperty]
+        private bool _theirAccepted;
+        
+        [ObservableProperty]
+        private uint _myGold;
+        
+        [ObservableProperty]
+        private uint _myPlatinum;
+        
+        [ObservableProperty]
+        private uint _theirGold;
+        
+        [ObservableProperty]
+        private uint _theirPlatinum;
+        
+        [ObservableProperty]
+        private uint _goldMax;
+        
+        [ObservableProperty]
+        private uint _platinumMax;
+
         public DateTime StartTime { get; }
 
-        public List<TradeItem> MyItems { get; } = new();
-        public List<TradeItem> TheirItems { get; } = new();
+        public ObservableCollection<TradeItem> MyItems { get; } = new();
+        public ObservableCollection<TradeItem> TheirItems { get; } = new();
 
-        public TradeSession(uint serial, uint targetSerial)
+        public TradeSession(uint serial)
         {
             Serial = serial;
-            TargetSerial = targetSerial;
             StartTime = DateTime.Now;
         }
     }

@@ -78,11 +78,23 @@
                                          Margin="0,0,0,8"/>
                     </UniformGrid>
 
-                    <ui:Button Content="Toggle Target HP Overlay" 
-                               Icon="{ui:SymbolIcon HeartPulse24}"
-                               Command="{Binding ToggleTargetHPCommand}"
-                               Margin="0,16,0,0"
-                               Appearance="Primary"/>
+                    <WrapPanel Margin="0,16,0,0">
+                        <ui:Button Content="Toggle Target HP Overlay"
+                                   Icon="{ui:SymbolIcon HeartPulse24}"
+                                   Command="{Binding ToggleTargetHPCommand}"
+                                   Appearance="Primary"
+                                   Margin="0,0,8,8"/>
+                        <ui:Button Content="Toggle Floating Toolbar"
+                                   Icon="{ui:SymbolIcon SlideLayout20}"
+                                   Command="{Binding ToggleFloatingToolbarCommand}"
+                                   Appearance="Secondary"
+                                   Margin="0,0,8,8"/>
+                        <ui:Button Content="Toggle Overhead Messages"
+                                   Icon="{ui:SymbolIcon Chat24}"
+                                   Command="{Binding ToggleOverheadMessagesCommand}"
+                                   Appearance="Secondary"
+                                   Margin="0,0,0,8"/>
+                    </WrapPanel>
                 </StackPanel>
             </ui:Card>
         </StackPanel>

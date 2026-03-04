@@ -253,6 +253,30 @@ namespace TMRazorImproved.Tests.MockTests.Agents
         }
 
         // -------------------------------------------------------------------------
+        // Test: TARGET invia 0x6C con il cursorId pendente del server
+        // -------------------------------------------------------------------------
+
+        [Fact]
+        public async Task TARGET_ShouldSendTargetObjectWithPendingCursorId()
+        {
+            uint expectedCursorId = 0xDEADBEEF;
+            _targetMock.Setup(t => t.PendingCursorId).Returns(expectedCursorId);
+
+            var svc   = CreateService();
+            var steps = new List<MacroStep> { new MacroStep("TARGET 12345", "TARGET 12345") };
+
+            await PlaySteps(svc, steps);
+
+            _packetMock.Verify(
+                p => p.SendToServer(It.Is<byte[]>(b =>
+                    b.Length == 19 &&
+                    b[0] == 0x6C &&
+                    (uint)((b[2] << 24) | (b[3] << 16) | (b[4] << 8) | b[5]) == expectedCursorId)),
+                Times.Once);
+            _targetMock.Verify(t => t.ClearTargetCursor(), Times.Once);
+        }
+
+        // -------------------------------------------------------------------------
         // Test: condizione NOT POISONED
         // -------------------------------------------------------------------------
 

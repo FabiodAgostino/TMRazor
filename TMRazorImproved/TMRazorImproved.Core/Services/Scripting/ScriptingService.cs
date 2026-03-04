@@ -4,6 +4,7 @@ using Microsoft.Scripting.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
+using CommunityToolkit.Mvvm.Messaging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -133,6 +134,7 @@ del _make_tracer_, _INTERVAL_, _sys_
         private readonly ISkillsService _skillsService;
         private readonly IFriendsService _friendsService;
         private readonly IConfigService _config;
+        private readonly IMessenger _messenger;
         private readonly ILogger<ScriptingService> _logger;
         private readonly ILoggerFactory _loggerFactory;
 
@@ -162,6 +164,7 @@ del _make_tracer_, _INTERVAL_, _sys_
             ISkillsService skillsService,
             IFriendsService friendsService,
             IConfigService config,
+            IMessenger messenger,
             ILogger<ScriptingService> logger,
             ILoggerFactory loggerFactory)
         {
@@ -172,6 +175,7 @@ del _make_tracer_, _INTERVAL_, _sys_
             _skillsService = skillsService;
             _friendsService = friendsService;
             _config = config;
+            _messenger = messenger;
             _logger = logger;
             _loggerFactory = loggerFactory;
         }
@@ -376,14 +380,14 @@ del _make_tracer_, _INTERVAL_, _sys_
             scope.SetVariable("__cancel__",        cancelCtrl);
             scope.SetVariable("__trace_interval__", TraceInterval);
             scope.SetVariable("Misc",              miscApi);
-            scope.SetVariable("Items",   new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>()));
-            scope.SetVariable("Mobiles", new MobilesApi(_world, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>()));
+            scope.SetVariable("Items",   new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger));
+            scope.SetVariable("Mobiles", new MobilesApi(_world, _friendsService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>()));
             scope.SetVariable("Player",  new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _loggerFactory.CreateLogger<PlayerApi>()));
             scope.SetVariable("Journal", new JournalApi(_journalService, cancelCtrl));
-            scope.SetVariable("Gumps",   new GumpsApi(_world, _packetService, cancelCtrl));
+            scope.SetVariable("Gumps",   new GumpsApi(_world, _packetService, cancelCtrl, _messenger));
             scope.SetVariable("Target",  new TargetApi(_targetingService, cancelCtrl));
             scope.SetVariable("Skills",  new SkillsApi(_skillsService, _packetService, cancelCtrl));
-            scope.SetVariable("Spells",  new SpellsApi(_packetService, cancelCtrl, _loggerFactory.CreateLogger<SpellsApi>()));
+            scope.SetVariable("Spells",  new SpellsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<SpellsApi>()));
             scope.SetVariable("Statics", new StaticsApi(cancelCtrl));
             scope.SetVariable("Friend",  new FriendApi(_friendsService, cancelCtrl));
             scope.SetVariable("Filters", new FiltersApi(_config, cancelCtrl));
@@ -404,7 +408,6 @@ del _make_tracer_, _INTERVAL_, _sys_
                 try { engine.Execute(TraceCleanup, scope); } catch { }
                 // FIX BUG-C02: dispose esplicito del runtime IronPython per evitare memory leak
                 try { engine.Runtime.Shutdown(); } catch { }
-                try { (engine as IDisposable)?.Dispose(); } catch { }
                 stdout.Dispose();
                 stderr.Dispose();
             }
@@ -420,18 +423,19 @@ del _make_tracer_, _INTERVAL_, _sys_
             
             var cancelCtrl = new ScriptCancellationController(cts.Token);
             var miscApi    = new MiscApi(_world, cancelCtrl, line => OutputReceived?.Invoke(line));
-            var itemsApi   = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>());
-            var mobilesApi = new MobilesApi(_world, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
+            var itemsApi   = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
+            var mobilesApi = new MobilesApi(_world, _friendsService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
             var playerApi  = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _loggerFactory.CreateLogger<PlayerApi>());
-            
-            var interpreter = new UOSteamInterpreter(
-                miscApi, 
-                playerApi, 
-                itemsApi, 
-                mobilesApi, 
-                cancelCtrl, 
-                line => OutputReceived?.Invoke(line));
+            var journalApi = new JournalApi(_journalService, cancelCtrl);
 
+            var interpreter = new UOSteamInterpreter(
+                miscApi,
+                playerApi,
+                itemsApi,
+                mobilesApi,
+                journalApi,
+                cancelCtrl,
+                line => OutputReceived?.Invoke(line));
             interpreter.Execute(code);
         }
 
@@ -448,14 +452,14 @@ del _make_tracer_, _INTERVAL_, _sys_
             var globals = new ScriptGlobals
             {
                 Player   = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _loggerFactory.CreateLogger<PlayerApi>()),
-                Items    = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>()),
-                Mobiles  = new MobilesApi(_world, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>()),
+                Items    = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger),
+                Mobiles  = new MobilesApi(_world, _friendsService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>()),
                 Misc     = new MiscApi(_world, cancelCtrl, line => OutputReceived?.Invoke(line)),
                 Journal  = new JournalApi(_journalService, cancelCtrl),
-                Gumps    = new GumpsApi(_world, _packetService, cancelCtrl),
+                Gumps    = new GumpsApi(_world, _packetService, cancelCtrl, _messenger),
                 Target   = new TargetApi(_targetingService, cancelCtrl),
                 Skills   = new SkillsApi(_skillsService, _packetService, cancelCtrl),
-                Spells   = new SpellsApi(_packetService, cancelCtrl),
+                Spells   = new SpellsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<SpellsApi>()),
                 Statics  = new StaticsApi(cancelCtrl),
                 Friend   = new FriendApi(_friendsService, cancelCtrl),
                 Filters  = new FiltersApi(_config, cancelCtrl)

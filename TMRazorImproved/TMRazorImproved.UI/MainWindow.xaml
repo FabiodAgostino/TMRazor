@@ -25,10 +25,12 @@
                            PaneDisplayMode="Left"
                            OpenPaneLength="220">
             <ui:NavigationView.MenuItems>
+                <ui:NavigationViewItem Content="Dashboard" TargetPageType="{x:Type pages:DashboardPage}" Icon="Home24" />
                 <ui:NavigationViewItem Content="Journal"   TargetPageType="{x:Type pages:JournalPage}" Icon="ReadingList24" />
                 <ui:NavigationViewItem Content="General"   TargetPageType="{x:Type pages:GeneralPage}" Icon="Settings24" />
                 <ui:NavigationViewItem Content="Options"   TargetPageType="{x:Type pages:OptionsPage}" Icon="Options24" />
                 <ui:NavigationViewItem Content="Display"   TargetPageType="{x:Type pages:DisplayPage}" Icon="Video24" />
+                <ui:NavigationViewItem Content="Skills"    TargetPageType="{x:Type pages:SkillsPage}" Icon="Flash24" />
                 <ui:NavigationViewItem Content="Hotkeys"   TargetPageType="{x:Type pages:HotkeysPage}" Icon="Keyboard24" />
                 <ui:NavigationViewItem Content="Network"   TargetPageType="{x:Type pages:PacketLoggerPage}" Icon="Broadcasting24">
                     <ui:NavigationViewItem.MenuItems>
@@ -57,6 +59,7 @@
                 <ui:NavigationViewItem Content="Tools" Icon="Toolbox24">
                     <ui:NavigationViewItem.MenuItems>
                         <ui:NavigationViewItem Content="Object Inspector" TargetPageType="{x:Type pages:InspectorPage}" Icon="EyeShow24" />
+                        <ui:NavigationViewItem Content="Gump List" TargetPageType="{x:Type pages:GumpListPage}" Icon="Layer24" />
                     </ui:NavigationViewItem.MenuItems>
                 </ui:NavigationViewItem>
             </ui:NavigationView.MenuItems>

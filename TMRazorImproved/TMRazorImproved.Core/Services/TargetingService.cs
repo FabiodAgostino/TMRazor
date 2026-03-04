@@ -21,14 +21,28 @@ namespace TMRazorImproved.Core.Services
         private uint _lastTarget;
         private List<uint> _targetQueue = new();
         private int _queueIndex = -1;
+        private bool _hasPrompt;
+        private volatile bool _hasTargetCursor;
+        private volatile uint _pendingCursorId;
+        // FIX P1-02: tracking serial/promptId dal pacchetto 0x9A S2C
+        private volatile uint _pendingPromptSerial;
+        private volatile uint _pendingPromptId;
 
-        public uint LastTarget 
-        { 
-            get => _lastTarget; 
-            set => _lastTarget = value; 
+        public uint LastTarget
+        {
+            get => _lastTarget;
+            set => _lastTarget = value;
         }
 
+        public bool HasPrompt => _hasPrompt;
+        public bool HasTargetCursor => _hasTargetCursor;
+        public uint PendingCursorId => _pendingCursorId;
+        public uint PendingPromptSerial => _pendingPromptSerial;
+        public uint PendingPromptId => _pendingPromptId;
+
+        public event Action<uint>? TargetCursorRequested;
         public event Action<uint>? TargetReceived;
+        public event Action<bool>? PromptChanged;
 
         public TargetingService(
             IPacketService packetService, 
@@ -44,8 +58,12 @@ namespace TMRazorImproved.Core.Services
             _friendsService = friendsService;
             _logger = logger;
 
-            // Registrazione Handlers Pacchetti Client->Server
+            // Registrazione Handlers Pacchetti Server->Client (richiesta di target)
+            _packetService.RegisterViewer(PacketPath.ServerToClient, 0x6C, HandleServerTargetCursor);
+            // Registrazione Handlers Pacchetti Client->Server (risposta al target)
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x6C, HandleTargetResponse);
+            // FIX P1-02: tracking serial/promptId dal pacchetto 0x9A S2C (ASCII Prompt)
+            _packetService.RegisterViewer(PacketPath.ServerToClient, 0x9A, HandlePromptFromServer);
 
             // Registrazione Hotkeys
             hotkeyService.RegisterAction("Target Next", () => TargetNext());
@@ -55,17 +73,36 @@ namespace TMRazorImproved.Core.Services
             hotkeyService.RegisterAction("Clear Target", () => Clear());
         }
 
+        private void HandleServerTargetCursor(byte[] data)
+        {
+            // Pacchetto 0x6C S2C: il server chiede al client di selezionare un target
+            // [0] 0x6C  [1] targetType  [2-5] cursorId  [6] cursorType
+            if (data.Length < 7) return;
+
+            uint cursorId = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(2));
+            _pendingCursorId = cursorId;
+            _hasTargetCursor = true;
+            _logger.LogDebug("Target Cursor Received from Server: cursorId=0x{CursorId:X}", cursorId);
+            TargetCursorRequested?.Invoke(cursorId);
+        }
+
+        private void HandlePromptFromServer(byte[] data)
+        {
+            // Pacchetto 0x9A S2C: cmd(1) len(2) serial(4) promptId(4) type(4) = 15 byte minimo
+            if (data.Length < 15) return;
+
+            _pendingPromptSerial = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(3));
+            _pendingPromptId = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(7));
+            _logger.LogDebug("Prompt Received from Server: serial=0x{Serial:X} promptId=0x{PromptId:X}", _pendingPromptSerial, _pendingPromptId);
+            SetPrompt(true);
+        }
+
         private void HandleTargetResponse(byte[] data)
         {
+            // Pacchetto 0x6C C2S: il client risponde al server con il target selezionato
+            // [0] 0x6C  [1] type  [2-5] cursorId  [6] action  [7-10] serial
             if (data.Length < 11) return;
-            
-            // Pacchetto 0x6C (Client to Server)
-            // [0] 0x6C
-            // [1] type (0=location, 1=object)
-            // [2-5] cursor id
-            // [6] action (0=target, 1=cancel)
-            // [7-10] serial
-            
+
             uint serial = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(7));
             byte action = data[6];
 
@@ -73,10 +110,14 @@ namespace TMRazorImproved.Core.Services
             {
                 _lastTarget = serial;
                 _logger.LogDebug("Target Response Received: 0x{Serial:X}", serial);
-                
-                // Notifichiamo gli iscritti (es. l'Inspector)
                 TargetReceived?.Invoke(serial);
             }
+        }
+
+        public void ClearTargetCursor()
+        {
+            _hasTargetCursor = false;
+            _pendingCursorId = 0;
         }
 
         public void RequestTarget()
@@ -149,11 +190,14 @@ namespace TMRazorImproved.Core.Services
 
         public void SendTarget(uint serial, ushort x, ushort y, sbyte z, ushort graphic)
         {
-            // Invia il pacchetto 0x6C (Target) al server
+            // Invia il pacchetto 0x6C (Target) al server usando il cursorId pendente
+            uint cursorId = _pendingCursorId;
+            ClearTargetCursor();
+
             byte[] packet = new byte[19];
             packet[0] = 0x6C;
             packet[1] = (serial == 0) ? (byte)0x00 : (byte)0x01; // 0=Loc, 1=Obj
-            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(2), 0); // Cursor ID
+            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(2), cursorId);
             packet[6] = 0x00; // Action: Target
             BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(7), serial);
             BinaryPrimitives.WriteUInt16BigEndian(packet.AsSpan(11), x);
@@ -166,8 +210,12 @@ namespace TMRazorImproved.Core.Services
 
         public void CancelTarget()
         {
+            uint cursorId = _pendingCursorId;
+            ClearTargetCursor();
+
             byte[] packet = new byte[19];
             packet[0] = 0x6C;
+            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(2), cursorId);
             packet[6] = 0x01; // Action: Cancel
             _packetService.SendToServer(packet);
         }
@@ -206,6 +254,38 @@ namespace TMRazorImproved.Core.Services
             _lastTarget = serial;
             // In TMRazor classico, settare il last target spesso invia anche il target fisico 
             // se c'è un cursore attivo nel client. Per ora lo settiamo e basta.
+        }
+
+        public void SetPrompt(bool hasPrompt)
+        {
+            if (_hasPrompt != hasPrompt)
+            {
+                _hasPrompt = hasPrompt;
+                _logger.LogDebug("Prompt State Changed: {State}", hasPrompt);
+                PromptChanged?.Invoke(hasPrompt);
+            }
+        }
+
+        public void SendPrompt(string text)
+        {
+            // Pacchetto 0x9A C2S (ASCII Prompt Response): cmd(1) len(2) serial(4) promptId(4) type(4) text(var ASCII null-term)
+            // FIX P1-02: usa serial e promptId tracciati dal 0x9A S2C ricevuto in HandlePromptFromServer
+            byte[] textBytes = System.Text.Encoding.ASCII.GetBytes(text);
+            byte[] packet = new byte[15 + textBytes.Length + 1];
+
+            packet[0] = 0x9A;
+            BinaryPrimitives.WriteUInt16BigEndian(packet.AsSpan(1), (ushort)packet.Length);
+            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(3), _pendingPromptSerial);
+            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(7), _pendingPromptId);
+            // type(4) a [11..14] = 0 (normal text response — already 0 from new byte[])
+            textBytes.CopyTo(packet, 15);
+            packet[packet.Length - 1] = 0x00; // Null terminator
+
+            _pendingPromptSerial = 0;
+            _pendingPromptId = 0;
+
+            _packetService.SendToServer(packet);
+            SetPrompt(false);
         }
 
         private List<Mobile> GetValidTargets()

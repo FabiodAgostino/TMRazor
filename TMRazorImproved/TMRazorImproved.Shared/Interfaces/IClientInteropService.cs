@@ -13,6 +13,11 @@ namespace TMRazorImproved.Shared.Interfaces
         uint LaunchClient(string exePath, string dllPath);
 
         /// <summary>
+        /// Attende l'inizializzazione della finestra per il processo specificato
+        /// </summary>
+        void WaitForWindow(uint pid);
+
+        /// <summary>
         /// Inizializza la libreria Crypt.dll per un processo specifico
         /// </summary>
         bool InstallLibrary(IntPtr windowHandle, int processId, int features);

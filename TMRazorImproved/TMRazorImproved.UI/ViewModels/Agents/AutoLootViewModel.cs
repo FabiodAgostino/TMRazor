@@ -238,8 +238,16 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         }
 
         partial void OnIsEnabledChanged(bool value) => SaveActiveListConfig();
-        partial void OnDelayChanged(int value) => SaveActiveListConfig();
-        partial void OnMaxRangeChanged(int value) => SaveActiveListConfig();
+        partial void OnDelayChanged(int value) 
+        {
+            ValidateProperty(value, nameof(Delay));
+            SaveActiveListConfig();
+        }
+        partial void OnMaxRangeChanged(int value) 
+        {
+            ValidateProperty(value, nameof(MaxRange));
+            SaveActiveListConfig();
+        }
         partial void OnNoOpenCorpseChanged(bool value) => SaveActiveListConfig();
         partial void OnAutoStartChanged(bool value) => SaveActiveListConfig();
         partial void OnAllowHiddenChanged(bool value) => SaveActiveListConfig();

@@ -15,6 +15,34 @@
         <StackPanel>
             <ui:TextBlock Text="Sound &amp; Music Manager" FontSize="28" FontWeight="Bold" Margin="0,0,0,24"/>
 
+            <!-- Volume Control Card -->
+            <ui:Card Margin="0,0,0,16" Padding="16">
+                <StackPanel>
+                    <ui:TextBlock Text="Client Volume" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Symbol="Speaker224" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <Slider Grid.Column="1"
+                                Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True"
+                                Value="{Binding Volume, Mode=TwoWay}"
+                                VerticalAlignment="Center"/>
+                        <ui:TextBlock Grid.Column="2"
+                                      Text="{Binding Volume, StringFormat={}{0:F0}%}"
+                                      Width="45"
+                                      TextAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      Margin="8,0,0,0"/>
+                    </Grid>
+                    <ui:InfoBar IsOpen="True" IsClosable="False" Severity="Informational"
+                                Title="Controllo volume per processo"
+                                Message="Modifica il volume audio del client Ultima Online in esecuzione. Il client deve essere avviato per avere effetto."/>
+                </StackPanel>
+            </ui:Card>
+
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -25,13 +53,13 @@
                 <ui:Card Grid.Column="0" Margin="0,0,8,0" Padding="16">
                     <StackPanel>
                         <ui:TextBlock Text="Play Sound" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
-                        <ui:TextBox PlaceholderText="Sound ID (dec/hex)" 
-                                    Text="{Binding SoundId, UpdateSourceTrigger=PropertyChanged}" 
+                        <ui:TextBox PlaceholderText="Sound ID (dec/hex)"
+                                    Text="{Binding SoundId, UpdateSourceTrigger=PropertyChanged}"
                                     Margin="0,0,0,12"/>
-                        <ui:Button Content="Play Sound" 
-                                   Icon="{ui:SymbolIcon Speaker224}" 
-                                   Command="{Binding PlaySoundCommand}" 
-                                   Appearance="Primary" 
+                        <ui:Button Content="Play Sound"
+                                   Icon="{ui:SymbolIcon Speaker224}"
+                                   Command="{Binding PlaySoundCommand}"
+                                   Appearance="Primary"
                                    HorizontalAlignment="Stretch"/>
                     </StackPanel>
                 </ui:Card>
@@ -40,19 +68,19 @@
                 <ui:Card Grid.Column="1" Margin="8,0,0,0" Padding="16">
                     <StackPanel>
                         <ui:TextBlock Text="Play Music" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
-                        <ui:TextBox PlaceholderText="Music ID (dec/hex)" 
-                                    Text="{Binding MusicId, UpdateSourceTrigger=PropertyChanged}" 
+                        <ui:TextBox PlaceholderText="Music ID (dec/hex)"
+                                    Text="{Binding MusicId, UpdateSourceTrigger=PropertyChanged}"
                                     Margin="0,0,0,12"/>
-                        <ui:Button Content="Play Music" 
-                                   Icon="{ui:SymbolIcon MusicNote224}" 
-                                   Command="{Binding PlayMusicCommand}" 
-                                   Appearance="Primary" 
+                        <ui:Button Content="Play Music"
+                                   Icon="{ui:SymbolIcon MusicNote224}"
+                                   Command="{Binding PlayMusicCommand}"
+                                   Appearance="Primary"
                                    HorizontalAlignment="Stretch"
                                    Margin="0,0,0,8"/>
-                        <ui:Button Content="Stop Music" 
-                                   Icon="{ui:SymbolIcon Stop24}" 
-                                   Command="{Binding StopMusicCommand}" 
-                                   Appearance="Secondary" 
+                        <ui:Button Content="Stop Music"
+                                   Icon="{ui:SymbolIcon Stop24}"
+                                   Command="{Binding StopMusicCommand}"
+                                   Appearance="Secondary"
                                    HorizontalAlignment="Stretch"/>
                     </StackPanel>
                 </ui:Card>

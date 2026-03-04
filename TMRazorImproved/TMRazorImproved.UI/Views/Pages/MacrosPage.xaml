@@ -131,12 +131,38 @@
                                   d:ItemsSource="{d:DesignData}">
                             <ListView.View>
                                 <GridView>
+                                    <GridViewColumn Header="Order" Width="80">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <ui:Button Icon="{ui:SymbolIcon ArrowUp20}" 
+                                                               Appearance="Transparent" Padding="2"
+                                                               Command="{Binding DataContext.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                                               CommandParameter="{Binding}" />
+                                                    <ui:Button Icon="{ui:SymbolIcon ArrowDown20}" 
+                                                               Appearance="Transparent" Padding="2"
+                                                               Command="{Binding DataContext.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                                               CommandParameter="{Binding}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="En" Width="40">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                          VerticalAlignment="Center" 
+                                                          HorizontalAlignment="Center" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
                                     <GridViewColumn Header="Command" Width="200">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <ui:TextBox Text="{Binding Command, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                                             BorderThickness="0" 
-                                                            Background="Transparent"/>
+                                                            Background="Transparent"
+                                                            FontFamily="Consolas" />
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
@@ -149,11 +175,12 @@
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
-                                    <GridViewColumn Header="Actions" Width="80">
+                                    <GridViewColumn Header="Actions" Width="60">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <ui:Button Icon="{ui:SymbolIcon Delete20}" 
                                                            Appearance="Transparent"
+                                                           Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                                            Command="{Binding DataContext.RemoveStepCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
                                                            CommandParameter="{Binding}"
                                                            Padding="4"/>

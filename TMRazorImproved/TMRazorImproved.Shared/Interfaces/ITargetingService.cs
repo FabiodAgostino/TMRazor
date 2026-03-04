@@ -6,8 +6,20 @@ namespace TMRazorImproved.Shared.Interfaces
     public interface ITargetingService
     {
         uint LastTarget { get; set; }
-        
+        bool HasPrompt { get; }
+
+        // true quando il server ha inviato 0x6C S2C e si aspetta ancora una risposta
+        bool HasTargetCursor { get; }
+        // Il cursor ID inviato dal server nell'ultimo 0x6C S2C; 0 se nessuno pendente
+        uint PendingCursorId { get; }
+
+        // Fired ogni volta che il server invia 0x6C S2C (richiesta di target)
+        event Action<uint> TargetCursorRequested;
         event Action<uint> TargetReceived;
+        event Action<bool> PromptChanged;
+
+        // Azzera HasTargetCursor e PendingCursorId (chiamato automaticamente da SendTarget/CancelTarget)
+        void ClearTargetCursor();
 
         void TargetNext();
         void TargetClosest();
@@ -19,6 +31,13 @@ namespace TMRazorImproved.Shared.Interfaces
         void SendTarget(uint serial, ushort x, ushort y, sbyte z, ushort graphic);
         void SetLastTarget(uint serial);
         void CancelTarget();
+
+        // Metodi per i prompt (0x9A, 0xC2)
+        // FIX P1-02: serial e promptId tracciati dal pacchetto 0x9A S2C
+        uint PendingPromptSerial { get; }
+        uint PendingPromptId { get; }
+        void SendPrompt(string text);
+        void SetPrompt(bool hasPrompt);
 
         // Richiede un target al client e notifica tramite evento
         void RequestTarget();

@@ -54,6 +54,9 @@ namespace TMRazorImproved.Core.Services
             [DllImport("Crypt.dll", EntryPoint = "GetCommMutex", SetLastError = true)]
             internal static extern IntPtr GetCommMutex();
 
+            [DllImport("Crypt.dll", EntryPoint = "WaitForWindow", SetLastError = true)]
+            internal static extern void WaitForWindow(uint pid);
+
             [DllImport("Crypt.dll", EntryPoint = "GetPacketLength", SetLastError = true)]
             internal static unsafe extern int GetPacketLength(byte* data, int bufLen);
 
@@ -101,6 +104,11 @@ namespace TMRazorImproved.Core.Services
         public void Shutdown(bool closeClient)
         {
             NativeMethods.Shutdown(closeClient);
+        }
+
+        public void WaitForWindow(uint pid)
+        {
+            NativeMethods.WaitForWindow(pid);
         }
 
         public IntPtr FindUOWindow()

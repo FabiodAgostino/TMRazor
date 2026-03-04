@@ -78,6 +78,55 @@
                 </Grid>
             </TabItem>
 
+            <!-- GUMP LIST MANAGER TAB -->
+            <TabItem Header="Gump List">
+                <Grid Margin="0,12,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <ui:Card Grid.Row="0" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBlock Grid.Column="0" Text="List of currently opened Gumps" VerticalAlignment="Center" FontWeight="SemiBold" />
+                            <ui:Button Grid.Column="1" Content="Refresh" Icon="{ui:SymbolIcon ArrowCounterclockwise24}" Command="{Binding RefreshGumpsListCommand}" Appearance="Primary" />
+                        </Grid>
+                    </ui:Card>
+
+                    <ui:Card Grid.Row="1">
+                        <DataGrid ItemsSource="{Binding OpenGumps}" 
+                                  AutoGenerateColumns="False" 
+                                  IsReadOnly="True" 
+                                  Background="Transparent" 
+                                  BorderThickness="0"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Gump ID" Binding="{Binding GumpId, StringFormat=0x{0:X8}}" Width="100"/>
+                                <DataGridTextColumn Header="Serial" Binding="{Binding Serial, StringFormat=0x{0:X8}}" Width="100"/>
+                                <DataGridTextColumn Header="X" Binding="{Binding X}" Width="60"/>
+                                <DataGridTextColumn Header="Y" Binding="{Binding Y}" Width="60"/>
+                                <DataGridTextColumn Header="Controls" Binding="{Binding Controls.Count}" Width="80"/>
+                                <DataGridTextColumn Header="Text Lines" Binding="{Binding Strings.Count}" Width="80"/>
+                                <DataGridTemplateColumn Header="Action" Width="100">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ui:Button Content="Inspect" 
+                                                       Command="{Binding DataContext.InspectSpecificGumpCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                                       CommandParameter="{Binding}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </ui:Card>
+                </Grid>
+            </TabItem>
+
             <!-- GUMP TAB ... (keeping current improvements) -->
             <TabItem Header="Gump Inspector">
                 <Grid Margin="0,12,0,0">
@@ -119,10 +168,16 @@
                                             </Grid.ContextMenu>
                                             <StackPanel Orientation="Horizontal">
                                                 <ui:SymbolIcon Symbol="Component24" Margin="0,0,12,0" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
-                                                <StackPanel>
+                                                <StackPanel Width="180">
                                                     <ui:TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
                                                     <ui:TextBlock Text="{Binding Type}" FontSize="11" Appearance="Secondary"/>
                                                 </StackPanel>
+                                                <ui:Button Content="Execute" 
+                                                           Icon="{ui:SymbolIcon Play24}"
+                                                           Padding="4"
+                                                           Margin="12,0,0,0"
+                                                           Command="{Binding DataContext.ExecuteGumpActionCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                           CommandParameter="{Binding}"/>
                                             </StackPanel>
                                         </Grid>
                                     </DataTemplate>

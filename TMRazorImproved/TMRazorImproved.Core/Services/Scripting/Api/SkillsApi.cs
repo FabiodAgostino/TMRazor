@@ -41,6 +41,23 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             }
         }
 
+        public virtual void SetLock(string name, string lockType)
+        {
+            _cancel.ThrowIfCancelled();
+            var skill = _skillsService.Skills.FirstOrDefault(s => s.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            if (skill == null) return;
+
+            SkillLock lt = lockType.ToLower() switch
+            {
+                "up" => SkillLock.Up,
+                "down" => SkillLock.Down,
+                "locked" or "lock" => SkillLock.Lock,
+                _ => SkillLock.Up
+            };
+
+            _skillsService.SetLock(skill.ID, lt);
+        }
+
         public virtual double GetValue(string name)
         {
             _cancel.ThrowIfCancelled();

@@ -25,6 +25,7 @@
             <conv:InvertBooleanConverter x:Key="InvertBooleanConverter"/>
             <conv:SpellIconConverter x:Key="SpellIconConverter"/>
             <conv:IntToBoolConverter x:Key="IntToBoolConverter"/>
+            <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
             <!-- Common Effects -->

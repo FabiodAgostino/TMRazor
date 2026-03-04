@@ -12,13 +12,15 @@ namespace TMRazorImproved.UI.ViewModels
     public partial class SecureTradeViewModel : ViewModelBase, IDisposable
     {
         private readonly ISecureTradeService _tradeService;
+        private readonly IWorldService _worldService;
         private readonly object _lock = new();
 
         public ObservableCollection<TradeSession> ActiveTrades { get; } = new();
 
-        public SecureTradeViewModel(ISecureTradeService tradeService)
+        public SecureTradeViewModel(ISecureTradeService tradeService, IWorldService worldService)
         {
             _tradeService = tradeService;
+            _worldService = worldService;
             BindingOperations.EnableCollectionSynchronization(ActiveTrades, _lock);
 
             _tradeService.TradeStarted += OnTradeStarted;
@@ -34,16 +36,66 @@ namespace TMRazorImproved.UI.ViewModels
 
         private void OnTradeStarted(uint serial)
         {
+            var data = _tradeService.GetTrade(serial);
+            if (data == null) return;
+
             lock (_lock)
             {
                 if (ActiveTrades.Any(t => t.Serial == serial)) return;
-                ActiveTrades.Add(new TradeSession(serial, 0)); // TargetSerial inizialmente 0
+                var session = new TradeSession(serial)
+                {
+                    TargetName = data.NameTrader
+                };
+                ActiveTrades.Add(session);
+                UpdateTradeSessionItems(session, data);
             }
         }
 
         private void OnTradeUpdated(uint serial)
         {
-            // Logica per aggiornare stato (accettato/non accettato)
+            var data = _tradeService.GetTrade(serial);
+            if (data == null) return;
+
+            TradeSession? session;
+            lock (_lock)
+            {
+                session = ActiveTrades.FirstOrDefault(t => t.Serial == serial);
+            }
+
+            if (session != null)
+            {
+                RunOnUIThread(() =>
+                {
+                    session.MyAccepted = data.AcceptMe;
+                    session.TheirAccepted = data.AcceptTrader;
+                    session.MyGold = data.GoldMe;
+                    session.MyPlatinum = data.PlatinumMe;
+                    session.TheirGold = data.GoldTrader;
+                    session.TheirPlatinum = data.PlatinumTrader;
+                    session.GoldMax = data.GoldMax;
+                    session.PlatinumMax = data.PlatinumMax;
+                    
+                    UpdateTradeSessionItems(session, data);
+                });
+            }
+        }
+
+        private void UpdateTradeSessionItems(TradeSession session, TradeData data)
+        {
+            session.MyItems.Clear();
+            session.TheirItems.Clear();
+
+            var myItems = _worldService.GetItemsInContainer(data.ContainerMe);
+            foreach (var item in myItems)
+            {
+                session.MyItems.Add(new TradeItem(item.Serial, item.Amount, item.Graphic, item.Hue, "Item"));
+            }
+
+            var theirItems = _worldService.GetItemsInContainer(data.ContainerTrader);
+            foreach (var item in theirItems)
+            {
+                session.TheirItems.Add(new TradeItem(item.Serial, item.Amount, item.Graphic, item.Hue, "Item"));
+            }
         }
 
         private void OnTradeClosed(uint serial)
@@ -66,6 +118,7 @@ namespace TMRazorImproved.UI.ViewModels
             _tradeService.TradeStarted -= OnTradeStarted;
             _tradeService.TradeClosed -= OnTradeClosed;
             _tradeService.TradeUpdated -= OnTradeUpdated;
+            GC.SuppressFinalize(this);
         }
     }
 }

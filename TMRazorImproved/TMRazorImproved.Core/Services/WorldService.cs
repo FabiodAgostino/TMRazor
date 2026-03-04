@@ -15,11 +15,18 @@ namespace TMRazorImproved.Core.Services
         private volatile Mobile? _player;
         public Mobile? Player => _player;
 
+        // FIX P0-03: backing field volatile per IsCasting — viene scritto dal packet handler thread
+        // (0x12 C2S in WorldPacketHandler) e letto dagli script Python su thread separato.
+        // Senza volatile il JIT può cachearlo in registro → lo script non vede mai l'aggiornamento.
+        private volatile bool _isCasting;
+        public bool IsCasting { get => _isCasting; set => _isCasting = value; }
         public UOGump? CurrentGump { get; private set; }
+        public ConcurrentDictionary<uint, UOGump> OpenGumps { get; } = new();
         public uint LastOpenedContainer { get; private set; }
 
         public IEnumerable<Mobile> Mobiles => _mobiles.Values;
         public IEnumerable<Item> Items => _items.Values;
+        public HashSet<uint> PartyMembers { get; } = new();
 
         public Mobile? FindMobile(uint serial) => _mobiles.GetValueOrDefault(serial);
         
@@ -47,6 +54,30 @@ namespace TMRazorImproved.Core.Services
             _items.AddOrUpdate(item.Serial, item, (_, existing) => item);
         }
 
+        public void AddPartyMember(uint serial)
+        {
+            lock (PartyMembers)
+            {
+                PartyMembers.Add(serial);
+            }
+        }
+
+        public void RemovePartyMember(uint serial)
+        {
+            lock (PartyMembers)
+            {
+                PartyMembers.Remove(serial);
+            }
+        }
+
+        public void ClearParty()
+        {
+            lock (PartyMembers)
+            {
+                PartyMembers.Clear();
+            }
+        }
+
         public void RemoveMobile(uint serial) => _mobiles.TryRemove(serial, out _);
 
         public void RemoveItem(uint serial) => _items.TryRemove(serial, out _);
@@ -60,10 +91,27 @@ namespace TMRazorImproved.Core.Services
         public void SetCurrentGump(UOGump? gump)
         {
             CurrentGump = gump;
+            if (gump != null)
+            {
+                OpenGumps.AddOrUpdate(gump.GumpId, gump, (_, _) => gump);
+            }
+        }
+
+        public void RemoveGump(uint gumpId)
+        {
+            OpenGumps.TryRemove(gumpId, out _);
+            if (CurrentGump?.GumpId == gumpId)
+            {
+                CurrentGump = null;
+            }
         }
 
         public void RemoveGump()
         {
+            if (CurrentGump != null)
+            {
+                OpenGumps.TryRemove(CurrentGump.GumpId, out _);
+            }
             CurrentGump = null;
         }
 
@@ -78,6 +126,7 @@ namespace TMRazorImproved.Core.Services
             _items.Clear();
             _player = null;
             CurrentGump = null;
+            OpenGumps.Clear();
         }
     }
 }

@@ -49,6 +49,7 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<FloatingToolbarWindow>();
                 services.AddSingleton<DPSMeterWindow>();
                 services.AddSingleton<TargetHPWindow>();
+                services.AddSingleton<OverheadMessageOverlay>();
                 services.AddTransient<TMRazorImproved.UI.Views.Windows.SpellGridWindow>();
 
                 // Core Services
@@ -70,6 +71,9 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<IDressService, DressService>();
                 services.AddSingleton<IVendorService, VendorService>();
                 services.AddSingleton<IRestockService, RestockService>();
+                services.AddSingleton<IAutoCarverService, AutoCarverService>();
+                services.AddSingleton<IBoneCutterService, BoneCutterService>();
+                services.AddSingleton<IAutoRemountService, AutoRemountService>();
                 services.AddSingleton<ISkillsService, SkillsService>();
                 services.AddSingleton<ITitleBarService, TitleBarService>();
                 services.AddSingleton<IHotkeyService, HotkeyService>();
@@ -84,8 +88,9 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<ISecureTradeService, SecureTradeService>();
                 services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
                 services.AddSingleton<IVideoCaptureService, VideoCaptureService>();
-                
-                // Packet Handlers
+                services.AddSingleton<IUOModService, UOModService>();
+
+                // Handlers (Singleton)
                 services.AddSingleton<WorldPacketHandler>();
                 services.AddSingleton<FilterHandler>();
                 services.AddSingleton<FriendsHandler>();
@@ -93,35 +98,37 @@ namespace TMRazorImproved.UI
                 // ViewModels
                 services.AddSingleton<SearchViewModel>();
                 services.AddSingleton<DashboardViewModel>();
-                services.AddSingleton<GeneralViewModel>();
+                services.AddTransient<GeneralViewModel>();
                 services.AddSingleton<JournalViewModel>();
                 services.AddSingleton<PacketLoggerViewModel>();
-                services.AddSingleton<SecureTradeViewModel>();
-                services.AddSingleton<GalleryViewModel>();
+                services.AddTransient<SecureTradeViewModel>();
+                services.AddTransient<GalleryViewModel>();
                 services.AddSingleton<PlayerStatusViewModel>();
                 services.AddSingleton<ScriptingViewModel>();
                 services.AddSingleton<MacrosViewModel>();
-                services.AddSingleton<FriendsViewModel>();
-                services.AddSingleton<FiltersViewModel>();
+                services.AddTransient<FriendsViewModel>();
+                services.AddTransient<FiltersViewModel>();
                 services.AddSingleton<FloatingToolbarViewModel>();
+                services.AddSingleton<OverheadMessageOverlayViewModel>();
                 services.AddSingleton<DPSMeterViewModel>();
                 services.AddSingleton<TargetHPViewModel>();
-                services.AddSingleton<OptionsViewModel>();
-                services.AddSingleton<DisplayViewModel>();
-                services.AddSingleton<SoundViewModel>();
-                services.AddSingleton<CountersViewModel>();
-                services.AddSingleton<HotkeysViewModel>();
-                services.AddSingleton<InspectorViewModel>();
-                services.AddSingleton<SkillsViewModel>();
+                services.AddTransient<OptionsViewModel>();
+                services.AddTransient<DisplayViewModel>();
+                services.AddTransient<SoundViewModel>();
+                services.AddTransient<CountersViewModel>();
+                services.AddTransient<HotkeysViewModel>();
+                services.AddTransient<InspectorViewModel>();
+                services.AddTransient<GumpListViewModel>();
+                services.AddTransient<SkillsViewModel>();
                 services.AddSingleton<SpellGridViewModel>();
-                services.AddSingleton<TMRazorImproved.UI.ViewModels.Agents.AutoLootViewModel>();
-                services.AddSingleton<TMRazorImproved.UI.ViewModels.Agents.ScavengerViewModel>();
-                services.AddSingleton<TMRazorImproved.UI.ViewModels.Agents.BandageHealViewModel>();
-                services.AddSingleton<TMRazorImproved.UI.ViewModels.Agents.TargetingViewModel>();
-                services.AddSingleton<TMRazorImproved.UI.ViewModels.Agents.OrganizerViewModel>();
-                services.AddSingleton<TMRazorImproved.UI.ViewModels.Agents.VendorViewModel>();
-                services.AddSingleton<TMRazorImproved.UI.ViewModels.Agents.RestockViewModel>();
-                services.AddSingleton<TMRazorImproved.UI.ViewModels.Agents.DressViewModel>();
+                services.AddTransient<TMRazorImproved.UI.ViewModels.Agents.AutoLootViewModel>();
+                services.AddTransient<TMRazorImproved.UI.ViewModels.Agents.ScavengerViewModel>();
+                services.AddTransient<TMRazorImproved.UI.ViewModels.Agents.BandageHealViewModel>();
+                services.AddTransient<TMRazorImproved.UI.ViewModels.Agents.TargetingViewModel>();
+                services.AddTransient<TMRazorImproved.UI.ViewModels.Agents.OrganizerViewModel>();
+                services.AddTransient<TMRazorImproved.UI.ViewModels.Agents.VendorViewModel>();
+                services.AddTransient<TMRazorImproved.UI.ViewModels.Agents.RestockViewModel>();
+                services.AddTransient<TMRazorImproved.UI.ViewModels.Agents.DressViewModel>();
 
                 // Pages
                 // Sprint Fix-3: le pagine stateless sono Transient per evitare memory leak
@@ -142,6 +149,7 @@ namespace TMRazorImproved.UI
                 services.AddTransient<DisplayPage>();
                 services.AddTransient<HotkeysPage>();
                 services.AddTransient<InspectorPage>();
+                services.AddTransient<GumpListPage>();
                 services.AddTransient<TMRazorImproved.UI.Views.Pages.SkillsPage>();
                 services.AddTransient<TMRazorImproved.UI.Views.Pages.Agents.AutoLootPage>();
                 services.AddTransient<TMRazorImproved.UI.Views.Pages.Agents.ScavengerPage>();
@@ -192,10 +200,16 @@ namespace TMRazorImproved.UI
                 _host.Services.GetRequiredService<IBandageHealService>();
                 _host.Services.GetRequiredService<IDressService>();
                 _host.Services.GetRequiredService<IVendorService>();
+                _host.Services.GetRequiredService<IAutoCarverService>();
+                _host.Services.GetRequiredService<IBoneCutterService>();
+                _host.Services.GetRequiredService<IAutoRemountService>();
                 _host.Services.GetRequiredService<ITargetingService>();
 
                 // Attiva i ViewModel che si iscrivono a messaggi (il DI li crea lazy)
                 _host.Services.GetRequiredService<PlayerStatusViewModel>();
+
+                // Pre-crea l'overlay messaggi overhead (sarà nascosto, si mostrerà automaticamente)
+                _host.Services.GetRequiredService<OverheadMessageOverlayViewModel>();
 
                 var mainWindow = _host.Services.GetRequiredService<MainWindow>();
                 mainWindow.Show();
@@ -228,6 +242,7 @@ namespace TMRazorImproved.UI
             search.RegisterItem(new SearchItem("Scripting", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(ScriptingPage))), "Python and UOSteam editor", "\uE943"));
             search.RegisterItem(new SearchItem("Macros", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(MacrosPage))), "Macro recorder and player", "\uE7C8"));
             search.RegisterItem(new SearchItem("Skills", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(SkillsPage))), "Character skills list", "\uEADB"));
+            search.RegisterItem(new SearchItem("Gump List", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(GumpListPage))), "Manage active gumps", "\uE179"));
             
             // Agents
             search.RegisterItem(new SearchItem("AutoLoot", SearchCategory.Agent, new RelayCommand(() => nav.Navigate(typeof(AutoLootPage))), "Automated corpse looting", "\uE8B7"));
@@ -261,6 +276,7 @@ namespace TMRazorImproved.UI
             (_host.Services.GetService<SecureTradeViewModel>() as IDisposable)?.Dispose();
             (_host.Services.GetService<ScriptingViewModel>() as IDisposable)?.Dispose();
             (_host.Services.GetService<PlayerStatusViewModel>() as IDisposable)?.Dispose();
+            (_host.Services.GetService<OverheadMessageOverlayViewModel>() as IDisposable)?.Dispose();
 
             await _host.StopAsync();
             _host.Dispose();

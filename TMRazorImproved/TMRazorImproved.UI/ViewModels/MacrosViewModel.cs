@@ -106,5 +106,33 @@ namespace TMRazorImproved.UI.ViewModels
                 MacroSteps.Remove(step);
             }
         }
+
+        [RelayCommand]
+        private void MoveStepUp(MacroStep? step)
+        {
+            if (step == null) return;
+            int index = MacroSteps.IndexOf(step);
+            if (index > 0)
+            {
+                MacroSteps.Move(index, index - 1);
+            }
+        }
+
+        [RelayCommand]
+        private void MoveStepDown(MacroStep? step)
+        {
+            if (step == null) return;
+            int index = MacroSteps.IndexOf(step);
+            if (index < MacroSteps.Count - 1)
+            {
+                MacroSteps.Move(index, index + 1);
+            }
+        }
+
+        [RelayCommand]
+        private void ClearSteps()
+        {
+            MacroSteps.Clear();
+        }
     }
 }
