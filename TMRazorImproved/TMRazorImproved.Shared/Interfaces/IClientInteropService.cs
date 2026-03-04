@@ -8,6 +8,18 @@ namespace TMRazorImproved.Shared.Interfaces
     public interface IClientInteropService
     {
         /// <summary>
+        /// Cerca un processo già in esecuzione nella stessa directory del client.
+        /// Utile quando il gioco è già aperto prima di cliccare "Launch".
+        /// </summary>
+        uint FindRunningGameProcess(string clientDirectory);
+
+        /// <summary>
+        /// Scatta uno snapshot dei PID esistenti prima di lanciare il client.
+        /// Da chiamare immediatamente prima di Process.Start.
+        /// </summary>
+        void PrepareForLaunch();
+
+        /// <summary>
         /// Avvia il client UO tramite Loader.dll
         /// </summary>
         uint LaunchClient(string exePath, string dllPath);
@@ -21,6 +33,12 @@ namespace TMRazorImproved.Shared.Interfaces
         /// Inizializza la libreria Crypt.dll per un processo specifico
         /// </summary>
         bool InstallLibrary(IntPtr windowHandle, int processId, int features);
+
+        /// <summary>
+        /// Injetta Crypt.dll nel processo target via CreateRemoteThread + LoadLibraryA
+        /// e chiama AttachAndPatch per hookare l'IAT e notificare Razor.
+        /// </summary>
+        bool InjectAndAttach(int processId, string cryptDllPath, IntPtr uoWnd, IntPtr razorWnd, int flags);
 
         /// <summary>
         /// Chiude la connessione con il client

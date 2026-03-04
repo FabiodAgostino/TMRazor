@@ -2,9 +2,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Enums;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Wpf.Ui;
 
 namespace TMRazorImproved.UI.ViewModels
@@ -22,6 +25,7 @@ namespace TMRazorImproved.UI.ViewModels
         private readonly IContentDialogService _dialogService;
         private readonly ISnackbarService _snackbarService;
         private readonly IUOModService _uoModService;
+        private readonly ILogger<GeneralViewModel> _logger;
 
         [ObservableProperty]
         private string _clientPath;
@@ -84,7 +88,8 @@ namespace TMRazorImproved.UI.ViewModels
             IClientInteropService clientInterop,
             IContentDialogService dialogService,
             ISnackbarService snackbarService,
-            IUOModService uoModService)
+            IUOModService uoModService,
+            ILogger<GeneralViewModel> logger)
         {
             _configService = configService;
             _languageService = languageService;
@@ -92,6 +97,7 @@ namespace TMRazorImproved.UI.ViewModels
             _dialogService = dialogService;
             _snackbarService = snackbarService;
             _uoModService = uoModService;
+            _logger = logger;
 
             // Carica i dati iniziali dal file di configurazione globale
             _clientPath = _configService.Global.ClientPath;
@@ -244,8 +250,29 @@ namespace TMRazorImproved.UI.ViewModels
         [RelayCommand]
         private void BrowseClient()
         {
-            // Implementazione futura con OpenFileDialog
-            StatusMessage = _languageService.GetString("Status.Browsing");
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Executables (*.exe)|*.exe|All files (*.*)|*.*",
+                Title = "Select Ultima Online Client"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                ClientPath = dialog.FileName;
+                _configService.Global.ClientPath = ClientPath;
+                
+                // Auto-detect DataPath from the executable's directory
+                var directory = System.IO.Path.GetDirectoryName(ClientPath);
+                if (!string.IsNullOrEmpty(directory))
+                {
+                    DataPath = directory;
+                    _configService.Global.DataPath = DataPath;
+                }
+
+                _configService.Save();
+                StatusMessage = "Client and Data paths updated.";
+                _snackbarService.Show("Settings Updated", "Client path has been configured successfully.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
+            }
         }
 
         [RelayCommand]
@@ -270,34 +297,76 @@ namespace TMRazorImproved.UI.ViewModels
 
             try
             {
-                // Logica di lancio tramite il servizio interop
-                uint pid = _clientInterop.LaunchClient(ClientPath, "Crypt.dll");
-
-                // Get MainWindow handle
-                IntPtr windowHandle = new System.Windows.Interop.WindowInteropHelper(System.Windows.Application.Current.MainWindow).Handle;
+                // Get MainWindow handle (necessario per InstallLibrary)
+                var mainWindow = System.Windows.Application.Current.MainWindow;
+                if (mainWindow == null) { _logger.LogError("MainWindow is NULL."); return; }
+                IntPtr windowHandle = new System.Windows.Interop.WindowInteropHelper(mainWindow).Handle;
+                System.Diagnostics.Trace.WriteLine($"[Launch] MainWindow Handle: 0x{windowHandle.ToInt64():X}");
 
                 // Calcola le flag (features)
                 int flags = 0;
-                if (NegotiateFeatures)
-                    flags |= 0x04;
-                if (PatchEncryption)
-                    flags |= 0x08; // Client Encrypted bit
+                if (NegotiateFeatures) flags |= 0x04;
+                if (PatchEncryption) flags |= 0x08;
 
-                // TODO: Aggiungi ServerEncrypted se necessario (0x10)
+                string clientDir = System.IO.Path.GetDirectoryName(ClientPath) ?? "";
 
-                // Esegui in background per non bloccare l'UI
+                // Deploy TMRazorPlugin.dll to TmClient's plugin directory and update settings.json
+                // so that TmClient loads it on next start and creates the shared memory we read from.
+                DeployPlugin(clientDir);
+
                 await Task.Run(() =>
                 {
-                    _clientInterop.WaitForWindow(pid);
-                    _clientInterop.InstallLibrary(windowHandle, (int)pid, flags);
+                    int gamePid = 0;
 
-                    // Inject UOMod.dll if any feature requires it
-                    // MultiClient requires injection
-                    if (AllowMultiClient) // O altre condizioni future per UOMod
+                    // CASO 1: il gioco è già in esecuzione — cerca nella stessa directory del ClientPath
+                    uint runningPid = _clientInterop.FindRunningGameProcess(clientDir);
+                    if (runningPid != 0)
                     {
-                        _uoModService.InjectUoMod((int)pid);
-                        // Abilita la patch MultiUO (sebbene UOMod spesso l'abiliti di default se iniettata, 
-                        // mandiamo il comando per sicurezza).
+                        System.Diagnostics.Trace.WriteLine($"[Launch] Game already running, attaching to PID {runningPid}");
+                        gamePid = (int)runningPid;
+                    }
+                    else
+                    {
+                        // CASO 2: il gioco non è in esecuzione.
+                        // Usa Process.Start direttamente: Loader.dll inietta nel launcher (sbagliato)
+                        // se TmClient.exe è un launcher che spawna il vero client.
+                        // L'iniezione di Crypt.dll avviene comunque dopo via SetWindowsHookEx.
+                        _clientInterop.PrepareForLaunch(); // snapshot PID prima del lancio
+                        System.Diagnostics.Trace.WriteLine($"[Launch] Starting client via Process.Start: {ClientPath}");
+                        var proc = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ClientPath)
+                        {
+                            WorkingDirectory = clientDir,
+                            UseShellExecute = true
+                        });
+                        uint launcherPid = (uint)(proc?.Id ?? 0);
+                        System.Diagnostics.Trace.WriteLine($"[Launch] Process started. PID: {launcherPid}");
+
+                        _clientInterop.WaitForWindow(launcherPid);
+                        gamePid = _clientInterop.GetUOProcessId();
+                        if (gamePid == 0) gamePid = (int)launcherPid;
+                        System.Diagnostics.Trace.WriteLine($"[Launch] Game PID after wait: {gamePid} (launcher was {launcherPid})");
+                    }
+
+                    System.Diagnostics.Trace.WriteLine($"[Launch] Installing hook for game PID: {gamePid}");
+                    bool success = _clientInterop.InstallLibrary(windowHandle, gamePid, flags);
+                    if (success)
+                    {
+                        System.Diagnostics.Trace.WriteLine($"[Launch] Hook installed successfully (PID: {gamePid})");
+                        _logger.LogInformation("Hook installed successfully (PID: {Pid})", gamePid);
+                    }
+                    else
+                    {
+                        System.Diagnostics.Trace.WriteLine($"[Launch] FAILED to install hook (PID: {gamePid})");
+                        _logger.LogError("FAILED to install hook (PID: {Pid})", gamePid);
+                    }
+
+                    // InstallLibrary apre la shared memory creata da TMRazorPlugin.dll (già caricata
+                    // da TmClient) e popola PacketTable in modo che GetPacketLength funzioni.
+                    // I WH hook non funzionano su TmClient (x64) ma non sono più necessari.
+
+                    if (AllowMultiClient && gamePid != 0)
+                    {
+                        _uoModService.InjectUoMod(gamePid);
                         _uoModService.EnablePatch(UOPatchType.MultiUO, true);
                     }
                 });
@@ -307,6 +376,57 @@ namespace TMRazorImproved.UI.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = $"Errore avvio: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Copies TMRazorPlugin.dll to TmClient's plugin directory and updates settings.json
+        /// so that TmClient will load the plugin on next startup.
+        /// </summary>
+        private void DeployPlugin(string clientDir)
+        {
+            try
+            {
+                string appDir    = System.AppContext.BaseDirectory;
+                string pluginSrc = System.IO.Path.Combine(appDir, "TMRazorPlugin.dll");
+                if (!System.IO.File.Exists(pluginSrc))
+                {
+                    System.Diagnostics.Trace.WriteLine($"[Deploy] TMRazorPlugin.dll not found in {appDir}, skipping deploy.");
+                    return;
+                }
+
+                string pluginDir = System.IO.Path.Combine(clientDir, "Data", "Plugins", "TMRazorImproved");
+                System.IO.Directory.CreateDirectory(pluginDir);
+
+                string pluginDst = System.IO.Path.Combine(pluginDir, "TMRazorPlugin.dll");
+                System.IO.File.Copy(pluginSrc, pluginDst, overwrite: true);
+                System.Diagnostics.Trace.WriteLine($"[Deploy] TMRazorPlugin.dll → {pluginDst}");
+
+                // Update settings.json plugins array to point to TMRazorPlugin.dll
+                string settingsPath = System.IO.Path.Combine(clientDir, "settings.json");
+                if (System.IO.File.Exists(settingsPath))
+                {
+                    try
+                    {
+                        string raw  = System.IO.File.ReadAllText(settingsPath);
+                        var    node = JsonNode.Parse(raw);
+                        if (node != null)
+                        {
+                            node["plugins"] = new JsonArray(JsonValue.Create(pluginDst));
+                            var opts = new JsonSerializerOptions { WriteIndented = true };
+                            System.IO.File.WriteAllText(settingsPath, node.ToJsonString(opts));
+                            System.Diagnostics.Trace.WriteLine($"[Deploy] settings.json updated → plugin={pluginDst}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Trace.WriteLine($"[Deploy] settings.json update warning: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine($"[Deploy] DeployPlugin warning: {ex.Message}");
             }
         }
 

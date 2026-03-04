@@ -11,7 +11,7 @@ namespace TMRazorImproved.UI.Views.Pages
         public JournalPage(JournalViewModel viewModel)
         {
             ViewModel = viewModel;
-            DataContext = this;
+            DataContext = ViewModel;
 
             InitializeComponent();
         }

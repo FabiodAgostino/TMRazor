@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <AssemblyName>TMRazorPlugin</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>8.0</LangVersion>
+    <!-- AnyCPU: when loaded by x64 TmClient, runs as x64 -->
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Private=false: don't copy cuoapi.dll to output.
+         TmClient loads it first; our AssemblyResolve returns the already-loaded instance
+         so that delegate types are identical (no type-mismatch crash). -->
+    <Reference Include="cuoapi">
+      <HintPath>cuoapi.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

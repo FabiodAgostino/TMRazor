@@ -43,24 +43,24 @@
                             <StackPanel Orientation="Horizontal">
                                 <ui:TextBlock Text="Set All Locks:" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"/>
                                 <ComboBox Width="100" 
-                                          ItemsSource="{Binding ViewModel.LockOptions}" 
-                                          SelectedItem="{Binding ViewModel.SelectedLockAll, Mode=TwoWay}"
+                                          ItemsSource="{Binding LockOptions}" 
+                                          SelectedItem="{Binding SelectedLockAll, Mode=TwoWay}"
                                           VerticalAlignment="Center"/>
-                                <ui:Button Command="{Binding ViewModel.SetAllLocksCommand}" 
+                                <ui:Button Command="{Binding SetAllLocksCommand}" 
                                            Icon="{ui:SymbolIcon Checkmark24}" 
                                            Margin="8,0,0,0" 
                                            ToolTip="Apply to all skills"/>
                             </StackPanel>
 
                             <ui:ToggleSwitch Grid.Column="1" 
-                                            IsChecked="{Binding ViewModel.DisplayChanges, Mode=TwoWay}" 
+                                            IsChecked="{Binding DisplayChanges, Mode=TwoWay}" 
                                             Content="Display Changes" 
                                             VerticalAlignment="Center" />
                         </Grid>
                     </ui:Card>
 
                     <ui:Card Grid.Row="1" Padding="0">
-                        <DataGrid ItemsSource="{Binding ViewModel.Skills}" 
+                        <DataGrid ItemsSource="{Binding Skills}" 
                                   AutoGenerateColumns="False" 
                                   CanUserAddRows="False" 
                                   Background="Transparent" 
@@ -75,7 +75,7 @@
                                 <DataGridTextColumn Header="Delta" Binding="{Binding Delta, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="{Binding DataContext.ViewModel.DisplayChanges, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <Setter Property="Visibility" Value="{Binding DataContext.DisplayChanges, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
@@ -83,7 +83,7 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <ComboBox SelectedItem="{Binding Lock, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                                      ItemsSource="{Binding DataContext.ViewModel.LockOptions, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                      ItemsSource="{Binding DataContext.LockOptions, RelativeSource={RelativeSource AncestorType=Page}}"
                                                       BorderThickness="0" Background="Transparent" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
@@ -101,14 +101,14 @@
 
                             <StackPanel Orientation="Horizontal">
                                 <ui:TextBlock Text="Total Real: " Appearance="Secondary" VerticalAlignment="Center" />
-                                <ui:TextBlock Text="{Binding ViewModel.TotalReal, StringFormat={}{0:F1}}" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,24,0" />
+                                <ui:TextBlock Text="{Binding TotalReal, StringFormat={}{0:F1}}" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,24,0" />
                                 <ui:TextBlock Text="Total Base: " Appearance="Secondary" VerticalAlignment="Center" />
-                                <ui:TextBlock Text="{Binding ViewModel.TotalBase, StringFormat={}{0:F1}}" FontWeight="Bold" VerticalAlignment="Center" />
+                                <ui:TextBlock Text="{Binding TotalBase, StringFormat={}{0:F1}}" FontWeight="Bold" VerticalAlignment="Center" />
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <ui:Button Content="Copy List" Icon="{ui:SymbolIcon Copy24}" Command="{Binding ViewModel.CopyAllCommand}" Margin="0,0,8,0" />
-                                <ui:Button Content="Reset Delta" Icon="{ui:SymbolIcon History24}" Command="{Binding ViewModel.ResetDeltaCommand}" />
+                                <ui:Button Content="Copy List" Icon="{ui:SymbolIcon Copy24}" Command="{Binding CopyAllCommand}" Margin="0,0,8,0" />
+                                <ui:Button Content="Reset Delta" Icon="{ui:SymbolIcon History24}" Command="{Binding ResetDeltaCommand}" />
                             </StackPanel>
                         </Grid>
                     </ui:Card>
@@ -129,7 +129,7 @@
 
                     <ui:Card Grid.Row="1" Padding="0" Margin="0,0,0,12">
                         <!-- Utilizzo di DataGrid per mostrare lo storico dei gain -->
-                        <DataGrid ItemsSource="{Binding ViewModel.GainHistory}" 
+                        <DataGrid ItemsSource="{Binding GainHistory}" 
                                   AutoGenerateColumns="False" 
                                   CanUserAddRows="False" 
                                   Background="Transparent" 
@@ -159,7 +159,7 @@
                     <ui:Card Grid.Row="2" Padding="12" VerticalAlignment="Bottom">
                         <Grid Height="150">
                             <ui:TextBlock Text="Gain History Chart" Appearance="Secondary" VerticalAlignment="Top" HorizontalAlignment="Left" />
-                            <ItemsControl ItemsSource="{Binding ViewModel.GainHistory}" Margin="0,20,0,0">
+                            <ItemsControl ItemsSource="{Binding GainHistory}" Margin="0,20,0,0">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" />

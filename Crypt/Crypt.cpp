@@ -63,6 +63,7 @@ bool ClientEncrypted = false;
 bool ServerEncrypted = false;
 bool DwmAttrState = true;
 bool connected = false;
+bool s_IATPatchApplied = false;
 
 enum class CLIENT_TYPE { TWOD = 1, THREED = 2 };
 CLIENT_TYPE ClientType = CLIENT_TYPE::TWOD;
@@ -205,25 +206,69 @@ void PatchDeathMsg()
 	}
 }
 
+struct FindWndData { DWORD pid; HWND hWnd; };
+BOOL CALLBACK FindUOWndProc(HWND hWnd, LPARAM lParam)
+{
+	FindWndData *data = (FindWndData*)lParam;
+	DWORD pid = 0;
+	GetWindowThreadProcessId(hWnd, &pid);
+	// EnumWindows enumera già solo finestre non-child (top-level + owned).
+	// Il check GetParent==NULL escluderebbe owned-window come il client custom.
+	if (pid == data->pid)
+	{
+		data->hWnd = hWnd;
+		return FALSE;
+	}
+	return TRUE;
+}
+
+DLLFUNCTION void SetUOWindowHandle(HWND hwnd)
+{
+	hUOWindow = hwnd;
+	OutputDebugStringA("[Crypt] SetUOWindowHandle called\n");
+}
+
 DLLFUNCTION int InstallLibrary(HWND PostWindow, DWORD pid, int flags)
 {
 	DWORD UOTId = 0;
+	char dbgBuf[256];
 
-	//Log("Install library...");
+	sprintf_s(dbgBuf, "[Crypt] InstallLibrary START: pid=%lu, hUOWindow=%p\n", pid, hUOWindow);
+	OutputDebugStringA(dbgBuf);
 
 	HWND hWnd = NULL;
 	if (pid != 0)
 	{
-		hWnd = FindWindow("Ultima Online", NULL);
-		while (hWnd != NULL)
+		// PRIORITY: usa hUOWindow già cachato da WaitForWindow/FindUOWindow
+		if (hUOWindow != NULL && IsWindow(hUOWindow))
 		{
-			UOTId = GetWindowThreadProcessId(hWnd, &UOProcId);
-			if (UOProcId == pid)
-				break;
-			hWnd = FindWindowEx(NULL, hWnd, "Ultima Online", NULL);
+			DWORD cachedPid = 0;
+			UOTId = GetWindowThreadProcessId(hUOWindow, &cachedPid);
+			sprintf_s(dbgBuf, "[Crypt] Cache check: hUOWindow=%p, cachedPid=%lu, UOTId=%lu\n", hUOWindow, cachedPid, UOTId);
+			OutputDebugStringA(dbgBuf);
+			if (cachedPid == pid)
+			{
+				hWnd = hUOWindow;
+				UOProcId = cachedPid;
+				OutputDebugStringA("[Crypt] Cache HIT, using cached window.\n");
+			}
 		}
 
-		if (UOProcId != pid || hWnd == NULL)
+		if (hWnd == NULL)
+		{
+			hWnd = FindWindow("Ultima Online", NULL);
+			while (hWnd != NULL)
+			{
+				UOTId = GetWindowThreadProcessId(hWnd, &UOProcId);
+				if (UOProcId == pid)
+					break;
+				hWnd = FindWindowEx(NULL, hWnd, "Ultima Online", NULL);
+			}
+			sprintf_s(dbgBuf, "[Crypt] FindWindow(UO): hWnd=%p, UOProcId=%lu, UOTId=%lu\n", hWnd, UOProcId, UOTId);
+			OutputDebugStringA(dbgBuf);
+		}
+
+		if (hWnd == NULL || UOProcId != pid)
 		{
 			hWnd = FindWindow("Ultima Online Third Dawn", NULL);
 			while (hWnd != NULL)
@@ -233,10 +278,21 @@ DLLFUNCTION int InstallLibrary(HWND PostWindow, DWORD pid, int flags)
 					break;
 				hWnd = FindWindowEx(NULL, hWnd, "Ultima Online Third Dawn", NULL);
 			}
+			sprintf_s(dbgBuf, "[Crypt] FindWindow(3D): hWnd=%p, UOProcId=%lu, UOTId=%lu\n", hWnd, UOProcId, UOTId);
+			OutputDebugStringA(dbgBuf);
 		}
 
-		if (UOProcId != pid)
-			return NO_TID;
+		// FALLBACK: Ricerca per PID se i nomi falliscono
+		if (hWnd == NULL || UOProcId != pid)
+		{
+			FindWndData data = { pid, NULL };
+			EnumWindows(FindUOWndProc, (LPARAM)&data);
+			hWnd = data.hWnd;
+			if (hWnd != NULL)
+				UOTId = GetWindowThreadProcessId(hWnd, &UOProcId);
+			sprintf_s(dbgBuf, "[Crypt] EnumWindows fallback: hWnd=%p, UOProcId=%lu, UOTId=%lu\n", hWnd, UOProcId, UOTId);
+			OutputDebugStringA(dbgBuf);
+		}
 	}
 	else
 	{
@@ -247,6 +303,9 @@ DLLFUNCTION int InstallLibrary(HWND PostWindow, DWORD pid, int flags)
 
 	hUOWindow = hWnd;
 	hRazorWnd = PostWindow;
+
+	sprintf_s(dbgBuf, "[Crypt] PRE-CHECK: hUOWindow=%p, UOTId=%lu, UOProcId=%lu\n", hUOWindow, UOTId, UOProcId);
+	OutputDebugStringA(dbgBuf);
 
 	if (hUOWindow == NULL)
 		return NO_UOWND;
@@ -259,6 +318,7 @@ DLLFUNCTION int InstallLibrary(HWND PostWindow, DWORD pid, int flags)
 	//memset( pShared, 0, sizeof(SharedMemory) );
 
 	pShared->IsHaxed = false;
+	memcpy(pShared->PacketTable, StaticPacketTable, 256 * sizeof(unsigned short));
 
 	hWndProcRetHook = SetWindowsHookEx(WH_CALLWNDPROCRET, WndProcRetHookFunc, hInstance, UOTId);
 	if (!hWndProcRetHook)
@@ -1737,17 +1797,33 @@ void SetCustomNotoHue(int hue)
 
 bool PatchMemory(void)
 {
-	//Log("Patching client functions.");
-
-	return
+	if (s_IATPatchApplied) return true; // already patched, avoid double-hook
+	OutputDebugStringA("[Crypt] PatchMemory: trying wsock32.dll\n");
+	bool ok =
 		HookFunction("wsock32.dll", "closesocket", 3, (unsigned long)HookCloseSocket, &OldCloseSocket, &CloseSocketAddress) &&
 		HookFunction("wsock32.dll", "connect", 4, (unsigned long)HookConnect, &OldConnect, &ConnectAddress) &&
 		HookFunction("wsock32.dll", "recv", 16, (unsigned long)HookRecv, &OldRecv, &RecvAddress) &&
 		HookFunction("wsock32.dll", "select", 18, (unsigned long)HookSelect, &OldSelect, &SelectAddress) &&
-		HookFunction("wsock32.dll", "send", 19, (unsigned long)HookSend, &OldSend, &SendAddress)
-		;
-	//HookFunction( "wsock32.dll", "socket", 23, (unsigned long)HookSocket, &OldSocket, &SocketAddress)
-	//HookFunction( "wsock32.dll", "WSAAsyncSelect", 101, (unsigned long)HookAsyncSelect, &OldAsyncSelect, &AsyncSelectAddress );
+		HookFunction("wsock32.dll", "send", 19, (unsigned long)HookSend, &OldSend, &SendAddress);
+
+	if (!ok)
+	{
+		OutputDebugStringA("[Crypt] PatchMemory: wsock32 failed, trying ws2_32.dll\n");
+		ok =
+			HookFunction("ws2_32.dll", "closesocket", 3, (unsigned long)HookCloseSocket, &OldCloseSocket, &CloseSocketAddress) &&
+			HookFunction("ws2_32.dll", "connect", 4, (unsigned long)HookConnect, &OldConnect, &ConnectAddress) &&
+			HookFunction("ws2_32.dll", "recv", 16, (unsigned long)HookRecv, &OldRecv, &RecvAddress) &&
+			HookFunction("ws2_32.dll", "select", 18, (unsigned long)HookSelect, &OldSelect, &SelectAddress) &&
+			HookFunction("ws2_32.dll", "send", 19, (unsigned long)HookSend, &OldSend, &SendAddress);
+	}
+
+	if (ok)
+	{
+		s_IATPatchApplied = true;
+		OutputDebugStringA("[Crypt] PatchMemory: SUCCESS\n");
+	}
+	else OutputDebugStringA("[Crypt] PatchMemory: FAILED\n");
+	return ok;
 }
 
 void MemoryPatch(unsigned long Address, unsigned long value)
@@ -1849,9 +1925,7 @@ void CALLBACK MessageProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam, MS
 
 		if (!pShared)
 			PostMessage(hRazorWnd, WM_UONETEVENT, NOT_READY, NO_SHAREMEM);
-		else if (CopyFailed)
-			PostMessage(hRazorWnd, WM_UONETEVENT, NOT_READY, NO_COPY);
-		else if (!PatchMemory())
+		else if (!PatchMemory()) // CopyFailed does not block socket hooks
 			PostMessage(hRazorWnd, WM_UONETEVENT, NOT_READY, NO_PATCH);
 		else
 			PostMessage(hRazorWnd, WM_UONETEVENT, READY, SUCCESS);
@@ -2163,6 +2237,62 @@ LRESULT CALLBACK UOAWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 		return SendMessage(hRazorWnd, nMsg, wParam, lParam);
 	else
 		return DefWindowProc(hWnd, nMsg, wParam, lParam);
+}
+
+// Params written by the C# injector into TmClient's address space before calling this thread proc.
+struct AttachParams
+{
+	HWND uoWnd;
+	HWND razorWnd;
+	int flags;
+};
+
+// Thread proc invoked via CreateRemoteThread after LoadLibraryA injection.
+// Runs inside TmClient's process: sets up globals, patches IAT, notifies Razor.
+DLLFUNCTION DWORD WINAPI AttachAndPatch(LPVOID lpParam)
+{
+	AttachParams *p = (AttachParams*)lpParam;
+	if (!p) return (DWORD)INVALID_PARAMS;
+
+	hRazorWnd = p->razorWnd;
+	hUOWindow = p->uoWnd;
+	ClientEncrypted = (p->flags & 0x08) != 0;
+	ServerEncrypted = (p->flags & 0x10) != 0;
+	UOProcId = GetCurrentProcessId();
+
+	OutputDebugStringA("[Crypt] AttachAndPatch called\n");
+
+	// Find TmClient's own window if not supplied
+	if (hUOWindow == NULL || !IsWindow(hUOWindow))
+	{
+		FindWndData data = { UOProcId, NULL };
+		EnumWindows(FindUOWndProc, (LPARAM)&data);
+		hUOWindow = data.hWnd;
+	}
+
+	if (!pShared)
+		OnAttach(NULL, 0);
+
+	if (!pShared)
+	{
+		OutputDebugStringA("[Crypt] AttachAndPatch: NO_SHAREMEM\n");
+		if (IsWindow(hRazorWnd))
+			PostMessage(hRazorWnd, WM_UONETEVENT, NOT_READY, NO_SHAREMEM);
+		return (DWORD)NO_SHAREMEM;
+	}
+
+	if (!PatchMemory())
+	{
+		OutputDebugStringA("[Crypt] AttachAndPatch: NO_PATCH\n");
+		if (IsWindow(hRazorWnd))
+			PostMessage(hRazorWnd, WM_UONETEVENT, NOT_READY, NO_PATCH);
+		return (DWORD)NO_PATCH;
+	}
+
+	OutputDebugStringA("[Crypt] AttachAndPatch: READY\n");
+	if (IsWindow(hRazorWnd))
+		PostMessage(hRazorWnd, WM_UONETEVENT, READY, SUCCESS);
+	return (DWORD)SUCCESS;
 }
 
 void Log(const char *format, ...)

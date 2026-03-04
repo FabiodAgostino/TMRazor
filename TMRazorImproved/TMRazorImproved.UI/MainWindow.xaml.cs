@@ -114,6 +114,12 @@ namespace TMRazorImproved.UI
         {
             try
             {
+                // Diagnostica: Log dei messaggi di rete (WM_USER + 1 = 0x401)
+                if (msg == 0x401)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[WndProc] Received WM_UONETEVENT: wParam={wParam}, lParam={lParam}");
+                }
+
                 // Passa il messaggio al PacketService per la gestione delle comunicazioni native da Crypt.dll
                 if (_packetService.OnMessage(hwnd, msg, wParam, lParam))
                 {

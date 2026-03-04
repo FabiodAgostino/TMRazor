@@ -185,6 +185,9 @@ namespace TMRazorImproved.UI
 
                 lang.Load(config.Global.Language);
                 
+                // Forza inizializzazione PacketService (attiva il fallback timer)
+                _host.Services.GetRequiredService<IPacketService>();
+                
                 _host.Services.GetRequiredService<IMapService>().Initialize(config.Global.DataPath);
                 
                 _host.Services.GetRequiredService<WorldPacketHandler>();
