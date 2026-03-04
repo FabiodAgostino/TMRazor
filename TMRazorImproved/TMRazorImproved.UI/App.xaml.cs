@@ -79,6 +79,7 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<IUltimaImageCache, UltimaImageCache>();
                 services.AddSingleton<ICounterService, CounterService>();
                 services.AddSingleton<IDPSMeterService, DPSMeterService>();
+                services.AddSingleton<IMapDataProvider, UltimaMapDataProvider>();
                 services.AddSingleton<IPathFindingService, PathFindingService>();
                 services.AddSingleton<ISecureTradeService, SecureTradeService>();
                 services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();

@@ -5,7 +5,7 @@
 **Revisore**: Architetto Senior — Migrazione .NET Framework → .NET Core
 **Scope**: Full codebase review — qualità del codice, bug, sicurezza, feature parity, elementi da migrare
 **Branch**: `claude/tmrazor-migration-review-C7AZY`
-**Stato**: ✅ Tutti i bug P0/P1/P2 identificati nella review **risolti e committati** | Sprint Fix-3 completato il 4 Marzo 2026
+**Stato**: ✅ Tutti i bug P0/P1/P2 identificati nella review **risolti e committati** | Sprint Fix-3 completato il 4 Marzo 2026 | Sprint Fix-4 completato il 4 Marzo 2026
 
 ---
 
@@ -710,7 +710,7 @@ Il TODO è presente nel codice ma il campo `HiddenStop` non è nemmeno definito 
 
 | Modulo | Originale | Implementato | Stub | Gap Reale | Post-Fix |
 |--------|-----------|-------------|------|-----------|----------|
-| PlayerApi | ~100 metodi | ~28 | 0 | 72% | **75%** (GetSkillValue, UseSkill, Cast implementati) |
+| PlayerApi | ~100 metodi | ~28 | 0 | 72% | **✅ 85%** (Sprint Fix-4: IsHidden/WarMode/Direction/MapId/Notoriety/UseType/FindLayer/GetLayer/InRange/DistanceTo/Mount/Dismount) |
 | ItemsApi | ~80 metodi | ~14 | 0 | 82% | **83%** (GetPropString, GetPropValue implementati) |
 | MobilesApi | ~60 metodi | ~8 | 0 | 87% | **87%** (invariato) |
 | SpellsApi | ~40 metodi | 8+ (Cast str+variants) | 0 | 97% | **97%** (Cast(string) + TryGetSpellId implementati) |
@@ -730,7 +730,7 @@ Il TODO è presente nel codice ma il campo `HiddenStop` non è nemmeno definito 
 | Scavenger | 100% | **75%** | **✅ 88%** | ConcurrentDictionary, thread-safe |
 | BandageHeal | 100% | **60%** | **✅ 88%** | NullRef corretto; HiddenStop implementato (Sprint Fix-3) |
 | Dress | 100% | **30%** | **✅ 85%** | Packet 0x13 WearItem corretto |
-| Organizer | 100% | **65%** | **65%** | Invariato |
+| Organizer | 100% | **65%** | **✅ 78%** | PacketBuilder integrato (Sprint Fix-4) |
 | Restock | 100% | **75%** | **75%** | Invariato |
 | Vendor | 100% | **35%** | **✅ 70%** | Buy ora funzionale con LastOpenedContainer |
 
@@ -946,15 +946,28 @@ Il progetto è ora **pronto per test in ambiente protetto (test server)**. La ma
 
 ---
 
-### Sprint Fix-4 — Qualità Avanzata (Prossimo Sprint)
+### Sprint Fix-4 — Qualità Avanzata ✅ COMPLETATO (4 Marzo 2026)
 
 | # | Task | Stima | Stato |
 |---|------|-------|-------|
-| 21 | Aggiungere ILoggerFactory alle Scripting API | 3h | ⏳ Pending |
-| 22 | Integrazione PacketBuilder in OrganizerService | 1h | ⏳ Pending |
-| 23 | Macro UseType / EquipItem / Mount-Dismount | 4h | ⏳ Pending |
-| 24 | PathFinding unit tests (mock UltimaSDK) | 4h | ⏳ Pending |
-| 25 | PlayerApi completamento (~25% stub restanti) | 8h | ⏳ Pending |
+| 21 | Aggiungere ILoggerFactory alle Scripting API | 3h | ✅ `ScriptingService` + ILogger<T>? in ItemsApi/MobilesApi/PlayerApi/SpellsApi |
+| 22 | Integrazione PacketBuilder in OrganizerService + ItemsApi.Move() | 1h | ✅ Rimosso `System.Buffers.Binary` raw, usa `PacketBuilder.*` |
+| 23 | Macro UseType / EquipItem / Mount-Dismount | 4h | ✅ `MacrosService` — 4 nuovi case: USETYPE, EQUIPITEM, MOUNT, DISMOUNT |
+| 24 | PathFinding unit tests (mock UltimaSDK) | 4h | ✅ `IMapDataProvider` + `UltimaMapDataProvider` + `PathFindingServiceTests.cs` (6 test) |
+| 25 | PlayerApi completamento (~25% stub restanti) | 8h | ✅ IsHidden/WarMode/Direction/MapId/Notoriety + UseType/FindLayer/GetLayer/InRange/DistanceTo/Mount/Dismount |
+
+---
+
+### Sprint Fix-5 — Feature Parity Avanzata (Prossimo Sprint)
+
+| # | Task | Stima | Stato |
+|---|------|-------|-------|
+| 26 | MobilesApi completamento (FindAllByID range, IsDead, IsFriend, GetHealth%) | 4h | ⏳ Pending |
+| 27 | JournalApi WaitForJournal con TaskCompletionSource (simile WAITFORTARGET) | 3h | ⏳ Pending |
+| 28 | GumpsApi completamento (WaitForGump, GetStringLine, GetLineCount) | 3h | ⏳ Pending |
+| 29 | Packet handler 0x6E (AnimationRequest S2C) | 2h | ⏳ Pending |
+| 30 | OrganizerService null-check profilo + test copertura | 2h | ⏳ Pending |
+| 31 | Integration test flusso completo Vendor Buy | 4h | ⏳ Pending |
 
 ---
 

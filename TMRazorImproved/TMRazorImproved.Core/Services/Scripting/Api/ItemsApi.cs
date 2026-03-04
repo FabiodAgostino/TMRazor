@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
+using TMRazorImproved.Core.Utilities;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
 
@@ -20,12 +22,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         private readonly IWorldService _world;
         private readonly IPacketService _packet;
         private readonly ScriptCancellationController _cancel;
+        private readonly ILogger<ItemsApi>? _logger;
 
-        public ItemsApi(IWorldService world, IPacketService packet, ScriptCancellationController cancel)
+        public ItemsApi(IWorldService world, IPacketService packet, ScriptCancellationController cancel, ILogger<ItemsApi>? logger = null)
         {
             _world = world;
             _packet = packet;
             _cancel = cancel;
+            _logger = logger;
         }
 
         // ------------------------------------------------------------------
@@ -153,38 +157,22 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void UseItem(uint serial)
         {
             _cancel.ThrowIfCancelled();
-            byte[] packet = new byte[5];
-            packet[0] = 0x06; // Double Click
-            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(1), serial);
-            _packet.SendToServer(packet);
+            _logger?.LogDebug("UseItem: serial=0x{Serial:X}", serial);
+            _packet.SendToServer(PacketBuilder.DoubleClick(serial));
         }
 
         public virtual void Click(uint serial)
         {
             _cancel.ThrowIfCancelled();
-            byte[] packet = new byte[5];
-            packet[0] = 0x09; // Single Click
-            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(1), serial);
-            _packet.SendToServer(packet);
+            _packet.SendToServer(PacketBuilder.SingleClick(serial));
         }
 
         public virtual void Move(uint serial, uint targetContainer, int amount = 1)
         {
             _cancel.ThrowIfCancelled();
-            byte[] lift = new byte[7];
-            lift[0] = 0x07;
-            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(lift.AsSpan(1), serial);
-            System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(lift.AsSpan(5), (ushort)amount);
-            _packet.SendToServer(lift);
-
-            byte[] drop = new byte[15];
-            drop[0] = 0x08;
-            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(drop.AsSpan(1), serial);
-            System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(drop.AsSpan(5), 0xFFFF);
-            System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(drop.AsSpan(7), 0xFFFF);
-            drop[9] = 0;
-            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(drop.AsSpan(11), targetContainer);
-            _packet.SendToServer(drop);
+            _logger?.LogDebug("Move: serial=0x{Serial:X} amount={Amount} → container=0x{Container:X}", serial, amount, targetContainer);
+            _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount));
+            _packet.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer));
         }
     }
 }

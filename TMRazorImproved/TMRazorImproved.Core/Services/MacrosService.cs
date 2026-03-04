@@ -463,6 +463,96 @@ namespace TMRazorImproved.Core.Services
                     break;
                 }
 
+                // Sprint Fix-4: USETYPE <graphic> — trova il primo item con quel graphic nel backpack e lo usa
+                case "USETYPE":
+                {
+                    if (!int.TryParse(args, out int useTypeGraphic)) break;
+                    var bp = _worldService.Player?.Backpack;
+                    TMRazorImproved.Shared.Models.Item? found = null;
+                    if (bp != null)
+                        found = _worldService.GetItemsInContainer(bp.Serial)
+                            .FirstOrDefault(i => i.Graphic == useTypeGraphic);
+                    if (found == null)
+                        found = _worldService.Items.FirstOrDefault(i => i.Graphic == useTypeGraphic);
+                    if (found != null)
+                    {
+                        _logger.LogDebug("USETYPE graphic=0x{G:X} → serial=0x{S:X}", useTypeGraphic, found.Serial);
+                        _packetService.SendToServer(PacketBuilder.DoubleClick(found.Serial));
+                    }
+                    else
+                        _logger.LogWarning("USETYPE: no item found with graphic 0x{G:X}", useTypeGraphic);
+                    break;
+                }
+
+                // Sprint Fix-4: EQUIPITEM <serial> <layer> — lift + wear
+                case "EQUIPITEM":
+                {
+                    var ep = args.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                    if (ep.Length == 2
+                        && uint.TryParse(ep[0], out uint equipSerial)
+                        && byte.TryParse(ep[1], out byte equipLayer))
+                    {
+                        uint playerSerial = _worldService.Player?.Serial ?? 0;
+                        _logger.LogDebug("EQUIPITEM serial=0x{S:X} layer={L} player=0x{P:X}", equipSerial, equipLayer, playerSerial);
+                        _packetService.SendToServer(PacketBuilder.LiftItem(equipSerial));
+                        await Task.Delay(50, token);
+                        _packetService.SendToServer(PacketBuilder.WearItem(equipSerial, equipLayer, playerSerial));
+                    }
+                    else
+                        _logger.LogWarning("EQUIPITEM: formato non valido. Atteso: EQUIPITEM <serial> <layer>");
+                    break;
+                }
+
+                // Sprint Fix-4: MOUNT <serial?> — double-click sul mount
+                case "MOUNT":
+                {
+                    if (uint.TryParse(args, out uint mountSerial) && mountSerial != 0)
+                    {
+                        _logger.LogDebug("MOUNT serial=0x{S:X}", mountSerial);
+                        _packetService.SendToServer(PacketBuilder.DoubleClick(mountSerial));
+                    }
+                    else
+                    {
+                        var player = _worldService.Player;
+                        if (player != null)
+                        {
+                            var nearestMobile = _worldService.Mobiles
+                                .Where(m => m.Serial != player.Serial && m.DistanceTo(player) <= 2)
+                                .OrderBy(m => m.DistanceTo(player))
+                                .FirstOrDefault();
+                            if (nearestMobile != null)
+                            {
+                                _logger.LogDebug("MOUNT nearest mobile=0x{S:X}", nearestMobile.Serial);
+                                _packetService.SendToServer(PacketBuilder.DoubleClick(nearestMobile.Serial));
+                            }
+                        }
+                    }
+                    break;
+                }
+
+                // Sprint Fix-4: DISMOUNT — double-click sull'item nel riding layer (layer 25)
+                case "DISMOUNT":
+                {
+                    var player = _worldService.Player;
+                    if (player != null)
+                    {
+                        const byte ridingLayer = 0x19; // layer 25
+                        var mountItem = _worldService.Items
+                            .FirstOrDefault(i => i.Container == player.Serial && i.Layer == ridingLayer);
+                        if (mountItem != null)
+                        {
+                            _logger.LogDebug("DISMOUNT via riding layer item 0x{S:X}", mountItem.Serial);
+                            _packetService.SendToServer(PacketBuilder.DoubleClick(mountItem.Serial));
+                        }
+                        else
+                        {
+                            _logger.LogDebug("DISMOUNT: no riding layer item, double-clicking player serial");
+                            _packetService.SendToServer(PacketBuilder.DoubleClick(player.Serial));
+                        }
+                    }
+                    break;
+                }
+
                 // Sprint Fix-3: RESPONDGUMP <serial> <typeId> <buttonId>
                 case "RESPONDGUMP":
                 {

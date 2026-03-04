@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Text;
+using Microsoft.Extensions.Logging;
+using TMRazorImproved.Core.Utilities;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
 
@@ -19,22 +21,24 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         private readonly IWorldService _world;
         private readonly IPacketService _packet;
         private readonly ITargetingService _targeting;
-        // FIX BUG-P2-01: iniettato ISkillsService per implementare GetSkillValue e UseSkill
         private readonly ISkillsService _skills;
         private readonly ScriptCancellationController _cancel;
+        private readonly ILogger<PlayerApi>? _logger;
 
         public PlayerApi(
             IWorldService world,
             IPacketService packet,
             ITargetingService targeting,
             ISkillsService skills,
-            ScriptCancellationController cancel)
+            ScriptCancellationController cancel,
+            ILogger<PlayerApi>? logger = null)
         {
             _world = world;
             _packet = packet;
             _targeting = targeting;
             _skills = skills;
             _cancel = cancel;
+            _logger = logger;
         }
 
         private Mobile? P => _world.Player;
@@ -76,6 +80,15 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         // Fame e Karma (TODO: Da estrarre tramite OPL o messaggi server)
         public virtual int Karma => 0;
         public virtual int Fame  => 0;
+
+        // ------------------------------------------------------------------
+        // Stato avanzato
+        // ------------------------------------------------------------------
+        public virtual bool IsHidden  => P?.IsHidden  ?? false;
+        public virtual bool WarMode   => P?.WarMode   ?? false;
+        public virtual int  Direction => P?.Direction ?? 0;
+        public virtual int  MapId     => P?.MapId     ?? 0;
+        public virtual int  Notoriety => P?.Notoriety ?? 0;
 
         // ------------------------------------------------------------------
         // Identificazione
@@ -143,10 +156,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void Attack(uint serial)
         {
             _cancel.ThrowIfCancelled();
-            byte[] packet = new byte[5];
-            packet[0] = 0x05;
-            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(1), serial);
-            _packet.SendToServer(packet);
+            _logger?.LogDebug("Attack: target=0x{Serial:X}", serial);
+            _packet.SendToServer(PacketBuilder.Attack(serial));
         }
 
         public virtual void HeadMsg(string message, int hue = 945)
@@ -220,29 +231,20 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void Cast(string spellName)
         {
             _cancel.ThrowIfCancelled();
-            // Delega a SpellsApi (via Cast int tramite il dictionary di SpellsApi)
-            // Costruiamo il pacchetto direttamente per evitare dipendenza circolare
-            if (!SpellsApi.TryGetSpellId(spellName, out int spellId)) return;
-            string cmd = spellId.ToString();
-            byte[] cmdBytes = Encoding.ASCII.GetBytes(cmd);
-            byte[] packet = new byte[3 + 1 + cmdBytes.Length + 1];
-            packet[0] = 0x12;
-            ushort len = (ushort)packet.Length;
-            packet[1] = (byte)(len >> 8);
-            packet[2] = (byte)(len & 0xff);
-            packet[3] = 0x56; // CastSpell
-            Array.Copy(cmdBytes, 0, packet, 4, cmdBytes.Length);
-            packet[packet.Length - 1] = 0x00;
-            _packet.SendToServer(packet);
+            if (!SpellsApi.TryGetSpellId(spellName, out int spellId))
+            {
+                _logger?.LogWarning("Cast: spell '{SpellName}' not found in dictionary", spellName);
+                return;
+            }
+            _logger?.LogDebug("Cast: '{SpellName}' → id={SpellId}", spellName, spellId);
+            _packet.SendToServer(PacketBuilder.CastSpell(spellId));
         }
 
         public virtual void UseItem(uint serial)
         {
             _cancel.ThrowIfCancelled();
-            byte[] packet = new byte[5];
-            packet[0] = 0x06; // Double Click
-            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(1), serial);
-            _packet.SendToServer(packet);
+            _logger?.LogDebug("UseItem: serial=0x{Serial:X}", serial);
+            _packet.SendToServer(PacketBuilder.DoubleClick(serial));
         }
 
         public virtual void TargetSelf() => _targeting.TargetSelf();
@@ -296,6 +298,112 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             packet[3] = 0x00; packet[4] = 0x25;
             packet[5] = 0x00; packet[6] = 0x04; // Disarm
             _packet.SendToServer(packet);
+        }
+
+        // ------------------------------------------------------------------
+        // Sprint Fix-4: metodi di utilità mancanti
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Usa (double-click) il primo item con il graphic specificato nel backpack.
+        /// Se non trovato nel backpack, cerca nell'intero mondo.
+        /// </summary>
+        public virtual void UseType(int graphic)
+        {
+            _cancel.ThrowIfCancelled();
+            var bp = P?.Backpack;
+            Item? found = null;
+            if (bp != null)
+                found = _world.GetItemsInContainer(bp.Serial)
+                              .FirstOrDefault(i => i.Graphic == graphic);
+            if (found == null)
+                found = _world.Items.FirstOrDefault(i => i.Graphic == graphic);
+            if (found != null)
+            {
+                _logger?.LogDebug("UseType graphic=0x{G:X} → serial=0x{S:X}", graphic, found.Serial);
+                _packet.SendToServer(PacketBuilder.DoubleClick(found.Serial));
+            }
+            else
+                _logger?.LogDebug("UseType: no item found with graphic 0x{G:X}", graphic);
+        }
+
+        /// <summary>
+        /// Ritorna l'item equipaggiato nel layer specificato, oppure null.
+        /// Layer 0x19 = Riding (mount), 0x01 = One-handed weapon, ecc.
+        /// </summary>
+        public virtual Item? FindLayer(byte layer)
+        {
+            _cancel.ThrowIfCancelled();
+            if (P == null) return null;
+            return _world.Items.FirstOrDefault(i => i.Container == P.Serial && i.Layer == layer);
+        }
+
+        /// <summary>Ritorna il serial dell'item equipaggiato nel layer specificato, 0 se non presente.</summary>
+        public virtual uint GetLayer(byte layer) => FindLayer(layer)?.Serial ?? 0;
+
+        /// <summary>Ritorna true se l'entità (mobile o item) con il serial dato è nel range specificato.</summary>
+        public virtual bool InRange(uint serial, int range)
+        {
+            _cancel.ThrowIfCancelled();
+            if (P == null) return false;
+            var entity = _world.FindEntity(serial);
+            return entity != null && entity.DistanceTo(P) <= range;
+        }
+
+        /// <summary>Ritorna la distanza Chebyshev tra il player e l'entità con il serial dato.</summary>
+        public virtual int DistanceTo(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            if (P == null) return 999;
+            var entity = _world.FindEntity(serial);
+            return entity?.DistanceTo(P) ?? 999;
+        }
+
+        /// <summary>
+        /// Tenta di montare il mobile con il serial specificato (double-click).
+        /// Se il serial è 0, cerca il mobile più vicino nel raggio di 2 tile.
+        /// </summary>
+        public virtual void Mount(uint serial = 0)
+        {
+            _cancel.ThrowIfCancelled();
+            if (serial != 0)
+            {
+                _logger?.LogDebug("Mount serial=0x{S:X}", serial);
+                _packet.SendToServer(PacketBuilder.DoubleClick(serial));
+                return;
+            }
+            if (P == null) return;
+            var nearest = _world.Mobiles
+                .Where(m => m.Serial != P.Serial && m.DistanceTo(P) <= 2)
+                .OrderBy(m => m.DistanceTo(P))
+                .FirstOrDefault();
+            if (nearest != null)
+            {
+                _logger?.LogDebug("Mount nearest=0x{S:X}", nearest.Serial);
+                _packet.SendToServer(PacketBuilder.DoubleClick(nearest.Serial));
+            }
+        }
+
+        /// <summary>
+        /// Smonta il personaggio: double-click sull'item nel riding layer (0x19).
+        /// Se non trovato, double-click sul player stesso.
+        /// </summary>
+        public virtual void Dismount()
+        {
+            _cancel.ThrowIfCancelled();
+            if (P == null) return;
+            const byte ridingLayer = 0x19;
+            var mountItem = _world.Items.FirstOrDefault(i => i.Container == P.Serial && i.Layer == ridingLayer);
+            if (mountItem != null)
+            {
+                _logger?.LogDebug("Dismount via riding layer item 0x{S:X}", mountItem.Serial);
+                _packet.SendToServer(PacketBuilder.DoubleClick(mountItem.Serial));
+            }
+            else
+            {
+                _logger?.LogDebug("Dismount: fallback double-click on player");
+                _packet.SendToServer(PacketBuilder.DoubleClick(P.Serial));
+            }
         }
     }
 }
