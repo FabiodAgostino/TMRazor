@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
 
@@ -13,18 +14,22 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
     {
         private readonly IWorldService _world;
         private readonly ScriptCancellationController _cancel;
+        private readonly ILogger<MobilesApi>? _logger;
 
-        public MobilesApi(IWorldService world, ScriptCancellationController cancel)
+        public MobilesApi(IWorldService world, ScriptCancellationController cancel, ILogger<MobilesApi>? logger = null)
         {
             _world = world;
             _cancel = cancel;
+            _logger = logger;
         }
 
         /// <summary>Cerca un mobile per serial. Ritorna None se non trovato.</summary>
         public virtual Mobile? FindBySerial(uint serial)
         {
             _cancel.ThrowIfCancelled();
-            return _world.FindMobile(serial);
+            var result = _world.FindMobile(serial);
+            if (result == null) _logger?.LogDebug("FindBySerial: mobile 0x{Serial:X} not found", serial);
+            return result;
         }
 
         public virtual Mobile? FindByID(int graphic)

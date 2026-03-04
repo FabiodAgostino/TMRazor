@@ -103,5 +103,79 @@ namespace TMRazorImproved.Tests.MockTests.Agents
             // Assert
             _packetServiceMock.Verify(p => p.SendToServer(It.IsAny<byte[]>()), Times.Never);
         }
+
+        // ---------------------------------------------------------------
+        // Sprint Fix-3: HiddenStop + NullRef
+        // ---------------------------------------------------------------
+
+        [Fact]
+        public async Task ShouldNotThrow_WhenCurrentProfileIsNull()
+        {
+            // Arrange: profilo null → nessuna NullReferenceException
+            _configServiceMock.Setup(c => c.CurrentProfile).Returns((UserProfile?)null);
+
+            var service = new BandageHealService(
+                _packetServiceMock.Object,
+                _configServiceMock.Object,
+                _worldServiceMock.Object,
+                _hotkeyServiceMock.Object,
+                _loggerMock.Object);
+
+            service.Start();
+            await Task.Delay(300);
+            service.Stop();
+
+            _packetServiceMock.Verify(p => p.SendToServer(It.IsAny<byte[]>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task ShouldNotHeal_WhenHiddenAndHiddenStopIsActive()
+        {
+            // Arrange
+            _player.Hits = 10;
+            _player.HitsMax = 100;
+            _player.IsHidden = true;
+            _profile.BandageHeal.HiddenStop = true;
+
+            var service = new BandageHealService(
+                _packetServiceMock.Object,
+                _configServiceMock.Object,
+                _worldServiceMock.Object,
+                _hotkeyServiceMock.Object,
+                _loggerMock.Object);
+
+            service.Start();
+            await Task.Delay(300);
+            service.Stop();
+
+            // HiddenStop deve bloccare la cura anche con HP basso
+            _packetServiceMock.Verify(p => p.SendToServer(It.IsAny<byte[]>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task ShouldHeal_WhenHiddenButHiddenStopIsDisabled()
+        {
+            // Arrange
+            _player.Hits = 10;
+            _player.HitsMax = 100;
+            _player.IsHidden = true;
+            _profile.BandageHeal.HiddenStop = false;
+
+            var service = new BandageHealService(
+                _packetServiceMock.Object,
+                _configServiceMock.Object,
+                _worldServiceMock.Object,
+                _hotkeyServiceMock.Object,
+                _loggerMock.Object);
+
+            service.Start();
+            await Task.Delay(300);
+            service.Stop();
+
+            // Deve curare anche da hidden se HiddenStop è false
+            _packetServiceMock.Verify(
+                p => p.SendToServer(It.Is<byte[]>(b => b.Length > 0 && b[0] == 0x06)),
+                Times.AtLeastOnce);
+        }
     }
 }

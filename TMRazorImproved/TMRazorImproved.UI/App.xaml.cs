@@ -79,6 +79,7 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<IUltimaImageCache, UltimaImageCache>();
                 services.AddSingleton<ICounterService, CounterService>();
                 services.AddSingleton<IDPSMeterService, DPSMeterService>();
+                services.AddSingleton<IMapDataProvider, UltimaMapDataProvider>();
                 services.AddSingleton<IPathFindingService, PathFindingService>();
                 services.AddSingleton<ISecureTradeService, SecureTradeService>();
                 services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
@@ -123,31 +124,34 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<TMRazorImproved.UI.ViewModels.Agents.DressViewModel>();
 
                 // Pages
-                services.AddSingleton<DashboardPage>();
-                services.AddSingleton<GeneralPage>();
-                services.AddSingleton<JournalPage>();
-                services.AddSingleton<PacketLoggerPage>();
-                services.AddSingleton<SecureTradePage>();
-                services.AddSingleton<GalleryPage>();
-                services.AddSingleton<ScriptingPage>();
-                services.AddSingleton<MacrosPage>();
-                services.AddSingleton<FiltersPage>();
-                services.AddSingleton<SoundPage>();
-                services.AddSingleton<CountersPage>();
-                services.AddSingleton<OptionsPage>();
-                services.AddSingleton<DisplayPage>();
-                services.AddSingleton<HotkeysPage>();
-                services.AddSingleton<InspectorPage>();
-                services.AddSingleton<TMRazorImproved.UI.Views.Pages.SkillsPage>();
-                services.AddSingleton<TMRazorImproved.UI.Views.Pages.Agents.AutoLootPage>();
-                services.AddSingleton<TMRazorImproved.UI.Views.Pages.Agents.ScavengerPage>();
-                services.AddSingleton<TMRazorImproved.UI.Views.Pages.Agents.BandageHealPage>();
-                services.AddSingleton<TMRazorImproved.UI.Views.Pages.Agents.TargetingPage>();
-                services.AddSingleton<TMRazorImproved.UI.Views.Pages.Agents.OrganizerPage>();
-                services.AddSingleton<TMRazorImproved.UI.Views.Pages.Agents.RestockPage>();
-                services.AddSingleton<TMRazorImproved.UI.Views.Pages.Agents.VendorPage>();
-                services.AddSingleton<TMRazorImproved.UI.Views.Pages.Agents.DressPage>();
-                services.AddSingleton<TMRazorImproved.UI.Views.Pages.Agents.FriendsPage>();
+                // Sprint Fix-3: le pagine stateless sono Transient per evitare memory leak
+                // e accumulo di stato visivo stale. Le pagine con stato significativo
+                // (editor, log, cronologia visibile) rimangono Singleton.
+                services.AddTransient<DashboardPage>();
+                services.AddTransient<GeneralPage>();
+                services.AddSingleton<JournalPage>();       // mantiene scroll + filtri
+                services.AddSingleton<PacketLoggerPage>();  // mantiene la lista pacchetti
+                services.AddTransient<SecureTradePage>();
+                services.AddTransient<GalleryPage>();
+                services.AddSingleton<ScriptingPage>();     // mantiene contenuto editor
+                services.AddSingleton<MacrosPage>();        // mantiene selezione macro
+                services.AddTransient<FiltersPage>();
+                services.AddTransient<SoundPage>();
+                services.AddTransient<CountersPage>();
+                services.AddTransient<OptionsPage>();
+                services.AddTransient<DisplayPage>();
+                services.AddTransient<HotkeysPage>();
+                services.AddTransient<InspectorPage>();
+                services.AddTransient<TMRazorImproved.UI.Views.Pages.SkillsPage>();
+                services.AddTransient<TMRazorImproved.UI.Views.Pages.Agents.AutoLootPage>();
+                services.AddTransient<TMRazorImproved.UI.Views.Pages.Agents.ScavengerPage>();
+                services.AddTransient<TMRazorImproved.UI.Views.Pages.Agents.BandageHealPage>();
+                services.AddTransient<TMRazorImproved.UI.Views.Pages.Agents.TargetingPage>();
+                services.AddTransient<TMRazorImproved.UI.Views.Pages.Agents.OrganizerPage>();
+                services.AddTransient<TMRazorImproved.UI.Views.Pages.Agents.RestockPage>();
+                services.AddTransient<TMRazorImproved.UI.Views.Pages.Agents.VendorPage>();
+                services.AddTransient<TMRazorImproved.UI.Views.Pages.Agents.DressPage>();
+                services.AddTransient<TMRazorImproved.UI.Views.Pages.Agents.FriendsPage>();
             }).Build();
 
         public static T? GetService<T>() where T : class

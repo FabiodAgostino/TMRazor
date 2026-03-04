@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models.Config;
 using System.Buffers.Binary;
+using TMRazorImproved.Core.Utilities;
 
 namespace TMRazorImproved.Core.Services
 {
@@ -113,22 +114,8 @@ namespace TMRazorImproved.Core.Services
 
         private void MoveItem(uint serial, ushort amount, uint targetContainer)
         {
-            // Lift
-            byte[] lift = new byte[7];
-            lift[0] = 0x07;
-            BinaryPrimitives.WriteUInt32BigEndian(lift.AsSpan(1), serial);
-            BinaryPrimitives.WriteUInt16BigEndian(lift.AsSpan(5), amount);
-            _packetService.SendToServer(lift);
-
-            // Drop
-            byte[] drop = new byte[15];
-            drop[0] = 0x08;
-            BinaryPrimitives.WriteUInt32BigEndian(drop.AsSpan(1), serial);
-            BinaryPrimitives.WriteUInt16BigEndian(drop.AsSpan(5), 0xFFFF);
-            BinaryPrimitives.WriteUInt16BigEndian(drop.AsSpan(7), 0xFFFF);
-            drop[9] = 0;
-            BinaryPrimitives.WriteUInt32BigEndian(drop.AsSpan(11), targetContainer);
-            _packetService.SendToServer(drop);
+            _packetService.SendToServer(PacketBuilder.LiftItem(serial, amount));
+            _packetService.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer));
         }
     }
 }

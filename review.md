@@ -5,7 +5,7 @@
 **Revisore**: Architetto Senior — Migrazione .NET Framework → .NET Core
 **Scope**: Full codebase review — qualità del codice, bug, sicurezza, feature parity, elementi da migrare
 **Branch**: `claude/tmrazor-migration-review-C7AZY`
-**Stato**: ✅ Tutti i bug P0/P1/P2 identificati nella review **risolti e committati**
+**Stato**: ✅ Tutti i bug P0/P1/P2 identificati nella review **risolti e committati** | Sprint Fix-3 completato il 4 Marzo 2026 | Sprint Fix-4 completato il 4 Marzo 2026
 
 ---
 
@@ -710,7 +710,7 @@ Il TODO è presente nel codice ma il campo `HiddenStop` non è nemmeno definito 
 
 | Modulo | Originale | Implementato | Stub | Gap Reale | Post-Fix |
 |--------|-----------|-------------|------|-----------|----------|
-| PlayerApi | ~100 metodi | ~28 | 0 | 72% | **75%** (GetSkillValue, UseSkill, Cast implementati) |
+| PlayerApi | ~100 metodi | ~28 | 0 | 72% | **✅ 85%** (Sprint Fix-4: IsHidden/WarMode/Direction/MapId/Notoriety/UseType/FindLayer/GetLayer/InRange/DistanceTo/Mount/Dismount) |
 | ItemsApi | ~80 metodi | ~14 | 0 | 82% | **83%** (GetPropString, GetPropValue implementati) |
 | MobilesApi | ~60 metodi | ~8 | 0 | 87% | **87%** (invariato) |
 | SpellsApi | ~40 metodi | 8+ (Cast str+variants) | 0 | 97% | **97%** (Cast(string) + TryGetSpellId implementati) |
@@ -718,7 +718,7 @@ Il TODO è presente nel codice ma il campo `HiddenStop` non è nemmeno definito 
 | JournalApi | ~25 metodi | ~15 | 0 | 40% | **40%** (invariato) |
 | GumpsApi | ~20 metodi | ~8 | 0 | 60% | **60%** (invariato) |
 | **FiltersApi** | **~15 metodi** | **3** | **0** | **100%** | **✅ 20%** (Enable/Disable/IsEnabled con IConfigService) |
-| **StaticsApi** | **~15 metodi** | **0** | **4 (tutti stub)** | **100%** | **0%** (invariato, non in scope) |
+| **StaticsApi** | **~15 metodi** | **4** | **0** | **75%** | **✅ 27%** (GetStaticsGraphic/TileInfo/LandGraphic/LandZ via UltimaSDK — Sprint Fix-3) |
 | **FriendApi** | **~10 metodi** | **4** | **0** | **100%** | **✅ 40%** (IsFriend/Add/Remove/GetFriendList con IFriendsService) |
 | TargetApi | ~15 metodi | ~4 | 0 | 73% | **73%** (invariato) |
 
@@ -728,9 +728,9 @@ Il TODO è presente nel codice ma il campo `HiddenStop` non è nemmeno definito 
 |-------|-----------|---------|----------|------|
 | AutoLoot | 100% | **70%** | **✅ 85%** | ConcurrentDictionary, thread-safe |
 | Scavenger | 100% | **75%** | **✅ 88%** | ConcurrentDictionary, thread-safe |
-| BandageHeal | 100% | **60%** | **✅ 75%** | NullRef corretto; HiddenStop ancora mancante |
+| BandageHeal | 100% | **60%** | **✅ 88%** | NullRef corretto; HiddenStop implementato (Sprint Fix-3) |
 | Dress | 100% | **30%** | **✅ 85%** | Packet 0x13 WearItem corretto |
-| Organizer | 100% | **65%** | **65%** | Invariato |
+| Organizer | 100% | **65%** | **✅ 78%** | PacketBuilder integrato (Sprint Fix-4) |
 | Restock | 100% | **75%** | **75%** | Invariato |
 | Vendor | 100% | **35%** | **✅ 70%** | Buy ora funzionale con LastOpenedContainer |
 
@@ -748,14 +748,15 @@ Il TODO è presente nel codice ma il campo `HiddenStop` non è nemmeno definito 
 | ATTACK | ✅ | ✅ | ✅ | Invariato |
 | WAITFORTARGET | ✅ | ❌ | **✅** | Attende reale pacchetto S2C 0x6C con timeout |
 | RECORD | ✅ | ❌ | **✅** | Implementato con intercettazione C2S (0x06,0x09,0xAD,0x6C,0x12,0x05) |
-| IF/WHILE/FOR | ✅ | ❌ | ❌ | Non presenti (fuori scope) |
-| RespondGump | ✅ | ❌ | ❌ | Non presente (fuori scope) |
+| IF/WHILE/FOR | ✅ | ❌ | **✅** | Interprete a PC + jump table; ELSEIF/ELSE/ENDIF + WHILE/ENDWHILE + FOR/ENDFOR |
+| RespondGump | ✅ | ❌ | **✅** | RESPONDGUMP <serial> <typeId> <buttonId> via PacketBuilder.RespondGump (0xB1) |
 | Mount/Dismount | ✅ | ❌ | ❌ | Non presente (fuori scope) |
 | UseType | ✅ | ❌ | ❌ | Non presente (fuori scope) |
 | EquipItem | ✅ | ❌ | ❌ | Non presente (fuori scope) |
 
 **Completamento effettivo Macro pre-fix**: ~25% (10 azioni base, nessun control flow, no recording)
-**Completamento effettivo Macro post-fix**: **~45%** (14 azioni funzionanti incluse SAY, CAST e RECORD reale)
+**Completamento effettivo Macro post-fix (Sprint Fix-2)**: ~45% (14 azioni funzionanti incluse SAY, CAST e RECORD reale)
+**Completamento effettivo Macro post-fix (Sprint Fix-3)**: **~68%** (IF/ELSEIF/ELSE/ENDIF + WHILE/ENDWHILE + FOR/ENDFOR + RESPONDGUMP + HiddenStop)
 
 ### 7.4 Packet Handler — Stato Reale
 
@@ -869,18 +870,18 @@ L'ultimo commit `9b1123b` rimuove `System.Drawing` e lo sostituisce con un custo
 | 11 | Fix `MacrosService.CAST` tipo 0x27 → 0x56 | `MacrosService.cs` | ✅ Risolto |
 | 12 | Implementare `MacrosService.WAITFORTARGET` reale | `MacrosService.cs` | ✅ Risolto |
 
-### Sprint Fix-3 — Anti-Pattern e Qualità (Prossimo Sprint)
+### Sprint Fix-3 — Anti-Pattern e Qualità ✅ COMPLETATO (4 Marzo 2026)
 
 | # | Task | Stima | Stato |
 |---|------|-------|-------|
-| 13 | Creare `PacketBuilder` centralizzato | 4h | ⏳ Pending |
-| 14 | Implementare `StaticsApi` usando UltimaSDK | 4h | ⏳ Pending |
-| 15 | Convertire pages da Singleton a Transient | 2h | ⏳ Pending |
-| 16 | Test copertura DressService, BandageHeal, PathFinding | 6h | ⏳ Pending |
-| 17 | Aggiungere logging nelle Scripting API | 2h | ⏳ Pending |
-| 18 | Implementare control flow macro (IF/WHILE/FOR) | 12h | ⏳ Pending |
-| 19 | Implementare macro RespondGump | 4h | ⏳ Pending |
-| 20 | Implementare BandageHealService.HiddenStop | 3h | ⏳ Pending |
+| 13 | Creare `PacketBuilder` centralizzato | 4h | ✅ `Core/Utilities/PacketBuilder.cs` — usato da 5 servizi |
+| 14 | Implementare `StaticsApi` usando UltimaSDK | 4h | ✅ `StaticsApi.cs` — GetStaticsGraphic/TileInfo/LandGraphic/LandZ reali |
+| 15 | Convertire pages da Singleton a Transient | 2h | ✅ `App.xaml.cs` — 19 pagine stateless → Transient; 4 con stato → Singleton |
+| 16 | Test copertura DressService, BandageHeal, MacrosService | 6h | ✅ `DressServiceTests.cs`, `MacrosServiceTests.cs`, test aggiuntivi BandageHeal |
+| 17 | Aggiungere logging nelle Scripting API | 2h | ⚠️ Rinviato Sprint Fix-4 (richiede ILoggerFactory refactoring in ScriptingService) |
+| 18 | Implementare control flow macro (IF/WHILE/FOR) | 12h | ✅ `MacrosService.cs` — IF/ELSEIF/ELSE/ENDIF + WHILE/ENDWHILE + FOR/ENDFOR |
+| 19 | Implementare macro RespondGump | 4h | ✅ `MacrosService.cs` — RESPONDGUMP via `PacketBuilder.RespondGump(0xB1)` |
+| 20 | Implementare BandageHealService.HiddenStop | 3h | ✅ `BandageHealService.cs` — controlla `config.HiddenStop && player.IsHidden` |
 
 ---
 
@@ -932,18 +933,44 @@ Le correzioni più significative sono:
 - **MacroService.Record()** implementato con intercettazione reale dei pacchetti C2S
 - **VendorService Buy** ora funzionale tramite tracking del container via `LastOpenedContainer`
 
-**Lavoro residuo** per raggiungere la piena feature parity con il TMRazor originale:
-1. `StaticsApi` — Da implementare con UltimaSDK per accesso alla mappa statica
-2. Control flow nelle macro (IF/WHILE/FOR) — Richiede un mini-interprete
-3. Macro EquipItem, RespondGump, Mount/Dismount — Feature individuali
-4. `BandageHealService.HiddenStop` — Feature di sicurezza per stealth
-5. Singleton pages → Transient (ANTI-02) — Refactoring DI
-6. Test coverage per DressService, BandageHeal, PathFinding, MacrosService
+**Lavoro residuo post-Sprint Fix-3** per raggiungere la piena feature parity con TMRazor originale:
+1. **Logging nelle Scripting API** — ILoggerFactory refactoring in ScriptingService (rinviato Sprint Fix-4)
+2. **Macro UseType / EquipItem / Mount-Dismount** — Feature individuali ancora mancanti
+3. **PathFinding tests** — Difficile testare senza dati UO reali; documento la limitazione
+4. **PlayerApi completamento** — Ancora ~25% stub da implementare
+5. **OrganizerService** — PacketBuilder non ancora integrato
 
-Il progetto è ora **pronto per i primi test in ambiente protetto (test server)**. Prima di un rilascio pubblico si raccomanda di completare i test unitari mancanti e di validare il comportamento su server UO reali.
+**Sprint Fix-3 completato**: 7 su 8 task completati (il logging APIs viene rinviato al prossimo sprint per complessità dell'integrazione con ILoggerFactory).
+
+Il progetto è ora **pronto per test in ambiente protetto (test server)**. La macro engine supporta control flow completo. Prima del rilascio pubblico si raccomanda di completare il logging negli script API e i test di integrazione con server UO reali.
+
+---
+
+### Sprint Fix-4 — Qualità Avanzata ✅ COMPLETATO (4 Marzo 2026)
+
+| # | Task | Stima | Stato |
+|---|------|-------|-------|
+| 21 | Aggiungere ILoggerFactory alle Scripting API | 3h | ✅ `ScriptingService` + ILogger<T>? in ItemsApi/MobilesApi/PlayerApi/SpellsApi |
+| 22 | Integrazione PacketBuilder in OrganizerService + ItemsApi.Move() | 1h | ✅ Rimosso `System.Buffers.Binary` raw, usa `PacketBuilder.*` |
+| 23 | Macro UseType / EquipItem / Mount-Dismount | 4h | ✅ `MacrosService` — 4 nuovi case: USETYPE, EQUIPITEM, MOUNT, DISMOUNT |
+| 24 | PathFinding unit tests (mock UltimaSDK) | 4h | ✅ `IMapDataProvider` + `UltimaMapDataProvider` + `PathFindingServiceTests.cs` (6 test) |
+| 25 | PlayerApi completamento (~25% stub restanti) | 8h | ✅ IsHidden/WarMode/Direction/MapId/Notoriety + UseType/FindLayer/GetLayer/InRange/DistanceTo/Mount/Dismount |
+
+---
+
+### Sprint Fix-5 — Feature Parity Avanzata (Prossimo Sprint)
+
+| # | Task | Stima | Stato |
+|---|------|-------|-------|
+| 26 | MobilesApi completamento (FindAllByID range, IsDead, IsFriend, GetHealth%) | 4h | ⏳ Pending |
+| 27 | JournalApi WaitForJournal con TaskCompletionSource (simile WAITFORTARGET) | 3h | ⏳ Pending |
+| 28 | GumpsApi completamento (WaitForGump, GetStringLine, GetLineCount) | 3h | ⏳ Pending |
+| 29 | Packet handler 0x6E (AnimationRequest S2C) | 2h | ⏳ Pending |
+| 30 | OrganizerService null-check profilo + test copertura | 2h | ⏳ Pending |
+| 31 | Integration test flusso completo Vendor Buy | 4h | ⏳ Pending |
 
 ---
 
 *Documento prodotto come parte della review architetturale indipendente di TMRazor Improved.*
-*Review iniziale: 3 Marzo 2026 | Aggiornamento post-fix: 3 Marzo 2026*
-*Revisore: Architetto Senior | Branch: `claude/tmrazor-migration-review-C7AZY`*
+*Review iniziale: 3 Marzo 2026 | Aggiornamento post-fix: 3 Marzo 2026 | Sprint Fix-3: 4 Marzo 2026*
+*Revisore: Architetto Senior | Branch: `claude/tmrazor-migration-review-C7AZY` → `claude/review-docs-next-sprint-9qFwI`*

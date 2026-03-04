@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.Extensions.Logging;
+using TMRazorImproved.Core.Utilities;
 using TMRazorImproved.Shared.Interfaces;
 
 namespace TMRazorImproved.Core.Services.Scripting.Api
@@ -9,6 +11,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
     {
         private readonly IPacketService _packet;
         private readonly ScriptCancellationController _cancel;
+        private readonly ILogger<SpellsApi>? _logger;
 
         // FIX BUG-P1-02: dictionary completo spell name → ID per tutti i circoli UO
         private static readonly Dictionary<string, int> SpellIds = new(StringComparer.OrdinalIgnoreCase)
@@ -59,27 +62,18 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             { "Spell Plague", 690 }, { "Hail Storm", 691 }, { "Nether Cyclone", 692 }, { "Rising Colossus", 693 },
         };
 
-        public SpellsApi(IPacketService packet, ScriptCancellationController cancel)
+        public SpellsApi(IPacketService packet, ScriptCancellationController cancel, ILogger<SpellsApi>? logger = null)
         {
             _packet = packet;
             _cancel = cancel;
+            _logger = logger;
         }
 
         public virtual void Cast(int spellId)
         {
             _cancel.ThrowIfCancelled();
-            string cmd = spellId.ToString();
-            byte[] cmdBytes = Encoding.ASCII.GetBytes(cmd);
-            byte[] packet = new byte[3 + 1 + cmdBytes.Length + 1];
-            packet[0] = 0x12;
-            ushort len = (ushort)packet.Length;
-            packet[1] = (byte)(len >> 8);
-            packet[2] = (byte)(len & 0xff);
-            packet[3] = 0x56; // CastSpell
-            Array.Copy(cmdBytes, 0, packet, 4, cmdBytes.Length);
-            packet[packet.Length - 1] = 0x00;
-
-            _packet.SendToServer(packet);
+            _logger?.LogDebug("Cast: spellId={SpellId}", spellId);
+            _packet.SendToServer(PacketBuilder.CastSpell(spellId));
         }
 
         public virtual void Cast(string name)
@@ -88,6 +82,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             // FIX BUG-P1-02: ricerca esatta, poi parziale case-insensitive
             if (SpellIds.TryGetValue(name, out int spellId))
             {
+                _logger?.LogDebug("Cast: '{SpellName}' → id={SpellId}", name, spellId);
                 Cast(spellId);
                 return;
             }
@@ -96,10 +91,12 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             {
                 if (kv.Key.Contains(name, StringComparison.OrdinalIgnoreCase))
                 {
+                    _logger?.LogDebug("Cast: '{SpellName}' matched '{FullName}' → id={SpellId}", name, kv.Key, kv.Value);
                     Cast(kv.Value);
                     return;
                 }
             }
+            _logger?.LogWarning("Cast: spell '{SpellName}' not found", name);
         }
 
         public virtual void CastMagery(string name) => Cast(name);

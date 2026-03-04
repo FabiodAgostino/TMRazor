@@ -9,6 +9,7 @@ using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
 using TMRazorImproved.Shared.Models.Config;
 using System.Buffers.Binary;
+using TMRazorImproved.Core.Utilities;
 
 namespace TMRazorImproved.Core.Services
 {
@@ -97,22 +98,9 @@ namespace TMRazorImproved.Core.Services
 
         private void EquipItem(uint serial, byte layer)
         {
-            // 1. Solleviamo l'oggetto (0x07)
-            byte[] lift = new byte[7];
-            lift[0] = 0x07;
-            BinaryPrimitives.WriteUInt32BigEndian(lift.AsSpan(1), serial);
-            BinaryPrimitives.WriteUInt16BigEndian(lift.AsSpan(5), 1);
-            _packetService.SendToServer(lift);
-
-            // 2. WearItem Request (0x13): cmd(1) itemSerial(4) layer(1) mobileSerial(4)
-            // FIX BUG-C01: 0x05 era Attack Request, il corretto pacchetto di equip è 0x13
-            byte[] equip = new byte[10];
-            equip[0] = 0x13;
-            BinaryPrimitives.WriteUInt32BigEndian(equip.AsSpan(1), serial);
-            equip[5] = layer;
-            BinaryPrimitives.WriteUInt32BigEndian(equip.AsSpan(6), _worldService.Player?.Serial ?? 0);
-            _packetService.SendToServer(equip);
-
+            uint playerSerial = _worldService.Player?.Serial ?? 0;
+            _packetService.SendToServer(PacketBuilder.LiftItem(serial));
+            _packetService.SendToServer(PacketBuilder.WearItem(serial, layer, playerSerial));
             _logger.LogDebug("Equipping item 0x{Serial:X} to layer {Layer}", serial, layer);
         }
 
@@ -121,8 +109,6 @@ namespace TMRazorImproved.Core.Services
             var player = _worldService.Player;
             if (player == null) return;
 
-            // In UO undress significa sollevare l'oggetto e rimetterlo nel backpack
-            // Cerchiamo il seriale del backpack (layer 21)
             uint backpackSerial = player.Backpack?.Serial ?? 0;
             if (backpackSerial == 0)
             {
@@ -130,23 +116,8 @@ namespace TMRazorImproved.Core.Services
                 return;
             }
 
-            // 1. Lift Request (0x07)
-            byte[] lift = new byte[7];
-            lift[0] = 0x07;
-            BinaryPrimitives.WriteUInt32BigEndian(lift.AsSpan(1), serial);
-            BinaryPrimitives.WriteUInt16BigEndian(lift.AsSpan(5), 1);
-            _packetService.SendToServer(lift);
-
-            // 2. Drop Request (0x08) verso il backpack
-            byte[] drop = new byte[15];
-            drop[0] = 0x08;
-            BinaryPrimitives.WriteUInt32BigEndian(drop.AsSpan(1), serial);
-            BinaryPrimitives.WriteUInt16BigEndian(drop.AsSpan(5), 0xFFFF);
-            BinaryPrimitives.WriteUInt16BigEndian(drop.AsSpan(7), 0xFFFF);
-            drop[9] = 0;
-            BinaryPrimitives.WriteUInt32BigEndian(drop.AsSpan(11), backpackSerial);
-            _packetService.SendToServer(drop);
-
+            _packetService.SendToServer(PacketBuilder.LiftItem(serial));
+            _packetService.SendToServer(PacketBuilder.DropToContainer(serial, backpackSerial));
             _logger.LogDebug("Unequipping item 0x{Serial:X} to backpack 0x{Backpack:X}", serial, backpackSerial);
         }
 
