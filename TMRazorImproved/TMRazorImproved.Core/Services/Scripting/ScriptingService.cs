@@ -119,6 +119,7 @@ del _make_tracer_, _sys_
 
         private readonly IWorldService _world;
         private readonly IPacketService _packetService;
+        private readonly IClientInteropService _interopService;
         private readonly ITargetingService _targetingService;
         private readonly IJournalService _journalService;
         private readonly ISkillsService _skillsService;
@@ -149,6 +150,7 @@ del _make_tracer_, _sys_
         public ScriptingService(
             IWorldService world,
             IPacketService packetService,
+            IClientInteropService interopService,
             ITargetingService targetingService,
             IJournalService journalService,
             ISkillsService skillsService,
@@ -160,6 +162,7 @@ del _make_tracer_, _sys_
         {
             _world = world;
             _packetService = packetService;
+            _interopService = interopService;
             _targetingService = targetingService;
             _journalService = journalService;
             _skillsService = skillsService;
@@ -363,7 +366,7 @@ del _make_tracer_, _sys_
             var stderr = new ScriptOutputWriter(line => ErrorReceived?.Invoke(line));
 
             var cancelCtrl = new ScriptCancellationController(cts.Token);
-            var miscApi    = new MiscApi(_world, cancelCtrl, line => OutputReceived?.Invoke(line));
+            var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line));
 
             scope.SetVariable("__stdout__",        stdout);
             scope.SetVariable("__stderr__",        stderr);
@@ -381,6 +384,7 @@ del _make_tracer_, _sys_
             scope.SetVariable("Statics", new StaticsApi(cancelCtrl));
             scope.SetVariable("Friend",  new FriendApi(_friendsService, cancelCtrl));
             scope.SetVariable("Filters", new FiltersApi(_config, cancelCtrl));
+            scope.SetVariable("Timer",   new TimerApi(cancelCtrl, miscApi));
 
             engine.Execute(TracePreamble, scope);
 
@@ -412,7 +416,7 @@ del _make_tracer_, _sys_
             _scriptThread = Thread.CurrentThread;
             
             var cancelCtrl = new ScriptCancellationController(cts.Token);
-            var miscApi    = new MiscApi(_world, cancelCtrl, line => OutputReceived?.Invoke(line));
+            var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line));
             var itemsApi   = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
             var mobilesApi = new MobilesApi(_world, _friendsService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
             var playerApi  = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _loggerFactory.CreateLogger<PlayerApi>());
@@ -439,12 +443,13 @@ del _make_tracer_, _sys_
             _logger.LogDebug("Starting Roslyn C# script execution: {ScriptName}", scriptName);
 
             var cancelCtrl = new ScriptCancellationController(cts.Token);
+            var misc = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line));
             var globals = new ScriptGlobals
             {
                 Player   = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _loggerFactory.CreateLogger<PlayerApi>()),
                 Items    = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger),
                 Mobiles  = new MobilesApi(_world, _friendsService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>()),
-                Misc     = new MiscApi(_world, cancelCtrl, line => OutputReceived?.Invoke(line)),
+                Misc     = misc,
                 Journal  = new JournalApi(_journalService, cancelCtrl),
                 Gumps    = new GumpsApi(_world, _packetService, cancelCtrl, _messenger),
                 Target   = new TargetApi(_targetingService, cancelCtrl),
@@ -452,7 +457,8 @@ del _make_tracer_, _sys_
                 Spells   = new SpellsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<SpellsApi>()),
                 Statics  = new StaticsApi(cancelCtrl),
                 Friend   = new FriendApi(_friendsService, cancelCtrl),
-                Filters  = new FiltersApi(_config, cancelCtrl)
+                Filters  = new FiltersApi(_config, cancelCtrl),
+                Timer    = new TimerApi(cancelCtrl, misc)
             };
 
             var options = ScriptOptions.Default

@@ -2568,4 +2568,5 @@
   <data name="Inspector.Status.WaitingTarget" xml:space="preserve"><value>In attesa del bersaglio in gioco...</value></data>
   <data name="Inspector.Status.Inspected" xml:space="preserve"><value>Ispezionato: 0x{0:X}</value></data>
   <data name="Inspector.Status.NotFound" xml:space="preserve"><value>Entità 0x{0:X} non trovata nella cache del mondo.</value></data>
+  <data name="Status.ClientReady" xml:space="preserve"><value>Client pronto!</value></data>
 </root>

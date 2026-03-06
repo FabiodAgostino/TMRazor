@@ -143,11 +143,10 @@
                                    Command="{Binding ToggleSpellGridCommand}"
                                    Margin="0,0,8,0"/>
                         
-                        <ui:Button Content="{loc:Loc EnhancedLauncher.launch.Text}" 
-                                   Appearance="Primary" 
+                        <ui:Button Content="{Binding LaunchButtonText}"
+                                   Appearance="{Binding IsGameRunning, Converter={StaticResource BooleanToAppearanceConverter}, ConverterParameter='Success|Primary'}"
                                    Padding="32,8"
-                                   Command="{Binding LaunchClientCommand}"/>
-                    </StackPanel>
+                                   Command="{Binding LaunchClientCommand}"/>                    </StackPanel>
                 </Grid>
             </ui:Card>
         </StackPanel>

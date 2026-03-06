@@ -11,6 +11,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
     {
         private readonly Mock<IWorldService> _worldMock = new();
         private readonly Mock<IPacketService> _packetMock = new();
+        private readonly Mock<IClientInteropService> _interopMock = new();
         private readonly Mock<ITargetingService> _targetingMock = new();
         private readonly Mock<ISkillsService> _skillsMock = new();
         private readonly Mock<IFriendsService> _friendsMock = new();
@@ -24,7 +25,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
 
         private UOSteamInterpreter CreateInterpreter(PlayerApi playerApi)
         {
-            var misc    = new MiscApi(_worldMock.Object, _cancel);
+            var misc    = new MiscApi(_worldMock.Object, _packetMock.Object, _interopMock.Object, _cancel);
             var items   = new ItemsApi(_worldMock.Object, _packetMock.Object, _cancel);
             var mobiles = new MobilesApi(_worldMock.Object, _friendsMock.Object, _cancel);
             var journalMock = new Mock<IJournalService>();

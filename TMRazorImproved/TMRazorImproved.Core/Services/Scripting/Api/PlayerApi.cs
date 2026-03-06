@@ -138,9 +138,9 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void Chat(string message, int hue = 0)
         {
             _cancel.ThrowIfCancelled();
-            System.Text.Encoding enc = System.Text.Encoding.BigEndianUnicode;
-            byte[] msgBytes = enc.GetBytes(message);
-            byte[] packet = new byte[12 + msgBytes.Length + 2];
+            // Pacchetto 0xAD (Unicode Speech)
+            byte[] msgBytes = System.Text.Encoding.BigEndianUnicode.GetBytes(message + "\0");
+            byte[] packet = new byte[12 + msgBytes.Length];
             packet[0] = 0xAD;
             ushort len = (ushort)packet.Length;
             packet[1] = (byte)(len >> 8);
@@ -166,20 +166,32 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             if (P == null) return;
             // Invia al client un messaggio locale sopra la testa del player
-            // Pacchetto 0x1C (ASCII) o 0xAE (Unicode)
-            byte[] msgBytes = System.Text.Encoding.Unicode.GetBytes(message);
-            byte[] packet = new byte[12 + msgBytes.Length + 2];
-            packet[0] = 0xAE; // Unicode message
-            ushort len = (ushort)packet.Length;
-            packet[1] = (byte)(len >> 8);
-            packet[2] = (byte)(len & 0xff);
+            // Pacchetto 0xAE (Unicode) con Serial del player
+            byte[] msgBytes = System.Text.Encoding.BigEndianUnicode.GetBytes(message + "\0");
+            int size = 48 + msgBytes.Length;
+            byte[] packet = new byte[size];
+
+            packet[0] = 0xAE;
+            packet[1] = (byte)(size >> 8);
+            packet[2] = (byte)size;
+
             // Serial (Player)
             System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(3), Serial);
             packet[7] = (byte)(P.Graphic >> 8); packet[8] = (byte)(P.Graphic & 0xff);
-            packet[9] = 0x00; // Type
-            packet[10] = (byte)(hue >> 8); packet[11] = (byte)(hue & 0xff);
-            // Font, Lang non necessari per 0xAE locale?
-            System.Array.Copy(msgBytes, 0, packet, 12, msgBytes.Length);
+            packet[9] = 0x00; // Type: Regular
+            
+            packet[10] = (byte)(hue >> 8);
+            packet[11] = (byte)hue;
+            
+            packet[12] = 0x00; packet[13] = 0x03; // Font
+            
+            packet[14] = (byte)'e'; packet[15] = (byte)'n'; packet[16] = (byte)'u'; packet[17] = 0; // Language
+            
+            string sysName = "System";
+            for (int i = 0; i < sysName.Length; i++) packet[18 + i] = (byte)sysName[i];
+
+            System.Array.Copy(msgBytes, 0, packet, 48, msgBytes.Length);
+            
             // Notifica al client (non al server)
             _packet.SendToClient(packet);
         }
@@ -188,8 +200,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         {
             _cancel.ThrowIfCancelled();
             // Pacchetto 0xAD (Unicode Speech)
-            byte[] msgBytes = System.Text.Encoding.BigEndianUnicode.GetBytes(message);
-            byte[] packet = new byte[12 + msgBytes.Length + 2];
+            byte[] msgBytes = System.Text.Encoding.BigEndianUnicode.GetBytes(message + "\0");
+            byte[] packet = new byte[12 + msgBytes.Length];
             packet[0] = 0xAD;
             ushort len = (ushort)packet.Length;
             packet[1] = (byte)(len >> 8);

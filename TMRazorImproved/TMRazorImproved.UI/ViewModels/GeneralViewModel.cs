@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Enums;
+using TMRazorImproved.UI.Utilities;
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -73,6 +74,14 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty]
         private bool _removeStaminaCheck;
 
+        [ObservableProperty]
+        private bool _isGameRunning;
+
+        [ObservableProperty]
+        private string _launchButtonText = "Launch";
+
+        private readonly System.Windows.Threading.DispatcherTimer _processCheckTimer;
+
         partial void OnRemoveStaminaCheckChanged(bool value)
         {
             _configService.Global.RemoveStaminaCheck = value;
@@ -120,7 +129,26 @@ namespace TMRazorImproved.UI.ViewModels
             _selectedProfile = _configService.Global.LastProfile;
             LoadAvailableProfiles();
 
-            _statusMessage = _languageService.GetString("Status.Ready");
+            _statusMessage = LanguageHelper.Status.Ready;
+            _launchButtonText = _languageService.GetString("EnhancedLauncher.launch.Text") ?? "Launch";
+
+            _processCheckTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(2)
+            };
+            _processCheckTimer.Tick += (s, e) => CheckProcessStatus();
+            _processCheckTimer.Start();
+            CheckProcessStatus();
+        }
+
+        private void CheckProcessStatus()
+        {
+            if (string.IsNullOrEmpty(ClientPath)) return;
+            string clientDir = System.IO.Path.GetDirectoryName(ClientPath) ?? "";
+            uint pid = _clientInterop.FindRunningGameProcess(clientDir);
+            
+            IsGameRunning = pid != 0;
+            LaunchButtonText = IsGameRunning ? "Connect" : (_languageService.GetString("EnhancedLauncher.launch.Text") ?? "Launch");
         }
 
         private void LoadAvailableProfiles()
@@ -291,11 +319,11 @@ namespace TMRazorImproved.UI.ViewModels
         {
             if (string.IsNullOrEmpty(ClientPath))
             {
-                StatusMessage = _languageService.GetString("Status.ErrorEmptyPath");
+                StatusMessage = LanguageHelper.Status.ErrorEmptyPath;
                 return;
             }
 
-            StatusMessage = _languageService.GetString("Status.Launching");
+            StatusMessage = LanguageHelper.Status.Launching;
             
             // Salviamo le impostazioni prima di lanciare
             _configService.Global.ClientPath = ClientPath;
@@ -377,7 +405,7 @@ namespace TMRazorImproved.UI.ViewModels
                     }
                 });
 
-                StatusMessage = _languageService.GetString("Status.ClientReady");
+                StatusMessage = LanguageHelper.Status.ClientReady;
             }
             catch (Exception ex)
             {

@@ -89,5 +89,15 @@ namespace TMRazorImproved.Shared.Interfaces
         /// Cambia il titolo di una finestra (Win32 SetWindowText)
         /// </summary>
         bool SetWindowText(IntPtr hWnd, string text);
+
+        /// <summary>
+        /// Ottiene la posizione del mouse relativa alla finestra del client.
+        /// </summary>
+        (int X, int Y) GetMousePosition();
+
+        /// <summary>
+        /// Imposta la posizione del mouse relativa alla finestra del client.
+        /// </summary>
+        void SetMousePosition(int x, int y);
     }
 }

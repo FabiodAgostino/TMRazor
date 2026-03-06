@@ -59,13 +59,8 @@
                                 VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Right: Run / Stop + status -->
+                <!-- Right: Run / Stop -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <ui:TextBlock Text="{Binding StatusText}"
-                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                  VerticalAlignment="Center"
-                                  Margin="0,0,16,0" FontSize="12"/>
-
                     <ui:Button Content="{loc:Loc Scripting.Run}"
                                Appearance="Primary"
                                Command="{Binding RunScriptCommand}"
@@ -131,18 +126,25 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Console header bar -->
                     <Border Grid.Row="0"
                             Background="#252526"
                             BorderBrush="{DynamicResource ControlBorderColorBrush}"
                             BorderThickness="0,0,0,1"
                             Padding="10,4">
                         <Grid>
-                            <ui:TextBlock Text="Output"
-                                          FontWeight="SemiBold"
-                                          FontSize="12"
-                                          Foreground="#CCCCCC"
-                                          VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <ui:TextBlock Text="Output"
+                                              FontWeight="SemiBold"
+                                              FontSize="12"
+                                              Foreground="#CCCCCC"
+                                              VerticalAlignment="Center"/>
+                                <ui:TextBlock Text="{Binding ExecutionStatus}"
+                                              FontSize="11"
+                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                              VerticalAlignment="Center"
+                                              Margin="10,0,0,0"
+                                              FontStyle="Italic"/>
+                            </StackPanel>
                             <ui:Button Content="Pulisci"
                                        HorizontalAlignment="Right"
                                        Appearance="Secondary"

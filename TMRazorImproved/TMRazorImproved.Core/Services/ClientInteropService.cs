@@ -33,6 +33,25 @@ namespace TMRazorImproved.Core.Services
 
         private static class NativeMethods
         {
+            [StructLayout(LayoutKind.Sequential)]
+            internal struct POINT
+            {
+                public int X;
+                public int Y;
+            }
+
+            [DllImport("user32.dll")]
+            internal static extern bool GetCursorPos(out POINT lpPoint);
+
+            [DllImport("user32.dll")]
+            internal static extern bool SetCursorPos(int X, int Y);
+
+            [DllImport("user32.dll")]
+            internal static extern bool ScreenToClient(IntPtr hWnd, ref POINT lpPoint);
+
+            [DllImport("user32.dll")]
+            internal static extern bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
+
             [DllImport("Loader.dll", EntryPoint = "Load", SetLastError = true, CharSet = CharSet.Ansi)]
             internal static unsafe extern uint Load([MarshalAs(UnmanagedType.LPStr)] string exe, [MarshalAs(UnmanagedType.LPStr)] string dll, [MarshalAs(UnmanagedType.LPStr)] string func, void* dllData, int dataLen, out uint pid);
 
@@ -530,6 +549,33 @@ namespace TMRazorImproved.Core.Services
         public bool SetWindowText(IntPtr hWnd, string text)
         {
             return NativeMethods.SetWindowText(hWnd, text);
+        }
+
+        public (int X, int Y) GetMousePosition()
+        {
+            NativeMethods.POINT p;
+            NativeMethods.GetCursorPos(out p);
+            IntPtr hwnd = GetWindowHandle();
+            if (hwnd != IntPtr.Zero)
+            {
+                NativeMethods.ScreenToClient(hwnd, ref p);
+            }
+            return (p.X, p.Y);
+        }
+
+        public void SetMousePosition(int x, int y)
+        {
+            IntPtr hwnd = GetWindowHandle();
+            if (hwnd != IntPtr.Zero)
+            {
+                NativeMethods.POINT p = new NativeMethods.POINT { X = x, Y = y };
+                NativeMethods.ClientToScreen(hwnd, ref p);
+                NativeMethods.SetCursorPos(p.X, p.Y);
+            }
+            else
+            {
+                NativeMethods.SetCursorPos(x, y);
+            }
         }
     }
 }

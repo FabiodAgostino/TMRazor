@@ -39,7 +39,7 @@ namespace TMRazorImproved.UI.ViewModels
         private bool _isRunning;
 
         [ObservableProperty]
-        private string _statusText = "Pronto";
+        private string _executionStatus = string.Empty;
 
         [ObservableProperty]
         private ScriptLanguage _selectedLanguage = ScriptLanguage.Python;
@@ -98,7 +98,7 @@ namespace TMRazorImproved.UI.ViewModels
 
             AddLog($"--- Avvio '{ScriptName}' [{SelectedLanguage}] ---", ScriptLogType.System);
             IsRunning = true;
-            StatusText = $"Esecuzione: {ScriptName}";
+            ExecutionStatus = $"Esecuzione: {ScriptName}...";
             NotifyCommandsCanExecuteChanged();
 
             await _scriptingService.RunAsync(ScriptCode, SelectedLanguage, ScriptName);
@@ -134,7 +134,7 @@ namespace TMRazorImproved.UI.ViewModels
             };
 
             ClearLog();
-            StatusText = "Pronto";
+            ExecutionStatus = string.Empty;
         }
 
         private void OpenScript()
@@ -235,7 +235,7 @@ namespace TMRazorImproved.UI.ViewModels
                 else
                     status = $"Completato — {info.ScriptName} ({info.Elapsed.TotalSeconds:F1}s)";
 
-                StatusText = status;
+                ExecutionStatus = status;
                 AddLog($"--- {status} ---", ScriptLogType.System);
             });
         }

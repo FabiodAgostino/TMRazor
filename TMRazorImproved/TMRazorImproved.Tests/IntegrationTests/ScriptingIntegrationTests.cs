@@ -20,6 +20,7 @@ namespace TMRazorImproved.Tests.Integration
             var scriptingService = new ScriptingService(
                 new Mock<IWorldService>().Object,
                 new Mock<IPacketService>().Object,
+                new Mock<IClientInteropService>().Object,
                 new Mock<ITargetingService>().Object,
                 new Mock<IJournalService>().Object,
                 new Mock<ISkillsService>().Object,
@@ -67,6 +68,7 @@ namespace TMRazorImproved.Tests.Integration
             return new ScriptingService(
                 new Mock<IWorldService>().Object,
                 new Mock<IPacketService>().Object,
+                new Mock<IClientInteropService>().Object,
                 new Mock<ITargetingService>().Object,
                 new Mock<IJournalService>().Object,
                 new Mock<ISkillsService>().Object,

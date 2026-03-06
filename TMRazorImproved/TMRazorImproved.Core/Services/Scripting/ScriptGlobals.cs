@@ -21,5 +21,6 @@ namespace TMRazorImproved.Core.Services.Scripting
         public StaticsApi Statics { get; set; } = null!;
         public FriendApi Friend { get; set; } = null!;
         public FiltersApi Filters { get; set; } = null!;
+        public TimerApi Timer { get; set; } = null!;
     }
 }

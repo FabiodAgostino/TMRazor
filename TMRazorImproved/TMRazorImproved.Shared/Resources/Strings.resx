@@ -1707,4 +1707,5 @@
   <data name="Inspector.Status.WaitingTarget" xml:space="preserve"><value>Waiting for target in game...</value></data>
   <data name="Inspector.Status.Inspected" xml:space="preserve"><value>Inspected: 0x{0:X}</value></data>
   <data name="Inspector.Status.NotFound" xml:space="preserve"><value>Entity 0x{0:X} not found in world cache.</value></data>
+  <data name="Status.ClientReady" xml:space="preserve"><value>Client is ready!</value></data>
 </root>
