@@ -9,7 +9,7 @@ namespace TMRazorImproved.Core.Services.Scripting
     /// verso un callback C# linea per linea.
     /// Usato con <c>engine.Runtime.IO.SetOutput / SetErrorOutput</c>.
     /// </summary>
-    internal sealed class ScriptOutputWriter : TextWriter
+    public sealed class ScriptOutputWriter : TextWriter
     {
         private readonly Action<string> _lineCallback;
         private readonly StringBuilder _buffer = new();
@@ -20,6 +20,10 @@ namespace TMRazorImproved.Core.Services.Scripting
         {
             _lineCallback = lineCallback;
         }
+
+        // IronPython sys.stdout compat
+        public void write(string text) => Write(text);
+        public void flush() => Flush();
 
         public override void Write(char value)
         {

@@ -1,8 +1,9 @@
+using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Text;
-using Microsoft.Extensions.Logging;
 using TMRazorImproved.Core.Utilities;
+using TMRazorImproved.Shared.Enums;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
 
@@ -210,6 +211,15 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return skill?.Value ?? 0;
         }
 
+        public virtual Item? GetItemOnLayer(string layerName)
+        {
+            _cancel.ThrowIfCancelled();
+            if (P == null || !Enum.TryParse<Layer>(layerName, true, out var layer))
+                return null;
+
+            return _world.Items.FirstOrDefault(i => i.Container == P.Serial && i.Layer == (byte)layer);
+        }
+
         public virtual void UseSkill(string skillName)
         {
             _cancel.ThrowIfCancelled();
@@ -246,6 +256,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _logger?.LogDebug("UseItem: serial=0x{Serial:X}", serial);
             _packet.SendToServer(PacketBuilder.DoubleClick(serial));
         }
+
+
 
         public virtual void TargetSelf() => _targeting.TargetSelf();
         public virtual void TargetLast() => _targeting.SendTarget(_targeting.LastTarget);

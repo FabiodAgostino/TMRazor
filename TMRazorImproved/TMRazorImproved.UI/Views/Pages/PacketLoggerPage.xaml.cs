@@ -11,7 +11,7 @@ namespace TMRazorImproved.UI.Views.Pages
         public PacketLoggerPage(PacketLoggerViewModel viewModel)
         {
             ViewModel = viewModel;
-            DataContext = this;
+            DataContext = ViewModel;
 
             InitializeComponent();
         }

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
@@ -57,6 +58,10 @@ namespace TMRazorImproved.UI.ViewModels
         {
             RunOnUIThread(() =>
             {
+                // SkillInfo properties sono aggiornate da un thread di background (timer).
+                // WPF non garantisce il marshaling cross-thread degli eventi PropertyChanged
+                // per gli item di un DataGrid → forziamo un refresh esplicito della view.
+                System.Windows.Data.CollectionViewSource.GetDefaultView(Skills).Refresh();
                 UpdateTotals();
                 RefreshHistory();
             });
@@ -65,6 +70,14 @@ namespace TMRazorImproved.UI.ViewModels
         private void RefreshSkills()
         {
             SyncCollection(Skills, _skillsService.Skills, _skillsLock);
+            foreach (var skill in Skills)
+                skill.PropertyChanged += OnSkillLockChanged;
+        }
+
+        private void OnSkillLockChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(SkillInfo.Lock) && sender is SkillInfo skill)
+                _skillsService.SetLock(skill.ID, skill.Lock);
         }
 
         private void RefreshHistory()

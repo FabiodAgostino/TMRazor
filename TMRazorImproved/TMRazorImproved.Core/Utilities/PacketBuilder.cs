@@ -118,17 +118,36 @@ namespace TMRazorImproved.Core.Utilities
             return pkt;
         }
 
+        /// <summary>
+        /// SkillUpdate S→C 0x3A type=0xDF: fake server packet per aggiornare la UI di ClassicUO
+        /// dopo un cambio di lock lato client. Stessa struttura del pacchetto server reale.
+        /// Layout: cmd(1) len(2) type(1=0xDF) skillId(2) value(2) base(2) lock(1) cap(2) = 13 bytes.
+        /// value/base/cap sono in fixed-point ×10 (Big-Endian short).
+        /// </summary>
+        public static byte[] SkillUpdate(int skillId, double value, double baseValue, double cap, byte lockType)
+        {
+            byte[] pkt = new byte[13];
+            pkt[0] = 0x3A;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), 13);
+            pkt[3] = 0xDF; // type: single skill update
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(4),  (ushort)skillId);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(6),  (ushort)Math.Round(value    * 10));
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(8),  (ushort)Math.Round(baseValue * 10));
+            pkt[10] = lockType;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(11), (ushort)Math.Round(cap      * 10));
+            return pkt;
+        }
+
         /// <summary>Set Skill Lock via 0x3A: cambia lo stato del lock (Up/Down/Locked) di una skill.</summary>
         public static byte[] SetSkillLock(int skillId, byte lockType)
         {
-            // Packet 0x3A single skill update (client->server lock change)
-            // Format: cmd(1) len(2) type(1) skillID(2) lock(1)
-            byte[] pkt = new byte[7];
+            // Packet 0x3A client->server: cmd(1) len(2) skillID(2) lock(1) = 6 bytes
+            // NON ha un type byte — il type byte esiste solo nel pacchetto server->client
+            byte[] pkt = new byte[6];
             pkt[0] = 0x3A;
-            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), 7);
-            pkt[3] = 0xDF; // Single skill lock change
-            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(4), (ushort)skillId);
-            pkt[6] = lockType;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), 6);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(3), (ushort)skillId);
+            pkt[5] = lockType;
             return pkt;
         }
 
@@ -194,6 +213,21 @@ namespace TMRazorImproved.Core.Utilities
             BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(7), gumpTypeId);
             BinaryPrimitives.WriteInt32BigEndian(pkt.AsSpan(11), buttonId);
             // switchCount = 0, textCount = 0 (already 0 from new byte[pktLen])
+            return pkt;
+        }
+
+        // -------------------------------------------------------------------------
+        // Properties
+        // -------------------------------------------------------------------------
+
+        /// <summary>Richiede le proprietà (Tooltip) di un oggetto (0xBF sub 0x10).</summary>
+        public static byte[] QueryProperties(uint serial)
+        {
+            byte[] pkt = new byte[9];
+            pkt[0] = 0xBF;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), 9);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(3), 0x10);
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(5), serial);
             return pkt;
         }
     }

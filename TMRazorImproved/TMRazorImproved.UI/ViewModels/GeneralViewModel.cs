@@ -22,6 +22,7 @@ namespace TMRazorImproved.UI.ViewModels
         private readonly IConfigService _configService;
         private readonly ILanguageService _languageService;
         private readonly IClientInteropService _clientInterop;
+        private readonly IPacketService _packetService;
         private readonly IContentDialogService _dialogService;
         private readonly ISnackbarService _snackbarService;
         private readonly IUOModService _uoModService;
@@ -82,10 +83,14 @@ namespace TMRazorImproved.UI.ViewModels
         private Views.Windows.FloatingToolbarWindow? _toolbar;
         private Views.Windows.DPSMeterWindow? _dpsMeter;
 
+        private readonly ISkillsService _skillsService;
+
         public GeneralViewModel(
-            IConfigService configService, 
+            IConfigService configService,
             ILanguageService languageService,
             IClientInteropService clientInterop,
+            IPacketService packetService,
+            ISkillsService skillsService,
             IContentDialogService dialogService,
             ISnackbarService snackbarService,
             IUOModService uoModService,
@@ -94,6 +99,8 @@ namespace TMRazorImproved.UI.ViewModels
             _configService = configService;
             _languageService = languageService;
             _clientInterop = clientInterop;
+            _packetService = packetService;
+            _skillsService = skillsService;
             _dialogService = dialogService;
             _snackbarService = snackbarService;
             _uoModService = uoModService;
@@ -102,6 +109,9 @@ namespace TMRazorImproved.UI.ViewModels
             // Carica i dati iniziali dal file di configurazione globale
             _clientPath = _configService.Global.ClientPath;
             _dataPath = _configService.Global.DataPath;
+
+            // Carica i nomi delle skill dai file dati del client (se disponibili)
+            _skillsService.LoadNamesFromDataPath(_dataPath);
             _patchEncryption = _configService.Global.PatchEncryption;
             _allowMultiClient = _configService.Global.AllowMultiClient;
             _negotiateFeatures = _configService.Global.NegotiateFeatures;
@@ -267,6 +277,7 @@ namespace TMRazorImproved.UI.ViewModels
                 {
                     DataPath = directory;
                     _configService.Global.DataPath = DataPath;
+                    _skillsService.LoadNamesFromDataPath(DataPath);
                 }
 
                 _configService.Save();
@@ -310,8 +321,8 @@ namespace TMRazorImproved.UI.ViewModels
 
                 string clientDir = System.IO.Path.GetDirectoryName(ClientPath) ?? "";
 
-                // Deploy TMRazorPlugin.dll to TmClient's plugin directory and update settings.json
-                // so that TmClient loads it on next start and creates the shared memory we read from.
+                // Deploy TMRazorPlugin.dll to the ClassicUO plugin directory and update settings.json
+                // so that the client loads it on next start and creates the shared memory we read from.
                 DeployPlugin(clientDir);
 
                 await Task.Run(() =>
@@ -347,18 +358,13 @@ namespace TMRazorImproved.UI.ViewModels
                         System.Diagnostics.Trace.WriteLine($"[Launch] Game PID after wait: {gamePid} (launcher was {launcherPid})");
                     }
 
-                    System.Diagnostics.Trace.WriteLine($"[Launch] Installing hook for game PID: {gamePid}");
-                    bool success = _clientInterop.InstallLibrary(windowHandle, gamePid, flags);
-                    if (success)
-                    {
-                        System.Diagnostics.Trace.WriteLine($"[Launch] Hook installed successfully (PID: {gamePid})");
-                        _logger.LogInformation("Hook installed successfully (PID: {Pid})", gamePid);
-                    }
-                    else
-                    {
-                        System.Diagnostics.Trace.WriteLine($"[Launch] FAILED to install hook (PID: {gamePid})");
-                        _logger.LogError("FAILED to install hook (PID: {Pid})", gamePid);
-                    }
+                    System.Diagnostics.Trace.WriteLine($"[Launch] Installing shared memory for game PID: {gamePid}");
+                    _clientInterop.InstallLibrary(windowHandle, gamePid, flags);
+                    // Signal PacketService that Crypt.dll is ready: enables packet processing
+                    // and resets any buffer state from premature timer ticks.
+                    _packetService.NotifyCryptReady();
+                    System.Diagnostics.Trace.WriteLine($"[Launch] Shared memory ready (PID: {gamePid})");
+                    _logger.LogInformation("Shared memory ready (PID: {Pid})", gamePid);
 
                     // InstallLibrary apre la shared memory creata da TMRazorPlugin.dll (già caricata
                     // da TmClient) e popola PacketTable in modo che GetPacketLength funzioni.
@@ -380,8 +386,9 @@ namespace TMRazorImproved.UI.ViewModels
         }
 
         /// <summary>
-        /// Copies TMRazorPlugin.dll to TmClient's plugin directory and updates settings.json
-        /// so that TmClient will load the plugin on next startup.
+        /// Copies TMRazorPlugin.dll to the ClassicUO plugin directory and updates settings.json
+        /// (merging with existing plugins) so that the client loads it on next startup.
+        /// Works with any ClassicUO-based client that uses the standard plugin API.
         /// </summary>
         private void DeployPlugin(string clientDir)
         {
@@ -412,10 +419,28 @@ namespace TMRazorImproved.UI.ViewModels
                         var    node = JsonNode.Parse(raw);
                         if (node != null)
                         {
-                            node["plugins"] = new JsonArray(JsonValue.Create(pluginDst));
-                            var opts = new JsonSerializerOptions { WriteIndented = true };
-                            System.IO.File.WriteAllText(settingsPath, node.ToJsonString(opts));
-                            System.Diagnostics.Trace.WriteLine($"[Deploy] settings.json updated → plugin={pluginDst}");
+                            // Merge: keep existing plugins, add ours if not already present
+                            var existing = node["plugins"] as JsonArray ?? new JsonArray();
+                            bool alreadyPresent = false;
+                            foreach (var item in existing)
+                                if (string.Equals(item?.GetValue<string>(), pluginDst, StringComparison.OrdinalIgnoreCase))
+                                { alreadyPresent = true; break; }
+
+                            if (!alreadyPresent)
+                            {
+                                var merged = new JsonArray();
+                                foreach (var item in existing)
+                                    merged.Add(item?.GetValue<string>());
+                                merged.Add(pluginDst);
+                                node["plugins"] = merged;
+                                var opts = new JsonSerializerOptions { WriteIndented = true };
+                                System.IO.File.WriteAllText(settingsPath, node.ToJsonString(opts));
+                                System.Diagnostics.Trace.WriteLine($"[Deploy] settings.json updated → plugin={pluginDst}");
+                            }
+                            else
+                            {
+                                System.Diagnostics.Trace.WriteLine($"[Deploy] settings.json already contains plugin entry, skipping.");
+                            }
                         }
                     }
                     catch (Exception ex)

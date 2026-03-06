@@ -20,10 +20,12 @@ namespace TMRazorImproved.Core.Services
         private readonly ILogger<PacketService> _logger;
 
         private void* _inRecv;
-        private void* _outRecv;
         private void* _inSend;
-        private void* _outSend;
+        private void* _outRecv;   // buffer 1: unused in plugin mode (kept for SendToClient)
+        private void* _outSend;   // buffer 3: unused in plugin mode (kept for SendToServer)
         private Mutex? _commMutex;
+        private bool _cryptReady;
+        private int  _diagTick;
 
         private readonly ConcurrentDictionary<(PacketPath, int), List<Action<byte[]>>> _viewers = new();
         private readonly ConcurrentDictionary<(PacketPath, int), List<Func<byte[], bool>>> _filters = new();
@@ -40,14 +42,24 @@ namespace TMRazorImproved.Core.Services
             
             // Timer di fallback per la scansione della memoria
             var fallbackTimer = new System.Timers.Timer(100);
-            fallbackTimer.Elapsed += (s, e) => 
+            fallbackTimer.Elapsed += (s, e) =>
             {
-                try 
+                try
                 {
-                    if (_inRecv == null) EnsureInitialized();
-                    
-                    if (_inSend != null) HandleComm((ClientInteropService.SharedBuffer*)_inSend, (ClientInteropService.SharedBuffer*)_outSend, PacketPath.ClientToServer);
-                    if (_inRecv != null) HandleComm((ClientInteropService.SharedBuffer*)_inRecv, (ClientInteropService.SharedBuffer*)_outRecv, PacketPath.ServerToClient);
+                    if (_inRecv == null || _commMutex == null) EnsureInitialized();
+                    if (!_cryptReady) return;
+
+                    _diagTick++;
+                    if (_diagTick % 20 == 1)
+                    {
+                        var cts = (ClientInteropService.SharedBuffer*)_inSend;
+                        var stc = (ClientInteropService.SharedBuffer*)_inRecv;
+                        System.Diagnostics.Trace.WriteLine(
+                            $"[PacketService] Diag — CTS inLen={(cts != null ? cts->Length : -1)}  STC inLen={(stc != null ? stc->Length : -1)}");
+                    }
+
+                    if (_inSend != null) HandleComm((ClientInteropService.SharedBuffer*)_inSend, PacketPath.ClientToServer);
+                    if (_inRecv != null) HandleComm((ClientInteropService.SharedBuffer*)_inRecv, PacketPath.ServerToClient);
                 }
                 catch (Exception ex)
                 {
@@ -76,10 +88,10 @@ namespace TMRazorImproved.Core.Services
                     byte* basePtr = (byte*)baseAddr.ToPointer();
                     int stride = sizeof(ClientInteropService.SharedBuffer);
 
-                    _inRecv  = basePtr;
-                    _outRecv = basePtr + stride;
-                    _inSend  = basePtr + stride * 2;
-                    _outSend = basePtr + stride * 3;
+                    _inRecv  = basePtr;                 // buffer 0: server→client (plugin writes)
+                    _outRecv = basePtr + stride;        // buffer 1: unused in plugin mode
+                    _inSend  = basePtr + stride * 2;    // buffer 2: client→server (plugin writes)
+                    _outSend = basePtr + stride * 3;    // buffer 3: unused in plugin mode
                 }
 
                 if (_commMutex == null)
@@ -93,6 +105,18 @@ namespace TMRazorImproved.Core.Services
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Called by GeneralViewModel after InstallLibrary completes.
+        /// Enables packet processing — with the length-prefix protocol, no Crypt.dll
+        /// pShared initialization is required, but we still gate here to ensure we only
+        /// start consuming packets after the client is fully set up.
+        /// </summary>
+        public void NotifyCryptReady()
+        {
+            _cryptReady = true;
+            System.Diagnostics.Trace.WriteLine("[PacketService] CryptReady — packet processing enabled.");
         }
 
         public void RegisterViewer(PacketPath path, int packetId, Action<byte[]> callback)
@@ -130,8 +154,6 @@ namespace TMRazorImproved.Core.Services
         public bool OnPacketReceived(PacketPath path, byte[] data)
         {
             if (data == null || data.Length == 0) return true;
-
-            System.Diagnostics.Trace.WriteLine($"[Packet] ID: 0x{data[0]:X2} ({path})");
 
             PacketReceived?.Invoke(path, data);
 
@@ -171,22 +193,37 @@ namespace TMRazorImproved.Core.Services
             EnsureInitialized();
             if (_outSend == null || _commMutex == null) return;
 
+            // Build length-prefixed frame (same format as Engine.cs WritePacket)
+            byte[] frame = new byte[LENGTH_PREFIX + data.Length];
+            frame[0] = (byte)( data.Length        & 0xFF);
+            frame[1] = (byte)((data.Length >>  8) & 0xFF);
+            frame[2] = (byte)((data.Length >> 16) & 0xFF);
+            frame[3] = (byte)((data.Length >> 24) & 0xFF);
+            Array.Copy(data, 0, frame, LENGTH_PREFIX, data.Length);
+
             try
             {
-                if (!_commMutex.WaitOne(100)) return;
+                if (!_commMutex.WaitOne(100))
+                {
+                    //System.Diagnostics.Trace.WriteLine("[PacketService] SendToServer: mutex timeout");
+                    return;
+                }
                 ClientInteropService.SharedBuffer* buff = (ClientInteropService.SharedBuffer*)_outSend;
                 int writeOffset = buff->Start + buff->Length;
-                if (writeOffset + data.Length > ClientInteropService.SHARED_BUFF_SIZE) return;
-
-                fixed (byte* pSrc = data)
+                //System.Diagnostics.Trace.WriteLine($"[PacketService] SendToServer: writing {frame.Length}b at offset {writeOffset}, id=0x{data[0]:X2}");
+                if (writeOffset + frame.Length > ClientInteropService.SHARED_BUFF_SIZE)
                 {
-                    byte* pDest = (&buff->Buff0) + writeOffset;
-                    _interop.CopyMemory(pDest, pSrc, data.Length);
-                    buff->Length += data.Length;
+                    //System.Diagnostics.Trace.WriteLine("[PacketService] SendToServer: buffer full");
+                    return;
                 }
 
-                IntPtr hwnd = _interop.FindUOWindow();
-                if (hwnd != IntPtr.Zero) _interop.PostMessage(hwnd, 0x400 + 1, new IntPtr(1), IntPtr.Zero);
+                fixed (byte* pSrc = frame)
+                {
+                    byte* pDest = (&buff->Buff0) + writeOffset;
+                    _interop.CopyMemory(pDest, pSrc, frame.Length);
+                    buff->Length += frame.Length;
+                }
+                //System.Diagnostics.Trace.WriteLine($"[PacketService] SendToServer: done, buff->Length={buff->Length}");
             }
             finally { _commMutex?.ReleaseMutex(); }
         }
@@ -197,22 +234,26 @@ namespace TMRazorImproved.Core.Services
             EnsureInitialized();
             if (_outRecv == null || _commMutex == null) return;
 
+            byte[] frame = new byte[LENGTH_PREFIX + data.Length];
+            frame[0] = (byte)( data.Length        & 0xFF);
+            frame[1] = (byte)((data.Length >>  8) & 0xFF);
+            frame[2] = (byte)((data.Length >> 16) & 0xFF);
+            frame[3] = (byte)((data.Length >> 24) & 0xFF);
+            Array.Copy(data, 0, frame, LENGTH_PREFIX, data.Length);
+
             try
             {
                 if (!_commMutex.WaitOne(100)) return;
                 ClientInteropService.SharedBuffer* buff = (ClientInteropService.SharedBuffer*)_outRecv;
                 int writeOffset = buff->Start + buff->Length;
-                if (writeOffset + data.Length > ClientInteropService.SHARED_BUFF_SIZE) return;
+                if (writeOffset + frame.Length > ClientInteropService.SHARED_BUFF_SIZE) return;
 
-                fixed (byte* pSrc = data)
+                fixed (byte* pSrc = frame)
                 {
                     byte* pDest = (&buff->Buff0) + writeOffset;
-                    _interop.CopyMemory(pDest, pSrc, data.Length);
-                    buff->Length += data.Length;
+                    _interop.CopyMemory(pDest, pSrc, frame.Length);
+                    buff->Length += frame.Length;
                 }
-
-                IntPtr hwnd = _interop.FindUOWindow();
-                if (hwnd != IntPtr.Zero) _interop.PostMessage(hwnd, 0x400 + 1, new IntPtr(2), IntPtr.Zero);
             }
             finally { _commMutex?.ReleaseMutex(); }
         }
@@ -224,8 +265,8 @@ namespace TMRazorImproved.Core.Services
                 uint type = (uint)wParam.ToInt64() & 0xFFFF;
                 switch (type)
                 {
-                    case 1: HandleComm((ClientInteropService.SharedBuffer*)_inSend, (ClientInteropService.SharedBuffer*)_outSend, PacketPath.ClientToServer); break;
-                    case 2: HandleComm((ClientInteropService.SharedBuffer*)_inRecv, (ClientInteropService.SharedBuffer*)_outRecv, PacketPath.ServerToClient); break;
+                    case 1: HandleComm((ClientInteropService.SharedBuffer*)_inSend, PacketPath.ClientToServer); break;
+                    case 2: HandleComm((ClientInteropService.SharedBuffer*)_inRecv, PacketPath.ServerToClient); break;
                     case 3:
                         System.Diagnostics.Trace.WriteLine("[PacketService] READY from TmClient — hook installed.");
                         EnsureInitialized();
@@ -240,42 +281,53 @@ namespace TMRazorImproved.Core.Services
             return false;
         }
 
-        private void HandleComm(ClientInteropService.SharedBuffer* inBuff, ClientInteropService.SharedBuffer* outBuff, PacketPath path)
+        // Must match Engine.cs LENGTH_PREFIX = 4
+        private const int LENGTH_PREFIX = 4;
+
+        private void HandleComm(ClientInteropService.SharedBuffer* inBuff, PacketPath path)
         {
-            if (inBuff == null || outBuff == null || _commMutex == null) return;
+            if (inBuff == null || _commMutex == null) return;
+
+            // Step 1: hold mutex only long enough to snapshot+drain the shared buffer.
+            // This minimises blocking the game's network thread (WritePacket WaitOne).
+            byte[] snapshot = null;
+            int snapshotLen = 0;
             try
             {
                 if (!_commMutex.WaitOne(10)) return;
-                while (inBuff->Length > 0)
+                int len = inBuff->Length;
+                if (len >= LENGTH_PREFIX)
                 {
-                    if (inBuff->Start < 0 || inBuff->Start >= ClientInteropService.SHARED_BUFF_SIZE) { inBuff->Start = 0; inBuff->Length = 0; break; }
-                    byte* buffPtr = (&inBuff->Buff0) + inBuff->Start;
-                    int bufLen = Math.Min(inBuff->Length, ClientInteropService.SHARED_BUFF_SIZE - inBuff->Start);
-                    int len = _interop.GetPacketLength(buffPtr, bufLen);
-
-                    if (len > bufLen || len <= 0) break;
-
-                    byte[] packetData = new byte[len];
-                    fixed (byte* pDest = packetData) { _interop.CopyMemory(pDest, buffPtr, len); }
-                    inBuff->Start += len; inBuff->Length -= len;
-
-                    if (!OnPacketReceived(path, packetData)) continue;
-
-                    int writeOffset = outBuff->Start + outBuff->Length;
-                    if (writeOffset + len > ClientInteropService.SHARED_BUFF_SIZE)
-                    {
-                        if (outBuff->Length + len <= ClientInteropService.SHARED_BUFF_SIZE)
-                        {
-                            _interop.CopyMemory(&outBuff->Buff0, (&outBuff->Buff0) + outBuff->Start, outBuff->Length);
-                            outBuff->Start = 0; writeOffset = outBuff->Length;
-                        } else break;
-                    }
-                    fixed (byte* pSrc = packetData) { _interop.CopyMemory((&outBuff->Buff0) + writeOffset, pSrc, len); outBuff->Length += len; }
+                    snapshot = new byte[len];
+                    fixed (byte* pDest = snapshot)
+                        _interop.CopyMemory(pDest, (&inBuff->Buff0) + inBuff->Start, len);
+                    snapshotLen    = len;
+                    inBuff->Start  = 0;
+                    inBuff->Length = 0;
                 }
-                if (inBuff->Length == 0) inBuff->Start = 0;
             }
-            catch (Exception ex) { System.Diagnostics.Trace.WriteLine($"[PacketService] Comm Error: {ex.Message}"); }
+            catch (Exception ex) { System.Diagnostics.Trace.WriteLine($"[PacketService] Comm Error (copy): {ex.Message}"); return; }
             finally { _commMutex?.ReleaseMutex(); }
+
+            // Step 2: parse and dispatch entirely outside the mutex — game thread never blocked here.
+            if (snapshot == null || snapshotLen < LENGTH_PREFIX) return;
+            try
+            {
+                int pos = 0;
+                while (pos + LENGTH_PREFIX <= snapshotLen)
+                {
+                    int packetLen = snapshot[pos] | (snapshot[pos + 1] << 8) | (snapshot[pos + 2] << 16) | (snapshot[pos + 3] << 24);
+                    pos += LENGTH_PREFIX;
+                    if (packetLen <= 0 || pos + packetLen > snapshotLen) break;
+
+                    byte[] packetData = new byte[packetLen];
+                    Array.Copy(snapshot, pos, packetData, 0, packetLen);
+                    pos += packetLen;
+
+                    OnPacketReceived(path, packetData);
+                }
+            }
+            catch (Exception ex) { System.Diagnostics.Trace.WriteLine($"[PacketService] Comm Error (dispatch): {ex.Message}"); }
         }
     }
 }

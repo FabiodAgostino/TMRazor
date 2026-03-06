@@ -181,6 +181,37 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return entry?.Arguments ?? string.Empty;
         }
 
+        public virtual void WaitForProps(object itemOrSerial, int timeout = 1000)
+        {
+            _cancel.ThrowIfCancelled();
+            
+            uint serial = 0;
+            if (itemOrSerial is uint u) serial = u;
+            else if (itemOrSerial is int i) serial = (uint)i;
+            else if (itemOrSerial is Item itm) serial = itm.Serial;
+            
+            if (serial == 0) return;
+
+            var entity = _world.FindItem(serial) as TMRazorImproved.Shared.Models.UOEntity
+                      ?? _world.FindMobile(serial) as TMRazorImproved.Shared.Models.UOEntity;
+
+            if (entity == null) return;
+            if (entity.Properties != null && entity.Properties.Hash != 0) return;
+
+            // Richiedi le properties al server
+            _packet.SendToServer(Utilities.PacketBuilder.QueryProperties(serial));
+
+            var deadline = Environment.TickCount64 + timeout;
+            while (Environment.TickCount64 < deadline)
+            {
+                _cancel.ThrowIfCancelled();
+                if (entity.Properties != null && entity.Properties.Hash != 0)
+                    return;
+
+                System.Threading.Thread.Sleep(10);
+            }
+        }
+
         public virtual int GetPropValue(uint serial, string name)
         {
             _cancel.ThrowIfCancelled();

@@ -195,6 +195,11 @@ namespace TMRazorImproved.Core.Services
             uint csharpTid = gameWnd != IntPtr.Zero ? GetWindowThreadProcessId(gameWnd, out _) : 0;
             System.Diagnostics.Trace.WriteLine($"[Interop] InstallLibrary called: PID={processId}, gameWnd=0x{gameWnd.ToInt64():X}, CS_TID={csharpTid}");
 
+            // Always store the PID so GetUOProcessId() works even if Crypt.dll's UOProcId
+            // stays 0 (e.g. TmClient has a custom window class that FindUOWindow() doesn't match).
+            if (processId > 0)
+                _discoveredGamePid = (uint)processId;
+
             if (gameWnd != IntPtr.Zero)
             {
                 try
@@ -211,8 +216,13 @@ namespace TMRazorImproved.Core.Services
             int result = NativeMethods.InstallLibrary(windowHandle, processId, features);
             if (result != 0) // In Crypt.h, SUCCESS è 0
             {
-                System.Diagnostics.Trace.WriteLine($"[Interop] InstallLibrary FAILED with code: {result}");
-                return false;
+                System.Diagnostics.Trace.WriteLine($"[Interop] InstallLibrary FAILED/PARTIAL with code: {result} (pShared and PacketTable are still initialized)");
+                // NO_HOOK (non-zero) is expected for x64 clients — shared memory IS ready.
+                // Do NOT return false here; callers may still use shared memory correctly.
+            }
+            else
+            {
+                System.Diagnostics.Trace.WriteLine($"[Interop] InstallLibrary SUCCESS");
             }
             return true;
         }

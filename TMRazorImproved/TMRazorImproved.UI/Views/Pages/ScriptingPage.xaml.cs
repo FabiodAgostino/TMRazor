@@ -129,6 +129,7 @@ namespace TMRazorImproved.UI.Views.Pages
                 {
                     Shared.Enums.ScriptLanguage.Python => "TMRazorImproved.UI.Resources.Highlighting.Python.xshd",
                     Shared.Enums.ScriptLanguage.UOSteam => "TMRazorImproved.UI.Resources.Highlighting.UOSteam.xshd",
+                    Shared.Enums.ScriptLanguage.CSharp => "TMRazorImproved.UI.Resources.Highlighting.CSharp.xshd",
                     _ => ""
                 };
 
@@ -172,6 +173,31 @@ namespace TMRazorImproved.UI.Views.Pages
             if (LogListBox.Items.Count == 0) return;
 
             LogListBox.ScrollIntoView(LogListBox.Items[LogListBox.Items.Count - 1]);
+        }
+
+        // ------------------------------------------------------------------
+        // Output Window Copy Support
+        // ------------------------------------------------------------------
+        private void LogListBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.C && Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+            {
+                var selectedItems = LogListBox.SelectedItems;
+                if (selectedItems.Count > 0)
+                {
+                    var sb = new System.Text.StringBuilder();
+                    foreach (ScriptLogEntry item in selectedItems)
+                    {
+                        sb.AppendLine($"[{item.FormattedTime}] {item.Text}");
+                    }
+                    try
+                    {
+                        Clipboard.SetText(sb.ToString().TrimEnd());
+                    }
+                    catch { /* Ignore clipboard errors */ }
+                    e.Handled = true;
+                }
+            }
         }
     }
 }

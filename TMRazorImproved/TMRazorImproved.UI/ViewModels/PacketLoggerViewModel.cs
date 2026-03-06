@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TMRazorImproved.Shared.Enums;
 using TMRazorImproved.Shared.Interfaces;
+using TMRazorImproved.Shared.Utilities;
 
 namespace TMRazorImproved.UI.ViewModels
 {
@@ -83,6 +84,7 @@ namespace TMRazorImproved.UI.ViewModels
         public PacketPath Direction { get; }
         public int Length { get; }
         public byte Id { get; }
+        public string Name { get; }
         public string Hex { get; }
         public string RawHex { get; }
 
@@ -92,6 +94,7 @@ namespace TMRazorImproved.UI.ViewModels
             Direction = direction;
             Length = data.Length;
             Id = data[0];
+            Name = PacketNames.GetName(direction, Id);
             RawHex = BitConverter.ToString(data).Replace("-", " ");
             Hex = FormatHexDump(data);
         }

@@ -12,7 +12,9 @@ namespace TMRazorImproved.Shared.Models
     public partial class SkillInfo : ObservableObject
     {
         public int ID { get; }
-        public string Name { get; }
+        public string Name { get; private set; }
+
+        public void SetName(string name) => Name = name;
 
         [ObservableProperty]
         private double _baseValue;

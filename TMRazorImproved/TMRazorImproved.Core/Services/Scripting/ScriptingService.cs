@@ -89,15 +89,9 @@ namespace TMRazorImproved.Core.Services.Scripting
         private const string TracePreamble = @"
 import sys as _sys_
 
-# --- 1. Redirect output ---
 _sys_.stdout = __stdout__
 _sys_.stderr = __stderr__
 
-# --- 2. Override time.sleep() → Misc.Pause() (cancellation-aware) ---
-# Sostituisce sys.modules['time'] con un wrapper.
-# 'import time; time.sleep(x)' e 'from time import sleep; sleep(x)' vengono
-# intercettati. Tutti gli altri attributi del modulo time sono inoltrati
-# all'originale via __getattr__.
 import time as _time_orig_
 class _SafeTime_:
     def sleep(self, secs): Misc.Pause(int(secs * 1000))
@@ -105,23 +99,19 @@ class _SafeTime_:
 _sys_.modules['time'] = _SafeTime_()
 del _SafeTime_, _time_orig_
 
-# --- 3. sys.settrace con check periodico ---
-# _t_ viene chiamato per ogni riga Python (overhead di frame inevitabile),
-# ma IsCancelled (cross-boundary DLR call) è letto solo ogni _INTERVAL_ righe.
-_INTERVAL_ = __trace_interval__
-def _make_tracer_(_c_):
+def _make_tracer_(_c_, _interval_):
     _n_ = [0]
     def _t_(frame, event, arg):
         _n_[0] += 1
-        if _n_[0] >= _INTERVAL_:
+        if _n_[0] >= _interval_:
             _n_[0] = 0
             if _c_.IsCancelled:
                 raise SystemExit('Script stopped by user')
         return _t_
     return _t_
 
-_sys_.settrace(_make_tracer_(__cancel__))
-del _make_tracer_, _INTERVAL_, _sys_
+_sys_.settrace(_make_tracer_(__cancel__, __trace_interval__))
+del _make_tracer_, _sys_
 ";
 
         // Rimuove il trace handler a fine esecuzione.

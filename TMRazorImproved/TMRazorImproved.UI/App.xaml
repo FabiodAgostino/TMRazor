@@ -23,9 +23,14 @@
             <conv:HotkeyDisplayConverter x:Key="HotkeyDisplayConverter"/>
             <conv:CaptureAppearanceConverter x:Key="CaptureAppearanceConverter"/>
             <conv:InvertBooleanConverter x:Key="InvertBooleanConverter"/>
+            <conv:BooleanInvertConverter x:Key="BooleanInvertConverter"/>
             <conv:SpellIconConverter x:Key="SpellIconConverter"/>
             <conv:IntToBoolConverter x:Key="IntToBoolConverter"/>
             <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+            <conv:IntToVisibilityConverter x:Key="IntToVisibilityConverter"/>
+            <conv:BooleanToTextConverter x:Key="BooleanToTextConverter"/>
+            <conv:BooleanToIconConverter x:Key="BooleanToIconConverter"/>
+            <conv:BooleanToAppearanceConverter x:Key="BooleanToAppearanceConverter"/>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
             <!-- Common Effects -->

@@ -19,6 +19,19 @@ namespace Assistant
         private static OnPacketSendRecv _onRecv;
         private static OnPacketSendRecv _onSend;
         private static OnInitialize     _onInit;
+        private static OnTick           _onTick;
+
+        // Plugin pointer saved so OnInitialize can read host-provided Send function
+        private static IntPtr _plugin;
+
+        // Host-provided function: plugin calls this to inject a C→S packet
+        private static OnPacketSendRecv _sendToServer;
+
+        // Host-provided function: plugin calls this to inject a S→C packet (fake server packet)
+        private static OnPacketSendRecv _recvToClient;
+
+        // Tick counter for throttled logging
+        private static int _tickCount;
 
         private static MemoryMappedFile         _mmf;
         private static MemoryMappedViewAccessor _view;
@@ -38,13 +51,41 @@ namespace Assistant
         private const long SHARED_MEM_SIZE = 2099062L + 4096L; // slight padding for safety
 
         // Buffer indices (match PacketService layout: _inRecv=0, _outRecv=1, _inSend=2, _outSend=3)
-        private const int IDX_IN_RECV = 0;  // server→client: plugin writes, Razor reads
-        private const int IDX_IN_SEND = 2;  // client→server: plugin writes, Razor reads
+        private const int IDX_IN_RECV  = 0;  // server→client: plugin writes, Razor reads
+        private const int IDX_IN_SEND  = 2;  // client→server: plugin writes, Razor reads
+        private const int IDX_OUT_RECV = 1;  // server→client: Razor writes, plugin reads and feeds via Recv()
+        private const int IDX_OUT_SEND = 3;  // client→server: Razor writes, plugin reads and sends via Send()
 
-        // PluginHeader field offsets (x64, from TestPlugin analysis):
+        // PluginHeader field offsets (x64, from cuoapi.dll PluginHeader struct reflection):
+        //   int ClientVersion                  → 0
+        //   IntPtr HWND                        → 8
+        //   IntPtr OnRecv                      → 16   ← plugin registers callback
+        //   IntPtr OnSend                      → 24   ← plugin registers callback
+        //   IntPtr OnHotkeyPressed             → 32
+        //   IntPtr OnMouse                     → 40
+        //   IntPtr OnPlayerPositionChanged     → 48
+        //   IntPtr OnClientClosing             → 56
+        //   IntPtr OnInitialize                → 64   ← plugin registers callback
+        //   IntPtr OnConnected                 → 72
+        //   IntPtr OnDisconnected              → 80
+        //   IntPtr OnFocusGained               → 88
+        //   IntPtr OnFocusLost                 → 96
+        //   IntPtr GetUOFilePath               → 104  ← host provides
+        //   IntPtr Recv                        → 112  ← host provides: inject S→C packet
+        //   IntPtr Send                        → 120  ← host provides: inject C→S packet
+        //   IntPtr GetPacketLength             → 128
+        //   IntPtr GetPlayerPosition           → 136
+        //   IntPtr CastSpell                   → 144
+        //   IntPtr GetStaticImage              → 152
+        //   IntPtr Tick                        → 160  ← plugin registers callback
+        //   IntPtr RequestMove                 → 168
+        //   IntPtr SetTitle                    → 176
         private const int OFFSET_ON_RECV       = 16;
         private const int OFFSET_ON_SEND       = 24;
         private const int OFFSET_ON_INITIALIZE = 64;
+        private const int OFFSET_RECV          = 112; // host Recv: inject S→C packet
+        private const int OFFSET_SEND          = 120; // host Send: inject C→S packet
+        private const int OFFSET_ON_TICK       = 160;
 
         /// <summary>Entry point called by TmClient via reflection.</summary>
         public static void Install(IntPtr plugin)
@@ -88,12 +129,23 @@ namespace Assistant
                 _onInit = new OnInitialize(DoOnInitialize);
                 _onRecv = new OnPacketSendRecv(DoOnRecv);
                 _onSend = new OnPacketSendRecv(DoOnSend);
+                _onTick = new OnTick(DoOnTick);
 
-                Marshal.WriteIntPtr(plugin, OFFSET_ON_INITIALIZE, Marshal.GetFunctionPointerForDelegate(_onInit));
-                Marshal.WriteIntPtr(plugin, OFFSET_ON_RECV,       Marshal.GetFunctionPointerForDelegate(_onRecv));
-                Marshal.WriteIntPtr(plugin, OFFSET_ON_SEND,       Marshal.GetFunctionPointerForDelegate(_onSend));
+                IntPtr pInit = Marshal.GetFunctionPointerForDelegate(_onInit);
+                IntPtr pRecv = Marshal.GetFunctionPointerForDelegate(_onRecv);
+                IntPtr pSend = Marshal.GetFunctionPointerForDelegate(_onSend);
+                IntPtr pTick = Marshal.GetFunctionPointerForDelegate(_onTick);
 
-                WriteLog(string.Format("Installed. PID={0} map={1} mutexCreated={2}", pid, mapName, created));
+                _plugin = plugin;
+
+                Marshal.WriteIntPtr(plugin, OFFSET_ON_INITIALIZE, pInit);
+                Marshal.WriteIntPtr(plugin, OFFSET_ON_RECV,       pRecv);
+                Marshal.WriteIntPtr(plugin, OFFSET_ON_SEND,       pSend);
+                Marshal.WriteIntPtr(plugin, OFFSET_ON_TICK,       pTick);
+
+                WriteLog(string.Format(
+                    "Installed. PID={0} map={1} mutexCreated={2} pInit=0x{3:X} pRecv=0x{4:X} pSend=0x{5:X} pTick=0x{6:X}",
+                    pid, mapName, created, pInit.ToInt64(), pRecv.ToInt64(), pSend.ToInt64(), pTick.ToInt64()));
             }
             catch (Exception ex)
             {
@@ -104,6 +156,133 @@ namespace Assistant
         private static void DoOnInitialize()
         {
             WriteLog("OnInitialize — TmClient ready");
+            // Read host-provided Send function pointer (inject C→S packet)
+            if (_plugin != IntPtr.Zero)
+            {
+                IntPtr recvPtr = Marshal.ReadIntPtr(_plugin, OFFSET_RECV);
+                if (recvPtr != IntPtr.Zero)
+                {
+                    _recvToClient = Marshal.GetDelegateForFunctionPointer<OnPacketSendRecv>(recvPtr);
+                    WriteLog(string.Format("Recv function acquired at 0x{0:X}", recvPtr.ToInt64()));
+                }
+                else WriteLog("WARNING: Recv function pointer is null");
+
+                IntPtr sendPtr = Marshal.ReadIntPtr(_plugin, OFFSET_SEND);
+                if (sendPtr != IntPtr.Zero)
+                {
+                    _sendToServer = Marshal.GetDelegateForFunctionPointer<OnPacketSendRecv>(sendPtr);
+                    WriteLog(string.Format("Send function acquired at 0x{0:X}", sendPtr.ToInt64()));
+                }
+                else WriteLog("WARNING: Send function pointer is null — SendToServer will not work");
+            }
+        }
+
+        private static void DoOnTick()
+        {
+            _tickCount++;
+            FlushOutRecv();
+            FlushOutSend();
+            if (_tickCount % 300 == 1) // log every ~5s at 60fps
+                WriteLog(string.Format("[Tick] tick#{0}", _tickCount));
+        }
+
+        /// <summary>
+        /// Reads packets written by TMRazorImproved into buffer IDX_OUT_RECV (buffer 1)
+        /// and feeds them into ClassicUO as fake S→C packets via the host Recv() function.
+        /// </summary>
+        private static void FlushOutRecv()
+        {
+            if (_view == null || _commMutex == null || _recvToClient == null) return;
+
+            long baseOff = (long)IDX_OUT_RECV * SHARED_BUFF_STRIDE;
+
+            byte[] snapshot = null;
+            int snapshotLen = 0;
+
+            if (!_commMutex.WaitOne(5)) return;
+            try
+            {
+                int buffLen = _view.ReadInt32(baseOff);
+                if (buffLen >= LENGTH_PREFIX)
+                {
+                    int buffStart = _view.ReadInt32(baseOff + 4);
+                    snapshot = new byte[buffLen];
+                    _view.ReadArray(baseOff + 8 + buffStart, snapshot, 0, buffLen);
+                    snapshotLen = buffLen;
+                    _view.Write(baseOff,     0);
+                    _view.Write(baseOff + 4, 0);
+                }
+            }
+            finally { _commMutex.ReleaseMutex(); }
+
+            if (snapshot == null || snapshotLen < LENGTH_PREFIX) return;
+
+            int pos = 0;
+            while (pos + LENGTH_PREFIX <= snapshotLen)
+            {
+                int packetLen = snapshot[pos] | (snapshot[pos + 1] << 8) | (snapshot[pos + 2] << 16) | (snapshot[pos + 3] << 24);
+                pos += LENGTH_PREFIX;
+                if (packetLen <= 0 || pos + packetLen > snapshotLen) break;
+
+                byte[] pkt = new byte[packetLen];
+                Array.Copy(snapshot, pos, pkt, 0, packetLen);
+                pos += packetLen;
+
+                int length = packetLen;
+                _recvToClient(ref pkt, ref length);
+            }
+        }
+
+        /// <summary>
+        /// Reads packets written by TMRazorImproved into buffer IDX_OUT_SEND (buffer 3)
+        /// and calls the host Send function to inject them into the C→S stream.
+        /// Format: same length-prefix protocol as WritePacket ([4-byte LE length][data]).
+        /// </summary>
+        private static void FlushOutSend()
+        {
+            if (_view == null || _commMutex == null || _sendToServer == null) return;
+
+            long baseOff = (long)IDX_OUT_SEND * SHARED_BUFF_STRIDE;
+
+            byte[] snapshot = null;
+            int snapshotLen = 0;
+
+            if (!_commMutex.WaitOne(5)) return;
+            try
+            {
+                int buffLen = _view.ReadInt32(baseOff);
+                if (buffLen >= LENGTH_PREFIX)
+                {
+                    int buffStart = _view.ReadInt32(baseOff + 4);
+                    snapshot = new byte[buffLen];
+                    _view.ReadArray(baseOff + 8 + buffStart, snapshot, 0, buffLen);
+                    snapshotLen = buffLen;
+                    _view.Write(baseOff,     0); // Length = 0
+                    _view.Write(baseOff + 4, 0); // Start = 0
+                }
+            }
+            finally { _commMutex.ReleaseMutex(); }
+
+            if (snapshot == null || snapshotLen < LENGTH_PREFIX) return;
+
+            WriteLog(string.Format("FlushOutSend: found {0} bytes in buffer 3", snapshotLen));
+
+            int pos = 0;
+            while (pos + LENGTH_PREFIX <= snapshotLen)
+            {
+                int packetLen = snapshot[pos] | (snapshot[pos + 1] << 8) | (snapshot[pos + 2] << 16) | (snapshot[pos + 3] << 24);
+                pos += LENGTH_PREFIX;
+                if (packetLen <= 0 || pos + packetLen > snapshotLen) break;
+
+                byte[] pkt = new byte[packetLen];
+                Array.Copy(snapshot, pos, pkt, 0, packetLen);
+                pos += packetLen;
+
+                WriteLog(string.Format("FlushOutSend: calling Send id=0x{0:X2} len={1}", pkt[0], packetLen));
+                int length = packetLen;
+                bool result = _sendToServer(ref pkt, ref length);
+                WriteLog(string.Format("FlushOutSend: Send returned {0}", result));
+            }
         }
 
         private static bool DoOnRecv(ref byte[] data, ref int length)
@@ -126,12 +305,18 @@ namespace Assistant
         ///   [4..7]  = Start  (int)  — read cursor into Buff
         ///   [8..]   = Buff[524288]
         /// </summary>
+        // Each entry in the buffer is: [4-byte LE length][packet bytes]
+        // The consumer (PacketService) reads the prefix to know the packet size without
+        // needing GetPacketLength / Crypt.dll's StaticPacketTable.
+        private const int LENGTH_PREFIX = 4;
+
         private static void WritePacket(int bufIdx, byte[] data, int length)
         {
             if (_view == null || _commMutex == null || data == null || length <= 0) return;
             if (length > data.Length) length = data.Length;
 
-            long baseOff = (long)bufIdx * SHARED_BUFF_STRIDE;
+            long baseOff  = (long)bufIdx * SHARED_BUFF_STRIDE;
+            int  writeSize = LENGTH_PREFIX + length; // prefix + payload
 
             if (!_commMutex.WaitOne(50)) return;
             try
@@ -139,7 +324,7 @@ namespace Assistant
                 int buffLen   = _view.ReadInt32(baseOff);       // current queued bytes
                 int buffStart = _view.ReadInt32(baseOff + 4);   // read cursor
 
-                // When buffer is fully consumed, reset cursor to 0 (mirrors HandleComm behaviour)
+                // When buffer is fully consumed, reset cursor to 0
                 if (buffLen == 0)
                 {
                     buffStart = 0;
@@ -148,10 +333,10 @@ namespace Assistant
 
                 int writeOffset = buffStart + buffLen;
 
-                // If the new packet doesn't fit at the current write position, try to compact
-                if (writeOffset + length > SHARED_BUFF_SIZE)
+                // If the new entry doesn't fit at the current write position, try to compact
+                if (writeOffset + writeSize > SHARED_BUFF_SIZE)
                 {
-                    if (buffLen > 0 && buffLen + length <= SHARED_BUFF_SIZE)
+                    if (buffLen > 0 && buffLen + writeSize <= SHARED_BUFF_SIZE)
                     {
                         // Move live data to the front of the buffer
                         byte[] temp = new byte[buffLen];
@@ -164,14 +349,15 @@ namespace Assistant
                     else
                     {
                         // Buffer full — drop this packet to avoid stalling the game
-                        WriteLog(string.Format("WARNING: buffer[{0}] full ({1}/{2}), packet 0x{3:X2} dropped",
-                            bufIdx, buffLen, SHARED_BUFF_SIZE, data[0]));
                         return;
                     }
                 }
 
-                _view.WriteArray(baseOff + 8 + writeOffset, data, 0, length);
-                _view.Write(baseOff, buffLen + length); // update Length
+                // Write 4-byte little-endian length prefix then packet data
+                byte[] prefix = BitConverter.GetBytes(length);
+                _view.WriteArray(baseOff + 8 + writeOffset,              prefix, 0, LENGTH_PREFIX);
+                _view.WriteArray(baseOff + 8 + writeOffset + LENGTH_PREFIX, data, 0, length);
+                _view.Write(baseOff, buffLen + writeSize); // update Length
             }
             finally
             {

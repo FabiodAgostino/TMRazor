@@ -9,7 +9,9 @@
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="1000"
       Title="Packet Logger"
-      d:DataContext="{d:DesignInstance vm:PacketLoggerViewModel}">
+      d:DataContext="{d:DesignInstance vm:PacketLoggerViewModel}"
+      VerticalAlignment="Stretch"
+      ScrollViewer.VerticalScrollBarVisibility="Disabled">
 
     <Page.Resources>
         <Style x:Key="DirectionIconStyle" TargetType="ui:SymbolIcon">
@@ -23,7 +25,8 @@
         </Style>
     </Page.Resources>
 
-    <Grid Margin="24">
+    <Grid Height="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
+    <Grid Margin="24" VerticalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -54,7 +57,7 @@
         </Grid>
 
         <!-- Content Area -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" x:Name="ContentGrid">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*" />
                 <ColumnDefinition Width="Auto" />
@@ -62,11 +65,16 @@
             </Grid.ColumnDefinitions>
 
             <!-- Packet List -->
-            <ui:ListView Grid.Column="0" 
+            <ui:ListView x:Name="PacketsList"
+                         Grid.Column="0" 
                          ItemsSource="{Binding Packets}" 
                          SelectedItem="{Binding SelectedPacket}"
                          VirtualizingPanel.IsVirtualizing="True"
-                         VirtualizingPanel.VirtualizationMode="Recycling">
+                         VirtualizingPanel.VirtualizationMode="Recycling"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         ScrollViewer.CanContentScroll="True"
+                         HorizontalAlignment="Stretch"
+                         VerticalAlignment="Stretch">
                 <ui:ListView.View>
                     <GridView>
                         <GridViewColumn Header="Dir" Width="40">
@@ -83,6 +91,7 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
+                        <GridViewColumn Header="Name" Width="120" DisplayMemberBinding="{Binding Name}" />
                         <GridViewColumn Header="Len" Width="60" DisplayMemberBinding="{Binding Length}" />
                         <GridViewColumn Header="Hex Preview" Width="200" DisplayMemberBinding="{Binding RawHex}" />
                     </GridView>
@@ -141,5 +150,6 @@
                 </Grid>
             </ui:Card>
         </Grid>
+    </Grid>
     </Grid>
 </Page>

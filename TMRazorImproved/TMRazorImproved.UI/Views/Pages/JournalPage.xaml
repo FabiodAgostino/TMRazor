@@ -44,7 +44,10 @@
 
         <!-- Journal List -->
         <ui:ListView Grid.Row="1" 
+                     x:Name="JournalListView"
                      ItemsSource="{Binding Entries}"
+                     SelectionMode="Extended"
+                     KeyDown="JournalListView_KeyDown"
                      VirtualizingPanel.IsVirtualizing="True"
                      VirtualizingPanel.VirtualizationMode="Recycling">
             <ui:ListView.View>
