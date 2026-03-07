@@ -458,5 +458,191 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _packet.SendToServer(data);
             _logger?.LogDebug("SetAbility: {Name} ({Id})", abilityName, ability);
         }
+
+        // ------------------------------------------------------------------
+        // Party
+        // ------------------------------------------------------------------
+
+        /// <summary>Ritorna i serial di tutti i membri del party.</summary>
+        public virtual System.Collections.Generic.List<uint> AllParty
+        {
+            get { _cancel.ThrowIfCancelled(); return _world.PartyMembers.ToList(); }
+        }
+
+        /// <summary>True se il serial dato è nel party del player.</summary>
+        public virtual bool InParty(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            return _world.PartyMembers.Contains(serial);
+        }
+
+        // ------------------------------------------------------------------
+        // Follower
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Lista approssimata dei follower: mobili amichevoli (notoriety=1)
+        /// nel range visivo, escluso il player stesso.
+        /// </summary>
+        public virtual System.Collections.Generic.List<uint> AllFollowers
+        {
+            get
+            {
+                _cancel.ThrowIfCancelled();
+                return _world.Mobiles
+                    .Where(m => m.Notoriety == 1 && m.Serial != (P?.Serial ?? 0))
+                    .Select(m => m.Serial)
+                    .ToList();
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // Stato mount / volo
+        // ------------------------------------------------------------------
+
+        /// <summary>True se il player è in sella (layer riding 0x19 occupato).</summary>
+        public virtual bool IsOnMount
+        {
+            get
+            {
+                _cancel.ThrowIfCancelled();
+                if (P == null) return false;
+                return _world.Items.Any(i => i.Container == P.Serial && i.Layer == 0x19);
+            }
+        }
+
+        /// <summary>Toggle volo Gargoyle (0x12 macro command 0x56).</summary>
+        public virtual void Fly()
+        {
+            _cancel.ThrowIfCancelled();
+            byte[] data = { 0x12, 0x00, 0x06, 0x56, 0x00, 0x00 };
+            _packet.SendToServer(data);
+        }
+
+        /// <summary>Alias di <see cref="Fly"/>.</summary>
+        public virtual void Land() => Fly();
+
+        // ------------------------------------------------------------------
+        // Chat estesa
+        // ------------------------------------------------------------------
+
+        /// <summary>Whisper (0xAD type=0x02).</summary>
+        public virtual void ChatWhisper(string message)
+        {
+            _cancel.ThrowIfCancelled();
+            SendSpeech(message, 0x02, 0x3B2);
+        }
+
+        /// <summary>Yell (0xAD type=0x04).</summary>
+        public virtual void ChatYell(string message)
+        {
+            _cancel.ThrowIfCancelled();
+            SendSpeech(message, 0x04, 0x21);
+        }
+
+        /// <summary>Emote (0xAD type=0x03).</summary>
+        public virtual void ChatEmote(string message)
+        {
+            _cancel.ThrowIfCancelled();
+            SendSpeech(message, 0x03, 0x24);
+        }
+
+        private void SendSpeech(string message, byte type, int hue)
+        {
+            byte[] msgBytes = System.Text.Encoding.BigEndianUnicode.GetBytes(message + "\0");
+            byte[] packet = new byte[12 + msgBytes.Length];
+            packet[0] = 0xAD;
+            ushort len = (ushort)packet.Length;
+            packet[1] = (byte)(len >> 8); packet[2] = (byte)(len & 0xff);
+            packet[3] = type;
+            packet[4] = (byte)(hue >> 8); packet[5] = (byte)(hue & 0xff);
+            packet[6] = 0x00; packet[7] = 0x03;
+            packet[8] = (byte)'e'; packet[9] = (byte)'n'; packet[10] = (byte)'u'; packet[11] = 0x00;
+            System.Array.Copy(msgBytes, 0, packet, 12, msgBytes.Length);
+            _packet.SendToServer(packet);
+        }
+
+        // ------------------------------------------------------------------
+        // Inventario — apertura contenitori
+        // ------------------------------------------------------------------
+
+        /// <summary>Apre il backpack (double-click).</summary>
+        public virtual void OpenBackpack()
+        {
+            _cancel.ThrowIfCancelled();
+            var bp = P?.Backpack;
+            if (bp != null) _packet.SendToServer(PacketBuilder.DoubleClick(bp.Serial));
+        }
+
+        /// <summary>Apre un contenitore qualsiasi tramite double-click.</summary>
+        public virtual void OpenContainer(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            _packet.SendToServer(PacketBuilder.DoubleClick(serial));
+        }
+
+        // ------------------------------------------------------------------
+        // War mode e resync
+        // ------------------------------------------------------------------
+
+        /// <summary>Alterna il war mode (0x72).</summary>
+        public virtual void ToggleWarMode()
+        {
+            _cancel.ThrowIfCancelled();
+            bool current = P?.WarMode ?? false;
+            byte[] pkt = { 0x72, (byte)(current ? 0x00 : 0x01), 0x00, 0x32, 0x00 };
+            _packet.SendToServer(pkt);
+        }
+
+        /// <summary>Imposta esplicitamente il war mode.</summary>
+        public virtual void SetWarMode(bool warMode)
+        {
+            _cancel.ThrowIfCancelled();
+            byte[] pkt = { 0x72, (byte)(warMode ? 0x01 : 0x00), 0x00, 0x32, 0x00 };
+            _packet.SendToServer(pkt);
+        }
+
+        /// <summary>Richiede resync al server (0x22 con flag 0xFF).</summary>
+        public virtual void Resync()
+        {
+            _cancel.ThrowIfCancelled();
+            byte[] pkt = { 0x22, 0xFF, 0x00 };
+            _packet.SendToServer(pkt);
+        }
+
+        // ------------------------------------------------------------------
+        // Buff / Debuff (via OPL)
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// True se il player ha una property con il nome del buff nelle OPL.
+        /// Per buff basati su 0xDF icon packet, serve un servizio dedicato.
+        /// </summary>
+        public virtual bool CheckBuffs(string buffName)
+        {
+            _cancel.ThrowIfCancelled();
+            if (P?.Properties == null || string.IsNullOrEmpty(buffName)) return false;
+            return P.Properties.Properties.Any(p =>
+                p.Arguments.Contains(buffName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>Alias di <see cref="CheckBuffs"/>.</summary>
+        public virtual bool HasBuff(string buffName) => CheckBuffs(buffName);
+
+        // ------------------------------------------------------------------
+        // Proprietà aggiuntive
+        // ------------------------------------------------------------------
+
+        /// <summary>Graphic (body) del player.</summary>
+        public virtual int Graphic => P?.Graphic ?? 0;
+
+        /// <summary>Hue del player.</summary>
+        public virtual int Hue => P?.Hue ?? 0;
+
+        /// <summary>Map ID corrente (alias di MapId).</summary>
+        public virtual int Map => P?.MapId ?? 0;
+
+        /// <summary>StatCap del player.</summary>
+        public virtual int StatCap => P?.StatCap ?? 0;
     }
 }

@@ -79,5 +79,92 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             5 => Ultima.Map.TerMur,
             _ => Ultima.Map.Felucca
         };
+
+        // ------------------------------------------------------------------
+        // API aggiuntive
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Ritorna la Z più alta tra le static tiles e il terreno a (x,y).
+        /// Utile per determinare la coordinata Z "calpestabile" di una cella.
+        /// </summary>
+        public virtual int GetHighestZ(int x, int y, int map)
+        {
+            _cancel.ThrowIfCancelled();
+            try
+            {
+                int landZ = GetLandZ(x, y, map);
+                var tiles = GetStaticsTileInfo(x, y, map);
+                if (tiles.Count == 0) return landZ;
+                int highestStatic = tiles.Max(t => t.Z);
+                return Math.Max(landZ, highestStatic);
+            }
+            catch { return 0; }
+        }
+
+        /// <summary>
+        /// Ritorna tutte le static tiles in un quadrato di (range*2+1)x(range*2+1) attorno a (x,y).
+        /// </summary>
+        public virtual List<StaticTile> GetTilesInRange(int x, int y, int range, int map)
+        {
+            _cancel.ThrowIfCancelled();
+            var result = new List<StaticTile>();
+            try
+            {
+                for (int dx = -range; dx <= range; dx++)
+                {
+                    for (int dy = -range; dy <= range; dy++)
+                    {
+                        _cancel.ThrowIfCancelled();
+                        result.AddRange(GetStaticsTileInfo(x + dx, y + dy, map));
+                    }
+                }
+            }
+            catch { }
+            return result;
+        }
+
+        /// <summary>
+        /// Ritorna il flag della tile di terreno a (x,y).
+        /// I flag UO sono bit mask: 0x1=Wet, 0x2=Impassable, 0x4=Surface, ecc.
+        /// </summary>
+        public virtual int GetTileFlags(int x, int y, int map)
+        {
+            _cancel.ThrowIfCancelled();
+            try
+            {
+                var umap = GetUltimaMap(map);
+                if (umap == null) return 0;
+                var tile = umap.Tiles.GetLandTile(x, y);
+                // Ultima.TileData.LandTable[tile.ID].Flags
+                var tileData = Ultima.TileData.LandTable[tile.ID & 0x3FFF];
+                return (int)tileData.Flags;
+            }
+            catch { return 0; }
+        }
+
+        /// <summary>
+        /// True se il graphic specificato è una tile di terreno (ID &lt; 0x4000).
+        /// </summary>
+        public virtual bool IsLand(int graphic)
+        {
+            _cancel.ThrowIfCancelled();
+            return graphic >= 0 && graphic < 0x4000;
+        }
+
+        /// <summary>
+        /// True se la cella (x,y) è impassabile (flag 0x40 oppure 0x2 su terreno).
+        /// </summary>
+        public virtual bool IsImpassable(int x, int y, int map)
+        {
+            _cancel.ThrowIfCancelled();
+            try
+            {
+                int flags = GetTileFlags(x, y, map);
+                const int impassableFlag = 0x40;
+                return (flags & impassableFlag) != 0;
+            }
+            catch { return false; }
+        }
     }
 }

@@ -1,5 +1,10 @@
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
+using TMRazorImproved.Core.Utilities;
 using TMRazorImproved.Shared.Interfaces;
 
 namespace TMRazorImproved.Core.Services.Scripting.Api
@@ -164,5 +169,128 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
 
         /// <summary>Ritorna il timestamp Unix corrente in millisecondi.</summary>
         public virtual long Timestamp() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+        // ------------------------------------------------------------------
+        // File I/O
+        // ------------------------------------------------------------------
+
+        /// <summary>Legge il contenuto di un file di testo. Ritorna stringa vuota se il file non esiste.</summary>
+        public virtual string ReadFile(string path)
+        {
+            _cancel.ThrowIfCancelled();
+            try { return File.Exists(path) ? File.ReadAllText(path) : string.Empty; }
+            catch { return string.Empty; }
+        }
+
+        /// <summary>Scrive (sovrascrive) un file di testo con il contenuto specificato.</summary>
+        public virtual void WriteFile(string path, string content)
+        {
+            _cancel.ThrowIfCancelled();
+            try { File.WriteAllText(path, content); }
+            catch { }
+        }
+
+        /// <summary>Aggiunge una riga in coda a un file di testo.</summary>
+        public virtual void AppendToFile(string path, string line)
+        {
+            _cancel.ThrowIfCancelled();
+            try { File.AppendAllText(path, line + Environment.NewLine); }
+            catch { }
+        }
+
+        // ------------------------------------------------------------------
+        // Random e tempo
+        // ------------------------------------------------------------------
+
+        private static readonly Random _rng = new();
+
+        /// <summary>Ritorna un intero casuale tra min (incluso) e max (incluso).</summary>
+        public virtual int Random(int min, int max)
+        {
+            _cancel.ThrowIfCancelled();
+            if (min > max) (min, max) = (max, min);
+            return _rng.Next(min, max + 1);
+        }
+
+        /// <summary>Ritorna un intero casuale tra 0 e max (incluso).</summary>
+        public virtual int Random(int max) => Random(0, max);
+
+        /// <summary>Ritorna l'ora corrente come DateTime (UTC).</summary>
+        public virtual DateTime Now() => DateTime.UtcNow;
+
+        /// <summary>Ritorna i millisecondi trascorsi dal timestamp <paramref name="t"/> (da <see cref="Timestamp"/>).</summary>
+        public virtual long DeltaTimestamp(long t) => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - t;
+
+        // ------------------------------------------------------------------
+        // Ignore list
+        // ------------------------------------------------------------------
+
+        private readonly ConcurrentDictionary<uint, byte> _ignoreList = new();
+
+        /// <summary>Aggiunge il serial alla lista degli ignorati.</summary>
+        public virtual void Ignore(uint serial) { _ignoreList.TryAdd(serial, 0); }
+
+        /// <summary>Rimuove il serial dalla lista degli ignorati.</summary>
+        public virtual void UnIgnore(uint serial) { _ignoreList.TryRemove(serial, out _); }
+
+        /// <summary>True se il serial è nella lista degli ignorati.</summary>
+        public virtual bool IsIgnored(uint serial) => _ignoreList.ContainsKey(serial);
+
+        /// <summary>Svuota la lista degli ignorati.</summary>
+        public virtual void ClearIgnores() { _ignoreList.Clear(); }
+
+        /// <summary>Ritorna tutti i serial ignorati.</summary>
+        public virtual List<uint> GetIgnoreList() => new List<uint>(_ignoreList.Keys);
+
+        // ------------------------------------------------------------------
+        // UO utility
+        // ------------------------------------------------------------------
+
+        /// <summary>Richiede resync al server (0x22 con flag 0xFF).</summary>
+        public virtual void Resync()
+        {
+            _cancel.ThrowIfCancelled();
+            byte[] pkt = { 0x22, 0xFF, 0x00 };
+            _packetService.SendToServer(pkt);
+        }
+
+        /// <summary>
+        /// Apre il context menu di un'entità (pacchetto 0xBF sub 0x0E).
+        /// Il server risponderà con 0xBF sub 0x0F con le voci del menu.
+        /// </summary>
+        public virtual void ContextMenu(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            byte[] pkt = new byte[9];
+            pkt[0] = 0xBF;
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), 9);
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(3), 0x0E); // sub
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(5), serial);
+            _packetService.SendToServer(pkt);
+        }
+
+        /// <summary>
+        /// Porta la finestra UO in primo piano (SetForegroundWindow Win32 API).
+        /// </summary>
+        public virtual void FocusUO()
+        {
+            _cancel.ThrowIfCancelled();
+            try
+            {
+                var hwnd = _interop?.GetWindowHandle() ?? IntPtr.Zero;
+                if (hwnd != IntPtr.Zero) SetForegroundWindow(hwnd);
+            }
+            catch { }
+        }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        /// <summary>Serial del player corrente.</summary>
+        public virtual uint GetPlayerSerial()
+        {
+            _cancel.ThrowIfCancelled();
+            return _world.Player?.Serial ?? 0;
+        }
     }
 }
