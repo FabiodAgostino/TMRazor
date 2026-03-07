@@ -113,7 +113,6 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<DPSMeterViewModel>();
                 services.AddSingleton<TargetHPViewModel>();
                 services.AddTransient<OptionsViewModel>();
-                services.AddTransient<DisplayViewModel>();
                 services.AddTransient<SoundViewModel>();
                 services.AddTransient<CountersViewModel>();
                 services.AddTransient<HotkeysViewModel>();
@@ -146,7 +145,6 @@ namespace TMRazorImproved.UI
                 services.AddTransient<SoundPage>();
                 services.AddTransient<CountersPage>();
                 services.AddTransient<OptionsPage>();
-                services.AddTransient<DisplayPage>();
                 services.AddTransient<HotkeysPage>();
                 services.AddTransient<InspectorPage>();
                 services.AddTransient<GumpListPage>();
@@ -183,7 +181,11 @@ namespace TMRazorImproved.UI
                 theme.ApplyTheme(config.Global.Theme);
                 theme.ApplyAccentColor(config.Global.AccentColor);
 
+                // Load language first
                 lang.Load(config.Global.Language);
+
+                // Initialize dynamic translation source AFTER language is loaded
+                TMRazorImproved.UI.Utilities.TranslationSource.Instance.Initialize(lang);
                 
                 // Forza inizializzazione PacketService (attiva il fallback timer)
                 _host.Services.GetRequiredService<IPacketService>();
@@ -241,7 +243,6 @@ namespace TMRazorImproved.UI
             search.RegisterItem(new SearchItem("Gallery", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(GalleryPage))), "Screenshots and videos", "\uE114"));
             search.RegisterItem(new SearchItem("General", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(GeneralPage))), "General settings", "\uE713"));
             search.RegisterItem(new SearchItem("Options", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(OptionsPage))), "Global options", "\uE713"));
-            search.RegisterItem(new SearchItem("Display", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(DisplayPage))), "Display and Visual settings", "\uE7B3"));
             search.RegisterItem(new SearchItem("Scripting", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(ScriptingPage))), "Python and UOSteam editor", "\uE943"));
             search.RegisterItem(new SearchItem("Macros", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(MacrosPage))), "Macro recorder and player", "\uE7C8"));
             search.RegisterItem(new SearchItem("Skills", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(SkillsPage))), "Character skills list", "\uEADB"));

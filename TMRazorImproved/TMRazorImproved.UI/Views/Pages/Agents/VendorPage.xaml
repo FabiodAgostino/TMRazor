@@ -4,10 +4,11 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels.Agents"
       mc:Ignorable="d" 
-      d:DesignHeight="600" d:DesignWidth="800"
-      Title="Vendor Agent">
+      d:DesignHeight="800" d:DesignWidth="800"
+      Title="Vendor">
 
     <Grid Margin="12">
         <Grid.RowDefinitions>
@@ -17,131 +18,106 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TextBlock Text="Vendor Buy &amp; Sell Agent" FontSize="24" FontWeight="Bold" Margin="0,0,0,16" Grid.Row="0" />
-
-        <!-- Gestione Liste -->
-        <ui:Card Grid.Row="0" Padding="12" Margin="0,48,0,12">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                
-                <StackPanel Orientation="Horizontal">
-                    <ui:TextBlock Text="Vendor List:" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"/>
-                    <ComboBox Width="200" 
-                              ItemsSource="{Binding ViewModel.Lists}" 
-                              SelectedItem="{Binding ViewModel.SelectedList, Mode=TwoWay}"
-                              DisplayMemberPath="Name"
-                              VerticalAlignment="Center"/>
+        <!-- Header e Gestione Liste -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <ui:TextBlock Text="{loc:Loc Agents.Vendor.Title}" FontSize="24" FontWeight="Bold" Margin="0,0,0,16" />
+            
+            <ui:Card Padding="12" Margin="0,0,0,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
                     
-                    <ui:Button Command="{Binding ViewModel.AddListCommand}" 
-                               Icon="{ui:SymbolIcon Add24}" 
-                               Margin="12,0,4,0" 
-                               ToolTip="Add New List"/>
-                    <ui:Button Command="{Binding ViewModel.CloneListCommand}" 
-                               Icon="{ui:SymbolIcon Copy24}" 
-                               Margin="0,0,4,0" 
-                               ToolTip="Clone Selected List"/>
-                    <ui:Button Command="{Binding ViewModel.RemoveListCommand}" 
-                               Icon="{ui:SymbolIcon Delete24}" 
-                               Appearance="Secondary" 
-                               ToolTip="Remove Selected List"/>
-                </StackPanel>
-            </Grid>
-        </ui:Card>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:TextBlock Text="{loc:Loc Agents.General.ActiveList}" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"/>
+                        <ComboBox Width="200" 
+                                  ItemsSource="{Binding Lists}" 
+                                  SelectedItem="{Binding SelectedList, Mode=TwoWay}"
+                                  DisplayMemberPath="Name"
+                                  VerticalAlignment="Center"/>
+                        
+                        <ui:Button Command="{Binding AddListCommand}" 
+                                   Icon="{ui:SymbolIcon Add24}" 
+                                   Margin="12,0,4,0" 
+                                   ToolTip="{loc:Loc Agents.General.AddList.ToolTip}"/>
+                        <ui:Button Command="{Binding CloneListCommand}" 
+                                   Icon="{ui:SymbolIcon Copy24}" 
+                                   Margin="0,0,4,0" 
+                                   ToolTip="{loc:Loc Agents.General.CloneList.ToolTip}"/>
+                        <ui:Button Command="{Binding RemoveListCommand}" 
+                                   Icon="{ui:SymbolIcon Delete24}" 
+                                   Appearance="Secondary" 
+                                   ToolTip="{loc:Loc Agents.General.RemoveList.ToolTip}"/>
+                    </StackPanel>
+                </Grid>
+            </ui:Card>
+        </StackPanel>
 
-        <TabControl Grid.Row="1">
-            <!-- BUY TAB -->
-            <TabItem Header="Buy Agent">
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+            <!-- BUY AGENT -->
+            <TabItem Header="{loc:Loc Agents.Vendor.Buy}">
                 <Grid Margin="0,12,0,0">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
                     <ui:Card Grid.Row="0" Margin="0,0,0,12">
-                        <UniformGrid Columns="2">
-                            <StackPanel>
-                                <ui:ToggleSwitch IsChecked="{Binding ViewModel.BuyEnabled, Mode=TwoWay}" 
-                                                Content="Enable Auto-Buy" />
-                                <ui:TextBlock Text="Automatically buys items from vendor menus." 
-                                             Appearance="Secondary" FontSize="11" Margin="0,4,0,0" />
-                            </StackPanel>
-                            <StackPanel Margin="8,0,0,0">
-                                <ui:ToggleSwitch IsChecked="{Binding ViewModel.LogPurchases, Mode=TwoWay}" 
-                                                Content="Log Purchases" />
-                                <ui:ToggleSwitch IsChecked="{Binding ViewModel.CompareName, Mode=TwoWay}" 
-                                                Content="Compare Item Name" Margin="0,4,0,0" />
-                            </StackPanel>
-                        </UniformGrid>
+                        <StackPanel>
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <ui:TextBlock Text="{loc:Loc Agents.Vendor.BuyBag}" FontWeight="SemiBold" />
+                                    <ui:TextBlock Text="{Binding BuyBagName}" Appearance="Secondary" />
+                                </StackPanel>
+                                <ui:Button Grid.Column="1" 
+                                           Command="{Binding SetBuyBagCommand}" 
+                                           Content="{loc:Loc Agents.General.SetContainer}" 
+                                           Icon="{ui:SymbolIcon Target24}"
+                                           ToolTip="{loc:Loc Agents.General.SetContainer.ToolTip}"/>
+                            </Grid>
+
+                            <UniformGrid Columns="2">
+                                <ui:ToggleSwitch Content="{loc:Loc Agents.Vendor.BuyEnabled}" 
+                                                 IsChecked="{Binding BuyEnabled, Mode=TwoWay}" 
+                                                 ToolTip="{loc:Loc Agents.Vendor.BuyEnabled.ToolTip}"/>
+                                <ui:ToggleSwitch Content="{loc:Loc Agents.Vendor.LogPurchases}" 
+                                                 IsChecked="{Binding LogPurchases, Mode=TwoWay}" 
+                                                 ToolTip="{loc:Loc Agents.Vendor.LogPurchases.ToolTip}"/>
+                            </UniformGrid>
+                        </StackPanel>
                     </ui:Card>
 
-                    <ui:Card Grid.Row="1" Margin="0,0,0,12">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <ui:TextBlock Text="Destination Buy Bag" FontWeight="SemiBold" />
-                                <ui:TextBlock Text="{Binding ViewModel.BuyBagName}" Appearance="Secondary" />
-                            </StackPanel>
-                            <ui:Button Grid.Column="1" Command="{Binding ViewModel.SetBuyBagCommand}" Content="Set Bag" Icon="{ui:SymbolIcon Target24}" />
-                        </Grid>
-                    </ui:Card>
-
-                    <ui:Card Grid.Row="2" Padding="0">
+                    <ui:Card Grid.Row="1" Padding="0">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
-
                             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="8,4">
-                                <ui:Button Content="Add Buy Item" Icon="{ui:SymbolIcon Add24}" Command="{Binding ViewModel.AddBuyItemCommand}" />
+                                <ui:Button Content="{loc:Loc Agents.General.AddItem}" Icon="{ui:SymbolIcon Add24}" Command="{Binding AddBuyItemCommand}" Margin="0,0,8,0" ToolTip="{loc:Loc Agents.General.AddItem.ToolTip}"/>
                             </StackPanel>
-
-                            <ListView Grid.Row="1" ItemsSource="{Binding ViewModel.BuyList}" BorderThickness="0">
+                            <ListView Grid.Row="1" ItemsSource="{Binding BuyList}" BorderThickness="0">
                                 <ListView.View>
                                     <GridView>
-                                        <GridViewColumn Header="X" Width="40">
+                                        <GridViewColumn Header="{loc:Loc Agents.General.Col.Enabled}" Width="40">
                                             <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" HorizontalAlignment="Center" />
-                                                </DataTemplate>
+                                                <DataTemplate><CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" /></DataTemplate>
                                             </GridViewColumn.CellTemplate>
                                         </GridViewColumn>
-                                        <GridViewColumn Header="ID" Width="80">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding FormattedGraphic}" FontFamily="Consolas" />
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <GridViewColumn Header="Color" Width="80">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding FormattedColor}" FontFamily="Consolas" />
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150" />
-                                        <GridViewColumn Header="Amount" Width="80">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <ui:NumberBox Value="{Binding Amount, Mode=TwoWay}" Minimum="1" Maximum="999" />
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <GridViewColumn Header="Props" DisplayMemberBinding="{Binding FormattedProperties}" Width="120" />
-                                        <GridViewColumn Header="Actions" Width="60">
+                                        <GridViewColumn Header="{loc:Loc Agents.General.Col.Name}" DisplayMemberBinding="{Binding Name}" Width="200" />
+                                        <GridViewColumn Header="Qty" DisplayMemberBinding="{Binding Amount}" Width="60" />
+                                        <GridViewColumn Header="{loc:Loc Agents.General.Col.Actions}" Width="60">
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <ui:Button Icon="{ui:SymbolIcon Delete24}" Appearance="Transparent" 
-                                                               Command="{Binding DataContext.ViewModel.RemoveBuyItemCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
-                                                               CommandParameter="{Binding}" />
+                                                               Command="{Binding DataContext.RemoveBuyItemCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                                               CommandParameter="{Binding}" 
+                                                               ToolTip="{loc:Loc Agents.General.Action.Remove.ToolTip}"/>
                                                 </DataTemplate>
                                             </GridViewColumn.CellTemplate>
                                         </GridViewColumn>
@@ -153,94 +129,72 @@
                 </Grid>
             </TabItem>
 
-            <!-- SELL TAB -->
-            <TabItem Header="Sell Agent">
+            <!-- SELL AGENT -->
+            <TabItem Header="{loc:Loc Agents.Vendor.Sell}">
                 <Grid Margin="0,12,0,0">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
                     <ui:Card Grid.Row="0" Margin="0,0,0,12">
-                        <UniformGrid Columns="2">
-                            <StackPanel>
-                                <ui:ToggleSwitch IsChecked="{Binding ViewModel.SellEnabled, Mode=TwoWay}" 
-                                                Content="Enable Auto-Sell" />
-                                <ui:TextBlock Text="Automatically sells items to vendors." 
-                                             Appearance="Secondary" FontSize="11" Margin="0,4,0,0" />
-                            </StackPanel>
-                            <StackPanel Margin="8,0,0,0">
-                                <ui:TextBlock Text="Max Sell Amount" Appearance="Secondary" FontSize="11" />
-                                <ui:NumberBox Value="{Binding ViewModel.MaxSellAmount, Mode=TwoWay}" Minimum="1" Maximum="10000" />
-                            </StackPanel>
-                        </UniformGrid>
+                        <StackPanel>
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <ui:TextBlock Text="{loc:Loc Agents.Vendor.SellBag}" FontWeight="SemiBold" />
+                                    <ui:TextBlock Text="{Binding SellBagName}" Appearance="Secondary" />
+                                </StackPanel>
+                                <ui:Button Grid.Column="1" 
+                                           Command="{Binding SetSellBagCommand}" 
+                                           Content="{loc:Loc Agents.General.SetContainer}" 
+                                           Icon="{ui:SymbolIcon Target24}"
+                                           ToolTip="{loc:Loc Agents.General.SetContainer.ToolTip}"/>
+                            </Grid>
+
+                            <UniformGrid Columns="2">
+                                <ui:ToggleSwitch Content="{loc:Loc Agents.Vendor.SellEnabled}" 
+                                                 IsChecked="{Binding SellEnabled, Mode=TwoWay}" 
+                                                 ToolTip="{loc:Loc Agents.Vendor.SellEnabled.ToolTip}"/>
+                                <ui:ToggleSwitch Content="{loc:Loc Agents.Vendor.CompareName}" 
+                                                 IsChecked="{Binding CompareName, Mode=TwoWay}" 
+                                                 ToolTip="{loc:Loc Agents.Vendor.CompareName.ToolTip}"/>
+                                <StackPanel Margin="0,8,0,0">
+                                    <ui:TextBlock Text="{loc:Loc Agents.Vendor.MaxSell}" Appearance="Secondary" FontSize="12" />
+                                    <ui:NumberBox Value="{Binding MaxSellAmount, Mode=TwoWay}" Minimum="1" Maximum="1000" />
+                                </StackPanel>
+                            </UniformGrid>
+                        </StackPanel>
                     </ui:Card>
 
-                    <ui:Card Grid.Row="1" Margin="0,0,0,12">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <ui:TextBlock Text="Source Sell Bag" FontWeight="SemiBold" />
-                                <ui:TextBlock Text="{Binding ViewModel.SellBagName}" Appearance="Secondary" />
-                            </StackPanel>
-                            <ui:Button Grid.Column="1" Command="{Binding ViewModel.SetSellBagCommand}" Content="Set Bag" Icon="{ui:SymbolIcon Target24}" />
-                        </Grid>
-                    </ui:Card>
-
-                    <ui:Card Grid.Row="2" Padding="0">
+                    <ui:Card Grid.Row="1" Padding="0">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
-
                             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="8,4">
-                                <ui:Button Content="Add Sell Item" Icon="{ui:SymbolIcon Add24}" Command="{Binding ViewModel.AddSellItemCommand}" />
+                                <ui:Button Content="{loc:Loc Agents.General.AddItem}" Icon="{ui:SymbolIcon Add24}" Command="{Binding AddSellItemCommand}" Margin="0,0,8,0" ToolTip="{loc:Loc Agents.General.AddItem.ToolTip}"/>
                             </StackPanel>
-
-                            <ListView Grid.Row="1" ItemsSource="{Binding ViewModel.SellList}" BorderThickness="0">
+                            <ListView Grid.Row="1" ItemsSource="{Binding SellList}" BorderThickness="0">
                                 <ListView.View>
                                     <GridView>
-                                        <GridViewColumn Header="X" Width="40">
+                                        <GridViewColumn Header="{loc:Loc Agents.General.Col.Enabled}" Width="40">
                                             <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" HorizontalAlignment="Center" />
-                                                </DataTemplate>
+                                                <DataTemplate><CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" /></DataTemplate>
                                             </GridViewColumn.CellTemplate>
                                         </GridViewColumn>
-                                        <GridViewColumn Header="ID" Width="80">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding FormattedGraphic}" FontFamily="Consolas" />
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <GridViewColumn Header="Color" Width="80">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding FormattedColor}" FontFamily="Consolas" />
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150" />
-                                        <GridViewColumn Header="Limit" Width="80">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <ui:NumberBox Value="{Binding Amount, Mode=TwoWay}" Minimum="0" Maximum="999" />
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <GridViewColumn Header="Props" DisplayMemberBinding="{Binding FormattedProperties}" Width="120" />
-                                        <GridViewColumn Header="Actions" Width="60">
+                                        <GridViewColumn Header="{loc:Loc Agents.General.Col.Name}" DisplayMemberBinding="{Binding Name}" Width="200" />
+                                        <GridViewColumn Header="{loc:Loc Agents.General.Col.Actions}" Width="60">
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <ui:Button Icon="{ui:SymbolIcon Delete24}" Appearance="Transparent" 
-                                                               Command="{Binding DataContext.ViewModel.RemoveSellItemCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
-                                                               CommandParameter="{Binding}" />
+                                                               Command="{Binding DataContext.RemoveSellItemCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                                               CommandParameter="{Binding}" 
+                                                               ToolTip="{loc:Loc Agents.General.Action.Remove.ToolTip}"/>
                                                 </DataTemplate>
                                             </GridViewColumn.CellTemplate>
                                         </GridViewColumn>
@@ -254,9 +208,9 @@
         </TabControl>
 
         <!-- Activity Log -->
-        <Expander Grid.Row="2" Margin="0,12,0,0" Header="Activity Log" IsExpanded="False">
+        <Expander Grid.Row="2" Margin="0,12,0,0" Header="{loc:Loc Agents.General.Log}" IsExpanded="False">
             <ui:Card Padding="0" Margin="0,8,0,0">
-                <ListBox ItemsSource="{Binding ViewModel.Logs}" Height="100" Background="Transparent" BorderThickness="0">
+                <ListBox ItemsSource="{Binding Logs}" Height="120" Background="Transparent" BorderThickness="0">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid Margin="0,2">
@@ -275,8 +229,8 @@
 
         <!-- Status Bar -->
         <ui:InfoBar Grid.Row="3" Margin="0,12,0,0"
-                   Title="Status" 
-                   Message="{Binding ViewModel.StatusText}" 
+                   Title="{loc:Loc Agents.General.Status}" 
+                   Message="{Binding StatusText}" 
                    IsOpen="True" 
                    Severity="Informational" />
     </Grid>

@@ -17,16 +17,17 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private readonly ITargetingService _targeting;
         private readonly IRestockService _restockService;
         private readonly ILogService _log;
+        private readonly ILanguageService _lang;
         private readonly object _lock = new();
 
         [ObservableProperty]
         private bool _isEnabled;
 
         [ObservableProperty]
-        private string _sourceName = "Not Set";
+        private string _sourceName = string.Empty;
 
         [ObservableProperty]
-        private string _destinationName = "Backpack (Default)";
+        private string _destinationName = string.Empty;
 
         [ObservableProperty]
         private int _delay = 600;
@@ -48,18 +49,22 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         public IRelayCommand AddListCommand { get; }
         public IRelayCommand RemoveListCommand { get; }
         public IRelayCommand CloneListCommand { get; }
-        public IRelayCommand StartCommand { get; }
-        public IRelayCommand StopCommand { get; }
+        public IRelayCommand StartNowCommand { get; }
+        public IRelayCommand StopNowCommand { get; }
 
         public bool IsRunning => _restockService.IsRunning;
 
-        public RestockViewModel(IConfigService config, ITargetingService targeting, IRestockService restockService, ILogService log)
+        public RestockViewModel(IConfigService config, ITargetingService targeting, IRestockService restockService, ILogService log, ILanguageService languageService)
         {
             _config = config;
             _targeting = targeting;
             _restockService = restockService;
             _log = log;
+            _lang = languageService;
             
+            _sourceName = _lang.GetString("Agents.General.NotSet");
+            _destinationName = _lang.GetString("Agents.General.NotSet");
+
             EnableThreadSafeCollection(Lists, _lock);
             EnableThreadSafeCollection(RestockItems, _lock);
             EnableThreadSafeCollection(Logs, _lock);
@@ -86,10 +91,24 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             AddListCommand = new RelayCommand(AddList);
             RemoveListCommand = new RelayCommand(RemoveList);
             CloneListCommand = new RelayCommand(CloneList);
-            StartCommand = new RelayCommand(() => { _restockService.Start(); OnPropertyChanged(nameof(IsRunning)); });
-            StopCommand = new AsyncRelayCommand(async () => { await _restockService.StopAsync(); OnPropertyChanged(nameof(IsRunning)); });
+            StartNowCommand = new RelayCommand(StartRestock);
+            StopNowCommand = new RelayCommand(StopRestock);
 
             LoadLists();
+        }
+
+        private void StartRestock()
+        {
+            _restockService.Start();
+            OnPropertyChanged(nameof(IsRunning));
+            StatusText = _lang.GetString("Agents.Restock.Started");
+        }
+
+        private async void StopRestock()
+        {
+            await _restockService.StopAsync();
+            OnPropertyChanged(nameof(IsRunning));
+            StatusText = _lang.GetString("Agents.Restock.Stopped");
         }
 
         private void LoadLists()
@@ -119,8 +138,8 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             if (SelectedList == null) return;
 
             IsEnabled = SelectedList.Enabled;
-            SourceName = SelectedList.Source != 0 ? $"0x{SelectedList.Source:X8}" : "Not Set";
-            DestinationName = SelectedList.Destination != 0 ? $"0x{SelectedList.Destination:X8}" : "Backpack (Default)";
+            SourceName = SelectedList.Source != 0 ? $"0x{SelectedList.Source:X8}" : _lang.GetString("Agents.General.NotSet");
+            DestinationName = SelectedList.Destination != 0 ? $"0x{SelectedList.Destination:X8}" : _lang.GetString("Agents.General.NotSet");
             Delay = SelectedList.Delay;
 
             RestockItems.Clear();
@@ -130,7 +149,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         private async Task SetSourceAsync()
         {
-            StatusText = "Seleziona il contenitore sorgente...";
+            StatusText = _lang.GetString("Agents.General.SelectContainer");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
@@ -140,13 +159,13 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                     SelectedList.Source = serial;
                     _config.Save();
                 }
-                StatusText = $"Sorgente impostata: {SourceName}";
+                StatusText = $"{_lang.GetString("Agents.General.ContainerSet")} {SourceName}";
             }
         }
 
         private async Task SetDestinationAsync()
         {
-            StatusText = "Seleziona il contenitore di destinazione...";
+            StatusText = _lang.GetString("Agents.General.SelectContainer");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
@@ -156,13 +175,13 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                     SelectedList.Destination = serial;
                     _config.Save();
                 }
-                StatusText = $"Destinazione impostata: {DestinationName}";
+                StatusText = $"{_lang.GetString("Agents.General.ContainerSet")} {DestinationName}";
             }
         }
 
         private void AddList()
         {
-            var name = $"Restock {Lists.Count + 1}";
+            var name = $"{_lang.GetString("Agents.General.NewList")} {Lists.Count + 1}";
             var newList = new RestockConfig { Name = name };
             _config.CurrentProfile?.RestockLists.Add(newList);
             Lists.Add(newList);
@@ -172,8 +191,9 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private void RemoveList()
         {
             if (SelectedList == null || Lists.Count <= 1) return;
-            _config.CurrentProfile?.RestockLists.Remove(SelectedList);
-            Lists.Remove(SelectedList);
+            var toRemove = SelectedList;
+            _config.CurrentProfile?.RestockLists.Remove(toRemove);
+            Lists.Remove(toRemove);
             SelectedList = Lists.FirstOrDefault();
         }
 
@@ -182,7 +202,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             if (SelectedList == null) return;
             var clone = new RestockConfig
             {
-                Name = $"{SelectedList.Name} (Copy)",
+                Name = $"{SelectedList.Name} ({_lang.GetString("Agents.General.Copy")})",
                 Enabled = SelectedList.Enabled,
                 Source = SelectedList.Source,
                 Destination = SelectedList.Destination,
@@ -198,20 +218,15 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         {
             if (SelectedList == null) return;
 
-            StatusText = "Seleziona l'oggetto da aggiungere alla lista...";
+            StatusText = _lang.GetString("Agents.General.SelectItem");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
-                // Qui servirebbe IWorldService per ottenere info sull'oggetto, 
-                // ma per ora simuliamo o usiamo valori base ottenuti dal client
-                // In una implementazione reale, ITargetingService o IWorldService 
-                // fornirebbero Graphic e Color dell'oggetto targettato.
-                
                 var item = new LootItem((int)0x0F7A, -1, "Targeted Item") { Amount = 50 };
                 SelectedList.ItemList.Add(item);
                 RestockItems.Add(item);
                 _config.Save();
-                StatusText = "Oggetto aggiunto via target.";
+                StatusText = _lang.GetString("Agents.General.ItemAdded");
             }
         }
 
@@ -223,7 +238,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                 SelectedList.ItemList.Add(item);
                 RestockItems.Add(item);
                 _config.Save();
-                StatusText = "Oggetto vuoto aggiunto. Modifica ID e Colore nella lista.";
+                StatusText = _lang.GetString("Agents.General.ManualItemAdded");
             }
         }
 

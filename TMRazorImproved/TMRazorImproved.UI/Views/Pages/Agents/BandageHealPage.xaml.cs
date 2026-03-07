@@ -10,7 +10,7 @@ namespace TMRazorImproved.UI.Views.Pages.Agents
         public BandageHealPage(BandageHealViewModel viewModel)
         {
             ViewModel = viewModel;
-            DataContext = this;
+            DataContext = this.ViewModel;
 
             InitializeComponent();
         }

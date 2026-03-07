@@ -10,7 +10,7 @@ namespace TMRazorImproved.UI.Views.Pages.Agents
         public AutoLootPage(AutoLootViewModel viewModel)
         {
             ViewModel = viewModel;
-            DataContext = ViewModel;
+            DataContext = this.ViewModel;
 
             InitializeComponent();
         }

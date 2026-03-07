@@ -1,4 +1,4 @@
-<Page x:Class="TMRazorImproved.UI.Views.Pages.ScriptingPage"
+﻿<Page x:Class="TMRazorImproved.UI.Views.Pages.ScriptingPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -10,7 +10,7 @@
       xmlns:util="clr-namespace:TMRazorImproved.UI.Utilities"
       mc:Ignorable="d"
       d:DesignHeight="700" d:DesignWidth="1000"
-      Title="Scripting"
+      Title="{loc:Loc Scripting.Title}"
       ScrollViewer.VerticalScrollBarVisibility="Disabled"
       VerticalAlignment="Stretch">
 
@@ -32,16 +32,16 @@
                 <!-- Left: file operations + script name -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <ui:Button Content="{loc:Loc Scripting.New}" Command="{Binding NewScriptCommand}"
-                               Margin="0,0,4,0" ToolTip="Nuovo script vuoto"/>
+                               Margin="0,0,4,0" ToolTip="{loc:Loc Scripting.New.ToolTip}"/>
                     <ui:Button Content="{loc:Loc Scripting.Open}"  Command="{Binding OpenScriptCommand}"
-                               Margin="0,0,4,0" ToolTip="Apri file .py"/>
+                               Margin="0,0,4,0" ToolTip="{loc:Loc Scripting.Open.ToolTip}"/>
                     <ui:Button Content="{loc:Loc Scripting.Save}" Command="{Binding SaveScriptCommand}"
-                               Margin="0,0,12,0" ToolTip="Salva script su file"/>
+                               Margin="0,0,12,0" ToolTip="{loc:Loc Scripting.Save.ToolTip}"/>
 
                     <Border Width="1" Background="{DynamicResource ControlBorderColorBrush}"
                             Margin="0,4,12,4"/>
 
-                    <ui:TextBlock Text="Language:" VerticalAlignment="Center" Margin="0,0,6,0"
+                    <ui:TextBlock Text="{loc:Loc Scripting.Language}" VerticalAlignment="Center" Margin="0,0,6,0"
                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                     <ComboBox Width="100" Margin="0,0,12,0"
                               ItemsSource="{Binding AvailableLanguages}"
@@ -51,11 +51,11 @@
                     <Border Width="1" Background="{DynamicResource ControlBorderColorBrush}"
                             Margin="0,4,12,4"/>
 
-                    <ui:TextBlock Text="Script:" VerticalAlignment="Center" Margin="0,0,6,0"
+                    <ui:TextBlock Text="{loc:Loc Scripting.Script}" VerticalAlignment="Center" Margin="0,0,6,0"
                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                     <ui:TextBox Width="200"
                                 Text="{Binding ScriptName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                PlaceholderText="nome_script.py"
+                                PlaceholderText="{loc:Loc Scripting.ScriptName.Placeholder}"
                                 VerticalAlignment="Center"/>
                 </StackPanel>
 
@@ -66,13 +66,13 @@
                                Command="{Binding RunScriptCommand}"
                                Padding="16,6"
                                Margin="0,0,6,0"
-                               ToolTip="Esegui lo script (F5)"/>
+                               ToolTip="{loc:Loc Scripting.Run.ToolTip}"/>
 
                     <ui:Button Content="{loc:Loc Scripting.Stop}"
                                Appearance="Danger"
                                Command="{Binding StopScriptCommand}"
                                Padding="16,6"
-                               ToolTip="Interrompi lo script"/>
+                               ToolTip="{loc:Loc Scripting.Stop.ToolTip}"/>
                 </StackPanel>
             </Grid>
         </ui:Card>
@@ -85,7 +85,7 @@
                 <RowDefinition Height="1*" MinHeight="80"/>
             </Grid.RowDefinitions>
 
-            <!-- ── Code Editor ── -->
+            <!-- â”€â”€ Code Editor â”€â”€ -->
             <Border Grid.Row="0"
                     Background="#1E1E1E"
                     BorderBrush="{DynamicResource ControlBorderColorBrush}"
@@ -106,7 +106,7 @@
                     util:AvalonEditBehavior.IsTextBindingActive="True"/>
             </Border>
 
-            <!-- ── GridSplitter ── -->
+            <!-- â”€â”€ GridSplitter â”€â”€ -->
             <GridSplitter Grid.Row="1"
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch"
@@ -114,7 +114,7 @@
                           ResizeBehavior="PreviousAndNext"
                           Cursor="SizeNS"/>
 
-            <!-- ── Output Console ── -->
+            <!-- â”€â”€ Output Console â”€â”€ -->
             <Border Grid.Row="2"
                     Background="#141414"
                     BorderBrush="{DynamicResource ControlBorderColorBrush}"
@@ -133,7 +133,7 @@
                             Padding="10,4">
                         <Grid>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <ui:TextBlock Text="Output"
+                                <ui:TextBlock Text="{loc:Loc Scripting.Output}"
                                               FontWeight="SemiBold"
                                               FontSize="12"
                                               Foreground="#CCCCCC"
@@ -145,13 +145,13 @@
                                               Margin="10,0,0,0"
                                               FontStyle="Italic"/>
                             </StackPanel>
-                            <ui:Button Content="Pulisci"
+                            <ui:Button Content="{loc:Loc Scripting.Clear}"
                                        HorizontalAlignment="Right"
                                        Appearance="Secondary"
                                        Padding="10,2"
                                        FontSize="11"
                                        Command="{Binding ClearLogCommand}"
-                                       ToolTip="Pulisci output"/>
+                                       ToolTip="{loc:Loc Scripting.Clear.ToolTip}"/>
                         </Grid>
                     </Border>
 

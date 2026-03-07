@@ -16,19 +16,20 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private readonly ITargetingService _targeting;
         private readonly IOrganizerService _organizer;
         private readonly ILogService _log;
+        private readonly ILanguageService _lang;
         private readonly object _lock = new();
 
         [ObservableProperty]
         private uint _sourceSerial;
 
         [ObservableProperty]
-        private string _sourceName = "Not Set";
+        private string _sourceName = string.Empty;
 
         [ObservableProperty]
         private uint _destinationSerial;
 
         [ObservableProperty]
-        private string _destinationName = "Not Set";
+        private string _destinationName = string.Empty;
 
         [ObservableProperty]
         private bool _isRunning;
@@ -66,13 +67,17 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         public IRelayCommand RemoveListCommand { get; }
         public IRelayCommand CloneListCommand { get; }
 
-        public OrganizerViewModel(IConfigService config, ITargetingService targeting, IOrganizerService organizer, ILogService log)
+        public OrganizerViewModel(IConfigService config, ITargetingService targeting, IOrganizerService organizer, ILogService log, ILanguageService languageService)
         {
             _config = config;
             _targeting = targeting;
             _organizer = organizer;
             _log = log;
+            _lang = languageService;
             
+            _sourceName = _lang.GetString("Agents.General.NotSet");
+            _destinationName = _lang.GetString("Agents.General.NotSet");
+
             EnableThreadSafeCollection(Lists, _lock);
             EnableThreadSafeCollection(OrganizerItems, _lock);
             EnableThreadSafeCollection(Logs, _lock);
@@ -135,9 +140,9 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             if (SelectedList == null) return;
 
             SourceSerial = SelectedList.Source;
-            SourceName = SourceSerial != 0 ? $"0x{SourceSerial:X8}" : "Not Set";
+            SourceName = SourceSerial != 0 ? $"0x{SourceSerial:X8}" : _lang.GetString("Agents.General.NotSet");
             DestinationSerial = SelectedList.Destination;
-            DestinationName = DestinationSerial != 0 ? $"0x{DestinationSerial:X8}" : "Not Set";
+            DestinationName = DestinationSerial != 0 ? $"0x{DestinationSerial:X8}" : _lang.GetString("Agents.General.NotSet");
             Delay = SelectedList.Delay;
             Stack = SelectedList.Stack;
             Loop = SelectedList.Loop;
@@ -152,7 +157,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         private void AddList()
         {
-            var name = $"New List {Lists.Count + 1}";
+            var name = $"{_lang.GetString("Agents.General.NewList")} {Lists.Count + 1}";
             var newList = new OrganizerConfig { Name = name };
             _config.CurrentProfile?.OrganizerLists.Add(newList);
             Lists.Add(newList);
@@ -173,7 +178,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             if (SelectedList == null) return;
             var clone = new OrganizerConfig
             {
-                Name = $"{SelectedList.Name} (Copy)",
+                Name = $"{SelectedList.Name} ({_lang.GetString("Agents.General.Copy")})",
                 Source = SelectedList.Source,
                 Destination = SelectedList.Destination,
                 Delay = SelectedList.Delay,
@@ -191,7 +196,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         private async Task SetSourceAsync()
         {
-            StatusText = "Seleziona il contenitore sorgente...";
+            StatusText = _lang.GetString("Agents.General.SelectContainer");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
@@ -203,13 +208,13 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                     config.Source = serial;
                     _config.Save();
                 }
-                StatusText = $"Sorgente impostata: {SourceName}";
+                StatusText = $"{_lang.GetString("Agents.General.ContainerSet")} {SourceName}";
             }
         }
 
         private async Task SetDestinationAsync()
         {
-            StatusText = "Seleziona il contenitore di destinazione...";
+            StatusText = _lang.GetString("Agents.General.SelectContainer");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
@@ -221,7 +226,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                     config.Destination = serial;
                     _config.Save();
                 }
-                StatusText = $"Destinazione impostata: {DestinationName}";
+                StatusText = $"{_lang.GetString("Agents.General.ContainerSet")} {DestinationName}";
             }
         }
 
@@ -230,7 +235,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             var config = GetActiveConfig();
             if (config == null) return;
 
-            StatusText = "Seleziona l'oggetto da aggiungere alla lista...";
+            StatusText = _lang.GetString("Agents.General.SelectItem");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
@@ -238,7 +243,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                 config.ItemList.Add(item);
                 OrganizerItems.Add(item);
                 _config.Save();
-                StatusText = "Oggetto aggiunto via target.";
+                StatusText = _lang.GetString("Agents.General.ItemAdded");
             }
         }
 
@@ -251,15 +256,14 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                 config.ItemList.Add(item);
                 OrganizerItems.Add(item);
                 _config.Save();
-                StatusText = "Oggetto vuoto aggiunto. Modifica ID e Colore nella lista.";
+                StatusText = _lang.GetString("Agents.General.ManualItemAdded");
             }
         }
 
         private void EditItem(LootItem? item)
         {
             if (item == null) return;
-            // TODO: Aprire dialog per la modifica delle proprietà e quantità
-            StatusText = $"Modifica proprietà/quantità per {item.Name} non ancora implementata.";
+            StatusText = _lang.GetString("Agents.General.EditNotImplemented");
         }
 
         private void RemoveItem(LootItem? item)
@@ -288,20 +292,20 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         {
             if (SourceSerial == 0 || DestinationSerial == 0)
             {
-                StatusText = "Errore: Imposta sorgente e destinazione prima di avviare.";
+                StatusText = _lang.GetString("Agents.Organizer.Error.NoContainers");
                 return;
             }
             
             _organizer.Start();
             IsRunning = _organizer.IsRunning;
-            StatusText = "Organizer avviato...";
+            StatusText = _lang.GetString("Agents.Organizer.Started");
         }
 
         private async Task StopAsync()
         {
             await _organizer.StopAsync();
             IsRunning = _organizer.IsRunning;
-            StatusText = "Organizer fermato.";
+            StatusText = _lang.GetString("Agents.Organizer.Stopped");
         }
 
         partial void OnDelayChanged(int value) => SaveConfig();

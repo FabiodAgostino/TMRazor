@@ -5,9 +5,10 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:converters="clr-namespace:TMRazorImproved.UI.Converters"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="800"
-      Title="Skills"
+      Title="{loc:Loc Skills.Title}"
       VerticalAlignment="Stretch"
       ScrollViewer.VerticalScrollBarVisibility="Disabled">
 
@@ -23,11 +24,11 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <ui:TextBlock Text="Skills" FontSize="28" FontWeight="Bold" Margin="0,0,0,16" Grid.Row="0" />
+            <ui:TextBlock Text="{loc:Loc Skills.Title}" FontSize="28" FontWeight="Bold" Margin="0,0,0,16" Grid.Row="0" />
 
             <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch">
             <!-- SKILLS LIST TAB -->
-            <TabItem Header="Skills List" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <TabItem Header="{loc:Loc Skills.Tab.List}" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Grid Margin="0,12,0,0" VerticalAlignment="Stretch">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -44,21 +45,23 @@
                             </Grid.ColumnDefinitions>
                             
                             <StackPanel Orientation="Horizontal">
-                                <ui:TextBlock Text="Set All Locks:" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"/>
+                                <ui:TextBlock Text="{loc:Loc Skills.SetAllLocks}" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"/>
                                 <ComboBox Width="100" 
                                           ItemsSource="{Binding LockOptions}" 
                                           SelectedItem="{Binding SelectedLockAll, Mode=TwoWay}"
-                                          VerticalAlignment="Center"/>
+                                          VerticalAlignment="Center"
+                                          ToolTip="{loc:Loc Skills.SetAllLocks.ToolTip}"/>
                                 <ui:Button Command="{Binding SetAllLocksCommand}" 
                                            Icon="{ui:SymbolIcon Checkmark24}" 
                                            Margin="8,0,0,0" 
-                                           ToolTip="Apply to all skills"/>
+                                           ToolTip="{loc:Loc Skills.ApplyAll.ToolTip}"/>
                             </StackPanel>
 
                             <ui:ToggleSwitch Grid.Column="1" 
                                             IsChecked="{Binding DisplayChanges, Mode=TwoWay}" 
-                                            Content="Display Changes" 
-                                            VerticalAlignment="Center" />
+                                            Content="{loc:Loc Skills.DisplayChanges}" 
+                                            VerticalAlignment="Center"
+                                            ToolTip="{loc:Loc Skills.DisplayChanges.ToolTip}" />
                         </Grid>
                     </ui:Card>
 
@@ -76,18 +79,18 @@
                                   HorizontalAlignment="Stretch"
                                   VerticalAlignment="Stretch">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Skill Name" Binding="{Binding Name}" Width="*" IsReadOnly="True" />
-                                <DataGridTextColumn Header="Real" Binding="{Binding Value, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True" />
-                                <DataGridTextColumn Header="Base" Binding="{Binding BaseValue, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True" />
-                                <DataGridTextColumn Header="Cap" Binding="{Binding Cap, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True" />
-                                <DataGridTextColumn Header="Delta" Binding="{Binding Delta, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True">
+                                <DataGridTextColumn Header="{loc:Loc Skills.Column.Name}" Binding="{Binding Name}" Width="*" IsReadOnly="True" />
+                                <DataGridTextColumn Header="{loc:Loc Skills.Column.Real}" Binding="{Binding Value, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True" />
+                                <DataGridTextColumn Header="{loc:Loc Skills.Column.Base}" Binding="{Binding BaseValue, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True" />
+                                <DataGridTextColumn Header="{loc:Loc Skills.Column.Cap}" Binding="{Binding Cap, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True" />
+                                <DataGridTextColumn Header="{loc:Loc Skills.Column.Delta}" Binding="{Binding Delta, StringFormat={}{0:F1}}" Width="80" IsReadOnly="True">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Visibility" Value="{Binding DataContext.DisplayChanges, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTemplateColumn Header="Lock" Width="100">
+                                <DataGridTemplateColumn Header="{loc:Loc Skills.Column.Lock}" Width="100">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <ComboBox SelectedItem="{Binding Lock, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
@@ -109,15 +112,15 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Orientation="Horizontal">
-                                <ui:TextBlock Text="Total Real: " Appearance="Secondary" VerticalAlignment="Center" />
+                                <ui:TextBlock Text="{loc:Loc Skills.Footer.TotalReal}" Appearance="Secondary" VerticalAlignment="Center" />
                                 <ui:TextBlock Text="{Binding TotalReal, StringFormat={}{0:F1}}" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,24,0" />
-                                <ui:TextBlock Text="Total Base: " Appearance="Secondary" VerticalAlignment="Center" />
+                                <ui:TextBlock Text="{loc:Loc Skills.Footer.TotalBase}" Appearance="Secondary" VerticalAlignment="Center" />
                                 <ui:TextBlock Text="{Binding TotalBase, StringFormat={}{0:F1}}" FontWeight="Bold" VerticalAlignment="Center" />
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <ui:Button Content="Copy List" Icon="{ui:SymbolIcon Copy24}" Command="{Binding CopyAllCommand}" Margin="0,0,8,0" />
-                                <ui:Button Content="Reset Delta" Icon="{ui:SymbolIcon History24}" Command="{Binding ResetDeltaCommand}" />
+                                <ui:Button Content="{loc:Loc Skills.Action.CopyList}" Icon="{ui:SymbolIcon Copy24}" Command="{Binding CopyAllCommand}" Margin="0,0,8,0" ToolTip="{loc:Loc Skills.Action.CopyList.ToolTip}" />
+                                <ui:Button Content="{loc:Loc Skills.Action.ResetDelta}" Icon="{ui:SymbolIcon History24}" Command="{Binding ResetDeltaCommand}" ToolTip="{loc:Loc Skills.Action.ResetDelta.ToolTip}" />
                             </StackPanel>
                         </Grid>
                     </ui:Card>
@@ -125,15 +128,16 @@
             </TabItem>
 
             <!-- SKILL GAIN HISTORY TAB -->
-            <TabItem Header="Gain History">
+            <TabItem Header="{loc:Loc Skills.Tab.History}">
                 <Grid Margin="0,12,0,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <ui:Card Grid.Row="0" Margin="0,0,0,12">
-                        <ui:TextBlock Text="History of Skill Gains" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <ui:TextBlock Text="{loc:Loc Skills.History.Header}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     </ui:Card>
 
                     <ui:Card Grid.Row="1" Padding="0" Margin="0,0,0,12">
@@ -148,11 +152,11 @@
                                   HeadersVisibility="Column"
                                   GridLinesVisibility="Horizontal">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat={}{0:HH:mm:ss}}" Width="100" />
-                                <DataGridTextColumn Header="Skill Name" Binding="{Binding SkillName}" Width="*" />
-                                <DataGridTextColumn Header="Old Value" Binding="{Binding OldValue, StringFormat={}{0:F1}}" Width="100" />
-                                <DataGridTextColumn Header="New Value" Binding="{Binding NewValue, StringFormat={}{0:F1}}" Width="100" />
-                                <DataGridTextColumn Header="Gain" Binding="{Binding Gain, StringFormat={}+{0:F1}}" Width="100" >
+                                <DataGridTextColumn Header="{loc:Loc Skills.Column.Time}" Binding="{Binding Timestamp, StringFormat={}{0:HH:mm:ss}}" Width="100" />
+                                <DataGridTextColumn Header="{loc:Loc Skills.Column.Name}" Binding="{Binding SkillName}" Width="*" />
+                                <DataGridTextColumn Header="{loc:Loc Skills.Column.OldValue}" Binding="{Binding OldValue, StringFormat={}{0:F1}}" Width="100" />
+                                <DataGridTextColumn Header="{loc:Loc Skills.Column.NewValue}" Binding="{Binding NewValue, StringFormat={}{0:F1}}" Width="100" />
+                                <DataGridTextColumn Header="{loc:Loc Skills.Column.Gain}" Binding="{Binding Gain, StringFormat={}+{0:F1}}" Width="100" >
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Foreground" Value="LimeGreen" />
@@ -167,7 +171,7 @@
                     <!-- Grafico Semplice -->
                     <ui:Card Grid.Row="2" Padding="12" VerticalAlignment="Bottom">
                         <Grid Height="150">
-                            <ui:TextBlock Text="Gain History Chart" Appearance="Secondary" VerticalAlignment="Top" HorizontalAlignment="Left" />
+                            <ui:TextBlock Text="{loc:Loc Skills.History.ChartHeader}" Appearance="Secondary" VerticalAlignment="Top" HorizontalAlignment="Left" />
                             <ItemsControl ItemsSource="{Binding GainHistory}" Margin="0,20,0,0">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>

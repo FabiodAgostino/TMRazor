@@ -1,6 +1,7 @@
 using System;
+using System.Windows.Data;
 using System.Windows.Markup;
-using TMRazorImproved.Shared.Interfaces;
+using TMRazorImproved.UI.Utilities;
 
 namespace TMRazorImproved.UI.Views
 {
@@ -25,18 +26,14 @@ namespace TMRazorImproved.UI.Views
             if (System.ComponentModel.DesignerProperties.GetIsInDesignMode(new System.Windows.DependencyObject()))
                 return $"[Design:{Key}]";
 
-            try
+            // Ritorna un binding dinamico a TranslationSource
+            var binding = new Binding($"[{Key}]")
             {
-                // Recupera il servizio di localizzazione dal DI container tramite l'App
-                var langService = App.GetService<ILanguageService>();
-                if (langService == null) return $"[NoService:{Key}]";
+                Source = TranslationSource.Instance,
+                Mode = BindingMode.OneWay
+            };
 
-                return langService.GetString(Key);
-            }
-            catch
-            {
-                return $"[Error:{Key}]";
-            }
+            return binding.ProvideValue(serviceProvider);
         }
     }
 }

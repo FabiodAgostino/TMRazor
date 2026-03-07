@@ -4,10 +4,11 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels.Agents"
       mc:Ignorable="d" 
-      d:DesignHeight="700" d:DesignWidth="900"
-      Title="Dress Agent">
+      d:DesignHeight="600" d:DesignWidth="800"
+      Title="Dress">
 
     <Grid Margin="12">
         <Grid.RowDefinitions>
@@ -16,167 +17,119 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TextBlock Text="Dress &amp; Undress Agent" FontSize="24" FontWeight="Bold" Margin="0,0,0,16" Grid.Row="0" />
-
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="250" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <!-- Sidebar: Liste -->
-            <ui:Card Grid.Column="0" Margin="0,0,12,0" Padding="8">
+        <!-- Header e Gestione Liste -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <ui:TextBlock Text="{loc:Loc Agents.Dress.Title}" FontSize="24" FontWeight="Bold" Margin="0,0,0,16" />
+            
+            <ui:Card Padding="12" Margin="0,0,0,12">
                 <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <ui:TextBlock Text="Equipment Lists" FontWeight="SemiBold" Margin="4,4,4,12" />
-
-                    <ListView Grid.Row="1" 
-                              ItemsSource="{Binding ViewModel.Lists}" 
-                              SelectedItem="{Binding ViewModel.SelectedList, Mode=TwoWay}"
-                              DisplayMemberPath="Name"
-                              BorderThickness="0" />
-
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
-                        <ui:Button Command="{Binding ViewModel.AddListCommand}" Icon="{ui:SymbolIcon Add24}" Margin="0,0,4,0" />
-                        <ui:Button Command="{Binding ViewModel.RemoveListCommand}" Icon="{ui:SymbolIcon Delete24}" Appearance="Secondary" />
-                    </StackPanel>
-                </Grid>
-            </ui:Card>
-
-            <StackPanel Grid.Column="0" VerticalAlignment="Bottom">
-                <ui:Card Margin="0,12,12,0" Padding="8">
-                    <StackPanel>
-                        <ui:TextBlock Text="Settings" FontWeight="SemiBold" Margin="0,0,0,8" />
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Orientation="Horizontal">
+                        <ui:TextBlock Text="{loc:Loc Agents.General.ActiveList}" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"/>
+                        <ComboBox Width="200" 
+                                  ItemsSource="{Binding Lists}" 
+                                  SelectedItem="{Binding SelectedList, Mode=TwoWay}"
+                                  DisplayMemberPath="Name"
+                                  VerticalAlignment="Center"/>
                         
-                        <ui:TextBlock Text="Drag Delay (ms)" Appearance="Secondary" FontSize="11" />
-                        <ui:NumberBox Value="{Binding ViewModel.DragDelay, Mode=TwoWay}" Minimum="100" Maximum="5000" SmallChange="50" Margin="0,0,0,8" />
-
-                        <ui:ToggleSwitch IsChecked="{Binding ViewModel.RemoveConflict, Mode=TwoWay}" Content="Remove Conflict" Margin="0,0,0,4" />
-                        <ui:ToggleSwitch IsChecked="{Binding ViewModel.Use3D, Mode=TwoWay}" Content="Use UO3D Equip" />
+                        <ui:Button Command="{Binding AddListCommand}" 
+                                   Icon="{ui:SymbolIcon Add24}" 
+                                   Margin="12,0,4,0" 
+                                   ToolTip="{loc:Loc Agents.General.AddList.ToolTip}"/>
+                        <ui:Button Command="{Binding CloneListCommand}" 
+                                   Icon="{ui:SymbolIcon Copy24}" 
+                                   Margin="0,0,4,0" 
+                                   ToolTip="{loc:Loc Agents.General.CloneList.ToolTip}"/>
+                        <ui:Button Command="{Binding RemoveListCommand}" 
+                                   Icon="{ui:SymbolIcon Delete24}" 
+                                   Appearance="Secondary" 
+                                   ToolTip="{loc:Loc Agents.General.RemoveList.ToolTip}"/>
                     </StackPanel>
-                </ui:Card>
 
-                <ui:Card Margin="0,12,12,0" Padding="8">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <ui:TextBlock Text="Undress Bag" FontWeight="SemiBold" />
-                            <ui:TextBlock Text="{Binding ViewModel.UndressBagName}" Appearance="Secondary" FontSize="11" TextTrimming="CharacterEllipsis" />
-                        </StackPanel>
-                        <ui:Button Grid.Column="1" Command="{Binding ViewModel.SetUndressBagCommand}" Icon="{ui:SymbolIcon Target24}" Padding="4" />
-                    </Grid>
-                </ui:Card>
-            </StackPanel>
-
-            <!-- Main: Grid Visuale Slots -->
-            <ui:Card Grid.Column="1" Padding="12">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <!-- Azioni Rapide -->
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
-                        <ui:Button Content="Dress Now" 
-                                   Icon="{ui:SymbolIcon TShirt24}" 
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <ui:Button Content="{loc:Loc Agents.Dress.DressNow}" 
+                                   Command="{Binding DressCommand}" 
                                    Appearance="Primary" 
-                                   Command="{Binding ViewModel.DressCommand}" 
                                    Margin="0,0,8,0" />
-                        <ui:Button Content="Undress Now" 
-                                   Icon="{ui:SymbolIcon Delete24}" 
-                                   Command="{Binding ViewModel.UndressCommand}"
-                                   Margin="0,0,8,0" />
-                        <ui:Button Content="Stop" 
-                                   Icon="{ui:SymbolIcon Stop24}" 
-                                   Command="{Binding ViewModel.StopCommand}"
-                                   Margin="0,0,8,0" />
-                        <ui:Button Content="Read Current" 
-                                   Icon="{ui:SymbolIcon ReadingList24}" 
-                                   Command="{Binding ViewModel.ReadCurrentCommand}"
-                                   Margin="0,0,8,0" />
-                        <ui:Button Content="Clear All" 
-                                   Icon="{ui:SymbolIcon Delete24}" 
-                                   Command="{Binding ViewModel.ClearAllSlotsCommand}"
-                                   Appearance="Secondary" />
+                        <ui:Button Content="{loc:Loc Agents.Dress.UndressNow}" 
+                                   Command="{Binding UndressCommand}" 
+                                   Appearance="Secondary" 
+                                   Margin="0,0,16,0" />
+                        <ui:ToggleSwitch IsChecked="{Binding ConflictCheck, Mode=TwoWay}" 
+                                        Content="{loc:Loc Agents.Dress.Conflict}" 
+                                        OnContent="On" OffContent="Off" />
                     </StackPanel>
-
-                    <!-- Griglia degli Slot -->
-                    <ScrollViewer Grid.Row="1">
-                        <ItemsControl ItemsSource="{Binding ViewModel.CurrentSlots}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <ui:Card Margin="4" Padding="8" Width="200" Height="80">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel>
-                                                <ui:TextBlock Text="{Binding Layer}" FontSize="11" Appearance="Secondary" />
-                                                <ui:TextBlock Text="{Binding ItemName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                                <ui:Button Icon="{ui:SymbolIcon Target24}" 
-                                                           Appearance="Transparent"
-                                                           Padding="4"
-                                                           Command="{Binding DataContext.ViewModel.SetSlotCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
-                                                           CommandParameter="{Binding}" 
-                                                           ToolTip="Set Item"/>
-                                                <ui:Button Icon="{ui:SymbolIcon Dismiss24}" 
-                                                           Appearance="Transparent"
-                                                           Padding="4"
-                                                           Command="{Binding DataContext.ViewModel.ClearSlotCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
-                                                           CommandParameter="{Binding}" 
-                                                           ToolTip="Clear Layer"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </ui:Card>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
                 </Grid>
             </ui:Card>
-        </Grid>
+        </StackPanel>
 
-        <!-- Activity Log -->
-        <Expander Grid.Row="2" Margin="0,12,0,0" Header="Activity Log (History)" IsExpanded="False">
-            <ui:Card Padding="0" Margin="0,8,0,0">
-                <ListBox ItemsSource="{Binding ViewModel.Logs}" Height="120" Background="Transparent" BorderThickness="0">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Grid Margin="0,2">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <ui:TextBlock Text="{Binding FormattedTime}" Appearance="Secondary" Margin="0,0,8,0" />
-                                <ui:TextBlock Grid.Column="1" Text="{Binding Message}" />
-                            </Grid>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </ui:Card>
-        </Expander>
+        <!-- Lista Item -->
+        <ui:Card Grid.Row="1" Padding="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="8,4">
+                    <ui:Button Content="{loc:Loc Agents.General.AddItem}" Icon="{ui:SymbolIcon Target24}" Command="{Binding AddItemCommand}" Margin="0,0,8,0" ToolTip="{loc:Loc Agents.General.AddItem.ToolTip}"/>
+                    <ui:Button Content="{loc:Loc Agents.General.ClearList}" Icon="{ui:SymbolIcon Delete24}" Command="{Binding ClearListCommand}" Appearance="Secondary" ToolTip="{loc:Loc Agents.General.ClearList.ToolTip}"/>
+                </StackPanel>
+
+                <ListView Grid.Row="1" ItemsSource="{Binding LootItems}" BorderThickness="0">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="{loc:Loc Agents.General.Col.Enabled}" Width="40">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" HorizontalAlignment="Center" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="{loc:Loc Agents.General.Col.Graphic}" Width="80">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding FormattedGraphic}" FontFamily="Consolas" VerticalAlignment="Center" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="{loc:Loc Agents.General.Col.Color}" Width="80">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding FormattedColor}" FontFamily="Consolas" VerticalAlignment="Center" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="{loc:Loc Agents.General.Col.Name}" DisplayMemberBinding="{Binding Name}" Width="150" />
+                            <GridViewColumn Header="{loc:Loc Agents.General.Col.Props}" DisplayMemberBinding="{Binding FormattedProperties}" Width="150" />
+                            <GridViewColumn Header="{loc:Loc Agents.General.Col.Actions}" Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:Button Icon="{ui:SymbolIcon Delete24}" 
+                                                       Appearance="Transparent" 
+                                                       Padding="4"
+                                                       Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                                       CommandParameter="{Binding}" 
+                                                       ToolTip="{loc:Loc Agents.General.Action.Remove.ToolTip}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </Grid>
+        </ui:Card>
 
         <!-- Status Bar -->
-        <ui:InfoBar Grid.Row="3" Margin="0,12,0,0"
-                   Title="Status" 
-                   Message="{Binding ViewModel.StatusText}" 
+        <ui:InfoBar Grid.Row="2" Margin="0,12,0,0"
+                   Title="{loc:Loc Agents.General.Status}" 
+                   Message="{Binding StatusText}" 
                    IsOpen="True" 
                    Severity="Informational" />
     </Grid>

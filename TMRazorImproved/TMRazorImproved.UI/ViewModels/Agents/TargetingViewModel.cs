@@ -15,10 +15,8 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private readonly ITargetingService _targeting;
         private readonly IFriendsService _friends;
         private readonly IWorldService _world;
+        private readonly ILanguageService _lang;
         private readonly object _lock = new();
-
-        [ObservableProperty]
-        private string _statusText = string.Empty;
 
         [ObservableProperty]
         private int _range = 12;
@@ -47,12 +45,13 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         public IRelayCommand AddBodyIDCommand { get; }
         public IRelayCommand AddHueCommand { get; }
 
-        public TargetingViewModel(IConfigService config, ITargetingService targeting, IWorldService world, IFriendsService friends)
+        public TargetingViewModel(IConfigService config, ITargetingService targeting, IWorldService world, IFriendsService friends, ILanguageService languageService)
         {
             _config = config;
             _targeting = targeting;
             _world = world;
             _friends = friends;
+            _lang = languageService;
 
             EnableThreadSafeCollection(TargetLists, _lock);
             EnableThreadSafeCollection(FriendList, _lock);
@@ -104,7 +103,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         private void AddFilter()
         {
-            var newFilter = new TargetFilter { Name = $"Filter {TargetLists.Count + 1}" };
+            var newFilter = new TargetFilter { Name = $"{_lang.GetString("Agents.General.NewList")} {TargetLists.Count + 1}" };
             _config.CurrentProfile?.TargetLists.Add(newFilter);
             TargetLists.Add(newFilter);
             SelectedFilter = newFilter;
@@ -144,13 +143,13 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         private async Task AddFriendAsync()
         {
-            StatusText = "Seleziona un giocatore da aggiungere agli amici...";
+            StatusText = _lang.GetString("Agents.General.SelectItem");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
                 if (_friends.IsFriend(serial))
                 {
-                    StatusText = "Giocatore già presente nella lista amici.";
+                    StatusText = "Player already in friends list.";
                     return;
                 }
 
@@ -158,7 +157,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                 string name = m?.Name ?? $"Friend_{serial:X8}";
                 _friends.AddFriend(serial, name);
                 RefreshFriendList();
-                StatusText = $"Amico aggiunto: {name}";
+                StatusText = $"Added friend: {name}";
             }
         }
 
@@ -168,7 +167,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             {
                 _friends.RemoveFriend(m.Serial);
                 RefreshFriendList();
-                StatusText = $"Amico rimosso: {m.Name}";
+                StatusText = $"Removed friend: {m.Name}";
             }
         }
 

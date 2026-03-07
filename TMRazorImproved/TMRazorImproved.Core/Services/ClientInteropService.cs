@@ -510,12 +510,10 @@ namespace TMRazorImproved.Core.Services
 
         public IntPtr GetCommMutex()
         {
-            // First: try Crypt.dll's internal handle (set after InstallLibrary runs)
-            IntPtr handle = NativeMethods.GetCommMutex();
-            if (handle != IntPtr.Zero) return handle;
-
-            // Fallback: open by name directly — works when TMRazorPlugin created the mutex
-            // before InstallLibrary was called (the common case with the plugin approach).
+            // Always open by name to guarantee we use the same mutex as TMRazorPlugin.
+            // Crypt.dll's GetCommMutex may return a different (internal) mutex handle that
+            // is NOT synchronized with the plugin's UONetSharedCOMM_{pid:x} mutex, which
+            // causes a race condition on Start/Length → out-of-bounds CopyMemory → crash.
             if (_hMutex != IntPtr.Zero) return _hMutex;
 
             int pid = GetUOProcessId();

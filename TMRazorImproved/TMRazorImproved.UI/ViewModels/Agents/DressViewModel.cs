@@ -18,6 +18,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private readonly ITargetingService _targeting;
         private readonly IWorldService _world;
         private readonly ILogService _log;
+        private readonly ILanguageService _lang;
         private readonly object _lock = new();
 
         [ObservableProperty]
@@ -36,7 +37,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private uint _undressBagSerial;
 
         [ObservableProperty]
-        private string _undressBagName = "Backpack (Default)";
+        private string _undressBagName = string.Empty;
 
         public ObservableCollection<DressList> Lists { get; } = new();
         public ObservableCollection<DressSlotViewModel> CurrentSlots { get; } = new();
@@ -44,8 +45,8 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         public IRelayCommand AddListCommand { get; }
         public IRelayCommand RemoveListCommand { get; }
-        public IRelayCommand DressCommand { get; }
-        public IRelayCommand UndressCommand { get; }
+        public IRelayCommand DressNowCommand { get; }
+        public IRelayCommand UndressNowCommand { get; }
         public IAsyncRelayCommand StopCommand { get; }
         public IRelayCommand ReadCurrentCommand { get; }
         public IAsyncRelayCommand SetUndressBagCommand { get; }
@@ -53,13 +54,16 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         public IRelayCommand<DressSlotViewModel> ClearSlotCommand { get; }
         public IRelayCommand ClearAllSlotsCommand { get; }
 
-        public DressViewModel(IConfigService config, IDressService dressService, ITargetingService targeting, IWorldService world, ILogService log)
+        public DressViewModel(IConfigService config, IDressService dressService, ITargetingService targeting, IWorldService world, ILogService log, ILanguageService languageService)
         {
             _config = config;
             _dressService = dressService;
             _targeting = targeting;
             _world = world;
             _log = log;
+            _lang = languageService;
+
+            _undressBagName = _lang.GetString("Agents.General.NotSet");
 
             EnableThreadSafeCollection(Logs, _lock);
 
@@ -77,8 +81,8 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
             AddListCommand = new RelayCommand(AddList);
             RemoveListCommand = new RelayCommand(RemoveList);
-            DressCommand = new RelayCommand(() => { if (SelectedList != null) _dressService.Dress(SelectedList.Name); });
-            UndressCommand = new RelayCommand(() => { if (SelectedList != null) _dressService.Undress(SelectedList.Name); });
+            DressNowCommand = new RelayCommand(() => { if (SelectedList != null) { _dressService.Dress(SelectedList.Name); StatusText = _lang.GetString("Agents.Dress.Dressing"); } });
+            UndressNowCommand = new RelayCommand(() => { if (SelectedList != null) { _dressService.Undress(SelectedList.Name); StatusText = _lang.GetString("Agents.Dress.Undressing"); } });
             StopCommand = new AsyncRelayCommand(() => _dressService.StopAsync());
             ReadCurrentCommand = new RelayCommand(ReadCurrent);
             SetUndressBagCommand = new AsyncRelayCommand(SetUndressBagAsync);
@@ -101,7 +105,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         private void AddList()
         {
-            var name = $"List {Lists.Count + 1}";
+            var name = $"{_lang.GetString("Agents.General.NewList")} {Lists.Count + 1}";
             var newList = new DressList { Name = name };
             _config.CurrentProfile.DressLists.Add(newList);
             Lists.Add(newList);
@@ -122,7 +126,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         private async Task SetUndressBagAsync()
         {
-            StatusText = "Seleziona la borsa per l'undress...";
+            StatusText = _lang.GetString("Agents.General.SelectContainer");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
@@ -133,7 +137,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                     SelectedList.UndressBag = serial;
                     _config.Save();
                 }
-                StatusText = $"Borsa undress impostata: {UndressBagName}";
+                StatusText = $"{_lang.GetString("Agents.General.ContainerSet")} {UndressBagName}";
             }
         }
 
@@ -153,14 +157,14 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             
             UpdateSlots();
             _config.Save();
-            StatusText = "Equipment read from player.";
+            StatusText = _lang.GetString("Agents.Dress.Complete");
         }
 
         private async Task SetSlotAsync(DressSlotViewModel? slot)
         {
             if (slot == null || SelectedList == null) return;
 
-            StatusText = $"Select item for {slot.Layer}...";
+            StatusText = _lang.GetString("Agents.General.SelectItem");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
@@ -178,7 +182,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
             SelectedList.LayerItems.Remove((byte)slot.Layer);
             slot.Serial = 0;
-            slot.ItemName = "Empty";
+            slot.ItemName = _lang.GetString("Agents.General.NotSet");
             _config.Save();
             StatusText = $"{slot.Layer} cleared.";
         }
@@ -191,10 +195,10 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             foreach (var slot in CurrentSlots)
             {
                 slot.Serial = 0;
-                slot.ItemName = "Empty";
+                slot.ItemName = _lang.GetString("Agents.General.NotSet");
             }
             _config.Save();
-            StatusText = "All slots cleared.";
+            StatusText = _lang.GetString("Agents.General.ClearList");
         }
 
         partial void OnSelectedListChanged(DressList? value)
@@ -206,7 +210,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                 RemoveConflict = value.RemoveConflict;
                 Use3D = value.Use3D;
                 UndressBagSerial = value.UndressBag;
-                UndressBagName = UndressBagSerial != 0 ? $"0x{UndressBagSerial:X8}" : "Backpack (Default)";
+                UndressBagName = UndressBagSerial != 0 ? $"0x{UndressBagSerial:X8}" : _lang.GetString("Agents.General.NotSet");
                 _config.Save();
             }
             UpdateSlots();
@@ -240,7 +244,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                 { 
                     Layer = layer, 
                     Serial = serial,
-                    ItemName = serial != 0 ? (_world.FindItem(serial)?.Name ?? $"0x{serial:X8}") : "Empty"
+                    ItemName = serial != 0 ? (_world.FindItem(serial)?.Name ?? $"0x{serial:X8}") : _lang.GetString("Agents.General.NotSet")
                 });
             }
         }
@@ -255,6 +259,6 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private uint _serial;
 
         [ObservableProperty]
-        private string _itemName = "Empty";
+        private string _itemName = string.Empty;
     }
 }

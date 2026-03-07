@@ -33,6 +33,15 @@ namespace Assistant
         // Tick counter for throttled logging
         private static int _tickCount;
 
+        // Cached player serial from 0x1B LoginConfirm — used to re-inject a synthetic
+        // LoginConfirm when the STC buffer is first drained (allows UI reconnect to work
+        // even when the original 0x1B was already consumed by a previous session).
+        private static uint _cachedPlayerSerial = 0;
+
+        // Cached full skills packet (0x3A type=0x02) — re-injected on reconnect
+        // so the UI gets skill data without needing a fresh login.
+        private static byte[] _cachedSkillsPacket = null;
+
         private static MemoryMappedFile         _mmf;
         private static MemoryMappedViewAccessor _view;
         private static Mutex                    _commMutex;
@@ -287,6 +296,19 @@ namespace Assistant
 
         private static bool DoOnRecv(ref byte[] data, ref int length)
         {
+            // Cache player serial from LoginConfirm (0x1B)
+            if (length >= 5 && data[0] == 0x1B)
+            {
+                uint serial = ((uint)data[1] << 24) | ((uint)data[2] << 16) | ((uint)data[3] << 8) | data[4];
+                if (serial != 0)
+                    _cachedPlayerSerial = serial;
+            }
+            // Cache full skills list (0x3A type 0x00 or 0x02) for re-injection on reconnect
+            if (length >= 5 && data[0] == 0x3A && (data[3] == 0x00 || data[3] == 0x02))
+            {
+                _cachedSkillsPacket = new byte[length];
+                Array.Copy(data, _cachedSkillsPacket, length);
+            }
             WritePacket(IDX_IN_RECV, data, length);
             return true; // true = pass packet through to client
         }
@@ -329,6 +351,36 @@ namespace Assistant
                 {
                     buffStart = 0;
                     _view.Write(baseOff + 4, 0);
+
+                    // Re-inject cached 0x1B (LoginConfirm) as the first STC packet when the
+                    // buffer is empty. This allows the UI to re-establish player identity on
+                    // reconnect even when the original 0x1B was already consumed by a previous
+                    // session. HandleLoginConfirm only needs cmd(1)+serial(4), rest is padding.
+                    if (bufIdx == IDX_IN_RECV && _cachedPlayerSerial != 0)
+                    {
+                        byte[] synth = new byte[37]; // standard 0x1B size
+                        synth[0] = 0x1B;
+                        synth[1] = (byte)(_cachedPlayerSerial >> 24);
+                        synth[2] = (byte)(_cachedPlayerSerial >> 16);
+                        synth[3] = (byte)(_cachedPlayerSerial >> 8);
+                        synth[4] = (byte)(_cachedPlayerSerial);
+                        byte[] synthPrefix = BitConverter.GetBytes(synth.Length);
+                        _view.WriteArray(baseOff + 8,              synthPrefix, 0, LENGTH_PREFIX);
+                        _view.WriteArray(baseOff + 8 + LENGTH_PREFIX, synth,    0, synth.Length);
+                        buffLen = LENGTH_PREFIX + synth.Length;
+
+                        // Also re-inject cached skills packet (0x3A type=0x02) if available
+                        var skills = _cachedSkillsPacket;
+                        if (skills != null)
+                        {
+                            byte[] skillsPrefix = BitConverter.GetBytes(skills.Length);
+                            _view.WriteArray(baseOff + 8 + buffLen,              skillsPrefix, 0, LENGTH_PREFIX);
+                            _view.WriteArray(baseOff + 8 + buffLen + LENGTH_PREFIX, skills,    0, skills.Length);
+                            buffLen += LENGTH_PREFIX + skills.Length;
+                        }
+
+                        _view.Write(baseOff, buffLen);
+                    }
                 }
 
                 int writeOffset = buffStart + buffLen;

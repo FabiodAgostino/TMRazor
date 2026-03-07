@@ -1,14 +1,13 @@
-<Page x:Class="TMRazorImproved.UI.Views.Pages.MacrosPage"
+﻿<Page x:Class="TMRazorImproved.UI.Views.Pages.MacrosPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      xmlns:local="clr-namespace:TMRazorImproved.UI.Views.Pages"
-      xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="800"
-      Title="Macros"
+      Title="{loc:Loc Macros.Title}"
       d:DataContext="{d:DesignInstance vm:MacrosViewModel, IsDesignTimeCreatable=False}">
 
     <Grid Margin="32">
@@ -17,7 +16,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <ui:TextBlock Text="Macros" FontSize="28" FontWeight="Bold" Margin="0,0,0,24" Grid.Row="0"/>
+        <ui:TextBlock Text="{loc:Loc Macros.Title}" FontSize="28" FontWeight="Bold" Margin="0,0,0,24" Grid.Row="0"/>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -28,7 +27,7 @@
             <!-- Macros List -->
             <ui:Card Grid.Column="0" Margin="0,0,16,0" Padding="0">
                 <DockPanel>
-                    <ui:TextBlock Text="Available Macros" FontSize="18" FontWeight="SemiBold" Margin="16" DockPanel.Dock="Top"/>
+                    <ui:TextBlock Text="{loc:Loc Macros.Available}" FontSize="18" FontWeight="SemiBold" Margin="16" DockPanel.Dock="Top"/>
                     
                     <StackPanel DockPanel.Dock="Bottom" Margin="16">
                         <Grid Margin="0,0,0,8">
@@ -37,17 +36,17 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <ui:TextBox Grid.Column="0" 
-                                        PlaceholderText="New Macro Name" 
+                                        PlaceholderText="{loc:Loc Macros.NewName.Placeholder}" 
                                         Text="{Binding NewMacroName, UpdateSourceTrigger=PropertyChanged}" 
                                         Margin="0,0,8,0"/>
                             <ui:Button Grid.Column="1" 
                                        Icon="{ui:SymbolIcon Record24}" 
                                        Command="{Binding RecordCommand}" 
                                        Appearance="Danger"
-                                       ToolTip="Record New Macro"/>
+                                       ToolTip="{loc:Loc Macros.Record.ToolTip}"/>
                         </Grid>
                         
-                        <ui:Button Content="Delete Selected" 
+                        <ui:Button Content="{loc:Loc Macros.DeleteSelected}" 
                                    Icon="{ui:SymbolIcon Delete24}" 
                                    Command="{Binding DeleteCommand}"
                                    HorizontalAlignment="Stretch"
@@ -85,11 +84,11 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <ui:TextBlock Text="{Binding SelectedMacro, FallbackValue='No Macro Selected'}" 
+                            <ui:TextBlock Text="{Binding SelectedMacro, FallbackValue={loc:Loc Macros.NoMacroSelected}}" 
                                          FontSize="20" FontWeight="Bold" Margin="0,0,0,16"/>
                             
                             <StackPanel Orientation="Horizontal">
-                                <ui:Button Content="Play" 
+                                <ui:Button Content="{loc:Loc Macros.Play}" 
                                            Icon="{ui:SymbolIcon Play24}" 
                                            Command="{Binding PlayCommand}" 
                                            Appearance="Primary"
@@ -97,14 +96,14 @@
                                            Width="100"
                                            IsEnabled="{Binding IsPlaying, Converter={StaticResource InvertBooleanConverter}, FallbackValue=True}"/>
                                 
-                                <ui:Button Content="Stop" 
+                                <ui:Button Content="{loc:Loc Macros.Stop}" 
                                            Icon="{ui:SymbolIcon Stop24}" 
                                            Command="{Binding StopCommand}" 
                                            Appearance="Secondary"
                                            Margin="0,0,8,0"
                                            Width="100"/>
 
-                                <ui:Button Content="Save Changes" 
+                                <ui:Button Content="{loc:Loc Macros.SaveChanges}" 
                                            Icon="{ui:SymbolIcon Save24}" 
                                            Command="{Binding SaveStepsCommand}" 
                                            Appearance="Secondary"
@@ -113,7 +112,7 @@
                         </StackPanel>
 
                         <ui:TextBlock Grid.Column="1" 
-                                     Text="RECORDING" 
+                                     Text="{loc:Loc Macros.Recording}" 
                                      Foreground="Red" 
                                      FontWeight="Bold"
                                      Visibility="{Binding IsRecording, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -123,7 +122,7 @@
 
                 <ui:Card Grid.Row="1" Padding="0">
                     <DockPanel>
-                        <ui:TextBlock Text="Macro Steps" FontSize="18" FontWeight="SemiBold" Margin="16" DockPanel.Dock="Top"/>
+                        <ui:TextBlock Text="{loc:Loc Macros.Steps}" FontSize="18" FontWeight="SemiBold" Margin="16" DockPanel.Dock="Top"/>
                         
                         <ListView ItemsSource="{Binding MacroSteps}" 
                                   BorderThickness="0"
@@ -131,7 +130,7 @@
                                   d:ItemsSource="{d:DesignData}">
                             <ListView.View>
                                 <GridView>
-                                    <GridViewColumn Header="Order" Width="80">
+                                    <GridViewColumn Header="{loc:Loc Macros.Column.Order}" Width="80">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
@@ -147,7 +146,7 @@
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
-                                    <GridViewColumn Header="En" Width="40">
+                                    <GridViewColumn Header="{loc:Loc Macros.Column.Enabled}" Width="40">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
@@ -156,7 +155,7 @@
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
-                                    <GridViewColumn Header="Command" Width="200">
+                                    <GridViewColumn Header="{loc:Loc Macros.Column.Command}" Width="200">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <ui:TextBox Text="{Binding Command, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
@@ -166,7 +165,7 @@
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
-                                    <GridViewColumn Header="Description" Width="300">
+                                    <GridViewColumn Header="{loc:Loc Macros.Column.Description}" Width="300">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <ui:TextBox Text="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
@@ -175,7 +174,7 @@
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
-                                    <GridViewColumn Header="Actions" Width="60">
+                                    <GridViewColumn Header="{loc:Loc Macros.Column.Actions}" Width="60">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <ui:Button Icon="{ui:SymbolIcon Delete20}" 

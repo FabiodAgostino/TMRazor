@@ -5,9 +5,10 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="800"
-      Title="Journal"
+      Title="{loc:Loc Journal.Title}"
       d:DataContext="{d:DesignInstance vm:JournalViewModel}">
 
     <Grid Margin="24">
@@ -19,26 +20,29 @@
 
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="Journal Log" Style="{StaticResource TitleTextBlockStyle}" />
-            <TextBlock Text="Monitor in-game system and world messages" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            <TextBlock Text="{loc:Loc Journal.Header}" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="{loc:Loc Journal.Description}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
         </StackPanel>
 
         <!-- Search and Actions -->
         <Grid Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Bottom">
             <StackPanel Orientation="Horizontal">
-                <ui:TextBox PlaceholderText="Filter journal..." 
+                <ui:TextBox PlaceholderText="{loc:Loc Journal.Filter.Placeholder}" 
                             Width="250" 
                             Icon="Search24"
                             Margin="0,0,8,0"
-                            Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-                <ui:Button Content="Export" 
+                            Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                            ToolTip="{loc:Loc Journal.Filter.ToolTip}" />
+                <ui:Button Content="{loc:Loc Journal.Export}" 
                            Icon="SaveArrowRight24" 
                            Margin="0,0,8,0"
-                           Command="{Binding ExportCommand}" />
-                <ui:Button Content="Clear" 
+                           Command="{Binding ExportCommand}"
+                           ToolTip="{loc:Loc Journal.Export.ToolTip}" />
+                <ui:Button Content="{loc:Loc Journal.Clear}" 
                            Icon="Delete24" 
                            Appearance="Secondary"
-                           Command="{Binding ClearCommand}" />
+                           Command="{Binding ClearCommand}"
+                           ToolTip="{loc:Loc Journal.Clear.ToolTip}" />
             </StackPanel>
         </Grid>
 
@@ -52,7 +56,7 @@
                      VirtualizingPanel.VirtualizationMode="Recycling">
             <ui:ListView.View>
                 <GridView>
-                    <GridViewColumn Header="Time" Width="100">
+                    <GridViewColumn Header="{loc:Loc Journal.Column.Time}" Width="100">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Timestamp, StringFormat='HH:mm:ss'}" 
@@ -60,8 +64,8 @@
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
-                    <GridViewColumn Header="Name" Width="150" DisplayMemberBinding="{Binding Name}" />
-                    <GridViewColumn Header="Message" Width="500">
+                    <GridViewColumn Header="{loc:Loc Journal.Column.Name}" Width="150" DisplayMemberBinding="{Binding Name}" />
+                    <GridViewColumn Header="{loc:Loc Journal.Column.Message}" Width="500">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
@@ -74,7 +78,7 @@
 
         <!-- Footer Info -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,16,0,0" HorizontalAlignment="Right">
-            <TextBlock Text="Total entries: " Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            <TextBlock Text="{loc:Loc Journal.Footer.TotalEntries}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
             <TextBlock Text="{Binding Entries.Count}" FontWeight="SemiBold" />
         </StackPanel>
     </Grid>

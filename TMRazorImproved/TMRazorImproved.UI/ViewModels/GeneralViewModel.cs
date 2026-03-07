@@ -129,8 +129,8 @@ namespace TMRazorImproved.UI.ViewModels
             _selectedProfile = _configService.Global.LastProfile;
             LoadAvailableProfiles();
 
-            _statusMessage = LanguageHelper.Status.Ready;
-            _launchButtonText = _languageService.GetString("EnhancedLauncher.launch.Text") ?? "Launch";
+            _statusMessage = _languageService.GetString("Status.Ready");
+            _launchButtonText = _languageService.GetString("General.Action.Launch");
 
             _processCheckTimer = new System.Windows.Threading.DispatcherTimer
             {
@@ -148,7 +148,7 @@ namespace TMRazorImproved.UI.ViewModels
             uint pid = _clientInterop.FindRunningGameProcess(clientDir);
             
             IsGameRunning = pid != 0;
-            LaunchButtonText = IsGameRunning ? "Connect" : (_languageService.GetString("EnhancedLauncher.launch.Text") ?? "Launch");
+            LaunchButtonText = IsGameRunning ? _languageService.GetString("General.Action.Connect") : _languageService.GetString("General.Action.Launch");
         }
 
         private void LoadAvailableProfiles()
@@ -169,8 +169,8 @@ namespace TMRazorImproved.UI.ViewModels
                 _configService.SwitchProfile(value);
                 _configService.Global.LastProfile = value;
                 _configService.Save();
-                StatusMessage = $"Profile switched to: {value}";
-                _snackbarService.Show("Profile Changed", $"Active profile is now '{value}'", Wpf.Ui.Controls.ControlAppearance.Info, null, TimeSpan.FromSeconds(3));
+                StatusMessage = $"{_languageService.GetString("General.Status.ProfileSwitched")}: {value}";
+                _snackbarService.Show(_languageService.GetString("General.Snackbar.ProfileChanged"), $"{_languageService.GetString("General.Snackbar.ProfileActive")} '{value}'", Wpf.Ui.Controls.ControlAppearance.Info, null, TimeSpan.FromSeconds(3));
             }
         }
 
@@ -179,16 +179,16 @@ namespace TMRazorImproved.UI.ViewModels
         {
             var textBox = new Wpf.Ui.Controls.TextBox
             {
-                PlaceholderText = "Enter profile name...",
+                PlaceholderText = _languageService.GetString("General.Profile.Create.Placeholder"),
                 Margin = new System.Windows.Thickness(0, 10, 0, 0)
             };
 
             var dialog = new Wpf.Ui.Controls.ContentDialog(_dialogService.GetDialogHost())
             {
-                Title = "Create New Profile",
+                Title = _languageService.GetString("General.Profile.Create.Title"),
                 Content = textBox,
-                PrimaryButtonText = "Create",
-                CloseButtonText = "Cancel",
+                PrimaryButtonText = _languageService.GetString("General.Dialog.Create"),
+                CloseButtonText = _languageService.GetString("General.Dialog.Cancel"),
                 DefaultButton = Wpf.Ui.Controls.ContentDialogButton.Primary
             };
 
@@ -200,7 +200,7 @@ namespace TMRazorImproved.UI.ViewModels
                 _configService.CreateProfile(newName);
                 LoadAvailableProfiles();
                 SelectedProfile = newName;
-                _snackbarService.Show("Success", $"Profile '{newName}' created.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
+                _snackbarService.Show(_languageService.GetString("General.Snackbar.Success"), $"{_languageService.GetString("General.Snackbar.ProfileCreated")} '{newName}'.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
             }
         }
 
@@ -213,7 +213,7 @@ namespace TMRazorImproved.UI.ViewModels
             _configService.DeleteProfile(toDelete);
             LoadAvailableProfiles();
             SelectedProfile = AvailableProfiles.FirstOrDefault() ?? "Default";
-            _snackbarService.Show("Profile Deleted", $"Profile '{toDelete}' has been removed.", Wpf.Ui.Controls.ControlAppearance.Caution, null, TimeSpan.FromSeconds(3));
+            _snackbarService.Show(_languageService.GetString("General.Snackbar.ProfileDeleted"), $"{_languageService.GetString("General.Snackbar.ProfileRemoved")} '{toDelete}'.", Wpf.Ui.Controls.ControlAppearance.Caution, null, TimeSpan.FromSeconds(3));
         }
 
         [RelayCommand]
@@ -224,16 +224,16 @@ namespace TMRazorImproved.UI.ViewModels
             var textBox = new Wpf.Ui.Controls.TextBox
             {
                 Text = $"{SelectedProfile}_Copy",
-                PlaceholderText = "Enter new profile name...",
+                PlaceholderText = _languageService.GetString("General.Profile.Create.Placeholder"),
                 Margin = new System.Windows.Thickness(0, 10, 0, 0)
             };
 
             var dialog = new Wpf.Ui.Controls.ContentDialog(_dialogService.GetDialogHost())
             {
-                Title = $"Clone Profile: {SelectedProfile}",
+                Title = $"{_languageService.GetString("General.Profile.Clone.Title")}: {SelectedProfile}",
                 Content = textBox,
-                PrimaryButtonText = "Clone",
-                CloseButtonText = "Cancel",
+                PrimaryButtonText = _languageService.GetString("General.Dialog.Clone"),
+                CloseButtonText = _languageService.GetString("General.Dialog.Cancel"),
                 DefaultButton = Wpf.Ui.Controls.ContentDialogButton.Primary
             };
 
@@ -245,7 +245,7 @@ namespace TMRazorImproved.UI.ViewModels
                 _configService.CloneProfile(SelectedProfile, newName);
                 LoadAvailableProfiles();
                 SelectedProfile = newName;
-                _snackbarService.Show("Success", $"Profile cloned to '{newName}'.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
+                _snackbarService.Show(_languageService.GetString("General.Snackbar.Success"), $"{_languageService.GetString("General.Snackbar.ProfileCloned")} '{newName}'.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
             }
         }
 
@@ -258,16 +258,16 @@ namespace TMRazorImproved.UI.ViewModels
             var textBox = new Wpf.Ui.Controls.TextBox
             {
                 Text = oldName,
-                PlaceholderText = "Enter new profile name...",
+                PlaceholderText = _languageService.GetString("General.Profile.Create.Placeholder"),
                 Margin = new System.Windows.Thickness(0, 10, 0, 0)
             };
 
             var dialog = new Wpf.Ui.Controls.ContentDialog(_dialogService.GetDialogHost())
             {
-                Title = $"Rename Profile: {oldName}",
+                Title = $"{_languageService.GetString("General.Profile.Rename.Title")}: {oldName}",
                 Content = textBox,
-                PrimaryButtonText = "Rename",
-                CloseButtonText = "Cancel",
+                PrimaryButtonText = _languageService.GetString("General.Dialog.Rename"),
+                CloseButtonText = _languageService.GetString("General.Dialog.Cancel"),
                 DefaultButton = Wpf.Ui.Controls.ContentDialogButton.Primary
             };
 
@@ -281,7 +281,7 @@ namespace TMRazorImproved.UI.ViewModels
                 _configService.RenameProfile(oldName, newName);
                 LoadAvailableProfiles();
                 SelectedProfile = newName;
-                _snackbarService.Show("Success", $"Profile renamed to '{newName}'.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
+                _snackbarService.Show(_languageService.GetString("General.Snackbar.Success"), $"{_languageService.GetString("General.Snackbar.ProfileRenamed")} '{newName}'.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
             }
         }
 
@@ -349,16 +349,18 @@ namespace TMRazorImproved.UI.ViewModels
 
                 string clientDir = System.IO.Path.GetDirectoryName(ClientPath) ?? "";
 
-                // Deploy TMRazorPlugin.dll to the ClassicUO plugin directory and update settings.json
-                // so that the client loads it on next start and creates the shared memory we read from.
-                DeployPlugin(clientDir);
+                // CASO 1: il gioco è già in esecuzione — non deployare il plugin (DLL locked dal processo)
+                uint runningPid = _clientInterop.FindRunningGameProcess(clientDir);
+
+                // Deploy TMRazorPlugin.dll only when launching a new client instance.
+                // If the game is already running, the plugin is already loaded and the DLL is locked.
+                if (runningPid == 0)
+                    DeployPlugin(clientDir);
 
                 await Task.Run(() =>
                 {
                     int gamePid = 0;
 
-                    // CASO 1: il gioco è già in esecuzione — cerca nella stessa directory del ClientPath
-                    uint runningPid = _clientInterop.FindRunningGameProcess(clientDir);
                     if (runningPid != 0)
                     {
                         System.Diagnostics.Trace.WriteLine($"[Launch] Game already running, attaching to PID {runningPid}");

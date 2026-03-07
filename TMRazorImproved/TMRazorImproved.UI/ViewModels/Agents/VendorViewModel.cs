@@ -15,6 +15,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private readonly IConfigService _config;
         private readonly ITargetingService _targeting;
         private readonly ILogService _log;
+        private readonly ILanguageService _lang;
         private readonly object _buyLock = new();
         private readonly object _sellLock = new();
         private readonly object _listLock = new();
@@ -29,13 +30,13 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private uint _buyBagSerial;
 
         [ObservableProperty]
-        private string _buyBagName = "Not Set";
+        private string _buyBagName = string.Empty;
 
         [ObservableProperty]
         private uint _sellBagSerial;
 
         [ObservableProperty]
-        private string _sellBagName = "Backpack (Default)";
+        private string _sellBagName = string.Empty;
 
         [ObservableProperty]
         private bool _logPurchases;
@@ -65,11 +66,15 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         public IRelayCommand RemoveListCommand { get; }
         public IRelayCommand CloneListCommand { get; }
 
-        public VendorViewModel(IConfigService config, ITargetingService targeting, ILogService log)
+        public VendorViewModel(IConfigService config, ITargetingService targeting, ILogService log, ILanguageService languageService)
         {
             _config = config;
             _targeting = targeting;
             _log = log;
+            _lang = languageService;
+
+            _buyBagName = _lang.GetString("Agents.General.NotSet");
+            _sellBagName = _lang.GetString("Agents.General.NotSet");
 
             EnableThreadSafeCollection(Lists, _listLock);
             EnableThreadSafeCollection(BuyList, _buyLock);
@@ -131,9 +136,9 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             BuyEnabled = SelectedList.BuyEnabled;
             SellEnabled = SelectedList.SellEnabled;
             BuyBagSerial = SelectedList.BuyBag;
-            BuyBagName = BuyBagSerial != 0 ? $"0x{BuyBagSerial:X8}" : "Not Set";
+            BuyBagName = BuyBagSerial != 0 ? $"0x{BuyBagSerial:X8}" : _lang.GetString("Agents.General.NotSet");
             SellBagSerial = SelectedList.SellBag;
-            SellBagName = SellBagSerial != 0 ? $"0x{SellBagSerial:X8}" : "Backpack (Default)";
+            SellBagName = SellBagSerial != 0 ? $"0x{SellBagSerial:X8}" : _lang.GetString("Agents.General.NotSet");
             LogPurchases = SelectedList.LogPurchases;
             CompareName = SelectedList.CompareName;
             MaxSellAmount = SelectedList.MaxSellAmount;
@@ -149,7 +154,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         private async Task SetBuyBagAsync()
         {
-            StatusText = "Seleziona la borsa per gli acquisti...";
+            StatusText = _lang.GetString("Agents.General.SelectContainer");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
@@ -160,13 +165,13 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                     SelectedList.BuyBag = serial;
                     _config.Save();
                 }
-                StatusText = $"Borsa acquisti impostata: {BuyBagName}";
+                StatusText = $"{_lang.GetString("Agents.General.ContainerSet")} {BuyBagName}";
             }
         }
 
         private async Task SetSellBagAsync()
         {
-            StatusText = "Seleziona la borsa sorgente per la vendita...";
+            StatusText = _lang.GetString("Agents.General.SelectContainer");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
@@ -177,13 +182,13 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                     SelectedList.SellBag = serial;
                     _config.Save();
                 }
-                StatusText = $"Borsa vendita impostata: {SellBagName}";
+                StatusText = $"{_lang.GetString("Agents.General.ContainerSet")} {SellBagName}";
             }
         }
 
         private void AddList()
         {
-            var name = $"Vendor {Lists.Count + 1}";
+            var name = $"{_lang.GetString("Agents.General.NewList")} {Lists.Count + 1}";
             var newList = new VendorConfig { Name = name };
             _config.CurrentProfile?.VendorLists.Add(newList);
             Lists.Add(newList);
@@ -193,8 +198,9 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private void RemoveList()
         {
             if (SelectedList == null || Lists.Count <= 1) return;
-            _config.CurrentProfile?.VendorLists.Remove(SelectedList);
-            Lists.Remove(SelectedList);
+            var toRemove = SelectedList;
+            _config.CurrentProfile?.VendorLists.Remove(toRemove);
+            Lists.Remove(toRemove);
             SelectedList = Lists.FirstOrDefault();
         }
 
@@ -203,7 +209,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             if (SelectedList == null) return;
             var clone = new VendorConfig
             {
-                Name = $"{SelectedList.Name} (Copy)",
+                Name = $"{SelectedList.Name} ({_lang.GetString("Agents.General.Copy")})",
                 BuyEnabled = SelectedList.BuyEnabled,
                 SellEnabled = SelectedList.SellEnabled,
                 BuyBag = SelectedList.BuyBag,

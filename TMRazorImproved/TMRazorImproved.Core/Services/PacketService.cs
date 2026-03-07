@@ -40,8 +40,11 @@ namespace TMRazorImproved.Core.Services
 
             System.Diagnostics.Trace.WriteLine("[PacketService] Constructor hit!");
             
-            // Timer di fallback per la scansione della memoria
+            // Timer di fallback per la scansione della memoria.
+            // AutoReset=false previene la re-entranza: il timer viene riavviato solo
+            // dopo che il tick corrente è completato, evitando accessi concorrenti ai buffer.
             var fallbackTimer = new System.Timers.Timer(100);
+            fallbackTimer.AutoReset = false;
             fallbackTimer.Elapsed += (s, e) =>
             {
                 try
@@ -65,8 +68,12 @@ namespace TMRazorImproved.Core.Services
                 {
                     System.Diagnostics.Trace.WriteLine($"[PacketService] Timer Error: {ex.Message}");
                 }
+                finally
+                {
+                    // Riavvia il timer solo dopo che il tick è completato (non re-entrante)
+                    try { (s as System.Timers.Timer)?.Start(); } catch { }
+                }
             };
-            fallbackTimer.AutoReset = true;
             fallbackTimer.Start();
         }
 
@@ -292,40 +299,62 @@ namespace TMRazorImproved.Core.Services
             // This minimises blocking the game's network thread (WritePacket WaitOne).
             byte[] snapshot = null;
             int snapshotLen = 0;
+            bool acquired = false;
             try
             {
-                if (!_commMutex.WaitOne(10)) return;
-                int len = inBuff->Length;
-                if (len >= LENGTH_PREFIX)
+                acquired = _commMutex.WaitOne(10);
+                if (!acquired) return;
+                int len   = inBuff->Length;
+                int start = inBuff->Start;
+                // Bounds check: prevent AccessViolationException if Start/Length are corrupt
+                // (can happen if the mutex wasn't correctly shared with the plugin).
+                if (len >= LENGTH_PREFIX &&
+                    start >= 0 &&
+                    (long)start + len <= ClientInteropService.SHARED_BUFF_SIZE)
                 {
                     snapshot = new byte[len];
                     fixed (byte* pDest = snapshot)
-                        _interop.CopyMemory(pDest, (&inBuff->Buff0) + inBuff->Start, len);
+                        _interop.CopyMemory(pDest, (&inBuff->Buff0) + start, len);
                     snapshotLen    = len;
+                    inBuff->Start  = 0;
+                    inBuff->Length = 0;
+                }
+                else if (len != 0)
+                {
+                    // Corrupt state — reset silently
+                    System.Diagnostics.Trace.WriteLine($"[PacketService] Corrupt buffer state (start={start} len={len}), resetting.");
                     inBuff->Start  = 0;
                     inBuff->Length = 0;
                 }
             }
             catch (Exception ex) { System.Diagnostics.Trace.WriteLine($"[PacketService] Comm Error (copy): {ex.Message}"); return; }
-            finally { _commMutex?.ReleaseMutex(); }
+            finally { if (acquired) _commMutex?.ReleaseMutex(); }
 
             // Step 2: parse and dispatch entirely outside the mutex — game thread never blocked here.
             if (snapshot == null || snapshotLen < LENGTH_PREFIX) return;
             try
             {
                 int pos = 0;
+                int dispatchCount = 0;
                 while (pos + LENGTH_PREFIX <= snapshotLen)
                 {
                     int packetLen = snapshot[pos] | (snapshot[pos + 1] << 8) | (snapshot[pos + 2] << 16) | (snapshot[pos + 3] << 24);
                     pos += LENGTH_PREFIX;
-                    if (packetLen <= 0 || pos + packetLen > snapshotLen) break;
+                    if (packetLen <= 0 || pos + packetLen > snapshotLen)
+                    {
+                        System.Diagnostics.Trace.WriteLine($"[PacketService] Parse BREAK at pos={pos - LENGTH_PREFIX} packetLen={packetLen} snapshotLen={snapshotLen} dispatched={dispatchCount} path={path}");
+                        break;
+                    }
 
                     byte[] packetData = new byte[packetLen];
                     Array.Copy(snapshot, pos, packetData, 0, packetLen);
                     pos += packetLen;
+                    dispatchCount++;
 
                     OnPacketReceived(path, packetData);
                 }
+                if (dispatchCount > 0)
+                    System.Diagnostics.Trace.WriteLine($"[PacketService] Dispatched {dispatchCount} packets ({snapshotLen}b) path={path}");
             }
             catch (Exception ex) { System.Diagnostics.Trace.WriteLine($"[PacketService] Comm Error (dispatch): {ex.Message}"); }
         }

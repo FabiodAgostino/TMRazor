@@ -14,6 +14,7 @@ namespace TMRazorImproved.UI.ViewModels
     public partial class GalleryViewModel : ViewModelBase
     {
         private readonly IScreenCaptureService _captureService;
+        private readonly ILanguageService _languageService;
         private readonly string _basePath;
 
         public ObservableCollection<GalleryItem> Items { get; } = new();
@@ -21,9 +22,10 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty]
         private GalleryItem? _selectedItem;
 
-        public GalleryViewModel(IScreenCaptureService captureService)
+        public GalleryViewModel(IScreenCaptureService captureService, ILanguageService languageService)
         {
             _captureService = captureService;
+            _languageService = languageService;
             _basePath = _captureService.GetCapturePath();
             
             _ = RefreshAsync();
@@ -73,7 +75,7 @@ namespace TMRazorImproved.UI.ViewModels
             }
             catch (Exception ex)
             {
-                StatusText = $"Error deleting file: {ex.Message}";
+                StatusText = string.Format(_languageService.GetString("Gallery.Error.Delete"), ex.Message);
             }
         }
     }

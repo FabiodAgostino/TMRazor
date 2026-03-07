@@ -16,6 +16,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private readonly IConfigService _config;
         private readonly ITargetingService _targeting;
         private readonly ILogService _log;
+        private readonly ILanguageService _lang;
         private readonly object _lock = new();
 
         [ObservableProperty]
@@ -25,7 +26,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private uint _containerSerial;
 
         [ObservableProperty]
-        private string _containerName = "Not Set";
+        private string _containerName = string.Empty;
 
         [ObservableProperty]
         [Range(100, 5000, ErrorMessage = "Delay must be between 100 and 5000ms")]
@@ -61,12 +62,15 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         public IRelayCommand RemoveListCommand { get; }
         public IRelayCommand CloneListCommand { get; }
 
-        public AutoLootViewModel(IConfigService config, ITargetingService targeting, ILogService log)
+        public AutoLootViewModel(IConfigService config, ITargetingService targeting, ILogService log, ILanguageService languageService)
         {
             _config = config;
             _targeting = targeting;
             _log = log;
+            _lang = languageService;
             
+            _containerName = _lang.GetString("Agents.General.NotSet");
+
             EnableThreadSafeCollection(Lists, _lock);
             EnableThreadSafeCollection(LootItems, _lock);
             EnableThreadSafeCollection(Logs, _lock);
@@ -126,7 +130,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
             IsEnabled = SelectedList.Enabled;
             ContainerSerial = SelectedList.Container;
-            ContainerName = ContainerSerial != 0 ? $"0x{ContainerSerial:X8}" : "Not Set";
+            ContainerName = ContainerSerial != 0 ? $"0x{ContainerSerial:X8}" : _lang.GetString("Agents.General.NotSet");
             Delay = SelectedList.Delay;
             MaxRange = SelectedList.MaxRange;
             NoOpenCorpse = SelectedList.NoOpenCorpse;
@@ -142,7 +146,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         private void AddList()
         {
-            var name = $"New List {Lists.Count + 1}";
+            var name = $"{_lang.GetString("Agents.General.NewList")} {Lists.Count + 1}";
             var newList = new AutoLootConfig { Name = name };
             _config.CurrentProfile?.AutoLootLists.Add(newList);
             Lists.Add(newList);
@@ -165,7 +169,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
             var clone = new AutoLootConfig
             {
-                Name = $"{SelectedList.Name} (Copy)",
+                Name = $"{SelectedList.Name} ({_lang.GetString("Agents.General.Copy")})",
                 Enabled = SelectedList.Enabled,
                 Container = SelectedList.Container,
                 Delay = SelectedList.Delay,
@@ -183,7 +187,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         private async Task SetContainerAsync()
         {
-            StatusText = "Seleziona il contenitore per il loot...";
+            StatusText = _lang.GetString("Agents.General.SelectContainer");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
@@ -194,12 +198,13 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                     SelectedList.Container = serial;
                     _config.Save();
                 }
-                StatusText = $"Contenitore impostato: {ContainerName}";
+                StatusText = $"{_lang.GetString("Agents.General.ContainerSet")} {ContainerName}";
             }
         }
 
         private void AddItem()
         {
+            // Note: In real implementation this might use targeting too
             uint graphic = 0x0EED;
             if (SelectedList != null && !SelectedList.ItemList.Any(i => i.Graphic == (int)graphic))
             {
@@ -207,14 +212,14 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                 SelectedList.ItemList.Add(newItem);
                 LootItems.Add(newItem);
                 _config.Save();
+                StatusText = _lang.GetString("Agents.General.ItemAdded");
             }
         }
 
         private void EditItem(LootItem? item)
         {
             if (item == null) return;
-            // TODO: Aprire dialog per la modifica delle proprietà
-            StatusText = $"Modifica proprietà per {item.Name} non ancora implementata.";
+            StatusText = _lang.GetString("Agents.General.EditNotImplemented");
         }
 
         private void RemoveItem(LootItem? item)

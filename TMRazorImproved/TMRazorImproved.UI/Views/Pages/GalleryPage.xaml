@@ -5,9 +5,10 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="1000"
-      Title="Gallery"
+      Title="{loc:Loc Gallery.Title}"
       d:DataContext="{d:DesignInstance vm:GalleryViewModel}">
 
     <Grid Margin="24">
@@ -19,13 +20,21 @@
         <!-- Header -->
         <Grid Grid.Row="0" Margin="0,0,0,24">
             <StackPanel>
-                <TextBlock Text="Media Gallery" Style="{StaticResource TitleTextBlockStyle}" />
-                <TextBlock Text="View and manage your in-game screenshots" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="{loc:Loc Gallery.Header}" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock Text="{loc:Loc Gallery.Description}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-                <ui:Button Content="Refresh" Icon="ArrowClockwise24" Command="{Binding RefreshCommand}" Margin="0,0,8,0" />
-                <ui:Button Content="Open Folder" Icon="Folder24" Appearance="Secondary" Command="{Binding OpenFolderCommand}" />
+                <ui:Button Content="{loc:Loc Gallery.Refresh}" 
+                           ToolTip="{loc:Loc Gallery.Refresh.ToolTip}"
+                           Icon="ArrowClockwise24" 
+                           Command="{Binding RefreshCommand}" 
+                           Margin="0,0,8,0" />
+                <ui:Button Content="{loc:Loc Gallery.OpenFolder}" 
+                           ToolTip="{loc:Loc Gallery.OpenFolder.ToolTip}"
+                           Icon="Folder24" 
+                           Appearance="Secondary" 
+                           Command="{Binding OpenFolderCommand}" />
             </StackPanel>
         </Grid>
 
@@ -64,6 +73,7 @@
                                         <!-- Actions per item -->
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,4">
                                             <ui:Button Icon="Delete16" 
+                                                       ToolTip="{loc:Loc Gallery.Delete.ToolTip}"
                                                        Appearance="Secondary" 
                                                        Padding="8,4" 
                                                        Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" 
@@ -82,8 +92,8 @@
         <Grid Grid.Row="1" Visibility="{Binding Items.Count, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter='0'}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <ui:SymbolIcon Symbol="Camera24" FontSize="48" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,16" />
-                <TextBlock Text="No screenshots found" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="16" />
-                <TextBlock Text="Take a screenshot in-game using the PrintScreen key or the assistant button" 
+                <TextBlock Text="{loc:Loc Gallery.Empty.Title}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="16" />
+                <TextBlock Text="{loc:Loc Gallery.Empty.Hint}" 
                            Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center" />
             </StackPanel>
         </Grid>

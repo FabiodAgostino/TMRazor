@@ -27,13 +27,13 @@ namespace TMRazorImproved.UI.ViewModels
         private bool _isWaitingForTarget;
 
         [ObservableProperty]
-        private string _gumpInfo = "No Gump inspected.";
+        private string _gumpInfo;
 
         [ObservableProperty]
         private UOGump? _inspectedGump;
 
         [ObservableProperty]
-        private string _mapInfo = "No Map data inspected.";
+        private string _mapInfo;
 
         [ObservableProperty]
         private int _playerX;
@@ -58,6 +58,9 @@ namespace TMRazorImproved.UI.ViewModels
             _packetService = packetService;
 
             _statusMessage = _languageService.GetString("Inspector.Status.ClickInspect");
+            _gumpInfo = _languageService.GetString("Inspector.Gump.NoGumpInspected");
+            _mapInfo = _languageService.GetString("Inspector.Map.NoMapData");
+
             _targetingService.TargetReceived += OnTargetReceived;
             
             EnableThreadSafeCollection(RecentSerials, new object());
@@ -84,7 +87,7 @@ namespace TMRazorImproved.UI.ViewModels
         private void RefreshMap()
         {
             UpdatePlayerPosition();
-            StatusMessage = "Mappa aggiornata alla posizione attuale.";
+            StatusMessage = _languageService.GetString("Inspector.Status.MapUpdated");
         }
 
         [RelayCommand]
@@ -96,7 +99,7 @@ namespace TMRazorImproved.UI.ViewModels
                 {
                     OpenGumps.Add(gump);
                 }
-                StatusMessage = $"Lista Gump aggiornata. Trovati: {OpenGumps.Count}";
+                StatusMessage = string.Format(_languageService.GetString("Inspector.Status.GumpListUpdated"), OpenGumps.Count);
             });
         }
 
@@ -114,7 +117,7 @@ namespace TMRazorImproved.UI.ViewModels
                 {
                     GumpControls.Add(control);
                 }
-                StatusMessage = $"Gump 0x{gump.GumpId:X8} ispezionato.";
+                StatusMessage = string.Format(_languageService.GetString("Inspector.Status.GumpInspected"), gump.GumpId);
             });
 
             // Cambia la selezione del tab corrente se necessario (potrebbe richiedere binding sul TabControl, 
@@ -133,7 +136,7 @@ namespace TMRazorImproved.UI.ViewModels
         private void InspectGump()
         {
             // Logica per ispezionare l'ultimo gump aperto
-            StatusMessage = "Ispezione Gump in corso...";
+            StatusMessage = _languageService.GetString("Inspector.Status.InspectingGump");
             var lastGump = _worldService.CurrentGump;
             
             RunOnUIThread(() => {
@@ -147,12 +150,12 @@ namespace TMRazorImproved.UI.ViewModels
                     {
                         GumpControls.Add(control);
                     }
-                    StatusMessage = "Gump ispezionato con successo.";
+                    StatusMessage = _languageService.GetString("Inspector.Status.GumpSuccess");
                 }
                 else
                 {
-                    GumpInfo = "Nessun Gump attivo trovato.";
-                    StatusMessage = "Nessun Gump trovato.";
+                    GumpInfo = _languageService.GetString("Inspector.Status.NoGumpFound");
+                    StatusMessage = _languageService.GetString("Inspector.Status.NoGumpFound");
                 }
             });
         }
@@ -166,11 +169,11 @@ namespace TMRazorImproved.UI.ViewModels
             {
                 byte[] pkt = TMRazorImproved.Core.Utilities.PacketBuilder.RespondGump(InspectedGump.Serial, InspectedGump.GumpId, btn.ButtonId);
                 _packetService.SendToServer(pkt);
-                StatusMessage = $"Inviata risposta Gump: Button {btn.ButtonId}";
+                StatusMessage = string.Format(_languageService.GetString("Inspector.Status.GumpResponse"), btn.ButtonId);
             }
             else
             {
-                StatusMessage = "Questo controllo non supporta azioni dirette.";
+                StatusMessage = _languageService.GetString("Inspector.Status.ActionNotSupported");
             }
         }
 
@@ -192,7 +195,7 @@ namespace TMRazorImproved.UI.ViewModels
             if (!string.IsNullOrEmpty(code))
             {
                 Clipboard.SetText(code);
-                StatusMessage = "Codice Python copiato negli appunti.";
+                StatusMessage = _languageService.GetString("Inspector.Status.PythonCopied");
             }
         }
 
@@ -210,7 +213,7 @@ namespace TMRazorImproved.UI.ViewModels
             if (!string.IsNullOrEmpty(code))
             {
                 Clipboard.SetText(code);
-                StatusMessage = "Codice C# copiato negli appunti.";
+                StatusMessage = _languageService.GetString("Inspector.Status.CSharpCopied");
             }
         }
 
@@ -218,7 +221,7 @@ namespace TMRazorImproved.UI.ViewModels
         private void InspectMap()
         {
             IsWaitingForTarget = true;
-            StatusMessage = "Seleziona una locazione sulla mappa...";
+            StatusMessage = _languageService.GetString("Inspector.Status.SelectMapLocation");
             // TODO: Implementare targeting specifico per locazione/terreno nel targetingService
         }
 

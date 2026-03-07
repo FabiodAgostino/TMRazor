@@ -7,87 +7,171 @@
       xmlns:local="clr-namespace:TMRazorImproved.UI.Views.Pages"
       xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       mc:Ignorable="d" 
-      d:DesignHeight="800" d:DesignWidth="800"
-      Title="Options">
+      d:DesignHeight="1000" d:DesignWidth="800"
+      Title="{loc:Loc Nav.Options}">
 
     <ScrollViewer Margin="32">
         <StackPanel>
-            <ui:TextBlock Text="General Options" FontSize="28" FontWeight="Bold" Margin="0,0,0,24"/>
+            <ui:TextBlock Text="{loc:Loc Options.Header}" FontSize="28" FontWeight="Bold" Margin="0,0,0,24"/>
 
             <!-- Tweaks & Display Card -->
             <ui:Card Margin="0,0,0,16">
                 <StackPanel>
-                    <ui:TextBlock Text="Display &amp; Tweaks" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <ui:TextBlock Text="{loc:Loc Options.DisplayTweaks}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
                     
-                    <Grid Margin="0,0,0,12">
+                    <Grid Margin="0,0,0,12" ToolTip="{loc:Loc Options.ForceWindowSize.ToolTip}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ui:TextBlock Text="Force Window Size" VerticalAlignment="Center" />
+                        <ui:TextBlock Text="{loc:Loc Options.ForceWindowSize}" VerticalAlignment="Center" />
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <ui:NumberBox Value="{Binding ForceWidth, Mode=TwoWay}" PlaceholderText="Width" Width="100" Margin="0,0,8,0" />
-                            <ui:NumberBox Value="{Binding ForceHeight, Mode=TwoWay}" PlaceholderText="Height" Width="100" />
+                            <ui:NumberBox Value="{Binding ForceWidth, Mode=TwoWay}" PlaceholderText="{loc:Loc Options.Width}" Width="100" Margin="0,0,8,0" />
+                            <ui:NumberBox Value="{Binding ForceHeight, Mode=TwoWay}" PlaceholderText="{loc:Loc Options.Height}" Width="100" />
                         </StackPanel>
                     </Grid>
 
-                    <ui:ToggleSwitch Content="Scale Items" 
+                    <ui:ToggleSwitch Content="{loc:Loc Options.ScaleItems}" 
                                      IsChecked="{Binding ScaleItems, Mode=TwoWay}"
-                                     Margin="0,0,0,8"/>
+                                     Margin="0,0,0,8"
+                                     ToolTip="{loc:Loc Options.ScaleItems.ToolTip}"/>
 
-                    <ui:ToggleSwitch Content="Always on Top" 
+                    <ui:ToggleSwitch Content="{loc:Loc Options.AlwaysOnTop}" 
                                      IsChecked="{Binding AlwaysOnTop, Mode=TwoWay}"
-                                     Margin="0,0,0,8"/>
+                                     Margin="0,0,0,8"
+                                     ToolTip="{loc:Loc Options.AlwaysOnTop.ToolTip}"/>
 
-                    <Grid Margin="0,8,0,0">
+                    <Grid Margin="0,8,0,0" ToolTip="{loc:Loc Options.UiOpacity.ToolTip}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="200" />
                         </Grid.ColumnDefinitions>
-                        <ui:TextBlock Text="UI Opacity" VerticalAlignment="Center" />
+                        <ui:TextBlock Text="{loc:Loc Options.UiOpacity}" VerticalAlignment="Center" />
                         <Slider Grid.Column="1" Minimum="0.2" Maximum="1.0" TickFrequency="0.05" IsSnapToTickEnabled="True"
                                 Value="{Binding UiOpacity, Mode=TwoWay}" />
                     </Grid>
                 </StackPanel>
             </ui:Card>
 
+            <!-- Game Visuals Card (Integrated from DisplayPage) -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel>
+                    <ui:TextBlock Text="{loc:Loc Options.GameVisuals}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    
+                    <UniformGrid Columns="2">
+                        <ui:ToggleSwitch Content="{loc:Loc Options.Visuals.ShowNames}" 
+                                         IsChecked="{Binding ShowNames, Mode=TwoWay}"
+                                         Margin="0,0,0,8"
+                                         ToolTip="{loc:Loc Options.Visuals.ShowNames.ToolTip}"/>
+                        
+                        <ui:ToggleSwitch Content="{loc:Loc Options.Visuals.ShowHealth}" 
+                                         IsChecked="{Binding ShowHealth, Mode=TwoWay}"
+                                         Margin="0,0,0,8"
+                                         ToolTip="{loc:Loc Options.Visuals.ShowHealth.ToolTip}"/>
+                        
+                        <ui:ToggleSwitch Content="{loc:Loc Options.Visuals.HighlightTarget}" 
+                                         IsChecked="{Binding HighlightTarget, Mode=TwoWay}"
+                                         Margin="0,0,0,8"
+                                         ToolTip="{loc:Loc Options.Visuals.HighlightTarget.ToolTip}"/>
+                        
+                        <ui:ToggleSwitch Content="{loc:Loc Options.Visuals.IncomingNames}" 
+                                         IsChecked="{Binding IncomingNames, Mode=TwoWay}"
+                                         Margin="0,0,0,8"
+                                         ToolTip="{loc:Loc Options.Visuals.IncomingNames.ToolTip}"/>
+
+                        <ui:ToggleSwitch Content="{loc:Loc Options.Visuals.ShowIncomingDamage}" 
+                                         IsChecked="{Binding ShowIncomingDamage, Mode=TwoWay}"
+                                         Margin="0,0,0,8"
+                                         ToolTip="{loc:Loc Options.Visuals.ShowIncomingDamage.ToolTip}"/>
+                    </UniformGrid>
+
+                    <WrapPanel Margin="0,16,0,0">
+                        <ui:Button Content="{loc:Loc Options.Action.TargetHP}"
+                                   Icon="{ui:SymbolIcon HeartPulse24}"
+                                   Command="{Binding ToggleTargetHPCommand}"
+                                   Appearance="Primary"
+                                   Margin="0,0,8,8"
+                                   ToolTip="{loc:Loc Options.Action.TargetHP.ToolTip}"/>
+                        <ui:Button Content="{loc:Loc Options.Action.FloatingToolbar}"
+                                   Icon="{ui:SymbolIcon SlideLayout20}"
+                                   Command="{Binding ToggleFloatingToolbarCommand}"
+                                   Appearance="Secondary"
+                                   Margin="0,0,8,8"
+                                   ToolTip="{loc:Loc Options.Action.FloatingToolbar.ToolTip}"/>
+                        <ui:Button Content="{loc:Loc Options.Action.OverheadMessages}"
+                                   Icon="{ui:SymbolIcon Chat24}"
+                                   Command="{Binding ToggleOverheadMessagesCommand}"
+                                   Appearance="Secondary"
+                                   Margin="0,0,0,8"
+                                   ToolTip="{loc:Loc Options.Action.OverheadMessages.ToolTip}"/>
+                    </WrapPanel>
+                </StackPanel>
+            </ui:Card>
+
             <!-- Automation & Behaviors Card -->
             <ui:Card Margin="0,0,0,16">
                 <StackPanel>
-                    <ui:TextBlock Text="Automation &amp; Behaviors" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <ui:TextBlock Text="{loc:Loc Options.AutomationBehaviors}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
                     
                     <UniformGrid Columns="2">
                         <StackPanel Margin="0,0,16,16">
-                            <ui:ToggleSwitch Content="Auto Carver" IsChecked="{Binding AutoCarver, Mode=TwoWay}" Margin="0,0,0,8"/>
+                            <ui:ToggleSwitch Content="{loc:Loc Options.AutoCarver}" 
+                                             IsChecked="{Binding AutoCarver, Mode=TwoWay}" 
+                                             Margin="0,0,0,8"
+                                             ToolTip="{loc:Loc Options.AutoCarver.ToolTip}"/>
                             <StackPanel Orientation="Horizontal" IsEnabled="{Binding AutoCarver}">
-                                <ui:TextBlock Text="Blade: " VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <ui:TextBlock Text="{loc:Loc Options.Blade}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <ui:TextBlock Text="{Binding AutoCarverBlade}" VerticalAlignment="Center" Width="80" Appearance="Secondary"/>
-                                <ui:Button Content="Set" Command="{Binding SetCarverBladeCommand}" Padding="8,4"/>
+                                <ui:Button Content="{loc:Loc Options.Set}" 
+                                           Command="{Binding SetCarverBladeCommand}" 
+                                           Padding="8,4"
+                                           ToolTip="{loc:Loc Options.SetBlade.ToolTip}"/>
                             </StackPanel>
                         </StackPanel>
 
                         <StackPanel Margin="0,0,0,16">
-                            <ui:ToggleSwitch Content="Bone Cutter" IsChecked="{Binding BoneCutter, Mode=TwoWay}" Margin="0,0,0,8"/>
+                            <ui:ToggleSwitch Content="{loc:Loc Options.BoneCutter}" 
+                                             IsChecked="{Binding BoneCutter, Mode=TwoWay}" 
+                                             Margin="0,0,0,8"
+                                             ToolTip="{loc:Loc Options.BoneCutter.ToolTip}"/>
                             <StackPanel Orientation="Horizontal" IsEnabled="{Binding BoneCutter}">
-                                <ui:TextBlock Text="Blade: " VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <ui:TextBlock Text="{loc:Loc Options.Blade}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <ui:TextBlock Text="{Binding BoneCutterBlade}" VerticalAlignment="Center" Width="80" Appearance="Secondary"/>
-                                <ui:Button Content="Set" Command="{Binding SetBoneCutterBladeCommand}" Padding="8,4"/>
+                                <ui:Button Content="{loc:Loc Options.Set}" 
+                                           Command="{Binding SetBoneCutterBladeCommand}" 
+                                           Padding="8,4"
+                                           ToolTip="{loc:Loc Options.SetBlade.ToolTip}"/>
                             </StackPanel>
                         </StackPanel>
 
                         <StackPanel Margin="0,0,16,16">
-                            <ui:ToggleSwitch Content="Auto Remount" IsChecked="{Binding AutoRemount, Mode=TwoWay}" Margin="0,0,0,8"/>
+                            <ui:ToggleSwitch Content="{loc:Loc Options.AutoRemount}" 
+                                             IsChecked="{Binding AutoRemount, Mode=TwoWay}" 
+                                             Margin="0,0,0,8"
+                                             ToolTip="{loc:Loc Options.AutoRemount.ToolTip}"/>
                             <StackPanel Orientation="Horizontal" IsEnabled="{Binding AutoRemount}">
-                                <ui:TextBlock Text="Mount: " VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <ui:TextBlock Text="{loc:Loc Options.Mount}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <ui:TextBlock Text="{Binding RemountSerial}" VerticalAlignment="Center" Width="80" Appearance="Secondary"/>
-                                <ui:Button Content="Set" Command="{Binding SetMountCommand}" Padding="8,4"/>
+                                <ui:Button Content="{loc:Loc Options.Set}" 
+                                           Command="{Binding SetMountCommand}" 
+                                           Padding="8,4"
+                                           ToolTip="{loc:Loc Options.SetMount.ToolTip}"/>
                             </StackPanel>
                         </StackPanel>
 
                         <StackPanel Margin="0,0,0,16">
-                            <ui:ToggleSwitch Content="Block Trade Requests" IsChecked="{Binding BlockTradeRequest, Mode=TwoWay}" Margin="0,0,0,8"/>
-                            <ui:ToggleSwitch Content="Block Party Invites" IsChecked="{Binding BlockPartyInvite, Mode=TwoWay}" Margin="0,0,0,8"/>
-                            <ui:ToggleSwitch Content="Auto Screenshot On Death" IsChecked="{Binding AutoScreenshotOnDeath, Mode=TwoWay}" Margin="0,0,0,8"/>
+                            <ui:ToggleSwitch Content="{loc:Loc Options.BlockTradeRequests}" 
+                                             IsChecked="{Binding BlockTradeRequest, Mode=TwoWay}" 
+                                             Margin="0,0,0,8"
+                                             ToolTip="{loc:Loc Options.BlockTradeRequests.ToolTip}"/>
+                            <ui:ToggleSwitch Content="{loc:Loc Options.BlockPartyInvites}" 
+                                             IsChecked="{Binding BlockPartyInvite, Mode=TwoWay}" 
+                                             Margin="0,0,0,8"
+                                             ToolTip="{loc:Loc Options.BlockPartyInvites.ToolTip}"/>
+                            <ui:ToggleSwitch Content="{loc:Loc Options.AutoScreenshotOnDeath}" 
+                                             IsChecked="{Binding AutoScreenshotOnDeath, Mode=TwoWay}" 
+                                             Margin="0,0,0,8"
+                                             ToolTip="{loc:Loc Options.AutoScreenshotOnDeath.ToolTip}"/>
                         </StackPanel>
                     </UniformGrid>
                 </StackPanel>

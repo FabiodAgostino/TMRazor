@@ -5,19 +5,20 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       d:DataContext="{d:DesignInstance vm:DashboardViewModel}"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="800"
-      Title="Dashboard">
+      Title="{loc:Loc Dashboard.Title}">
 
     <ScrollViewer Margin="24">
         <StackPanel>
-            <ui:TextBlock Text="TMRazor Improved Dashboard"
+            <ui:TextBlock Text="{loc:Loc Dashboard.Header}"
                           FontWeight="Bold"
                           FontSize="32"
                           Margin="0,0,0,8" />
             
-            <ui:TextBlock Text="Welcome back. All systems are operational."
+            <ui:TextBlock Text="{loc:Loc Dashboard.Welcome}"
                           Appearance="Secondary"
                           Margin="0,0,0,24" />
 
@@ -30,19 +31,33 @@
                 <!-- System Status -->
                 <ui:Card Grid.Column="0" Margin="0,0,8,0" VerticalAlignment="Top">
                     <StackPanel>
-                        <ui:TextBlock Text="System Status" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                        <ui:TextBlock Text="{loc:Loc Dashboard.SystemStatus}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
                         
-                        <ui:InfoBar Title="Core Engine" Message="v10.0.0 (NET 10)" IsOpen="True" Severity="Success" Margin="0,0,0,8" />
-                        <ui:InfoBar Title="Network" Message="Connected to UO Client" IsOpen="True" Severity="Informational" Margin="0,0,0,8" />
+                        <ui:InfoBar Title="{loc:Loc Dashboard.CoreEngine}" Message="v10.0.0 (NET 10)" IsOpen="True" Severity="Success" Margin="0,0,0,8" ToolTip="{loc:Loc Dashboard.CoreEngine.ToolTip}"/>
+                        <ui:InfoBar Title="{loc:Loc Dashboard.Network}" Message="{loc:Loc Dashboard.Network.Connected}" IsOpen="True" Severity="Informational" Margin="0,0,0,8" ToolTip="{loc:Loc Dashboard.Network.ToolTip}"/>
                         
-                        <ui:Button Content="Diagnostics" Icon="Pulse24" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{loc:Loc Dashboard.Language.ToolTip}">
+                                <ui:TextBlock Text="{loc:Loc Dashboard.Language}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <ComboBox Width="120" 
+                                          ItemsSource="{Binding AvailableLanguages}" 
+                                          SelectedItem="{Binding SelectedLanguage}" />
+                            </StackPanel>
+
+                            <ui:Button Grid.Column="1" Content="{loc:Loc Dashboard.Diagnostics}" Icon="Pulse24" HorizontalAlignment="Right" ToolTip="{loc:Loc Dashboard.Diagnostics.ToolTip}"/>
+                        </Grid>
                     </StackPanel>
                 </ui:Card>
 
                 <!-- Media & Capture -->
                 <ui:Card Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Top">
                     <StackPanel>
-                        <ui:TextBlock Text="Media &amp; Capture" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                        <ui:TextBlock Text="{loc:Loc Dashboard.MediaCapture}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
                         
                         <Grid Margin="0,0,0,16">
                             <Grid.ColumnDefinitions>
@@ -51,22 +66,24 @@
                             </Grid.ColumnDefinitions>
                             
                             <ui:Button Grid.Column="0" 
-                                       Content="Screenshot" 
+                                       Content="{loc:Loc Dashboard.Screenshot}" 
                                        Icon="Camera24" 
                                        Command="{Binding TakeScreenshotCommand}"
                                        Margin="0,0,4,0"
-                                       HorizontalAlignment="Stretch"/>
+                                       HorizontalAlignment="Stretch"
+                                       ToolTip="{loc:Loc Dashboard.Screenshot.ToolTip}"/>
                             
                             <ui:Button Grid.Column="1" 
-                                       Content="Record Video" 
+                                       Content="{loc:Loc Dashboard.RecordVideo}" 
                                        Icon="Video24" 
                                        Command="{Binding ToggleRecordingCommand}"
                                        Appearance="Secondary"
                                        Margin="4,0,0,0"
-                                       HorizontalAlignment="Stretch"/>
+                                       HorizontalAlignment="Stretch"
+                                       ToolTip="{loc:Loc Dashboard.RecordVideo.ToolTip}"/>
                         </Grid>
 
-                        <ui:TextBlock Text="Recent Captures" FontSize="14" FontWeight="Medium" Margin="0,0,0,8"/>
+                        <ui:TextBlock Text="{loc:Loc Dashboard.RecentCaptures}" FontSize="14" FontWeight="Medium" Margin="0,0,0,8"/>
                         
                         <ItemsControl ItemsSource="{Binding RecentScreenshots}" Margin="0,0,0,8">
                             <ItemsControl.ItemsPanel>
@@ -83,11 +100,12 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <ui:Button Content="Open Gallery Folder" 
+                        <ui:Button Content="{loc:Loc Dashboard.OpenGallery}" 
                                    Icon="Folder24" 
                                    Command="{Binding OpenGalleryCommand}" 
                                    Appearance="Secondary"
-                                   HorizontalAlignment="Stretch"/>
+                                   HorizontalAlignment="Stretch"
+                                   ToolTip="{loc:Loc Dashboard.OpenGallery.ToolTip}"/>
                     </StackPanel>
                 </ui:Card>
             </Grid>

@@ -11,7 +11,7 @@ namespace TMRazorImproved.UI.Views.Pages
         public SecureTradePage(SecureTradeViewModel viewModel)
         {
             ViewModel = viewModel;
-            DataContext = this;
+            DataContext = ViewModel;
 
             InitializeComponent();
         }
