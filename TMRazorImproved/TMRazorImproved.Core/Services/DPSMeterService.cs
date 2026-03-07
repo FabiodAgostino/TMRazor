@@ -17,9 +17,16 @@ namespace TMRazorImproved.Core.Services
         private readonly List<(DateTime Time, ushort Amount)> _damageHistory = new();
         private readonly Dictionary<uint, long> _targetDamage = new();
 
-        public double CurrentDPS { get; private set; }
-        public double MaxDPS { get; private set; }
-        public long TotalDamage { get; private set; }
+        // BUG-NEW-01 FIX: backing fields con Interlocked/Volatile per visibilità cross-thread
+        // (timer thread scrive, UI thread legge — senza sync il JIT può cachare i valori)
+        private readonly object _statsLock = new();
+        private double _currentDPS;
+        private double _maxDPS;
+        private long _totalDamage;
+
+        public double CurrentDPS { get { lock (_statsLock) return _currentDPS; } }
+        public double MaxDPS { get { lock (_statsLock) return _maxDPS; } }
+        public long TotalDamage { get { lock (_statsLock) return _totalDamage; } }
         public TimeSpan CombatTime => IsActive ? DateTime.Now - _startTime : _totalTime;
         public bool IsActive { get; private set; }
 
@@ -57,9 +64,7 @@ namespace TMRazorImproved.Core.Services
         public void Reset()
         {
             Stop();
-            TotalDamage = 0;
-            MaxDPS = 0;
-            CurrentDPS = 0;
+            lock (_statsLock) { _totalDamage = 0; _maxDPS = 0; _currentDPS = 0; }
             _totalTime = TimeSpan.Zero;
             lock (_damageHistory) { _damageHistory.Clear(); }
             lock (_targetDamage) { _targetDamage.Clear(); }
@@ -78,8 +83,8 @@ namespace TMRazorImproved.Core.Services
                 lock (_damageHistory)
                 {
                     _damageHistory.Add((DateTime.Now, amount));
-                    TotalDamage += (long)amount;
                 }
+                lock (_statsLock) { _totalDamage += (long)amount; }
                 
                 lock (_targetDamage)
                 {
@@ -107,8 +112,11 @@ namespace TMRazorImproved.Core.Services
                 dps = windowDamage / 10.0;
             }
 
-            CurrentDPS = dps;
-            if (dps > MaxDPS) MaxDPS = dps;
+            lock (_statsLock)
+            {
+                _currentDPS = dps;
+                if (dps > _maxDPS) _maxDPS = dps;
+            }
             
             Updated?.Invoke();
         }
