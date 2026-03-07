@@ -1,11 +1,12 @@
+using System.Threading;
 using TMRazorImproved.Core.Services.Scripting.Api;
 
 namespace TMRazorImproved.Core.Services.Scripting
 {
     /// <summary>
-    /// Classe globale iniettata negli script C#.
+    /// Classe globale iniettata negli script C# via Roslyn.
     /// Le proprietà pubbliche di questa classe saranno accessibili direttamente
-    /// nello script senza prefisso (es. Player.Hits).
+    /// nello script senza prefisso (es. Player.Hits, ScriptToken.ThrowIfCancellationRequested()).
     /// </summary>
     public class ScriptGlobals
     {
@@ -22,5 +23,12 @@ namespace TMRazorImproved.Core.Services.Scripting
         public FriendApi Friend { get; set; } = null!;
         public FiltersApi Filters { get; set; } = null!;
         public TimerApi Timer { get; set; } = null!;
+
+        /// <summary>
+        /// Token di cancellazione per lo script corrente.
+        /// Gli script C# possono chiamare <c>ScriptToken.ThrowIfCancellationRequested()</c>
+        /// nei propri loop per supportare la cancellazione cooperativa.
+        /// </summary>
+        public CancellationToken ScriptToken { get; set; }
     }
 }

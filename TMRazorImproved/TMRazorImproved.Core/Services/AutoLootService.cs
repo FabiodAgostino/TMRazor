@@ -49,11 +49,12 @@ namespace TMRazorImproved.Core.Services
             hotkeyService.RegisterAction("AutoLoot Toggle", () => { if (IsRunning) _ = StopAsync(); else Start(); });
         }
 
-        private AutoLootConfig GetActiveConfig()
+        // BUG-P1-04 FIX: return type non-nullable con possibile return null → CS8603
+        private AutoLootConfig? GetActiveConfig()
         {
             var profile = _configService.CurrentProfile;
             if (profile == null) return null;
-            return profile.AutoLootLists.FirstOrDefault(l => l.Name == profile.ActiveAutoLootList) 
+            return profile.AutoLootLists.FirstOrDefault(l => l.Name == profile.ActiveAutoLootList)
                    ?? profile.AutoLootLists.FirstOrDefault();
         }
 

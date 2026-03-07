@@ -2,9 +2,8 @@ using IronPython.Hosting;
 using IronPython.Runtime.Exceptions;
 using Microsoft.Scripting.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.CodeAnalysis.CSharp.Scripting;
-using Microsoft.CodeAnalysis.Scripting;
 using CommunityToolkit.Mvvm.Messaging;
+using TMRazorImproved.Core.Services.Scripting.Engines;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -434,7 +433,7 @@ del _make_tracer_, _sys_
         }
 
         // ------------------------------------------------------------------
-        // Esecuzione C# (Roslyn)
+        // Esecuzione C# (Roslyn) — delegata a CSharpScriptEngine
         // ------------------------------------------------------------------
 
         private void ExecuteCSharpInternal(string code, string scriptName, CancellationTokenSource cts)
@@ -446,47 +445,31 @@ del _make_tracer_, _sys_
             var misc = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line));
             var globals = new ScriptGlobals
             {
-                Player   = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _loggerFactory.CreateLogger<PlayerApi>()),
-                Items    = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger),
-                Mobiles  = new MobilesApi(_world, _friendsService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>()),
-                Misc     = misc,
-                Journal  = new JournalApi(_journalService, cancelCtrl),
-                Gumps    = new GumpsApi(_world, _packetService, cancelCtrl, _messenger),
-                Target   = new TargetApi(_targetingService, cancelCtrl),
-                Skills   = new SkillsApi(_skillsService, _packetService, cancelCtrl),
-                Spells   = new SpellsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<SpellsApi>()),
-                Statics  = new StaticsApi(cancelCtrl),
-                Friend   = new FriendApi(_friendsService, cancelCtrl),
-                Filters  = new FiltersApi(_config, cancelCtrl),
-                Timer    = new TimerApi(cancelCtrl, misc)
+                Player      = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _loggerFactory.CreateLogger<PlayerApi>()),
+                Items       = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger),
+                Mobiles     = new MobilesApi(_world, _friendsService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>()),
+                Misc        = misc,
+                Journal     = new JournalApi(_journalService, cancelCtrl),
+                Gumps       = new GumpsApi(_world, _packetService, cancelCtrl, _messenger),
+                Target      = new TargetApi(_targetingService, cancelCtrl),
+                Skills      = new SkillsApi(_skillsService, _packetService, cancelCtrl),
+                Spells      = new SpellsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<SpellsApi>()),
+                Statics     = new StaticsApi(cancelCtrl),
+                Friend      = new FriendApi(_friendsService, cancelCtrl),
+                Filters     = new FiltersApi(_config, cancelCtrl),
+                Timer       = new TimerApi(cancelCtrl, misc),
+                // Espone il token direttamente agli script per cancellazione cooperativa:
+                // ScriptToken.ThrowIfCancellationRequested() in qualsiasi loop dello script.
+                ScriptToken = cts.Token
             };
 
-            var options = ScriptOptions.Default
-                .WithReferences(
-                    typeof(ScriptGlobals).Assembly,
-                    typeof(ScriptLanguage).Assembly,
-                    typeof(object).Assembly,
-                    typeof(System.Linq.Enumerable).Assembly,
-                    typeof(System.Collections.Generic.List<>).Assembly)
-                .WithImports(
-                    "System",
-                    "System.Collections.Generic",
-                    "System.Linq",
-                    "System.Threading.Tasks",
-                    "TMRazorImproved.Core.Services.Scripting.Api",
-                    "TMRazorImproved.Shared.Models");
+            var engine = new CSharpScriptEngine(
+                line => OutputReceived?.Invoke(line),
+                line => ErrorReceived?.Invoke(line));
 
             try
             {
-                // Esecuzione sincrona del task asincrono Roslyn all'interno del thread worker dello script
-                CSharpScript.RunAsync(code, options, globals, typeof(ScriptGlobals), cts.Token).Wait();
-            }
-            catch (AggregateException aggEx)
-            {
-                // Roslyn wrappa le eccezioni in AggregateException
-                if (aggEx.InnerException != null)
-                    throw aggEx.InnerException;
-                throw;
+                engine.Execute(code, globals);
             }
             finally
             {
