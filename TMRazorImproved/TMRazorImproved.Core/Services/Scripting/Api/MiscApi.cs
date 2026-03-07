@@ -22,14 +22,21 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         private readonly IWorldService _world;
         private readonly IPacketService _packetService;
         private readonly IClientInteropService _interop;
+        private readonly ITargetingService? _targeting;
         private readonly ScriptCancellationController _cancel;
         private readonly Action<string>? _outputCallback;
 
-        public MiscApi(IWorldService world, IPacketService packetService, IClientInteropService interop, ScriptCancellationController cancel, Action<string>? outputCallback = null)
+        // Named lists shared per-script-run (reset on new execution via ScriptingService)
+        private readonly ConcurrentDictionary<string, List<object>> _lists = new(StringComparer.OrdinalIgnoreCase);
+
+        public MiscApi(IWorldService world, IPacketService packetService, IClientInteropService interop,
+            ScriptCancellationController cancel, Action<string>? outputCallback = null,
+            ITargetingService? targeting = null)
         {
             _world = world;
             _packetService = packetService;
             _interop = interop;
+            _targeting = targeting;
             _cancel = cancel;
             _outputCallback = outputCallback;
         }
@@ -152,13 +159,20 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
 
         public virtual bool WaitForTarget(int timeoutMs = 5000)
         {
-            // TODO: Implementare flag HasTarget in WorldService o PacketService
-            return WaitFor(() => false, timeoutMs); 
+            if (_targeting != null)
+                return WaitFor(() => _targeting.HasTargetCursor, timeoutMs);
+            return WaitFor(() => false, timeoutMs);
         }
 
         public virtual bool WaitGump(uint gumpId, int timeoutMs = 5000)
         {
             return WaitFor(() => _world.CurrentGump?.GumpId == gumpId, timeoutMs);
+        }
+
+        /// <summary>Attende qualsiasi gump (indipendentemente dall'ID).</summary>
+        public virtual bool WaitForGumpAny(int timeoutMs = 5000)
+        {
+            return WaitFor(() => _world.CurrentGump != null || _world.OpenGumps.Count > 0, timeoutMs);
         }
 
         /// <summary>Scrive una riga sul pannello output della UI (non sulla chat UO).</summary>
@@ -291,6 +305,99 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         {
             _cancel.ThrowIfCancelled();
             return _world.Player?.Serial ?? 0;
+        }
+
+        // ------------------------------------------------------------------
+        // Named Lists — compatibilità RazorEnhanced/UOSteam
+        // ------------------------------------------------------------------
+
+        /// <summary>Crea una lista nominata (vuota se già esiste).</summary>
+        public virtual void CreateList(string name)
+        {
+            _cancel.ThrowIfCancelled();
+            _lists.TryAdd(name, new List<object>());
+        }
+
+        /// <summary>Aggiunge un valore in fondo alla lista.</summary>
+        public virtual void PushList(string name, object value, string pos = "front")
+        {
+            _cancel.ThrowIfCancelled();
+            var list = _lists.GetOrAdd(name, _ => new List<object>());
+            lock (list)
+            {
+                if (pos.Equals("back", StringComparison.OrdinalIgnoreCase))
+                    list.Add(value);
+                else
+                    list.Insert(0, value);
+            }
+        }
+
+        /// <summary>Rimuove e restituisce il primo elemento dalla lista (null se vuota).</summary>
+        public virtual object? PopList(string name, string pos = "front")
+        {
+            _cancel.ThrowIfCancelled();
+            if (!_lists.TryGetValue(name, out var list)) return null;
+            lock (list)
+            {
+                if (list.Count == 0) return null;
+                int idx = pos.Equals("back", StringComparison.OrdinalIgnoreCase) ? list.Count - 1 : 0;
+                var val = list[idx];
+                list.RemoveAt(idx);
+                return val;
+            }
+        }
+
+        /// <summary>Rimuove il primo elemento uguale a <paramref name="value"/> dalla lista.</summary>
+        public virtual void RemoveList(string name, object value)
+        {
+            _cancel.ThrowIfCancelled();
+            if (!_lists.TryGetValue(name, out var list)) return;
+            lock (list) { list.Remove(value); }
+        }
+
+        /// <summary>Svuota una lista senza distruggerla.</summary>
+        public virtual void ClearList(string name)
+        {
+            _cancel.ThrowIfCancelled();
+            if (_lists.TryGetValue(name, out var list)) lock (list) { list.Clear(); }
+        }
+
+        /// <summary>Elimina completamente una lista.</summary>
+        public virtual void DestroyList(string name)
+        {
+            _cancel.ThrowIfCancelled();
+            _lists.TryRemove(name, out _);
+        }
+
+        /// <summary>True se la lista esiste (anche se vuota).</summary>
+        public virtual bool ListExists(string name)
+        {
+            _cancel.ThrowIfCancelled();
+            return _lists.ContainsKey(name);
+        }
+
+        /// <summary>Numero di elementi nella lista (0 se non esiste).</summary>
+        public virtual int ListCount(string name)
+        {
+            _cancel.ThrowIfCancelled();
+            if (!_lists.TryGetValue(name, out var list)) return 0;
+            lock (list) { return list.Count; }
+        }
+
+        /// <summary>Copia snapshot della lista (thread-safe).</summary>
+        public virtual List<object> GetList(string name)
+        {
+            _cancel.ThrowIfCancelled();
+            if (!_lists.TryGetValue(name, out var list)) return new List<object>();
+            lock (list) { return new List<object>(list); }
+        }
+
+        /// <summary>True se la lista contiene l'elemento.</summary>
+        public virtual bool ListContains(string name, object value)
+        {
+            _cancel.ThrowIfCancelled();
+            if (!_lists.TryGetValue(name, out var list)) return false;
+            lock (list) { return list.Contains(value); }
         }
     }
 }

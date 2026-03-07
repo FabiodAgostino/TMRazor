@@ -212,5 +212,44 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             if (_world.CurrentGump?.GumpId == gumpId) return _world.CurrentGump;
             return _world.OpenGumps.Values.FirstOrDefault(g => g.GumpId == gumpId);
         }
+
+        /// <summary>Numero di text entry nel gump corrente (conta le righe con "textentry" nel layout).</summary>
+        public virtual int GetTextEntryCount()
+        {
+            _cancel.ThrowIfCancelled();
+            var gump = _world.CurrentGump;
+            if (gump == null || string.IsNullOrEmpty(gump.Layout)) return 0;
+            return System.Text.RegularExpressions.Regex.Matches(gump.Layout, @"\{\s*textentry\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Count;
+        }
+
+        /// <summary>Numero di switch/checkbox nel gump corrente.</summary>
+        public virtual int GetSwitchCount()
+        {
+            _cancel.ThrowIfCancelled();
+            var gump = _world.CurrentGump;
+            if (gump == null || string.IsNullOrEmpty(gump.Layout)) return 0;
+            return System.Text.RegularExpressions.Regex.Matches(gump.Layout, @"\{\s*(checkmark|radio)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Count;
+        }
+
+        /// <summary>Attende che appaia un gump con il serial specificato (non GumpId).</summary>
+        public virtual bool WaitForGumpSerial(uint gumpSerial, int timeoutMs = 5000)
+        {
+            _cancel.ThrowIfCancelled();
+            var deadline = System.Environment.TickCount64 + timeoutMs;
+            while (System.Environment.TickCount64 < deadline)
+            {
+                _cancel.ThrowIfCancelled();
+                if (_world.OpenGumps.ContainsKey(gumpSerial)) return true;
+                System.Threading.Thread.Sleep(50);
+            }
+            return _world.OpenGumps.ContainsKey(gumpSerial);
+        }
+
+        /// <summary>Lista dei serial di tutti i gump aperti.</summary>
+        public virtual System.Collections.Generic.List<uint> GetOpenGumpSerials()
+        {
+            _cancel.ThrowIfCancelled();
+            return new System.Collections.Generic.List<uint>(_world.OpenGumps.Keys);
+        }
     }
 }

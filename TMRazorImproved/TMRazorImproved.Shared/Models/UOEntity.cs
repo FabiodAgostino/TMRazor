@@ -81,6 +81,10 @@ namespace TMRazorImproved.Shared.Models
         public ushort MaxDamage { get; set; }
         public int Tithe { get; set; }
 
+        // Fame e Karma (aggiornabili da messaggi server o handshake)
+        public short Fame { get; set; }
+        public short Karma { get; set; }
+
         // Posizione mappa (cambia con 0x76/0xBF sub)
         public int MapId { get; set; }
 

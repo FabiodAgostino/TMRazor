@@ -122,5 +122,56 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             int estimatedCost = circle * 4;
             return (_world.Player?.Mana ?? 0) >= estimatedCost;
         }
+
+        // ------------------------------------------------------------------
+        // Controllo del cast
+        // ------------------------------------------------------------------
+
+        private volatile string _lastSpellName = string.Empty;
+
+        /// <summary>
+        /// Interrompe il cast corrente inviando un movimento (tecnica standard UO per cancellare il cast).
+        /// </summary>
+        public virtual void Interrupt()
+        {
+            _cancel.ThrowIfCancelled();
+            // Il modo standard per interrompere un cast in UO è muoversi o eseguire un'azione
+            // Inviamo 0x02 (MoveRequest) con la direzione corrente per "scuotere" il cast
+            var player = _world.Player;
+            if (player == null) return;
+            byte dir = player.Direction;
+            byte[] pkt = { 0x02, dir, 0x01, 0x00, 0x00, 0x00, 0x00 };
+            _packet.SendToServer(pkt);
+        }
+
+        /// <summary>Nome dell'ultimo incantesimo castato (vuoto se nessuno).</summary>
+        public virtual string GetLastSpell() => _lastSpellName;
+
+        /// <summary>Casta e registra il nome dell'ultimo incantesimo.</summary>
+        public virtual void CastAndRecord(string name)
+        {
+            _cancel.ThrowIfCancelled();
+            if (SpellDefinitions.TryGetSpellId(name, out int spellId))
+            {
+                _lastSpellName = name;
+                Cast(spellId);
+            }
+        }
+
+        /// <summary>
+        /// Attende che il flag IsCasting diventi false (cast completato o interrotto),
+        /// poi ritorna true. False se scade il timeout.
+        /// </summary>
+        public virtual bool WaitCastComplete(int timeoutMs = 10000)
+        {
+            var deadline = Environment.TickCount64 + timeoutMs;
+            while (Environment.TickCount64 < deadline)
+            {
+                _cancel.ThrowIfCancelled();
+                if (!IsCasting) return true;
+                System.Threading.Thread.Sleep(50);
+            }
+            return !IsCasting;
+        }
     }
 }

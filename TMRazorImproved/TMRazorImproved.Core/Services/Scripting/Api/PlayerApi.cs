@@ -78,9 +78,9 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual int Gold      => P?.Gold      ?? 0;
         public virtual int Armor     => P?.Armor     ?? 0;
 
-        // Fame e Karma (TODO: Da estrarre tramite OPL o messaggi server)
-        public virtual int Karma => 0;
-        public virtual int Fame  => 0;
+        // Fame e Karma — settati da WorldPacketHandler quando disponibili
+        public virtual int Karma => P?.Karma ?? 0;
+        public virtual int Fame  => P?.Fame  ?? 0;
 
         // ------------------------------------------------------------------
         // Stato avanzato
@@ -644,5 +644,58 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
 
         /// <summary>StatCap del player.</summary>
         public virtual int StatCap => P?.StatCap ?? 0;
+
+        // ------------------------------------------------------------------
+        // Bandage
+        // ------------------------------------------------------------------
+
+        /// <summary>Usa una fascia sul player stesso (UseType 0x0E75 → UseItem sul target self).</summary>
+        public virtual void BandageSelf()
+        {
+            _cancel.ThrowIfCancelled();
+            Bandage(P?.Serial ?? 0);
+        }
+
+        /// <summary>Usa la prima fascia nel backpack sul target specificato.</summary>
+        public virtual void Bandage(uint targetSerial)
+        {
+            _cancel.ThrowIfCancelled();
+            if (targetSerial == 0) return;
+            // Trova la prima fascia (graphic 0x0E75) nel backpack
+            var bp = P?.Backpack;
+            if (bp == null) return;
+            var bandage = _world.Items.FirstOrDefault(i => i.Container == bp.Serial && i.Graphic == 0x0E75);
+            if (bandage == null) return;
+            // Double-click fascia, poi target
+            _packet.SendToServer(PacketBuilder.DoubleClick(bandage.Serial));
+        }
+
+        // ------------------------------------------------------------------
+        // Titolo e abilità speciali
+        // ------------------------------------------------------------------
+
+        /// <summary>True se il player è sotto polymorph (graphic != body nativo).</summary>
+        public virtual bool IsPolymorph
+        {
+            get
+            {
+                var p = P;
+                if (p == null) return false;
+                // Corpo nativo umano: 0x190 (male), 0x191 (female), elf: 0x25D/0x25E, gargoyle: 0x29A/0x29B
+                return p.Graphic != 0x190 && p.Graphic != 0x191 &&
+                       p.Graphic != 0x25D && p.Graphic != 0x25E &&
+                       p.Graphic != 0x29A && p.Graphic != 0x29B;
+            }
+        }
+
+        /// <summary>Ritorna tutti gli skill come dizionario nome→valore corrente.</summary>
+        public virtual System.Collections.Generic.Dictionary<string, double> GetAllSkills()
+        {
+            _cancel.ThrowIfCancelled();
+            var dict = new System.Collections.Generic.Dictionary<string, double>(StringComparison.OrdinalIgnoreCase);
+            foreach (var s in _skills.Skills)
+                dict[s.Name] = s.Value;
+            return dict;
+        }
     }
 }

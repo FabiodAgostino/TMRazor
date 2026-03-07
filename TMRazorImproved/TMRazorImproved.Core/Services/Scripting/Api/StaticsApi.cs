@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace TMRazorImproved.Core.Services.Scripting.Api
@@ -166,5 +167,68 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             }
             catch { return false; }
         }
+
+        /// <summary>
+        /// Verifica la linea di visione tra due punti usando il raycasting Chebyshev.
+        /// Controlla ogni cella nella linea; ritorna false se un tile impassabile blocca il tragitto.
+        /// </summary>
+        public virtual bool GetLOS(int x1, int y1, int z1, int x2, int y2, int z2, int map)
+        {
+            _cancel.ThrowIfCancelled();
+            int dx = Math.Abs(x2 - x1), dy = Math.Abs(y2 - y1);
+            int steps = Math.Max(dx, dy);
+            if (steps == 0) return true;
+
+            double stepX = (x2 - x1) / (double)steps;
+            double stepY = (y2 - y1) / (double)steps;
+
+            for (int i = 1; i < steps; i++)
+            {
+                int cx = x1 + (int)Math.Round(stepX * i);
+                int cy = y1 + (int)Math.Round(stepY * i);
+                if (IsImpassable(cx, cy, map)) return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Ritorna i flag delle statiche presenti a (x,y) OR-ati insieme.
+        /// Utile per verificare se una posizione ha statics surface/impassable.
+        /// </summary>
+        public virtual int GetStaticFlagsAt(int x, int y, int map)
+        {
+            _cancel.ThrowIfCancelled();
+            try
+            {
+                var umap = GetUltimaMap(map);
+                if (umap == null) return 0;
+                var tiles = umap.Tiles.GetStaticTiles(x, y);
+                int combined = 0;
+                foreach (var t in tiles)
+                {
+                    if (t.ID >= 0 && t.ID < Ultima.TileData.ItemTable.Length)
+                        combined |= (int)Ultima.TileData.ItemTable[t.ID].Flags;
+                }
+                return combined;
+            }
+            catch { return 0; }
+        }
+
+        /// <summary>
+        /// Controlla se una posizione può ospitare un mobile (non impassabile per land + statics).
+        /// </summary>
+        public virtual bool CanFit(int x, int y, int z, int map)
+        {
+            _cancel.ThrowIfCancelled();
+            try
+            {
+                if (IsImpassable(x, y, map)) return false;
+                int staticFlags = GetStaticFlagsAt(x, y, map);
+                const int impassable = 0x40;
+                return (staticFlags & impassable) == 0;
+            }
+            catch { return false; }
+        }
+
     }
 }
