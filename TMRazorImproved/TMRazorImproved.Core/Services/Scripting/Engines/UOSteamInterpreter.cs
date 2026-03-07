@@ -21,6 +21,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
         private readonly Dictionary<string, long> _timers = new();
         private readonly Dictionary<string, string> _variables = new();
         private readonly Stack<int> _loopStack = new();
+        private readonly Stack<(int lineIndex, int counter, int limit, string varName)> _forStack = new();
+        private static readonly Random _rng = new();
         private int _currentLineIndex;
         private string[] _lines = Array.Empty<string>();
 
@@ -111,8 +113,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                     case "endwhile":
                         if (_loopStack.Count > 0)
                         {
-                            _currentLineIndex = _loopStack.Pop() - 1; 
+                            _currentLineIndex = _loopStack.Pop() - 1;
                         }
+                        break;
+                    case "for":
+                        HandleFor(args);
+                        break;
+                    case "endfor":
+                        HandleEndFor();
                         break;
                     case "setvar":
                         if (args.Length >= 2) _variables[args[0].ToLower()] = args[1];
@@ -166,7 +174,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                         if (args.Length > 0) _player.SetAbility(args[0]);
                         break;
                     case "interrupt":
-                        _player.Cast("clumsy"); // Un hack tipico per resettare il casting o target
+                        // Invia MoveRequest per cancellare il cast corrente
+                        _player.Resync();
                         break;
                     case "setoption":
                         if (args.Length >= 2) _variables[args[0].ToLower()] = args[1];
@@ -203,9 +212,53 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                     case "waitfortarget":
                         _misc.WaitForTarget(args.Length > 0 ? ParseInt(args[0]) : 5000);
                         break;
+                    case "random":
+                        // random varname max  →  setvar varname (random 0..max)
+                        if (args.Length >= 2)
+                            _variables[args[0].ToLower()] = _rng.Next(0, ParseInt(args[1]) + 1).ToString();
+                        else if (args.Length == 1)
+                            _variables["_random"] = _rng.Next(0, ParseInt(args[0]) + 1).ToString();
+                        break;
+                    case "target":
+                        if (args.Length > 0) _misc.WaitForTarget(500);
+                        break;
+                    case "targettype":
+                        if (args.Length > 0) _misc.WaitForTarget(500);
+                        break;
+                    case "attack":
+                        if (args.Length > 0) _player.Attack(ParseSerial(args[0]));
+                        break;
+                    case "warmode":
+                        if (args.Length > 0) _player.SetWarMode(args[0].Equals("on", StringComparison.OrdinalIgnoreCase));
+                        break;
+                    case "useskill":
+                        if (args.Length > 0) _player.UseSkill(args[0]);
+                        break;
+                    case "skill":
+                        if (args.Length > 0) _player.UseSkill(args[0]);
+                        break;
+                    case "dclick":
+                    case "doubleclick":
+                        if (args.Length > 0) _items.UseItem(ParseSerial(args[0]));
+                        break;
+                    case "click":
+                    case "singleclick":
+                        if (args.Length > 0) _items.Click(ParseSerial(args[0]));
+                        break;
+                    case "move":
+                    case "moveitem":
+                        if (args.Length >= 2) _items.Move(ParseSerial(args[0]), ParseSerial(args[1]), args.Length > 2 ? ParseInt(args[2]) : 1);
+                        break;
+                    case "lift":
+                        if (args.Length > 0) _items.Lift(ParseSerial(args[0]), args.Length > 1 ? ParseInt(args[1]) : 1);
+                        break;
+                    case "drop":
+                        if (args.Length >= 2) _items.Drop(ParseSerial(args[0]), ParseSerial(args[1]), args.Length > 2 ? ParseInt(args[2]) : 1);
+                        break;
                     case "replay":
                         _currentLineIndex = -1; // Riavvia lo script
                         _loopStack.Clear();
+                        _forStack.Clear();
                         break;
                     case "stop":
                         _currentLineIndex = _lines.Length; // Termina
@@ -299,18 +352,48 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             if (expr.Contains(">"))  return Compare(expr, ">");
             if (expr.Contains("<"))  return Compare(expr, "<");
 
-            // Comandi di ricerca
+            // Comandi di ricerca/query
             if (expr.StartsWith("findtype ")) return HandleFindType(expr);
-            if (expr.StartsWith("counttype ")) return _items.GetBackpackItems().Count(i => i.Graphic == ParseInt(expr.Replace("counttype ", ""))) > 0;
+            if (expr.StartsWith("counttype ")) return HandleCountType(expr);
+            if (expr.StartsWith("injournal ")) return _journal.InJournal(expr.Substring(10).Trim('\'', '"'));
+            if (expr.StartsWith("injournalline ")) return _journal.InJournal(expr.Substring(14).Trim('\'', '"'));
+            if (expr.StartsWith("gumpexists "))
+            {
+                uint gumpId = ParseSerial(expr.Substring(11).Trim());
+                return _misc.WaitGump(gumpId, 0);
+            }
+            if (expr.StartsWith("timer ") || expr.StartsWith("timername "))
+            {
+                // timer timerName >= value → true se il timer esiste e ha superato la soglia
+                // Per semplicità: timer <name> → true se esiste
+                var parts2 = expr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts2.Length >= 2)
+                {
+                    string tname = parts2[1].ToLower();
+                    if (_timers.TryGetValue(tname, out long t))
+                        return Environment.TickCount64 - t >= 0;
+                }
+                return false;
+            }
+            if (expr.StartsWith("listexists ")) return _lists.ContainsKey(expr.Substring(11).Trim().ToLower());
+            if (expr.StartsWith("listcount "))
+            {
+                string lname = expr.Substring(10).Trim().ToLower();
+                return _lists.TryGetValue(lname, out var l) && l.Count > 0;
+            }
 
             // Proprietà booleane
             switch (expr)
             {
-                case "poisoned": return _player.IsPoisoned;
-                case "dead": return _player.Hits <= 0;
-                case "hidden": return false;
-                case "mounted": return false;
-                case "warmode": return false;
+                case "poisoned":  return _player.IsPoisoned;
+                case "dead":      return _player.Hits <= 0;
+                case "hidden":    return _player.IsHidden;
+                case "mounted":   return _player.IsOnMount;
+                case "warmode":   return _player.WarMode;
+                case "paralyzed": return false; // no packet tracking yet
+                case "blessed":   return false;
+                case "yellowhits": return _player.IsYellowHits;
+                case "hasgump":   return _misc.WaitForGumpAny(50);
             }
 
             return false;
@@ -356,21 +439,74 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
 
         private long GetValue(string term)
         {
+            // Variabili script
+            if (_variables.TryGetValue(term, out string? varVal) && long.TryParse(varVal, out long varNum)) return varNum;
+
             if (long.TryParse(term, out long val)) return val;
             if (term.StartsWith("0x") && long.TryParse(term.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out long hexVal)) return hexVal;
 
             return term switch
             {
-                "hits" => _player.Hits,
-                "maxhits" => _player.HitsMax,
-                "mana" => _player.Mana,
-                "maxmana" => _player.ManaMax,
-                "stam" => _player.Stam,
-                "maxstam" => _player.StamMax,
-                "serial" => _player.Serial,
-                "weight" => 0,
+                "hits"         => _player.Hits,
+                "maxhits"      => _player.HitsMax,
+                "mana"         => _player.Mana,
+                "maxmana"      => _player.ManaMax,
+                "stam"         => _player.Stam,
+                "maxstam"      => _player.StamMax,
+                "str"          => _player.Str,
+                "dex"          => _player.Dex,
+                "int"          => _player.Int,
+                "serial"       => _player.Serial,
+                "weight"       => _player.Weight,
+                "maxweight"    => _player.MaxWeight,
+                "followers"    => _player.Followers,
+                "maxfollowers" => _player.FollowersMax,
+                "gold"         => _player.Gold,
+                "armor"        => _player.Armor,
+                "fame"         => _player.Fame,
+                "karma"        => _player.Karma,
+                "x"            => _player.X,
+                "y"            => _player.Y,
+                "z"            => _player.Z,
+                "random"       => _rng.Next(0, 100),
                 _ => ParseSerial(term) // Prova se è un alias
             };
+        }
+
+        private bool HandleCountType(string expr)
+        {
+            // counttype graphic [hue] [container]  →  true se count > 0
+            var parts = expr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 2) return false;
+            int graphic = ParseInt(parts[1]);
+            int hue = parts.Length > 2 ? ParseInt(parts[2]) : -1;
+            uint container = parts.Length > 3 ? ParseSerial(parts[3]) : 0;
+            return _items.FindAllByID(graphic, hue, container).Count > 0;
+        }
+
+        private void HandleFor(string[] args)
+        {
+            // for <count>  →  ripete il blocco <count> volte
+            int limit = args.Length > 0 ? ParseInt(args[0]) : 0;
+            if (limit <= 0)
+            {
+                SkipToBlockEnd("for", "endfor");
+                return;
+            }
+            _forStack.Push((_currentLineIndex, 0, limit, string.Empty));
+        }
+
+        private void HandleEndFor()
+        {
+            if (_forStack.Count == 0) return;
+            var (lineIndex, counter, limit, varName) = _forStack.Pop();
+            int next = counter + 1;
+            if (next < limit)
+            {
+                _forStack.Push((lineIndex, next, limit, varName));
+                _currentLineIndex = lineIndex; // Torna all'inizio del for (verrà incrementato nel loop)
+            }
+            // Se completato, continua normalmente
         }
 
         private uint ParseSerial(string s)

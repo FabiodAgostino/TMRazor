@@ -77,7 +77,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             var skill = _skillsService.Skills.FirstOrDefault(s => s.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
             if (skill == null) return "Up";
-            
+
             return skill.Lock switch
             {
                 SkillLock.Up => "Up",
@@ -85,6 +85,51 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 SkillLock.Lock => "Locked",
                 _ => "Up"
             };
+        }
+
+        /// <summary>Valore base (non modificato da buff/debuff) dello skill.</summary>
+        public virtual double GetBase(string name)
+        {
+            _cancel.ThrowIfCancelled();
+            var skill = _skillsService.Skills.FirstOrDefault(s => s.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            return skill?.BaseValue ?? 0;
+        }
+
+        /// <summary>Alias di GetBase — compatibilità RazorEnhanced.</summary>
+        public virtual double GetReal(string name) => GetBase(name);
+
+        /// <summary>Delta dell'ultima variazione dello skill (positivo = guadagno).</summary>
+        public virtual double GetDelta(string name)
+        {
+            _cancel.ThrowIfCancelled();
+            var skill = _skillsService.Skills.FirstOrDefault(s => s.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            return skill?.Delta ?? 0;
+        }
+
+        /// <summary>Attende un gain sullo skill specificato entro il timeout (ms). True se il gain è avvenuto.</summary>
+        public virtual bool WaitGain(string name, int timeoutMs = 30000)
+        {
+            _cancel.ThrowIfCancelled();
+            var skill = _skillsService.Skills.FirstOrDefault(s => s.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            if (skill == null) return false;
+
+            double initial = skill.Value;
+            var deadline = Environment.TickCount64 + timeoutMs;
+            while (Environment.TickCount64 < deadline)
+            {
+                _cancel.ThrowIfCancelled();
+                var current = _skillsService.Skills.FirstOrDefault(s => s.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                if (current != null && current.Value > initial) return true;
+                System.Threading.Thread.Sleep(500);
+            }
+            return false;
+        }
+
+        /// <summary>Lista di tutti gli skill disponibili (IDs + nomi).</summary>
+        public virtual System.Collections.Generic.List<SkillInfo> GetAll()
+        {
+            _cancel.ThrowIfCancelled();
+            return new System.Collections.Generic.List<SkillInfo>(_skillsService.Skills);
         }
     }
 }

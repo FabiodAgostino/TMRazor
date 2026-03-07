@@ -77,5 +77,101 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         {
             return SpellDefinitions.TryGetSpellId(name, out id);
         }
+
+        // ------------------------------------------------------------------
+        // Cerchie aggiuntive
+        // ------------------------------------------------------------------
+
+        /// <summary>Lancia un incantesimo di Imbuing.</summary>
+        public virtual void CastImbuing(string name) => Cast(name);
+
+        /// <summary>Lancia un Bard Mastery spell.</summary>
+        public virtual void CastMastery(string name) => Cast(name);
+
+        // ------------------------------------------------------------------
+        // Utility spell
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Attende che la mana del player raggiunga almeno il valore specificato.
+        /// Controlla ogni 100ms. Ritorna true se la mana è sufficiente entro il timeout.
+        /// </summary>
+        public virtual bool WaitForMana(int mana, int timeoutMs = 10000)
+        {
+            _cancel.ThrowIfCancelled();
+            var deadline = Environment.TickCount64 + timeoutMs;
+            while (Environment.TickCount64 < deadline)
+            {
+                _cancel.ThrowIfCancelled();
+                if ((_world.Player?.Mana ?? 0) >= mana) return true;
+                System.Threading.Thread.Sleep(100);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// True se il player ha abbastanza mana per l'incantesimo specificato.
+        /// Il costo minimo è stimato in base al circolo (id / 8 + 1) * 4.
+        /// </summary>
+        public virtual bool HasManaToCast(string spellName)
+        {
+            _cancel.ThrowIfCancelled();
+            if (!SpellDefinitions.TryGetSpellId(spellName, out int id)) return false;
+            // Stima: cerchio = (id-1)/8+1, mana = cerchio * 4  (magery standard)
+            int circle = (id > 0) ? ((id - 1) / 8 + 1) : 1;
+            int estimatedCost = circle * 4;
+            return (_world.Player?.Mana ?? 0) >= estimatedCost;
+        }
+
+        // ------------------------------------------------------------------
+        // Controllo del cast
+        // ------------------------------------------------------------------
+
+        private volatile string _lastSpellName = string.Empty;
+
+        /// <summary>
+        /// Interrompe il cast corrente inviando un movimento (tecnica standard UO per cancellare il cast).
+        /// </summary>
+        public virtual void Interrupt()
+        {
+            _cancel.ThrowIfCancelled();
+            // Il modo standard per interrompere un cast in UO è muoversi o eseguire un'azione
+            // Inviamo 0x02 (MoveRequest) con la direzione corrente per "scuotere" il cast
+            var player = _world.Player;
+            if (player == null) return;
+            byte dir = player.Direction;
+            byte[] pkt = { 0x02, dir, 0x01, 0x00, 0x00, 0x00, 0x00 };
+            _packet.SendToServer(pkt);
+        }
+
+        /// <summary>Nome dell'ultimo incantesimo castato (vuoto se nessuno).</summary>
+        public virtual string GetLastSpell() => _lastSpellName;
+
+        /// <summary>Casta e registra il nome dell'ultimo incantesimo.</summary>
+        public virtual void CastAndRecord(string name)
+        {
+            _cancel.ThrowIfCancelled();
+            if (SpellDefinitions.TryGetSpellId(name, out int spellId))
+            {
+                _lastSpellName = name;
+                Cast(spellId);
+            }
+        }
+
+        /// <summary>
+        /// Attende che il flag IsCasting diventi false (cast completato o interrotto),
+        /// poi ritorna true. False se scade il timeout.
+        /// </summary>
+        public virtual bool WaitCastComplete(int timeoutMs = 10000)
+        {
+            var deadline = Environment.TickCount64 + timeoutMs;
+            while (Environment.TickCount64 < deadline)
+            {
+                _cancel.ThrowIfCancelled();
+                if (!IsCasting) return true;
+                System.Threading.Thread.Sleep(50);
+            }
+            return !IsCasting;
+        }
     }
 }

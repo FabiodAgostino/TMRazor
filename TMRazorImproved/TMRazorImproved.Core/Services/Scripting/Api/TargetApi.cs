@@ -115,5 +115,31 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             _targeting.SendPrompt(text);
         }
+
+        /// <summary>Invia un target di tipo land/ground alle coordinate specificate (z=0 se non noto).</summary>
+        public virtual void TargetXYZ(int x, int y, int z = 0, int graphic = 0)
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.SendTarget(0, (ushort)x, (ushort)y, (sbyte)z, (ushort)graphic);
+        }
+
+        /// <summary>
+        /// Attende un target cursor poi lo invia alla tile ground specificata.
+        /// </summary>
+        public virtual bool TargetGround(int x, int y, int z = 0, int timeoutMs = 5000)
+        {
+            if (!WaitForTarget(timeoutMs)) return false;
+            TargetXYZ(x, y, z);
+            return true;
+        }
+
+        /// <summary>
+        /// Avanza al prossimo target nella coda. Ritorna il cursore inviato (0 se nessun target in coda).
+        /// </summary>
+        public virtual void TargetNext()
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.TargetNext();
+        }
     }
 }

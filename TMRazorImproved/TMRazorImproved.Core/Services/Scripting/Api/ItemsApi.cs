@@ -319,5 +319,141 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount));
             _packet.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer));
         }
+
+        // ------------------------------------------------------------------
+        // Container utilities
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// True se il contenitore con il serial dato è noto al client
+        /// (almeno un item con ContainerSerial uguale, oppure il serial è nel world).
+        /// </summary>
+        public virtual bool ContainerExists(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            return _world.FindItem(serial) != null
+                || _world.Items.Any(i => i.ContainerSerial == serial);
+        }
+
+        /// <summary>Ritorna tutti gli item nel contenitore specificato (non ricorsivo).</summary>
+        public virtual List<Item> GetItems(uint containerSerial)
+        {
+            _cancel.ThrowIfCancelled();
+            return _world.Items.Where(i => i.ContainerSerial == containerSerial).ToList();
+        }
+
+        /// <summary>
+        /// True se l'item è direttamente nel contenitore specificato
+        /// (non ricorsivo — solo il livello top del contenitore).
+        /// </summary>
+        public virtual bool IsInContainer(uint serial, uint containerSerial)
+        {
+            _cancel.ThrowIfCancelled();
+            var item = _world.FindItem(serial);
+            return item != null && item.ContainerSerial == containerSerial;
+        }
+
+        /// <summary>Ritorna il serial del contenitore che contiene l'item, 0 se a terra.</summary>
+        public virtual uint GetContainer(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            return _world.FindItem(serial)?.ContainerSerial ?? 0;
+        }
+
+        /// <summary>
+        /// Cerca il primo item equipaggiato nel layer specificato sul player.
+        /// </summary>
+        public virtual Item? FindByLayer(byte layer)
+        {
+            _cancel.ThrowIfCancelled();
+            var player = _world.Player;
+            if (player == null) return null;
+            return _world.Items.FirstOrDefault(i => i.Container == player.Serial && i.Layer == layer);
+        }
+
+        /// <summary>Cerca il primo item equipaggiato nel layer specificato (per nome).</summary>
+        public virtual Item? FindByLayer(string layerName)
+        {
+            _cancel.ThrowIfCancelled();
+            if (!Enum.TryParse<TMRazorImproved.Shared.Enums.Layer>(layerName, true, out var layer))
+                return null;
+            return FindByLayer((byte)layer);
+        }
+
+        /// <summary>True se l'item si trova a terra (nessun contenitore).</summary>
+        public virtual bool IsOnGround(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            var item = _world.FindItem(serial);
+            return item != null && item.ContainerSerial == 0;
+        }
+
+        /// <summary>Ritorna il Graphic dell'item.</summary>
+        public virtual int GetGraphic(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            return _world.FindItem(serial)?.Graphic ?? 0;
+        }
+
+        /// <summary>Ritorna il Hue dell'item.</summary>
+        public virtual int GetHue(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            return _world.FindItem(serial)?.Hue ?? 0;
+        }
+
+        /// <summary>Ritorna il Layer dell'item (0 se non equipaggiato).</summary>
+        public virtual int GetLayer(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            return _world.FindItem(serial)?.Layer ?? 0;
+        }
+
+        /// <summary>
+        /// Attende che un item con il graphic specificato appaia nel contenitore dato
+        /// (o nel mondo se container=0) entro il timeout.
+        /// </summary>
+        public virtual bool WaitForID(int graphic, int hue = -1, uint container = 0, int timeout = 5000)
+        {
+            _cancel.ThrowIfCancelled();
+            var deadline = Environment.TickCount64 + timeout;
+            while (Environment.TickCount64 < deadline)
+            {
+                _cancel.ThrowIfCancelled();
+                var item = FindByID(graphic, hue, container);
+                if (item != null) return true;
+                System.Threading.Thread.Sleep(50);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Filtra per contenitore (ritorna items direttamente dentro containerSerial).
+        /// </summary>
+        public virtual IEnumerable<Item> FilterByContainer(uint containerSerial)
+        {
+            _cancel.ThrowIfCancelled();
+            return _world.Items.Where(i => i.ContainerSerial == containerSerial).ToList();
+        }
+
+        /// <summary>Solleva un item verso il cursore (0x07 grab, poi 0x08 drop).</summary>
+        public virtual void Lift(uint serial, int amount = 1)
+        {
+            _cancel.ThrowIfCancelled();
+            _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount));
+        }
+
+        /// <summary>Alias di <see cref="Move"/> per compatibilità con RazorEnhanced.</summary>
+        public virtual void Drop(uint serial, uint targetContainer, int amount = 1)
+            => Move(serial, targetContainer, amount);
+
+        /// <summary>
+        /// Ritorna il numero di item nel contenitore (non ricorsivo).
+        /// </summary>
+        public virtual int ContainerCount(uint containerSerial)
+        {
+            _cancel.ThrowIfCancelled();
+            return _world.Items.Count(i => i.ContainerSerial == containerSerial);
+        }
     }
 }

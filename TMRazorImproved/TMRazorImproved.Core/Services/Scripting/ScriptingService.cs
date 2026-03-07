@@ -365,7 +365,7 @@ del _make_tracer_, _sys_
             var stderr = new ScriptOutputWriter(line => ErrorReceived?.Invoke(line));
 
             var cancelCtrl = new ScriptCancellationController(cts.Token);
-            var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line));
+            var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService);
 
             scope.SetVariable("__stdout__",        stdout);
             scope.SetVariable("__stderr__",        stderr);
@@ -415,7 +415,7 @@ del _make_tracer_, _sys_
             _scriptThread = Thread.CurrentThread;
             
             var cancelCtrl = new ScriptCancellationController(cts.Token);
-            var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line));
+            var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService);
             var itemsApi   = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
             var mobilesApi = new MobilesApi(_world, _friendsService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
             var playerApi  = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _loggerFactory.CreateLogger<PlayerApi>());
@@ -442,7 +442,7 @@ del _make_tracer_, _sys_
             _logger.LogDebug("Starting Roslyn C# script execution: {ScriptName}", scriptName);
 
             var cancelCtrl = new ScriptCancellationController(cts.Token);
-            var misc = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line));
+            var misc = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService);
             var globals = new ScriptGlobals
             {
                 Player      = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _loggerFactory.CreateLogger<PlayerApi>()),

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using TMRazorImproved.Shared.Interfaces;
@@ -113,6 +115,91 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             {
                 _journal.OnNewEntry -= handler;
             }
+        }
+
+        // ------------------------------------------------------------------
+        // Ricerca avanzata
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// True se almeno una entry nel journal contiene il testo (case-insensitive)
+        /// con la stessa semantica di <see cref="InJournal"/> ma con nome RazorEnhanced.
+        /// </summary>
+        public virtual bool InJournalLine(string text)
+        {
+            _cancel.ThrowIfCancelled();
+            return InJournal(text);
+        }
+
+        /// <summary>
+        /// True se almeno una entry nel journal corrisponde all'espressione regolare.
+        /// Utile per pattern come "(\d+) gold" o "You (gained|lost)".
+        /// </summary>
+        public virtual bool InJournalRegex(string pattern)
+        {
+            _cancel.ThrowIfCancelled();
+            if (string.IsNullOrEmpty(pattern)) return false;
+            try
+            {
+                var rx = new Regex(pattern, RegexOptions.IgnoreCase);
+                return _journal.Entries.Any(e => rx.IsMatch(e.Text));
+            }
+            catch (RegexParseException) { return false; }
+        }
+
+        /// <summary>
+        /// True se almeno una entry contiene il testo E il Name corrisponde al tipo.
+        /// JournalEntry.Name contiene il nome del mittente (es. "System" per messaggi di sistema).
+        /// Usare "System" per messaggi di sistema, nome del mobile per chat normale.
+        /// </summary>
+        public virtual bool InJournalByType(string text, string type)
+        {
+            _cancel.ThrowIfCancelled();
+            if (string.IsNullOrEmpty(text)) return false;
+            return _journal.Entries.Any(e =>
+                e.Text.Contains(text, StringComparison.OrdinalIgnoreCase) &&
+                e.Name.Equals(type, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// Ritorna il testo dell'ultima entry dove Name corrisponde al tipo, null se assente.
+        /// </summary>
+        public virtual string? GetLastByType(string type)
+        {
+            _cancel.ThrowIfCancelled();
+            return _journal.Entries
+                .LastOrDefault(e => e.Name.Equals(type, StringComparison.OrdinalIgnoreCase))
+                ?.Text;
+        }
+
+        /// <summary>
+        /// True se almeno una entry contiene il testo E proviene dal serial specificato.
+        /// </summary>
+        public virtual bool InJournalBySerial(string text, uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            if (string.IsNullOrEmpty(text)) return false;
+            return _journal.Entries.Any(e =>
+                e.Text.Contains(text, StringComparison.OrdinalIgnoreCase) &&
+                e.Serial == serial);
+        }
+
+        /// <summary>
+        /// Ritorna tutte le entries che corrispondono al pattern regex.
+        /// </summary>
+        public virtual List<string> GetJournalEntriesRegex(string pattern)
+        {
+            _cancel.ThrowIfCancelled();
+            if (string.IsNullOrEmpty(pattern)) return new List<string>();
+            try
+            {
+                var rx = new Regex(pattern, RegexOptions.IgnoreCase);
+                return _journal.Entries
+                    .Where(e => rx.IsMatch(e.Text))
+                    .Select(e => e.Text)
+                    .ToList();
+            }
+            catch (RegexParseException) { return new List<string>(); }
         }
     }
 }

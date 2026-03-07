@@ -216,6 +216,50 @@ namespace TMRazorImproved.Core.Utilities
             return pkt;
         }
 
+        /// <summary>
+        /// Gump Menu Select 0xB1 con switches e text entries.
+        /// switches: array di buttonId delle checkbox spuntate.
+        /// textEntries: array di (textIndex, textValue) per i campi di input.
+        /// </summary>
+        public static byte[] RespondGump(uint gumpSerial, uint gumpTypeId, int buttonId,
+            int[]? switches, (int index, string text)[]? textEntries)
+        {
+            switches     ??= Array.Empty<int>();
+            textEntries  ??= Array.Empty<(int, string)>();
+
+            // Calcola dimensione: header(19) + switchCount(4) + switches + textCount(4) + text entries
+            int switchLen = 4 + switches.Length * 4;
+            int textEntryBytes = 0;
+            foreach (var (_, t) in textEntries)
+                textEntryBytes += 4 + t.Length * 2; // index(2) + len(2) + unicode chars
+            int pktLen = 19 + switchLen + textEntryBytes;
+
+            var pkt = new byte[pktLen];
+            pkt[0] = 0xB1;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), (ushort)pktLen);
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(3), gumpSerial);
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(7), gumpTypeId);
+            BinaryPrimitives.WriteInt32BigEndian(pkt.AsSpan(11), buttonId);
+
+            int pos = 15;
+            BinaryPrimitives.WriteInt32BigEndian(pkt.AsSpan(pos), switches.Length); pos += 4;
+            foreach (int sw in switches)
+            { BinaryPrimitives.WriteInt32BigEndian(pkt.AsSpan(pos), sw); pos += 4; }
+
+            BinaryPrimitives.WriteInt32BigEndian(pkt.AsSpan(pos), textEntries.Length); pos += 4;
+            foreach (var (idx, text) in textEntries)
+            {
+                BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(pos), (ushort)idx); pos += 2;
+                BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(pos), (ushort)text.Length); pos += 2;
+                foreach (char c in text)
+                {
+                    pkt[pos++] = (byte)(c >> 8);
+                    pkt[pos++] = (byte)c;
+                }
+            }
+            return pkt;
+        }
+
         // -------------------------------------------------------------------------
         // Properties
         // -------------------------------------------------------------------------

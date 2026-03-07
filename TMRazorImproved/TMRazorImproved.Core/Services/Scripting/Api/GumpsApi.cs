@@ -133,5 +133,123 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             if (gump == null || index < 0 || index >= gump.Strings.Count) return string.Empty;
             return gump.Strings[index];
         }
+
+        // ------------------------------------------------------------------
+        // API aggiuntive
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// True se il gump con il GumpId specificato è aperto.
+        /// Controlla sia il CurrentGump che la lista OpenGumps.
+        /// </summary>
+        public virtual bool IsGumpVisible(uint gumpId)
+        {
+            _cancel.ThrowIfCancelled();
+            if (_world.CurrentGump?.GumpId == gumpId) return true;
+            return _world.OpenGumps.Values.Any(g => g.GumpId == gumpId);
+        }
+
+        /// <summary>
+        /// Ritorna il testo dell'entry di input con l'indice specificato
+        /// (corrisponde alle Strings del gump — campo di testo editabile).
+        /// </summary>
+        public virtual string GetTextEntry(int index)
+        {
+            _cancel.ThrowIfCancelled();
+            return GetStringLine(index);
+        }
+
+        /// <summary>
+        /// Ritorna la lista degli id dei pulsanti radio/checkbox definiti nel layout
+        /// del gump corrente (comando "checkmark" o "radio" nel layout).
+        /// </summary>
+        public virtual System.Collections.Generic.List<int> GetSwitches()
+        {
+            _cancel.ThrowIfCancelled();
+            var gump = _world.CurrentGump;
+            if (gump == null) return new System.Collections.Generic.List<int>();
+            // Cerca "checkmark" e "radio" nel Layout raw
+            var result = new System.Collections.Generic.List<int>();
+            var matches = System.Text.RegularExpressions.Regex.Matches(
+                gump.Layout, @"\{\s*(?:checkmark|radio)\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+)\s*\}",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            foreach (System.Text.RegularExpressions.Match m in matches)
+            {
+                if (int.TryParse(m.Groups[1].Value, out int id))
+                    result.Add(id);
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Risponde al gump con il serial/gumpId specificato inviando
+        /// switches (radio/checkbox) e text entries oltre al buttonId.
+        /// </summary>
+        public virtual void ReplyGump(uint gumpSerial, uint gumpTypeId, int buttonId,
+            int[]? switches = null, string[]? textEntries = null)
+        {
+            _cancel.ThrowIfCancelled();
+            // Costruisce il formato (index, text) dalla lista di stringhe
+            (int, string)[]? entries = null;
+            if (textEntries != null)
+            {
+                entries = new (int, string)[textEntries.Length];
+                for (int i = 0; i < textEntries.Length; i++)
+                    entries[i] = (i, textEntries[i]);
+            }
+            _packet.SendToServer(
+                TMRazorImproved.Core.Utilities.PacketBuilder.RespondGump(
+                    gumpSerial, gumpTypeId, buttonId, switches, entries));
+            _world.RemoveGump(gumpSerial);
+        }
+
+        /// <summary>
+        /// Ritorna il gump aperto con il GumpId specificato, oppure null.
+        /// </summary>
+        public virtual UOGump? GetGumpById(uint gumpId)
+        {
+            _cancel.ThrowIfCancelled();
+            if (_world.CurrentGump?.GumpId == gumpId) return _world.CurrentGump;
+            return _world.OpenGumps.Values.FirstOrDefault(g => g.GumpId == gumpId);
+        }
+
+        /// <summary>Numero di text entry nel gump corrente (conta le righe con "textentry" nel layout).</summary>
+        public virtual int GetTextEntryCount()
+        {
+            _cancel.ThrowIfCancelled();
+            var gump = _world.CurrentGump;
+            if (gump == null || string.IsNullOrEmpty(gump.Layout)) return 0;
+            return System.Text.RegularExpressions.Regex.Matches(gump.Layout, @"\{\s*textentry\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Count;
+        }
+
+        /// <summary>Numero di switch/checkbox nel gump corrente.</summary>
+        public virtual int GetSwitchCount()
+        {
+            _cancel.ThrowIfCancelled();
+            var gump = _world.CurrentGump;
+            if (gump == null || string.IsNullOrEmpty(gump.Layout)) return 0;
+            return System.Text.RegularExpressions.Regex.Matches(gump.Layout, @"\{\s*(checkmark|radio)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Count;
+        }
+
+        /// <summary>Attende che appaia un gump con il serial specificato (non GumpId).</summary>
+        public virtual bool WaitForGumpSerial(uint gumpSerial, int timeoutMs = 5000)
+        {
+            _cancel.ThrowIfCancelled();
+            var deadline = System.Environment.TickCount64 + timeoutMs;
+            while (System.Environment.TickCount64 < deadline)
+            {
+                _cancel.ThrowIfCancelled();
+                if (_world.OpenGumps.ContainsKey(gumpSerial)) return true;
+                System.Threading.Thread.Sleep(50);
+            }
+            return _world.OpenGumps.ContainsKey(gumpSerial);
+        }
+
+        /// <summary>Lista dei serial di tutti i gump aperti.</summary>
+        public virtual System.Collections.Generic.List<uint> GetOpenGumpSerials()
+        {
+            _cancel.ThrowIfCancelled();
+            return new System.Collections.Generic.List<uint>(_world.OpenGumps.Keys);
+        }
     }
 }
