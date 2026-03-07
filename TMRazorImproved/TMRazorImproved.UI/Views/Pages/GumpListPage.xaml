@@ -4,6 +4,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="Gump List Manager">
@@ -15,12 +16,12 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,16">
-            <ui:TextBlock Text="Gump List Manager" FontSize="28" FontWeight="Bold" />
-            <ui:Button Command="{Binding ViewModel.RefreshGumpsCommand}" Icon="{ui:SymbolIcon Refresh24}" Margin="16,0,0,0" ToolTip="Refresh Gumps" />
+            <ui:TextBlock Text="{loc:Loc Nav.Tools.GumpList}" FontSize="28" FontWeight="Bold" />
+            <ui:Button Command="{Binding RefreshGumpsCommand}" Icon="{ui:SymbolIcon ArrowCounterclockwise24}" Margin="16,0,0,0" ToolTip="{loc:Loc Inspector.GumpList.Refresh.ToolTip}" />
         </StackPanel>
 
         <ui:Card Grid.Row="1" Padding="0">
-            <DataGrid ItemsSource="{Binding ViewModel.OpenGumps}" 
+            <DataGrid ItemsSource="{Binding OpenGumps}" 
                       AutoGenerateColumns="False" 
                       CanUserAddRows="False" 
                       Background="Transparent" 
@@ -28,25 +29,27 @@
                       HeadersVisibility="Column"
                       GridLinesVisibility="Horizontal">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Gump ID" Binding="{Binding GumpId, StringFormat=0x{0:X}}" Width="100" />
-                    <DataGridTextColumn Header="Serial" Binding="{Binding Serial, StringFormat=0x{0:X}}" Width="100" />
-                    <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="100" />
-                    <DataGridTextColumn Header="Commands" Binding="{Binding Commands.Count}" Width="100" />
-                    <DataGridTextColumn Header="Lines" Binding="{Binding Lines.Count}" Width="100" />
-                    <DataGridTemplateColumn Header="Actions" Width="*">
+                    <DataGridTextColumn Header="{loc:Loc Inspector.GumpList.Column.ID}" Binding="{Binding GumpId, StringFormat=0x{0:X}}" Width="100" />
+                    <DataGridTextColumn Header="{loc:Loc Inspector.GumpList.Column.Serial}" Binding="{Binding Serial, StringFormat=0x{0:X}}" Width="100" />
+                    <DataGridTextColumn Header="{loc:Loc Inspector.GumpList.Column.Type}" Binding="{Binding Type}" Width="100" />
+                    <DataGridTextColumn Header="{loc:Loc Inspector.GumpList.Column.Commands}" Binding="{Binding Commands.Count}" Width="100" />
+                    <DataGridTextColumn Header="{loc:Loc Inspector.GumpList.Column.Lines}" Binding="{Binding Lines.Count}" Width="100" />
+                    <DataGridTemplateColumn Header="{loc:Loc Inspector.GumpList.Column.Actions}" Width="*">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
-                                    <ui:Button Command="{Binding DataContext.ViewModel.InspectGumpCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                    <ui:Button Command="{Binding DataContext.InspectGumpCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
                                                CommandParameter="{Binding}" 
                                                Icon="{ui:SymbolIcon EyeShow24}" 
-                                               Content="Inspect" 
-                                               Margin="0,0,8,0" />
-                                    <ui:Button Command="{Binding DataContext.ViewModel.CloseGumpCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                               Content="{loc:Loc Inspector.GumpList.Action.Inspect}" 
+                                               Margin="0,0,8,0"
+                                               ToolTip="{loc:Loc Inspector.GumpList.Action.Inspect.ToolTip}"/>
+                                    <ui:Button Command="{Binding DataContext.CloseGumpCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
                                                CommandParameter="{Binding}" 
                                                Icon="{ui:SymbolIcon Dismiss24}" 
-                                               Content="Close" 
-                                               Appearance="Danger" />
+                                               Content="{loc:Loc Inspector.GumpList.Action.Close}" 
+                                               Appearance="Danger" 
+                                               ToolTip="{loc:Loc Inspector.GumpList.Action.Close.ToolTip}"/>
                                 </StackPanel>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>

@@ -16,19 +16,50 @@ namespace TMRazorImproved.UI.ViewModels
         private readonly IScreenCaptureService _screenCapture;
         private readonly IVideoCaptureService _videoCapture;
         private readonly ISnackbarService _snackbar;
+        private readonly ILanguageService _languageService;
 
         [ObservableProperty]
         private bool _isRecording;
 
-        public ObservableCollection<string> RecentScreenshots { get; } = new();
+        [ObservableProperty]
+        private string _selectedLanguage;
 
-        public DashboardViewModel(IScreenCaptureService screenCapture, IVideoCaptureService videoCapture, ISnackbarService snackbar)
+        public ObservableCollection<string> RecentScreenshots { get; } = new();
+        public ObservableCollection<string> AvailableLanguages { get; } = new();
+
+        public DashboardViewModel(IScreenCaptureService screenCapture, IVideoCaptureService videoCapture, ISnackbarService snackbar, ILanguageService languageService, IConfigService configService)
         {
             _screenCapture = screenCapture;
             _videoCapture = videoCapture;
             _snackbar = snackbar;
+            _languageService = languageService;
             
+            foreach (var lang in _languageService.GetAvailableLanguages())
+            {
+                AvailableLanguages.Add(lang);
+            }
+
+            // Bind to current config
+            _selectedLanguage = configService.Global.Language;
+
             LoadRecentScreenshots();
+        }
+
+        partial void OnSelectedLanguageChanged(string value)
+        {
+            if (!string.IsNullOrEmpty(value))
+            {
+                _languageService.Load(value);
+                TMRazorImproved.UI.Utilities.TranslationSource.Instance.Refresh();
+                
+                // Save to configuration so it persists
+                var configService = App.GetService<IConfigService>();
+                if (configService != null && configService.Global.Language != value)
+                {
+                    configService.Global.Language = value;
+                    configService.Save();
+                }
+            }
         }
 
         private void LoadRecentScreenshots()

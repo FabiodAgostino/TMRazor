@@ -18,10 +18,15 @@ namespace TMRazorImproved.Core.Services
         private readonly IFriendsService _friendsService;
         private readonly ILogger<TargetingService> _logger;
 
-        private uint _lastTarget;
+        // BUG-P1-01 FIX: _lastTarget e _hasPrompt acceduti da packet thread e UI thread →
+        // devono essere volatile per garantire visibilità cross-thread senza lock overhead.
+        private volatile uint _lastTarget;
+        // _targetQueue e _queueIndex: modificati da hotkey callbacks (qualsiasi thread) →
+        // accessi protetti da _queueLock.
         private List<uint> _targetQueue = new();
         private int _queueIndex = -1;
-        private bool _hasPrompt;
+        private readonly object _queueLock = new();
+        private volatile bool _hasPrompt;
         private volatile bool _hasTargetCursor;
         private volatile uint _pendingCursorId;
         // FIX P1-02: tracking serial/promptId dal pacchetto 0x9A S2C
@@ -30,11 +35,11 @@ namespace TMRazorImproved.Core.Services
 
         public uint LastTarget
         {
-            get => _lastTarget;
-            set => _lastTarget = value;
+            get => _lastTarget;   // volatile read
+            set => _lastTarget = value;  // volatile write
         }
 
-        public bool HasPrompt => _hasPrompt;
+        public bool HasPrompt => _hasPrompt;  // volatile read
         public bool HasTargetCursor => _hasTargetCursor;
         public uint PendingCursorId => _pendingCursorId;
         public uint PendingPromptSerial => _pendingPromptSerial;
@@ -138,20 +143,23 @@ namespace TMRazorImproved.Core.Services
             var validTargets = GetValidTargets();
             if (validTargets.Count == 0) return;
 
-            // Gestione del ciclo della coda
-            if (_targetQueue.SequenceEqual(validTargets.Select(t => t.Serial)))
+            lock (_queueLock)
             {
-                _queueIndex = (_queueIndex + 1) % _targetQueue.Count;
-            }
-            else
-            {
-                _targetQueue = validTargets.Select(t => t.Serial).ToList();
-                _queueIndex = 0;
-            }
+                var validSerials = validTargets.Select(t => t.Serial).ToList();
+                if (_targetQueue.SequenceEqual(validSerials))
+                {
+                    _queueIndex = (_queueIndex + 1) % _targetQueue.Count;
+                }
+                else
+                {
+                    _targetQueue = validSerials;
+                    _queueIndex = 0;
+                }
 
-            uint targetSerial = _targetQueue[_queueIndex];
-            SetLastTarget(targetSerial);
-            _logger.LogDebug("Target Next: 0x{Serial:X}", targetSerial);
+                uint targetSerial = _targetQueue[_queueIndex];
+                SetLastTarget(targetSerial);
+                _logger.LogDebug("Target Next: 0x{Serial:X}", targetSerial);
+            }
         }
 
         public void TargetClosest()
@@ -178,8 +186,7 @@ namespace TMRazorImproved.Core.Services
         public void Clear()
         {
             _lastTarget = 0;
-            _targetQueue.Clear();
-            _queueIndex = -1;
+            lock (_queueLock) { _targetQueue.Clear(); _queueIndex = -1; }
             _logger.LogDebug("Target Cleared");
         }
 

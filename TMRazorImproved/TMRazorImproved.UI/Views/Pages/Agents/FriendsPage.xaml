@@ -4,158 +4,21 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      xmlns:local="clr-namespace:TMRazorImproved.UI.Views.Pages.Agents"
-      xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="800"
-      Title="Friends Agent"
-      d:DataContext="{d:DesignInstance vm:FriendsViewModel, IsDesignTimeCreatable=False}">
+      Title="Friends">
 
-    <Grid Margin="32">
+    <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <ui:TextBlock Text="Friends Agent" FontSize="28" FontWeight="Bold" Margin="0,0,0,24" Grid.Row="0"/>
+        <ui:TextBlock Text="{loc:Loc Agents.Friends.Title}" FontSize="24" FontWeight="Bold" Margin="0,0,0,16" Grid.Row="0" />
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="250" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <!-- Lists Management -->
-            <ui:Card Grid.Column="0" Margin="0,0,16,0" Padding="16">
-                <DockPanel>
-                    <ui:TextBlock Text="Friend Lists" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" DockPanel.Dock="Top"/>
-                    
-                    <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
-                        <ui:TextBox PlaceholderText="New List Name" 
-                                    Text="{Binding NewListName, UpdateSourceTrigger=PropertyChanged}" 
-                                    Margin="0,0,0,8"/>
-                        <ui:Button Content="Create List" 
-                                   Command="{Binding CreateListCommand}" 
-                                   HorizontalAlignment="Stretch" 
-                                   Appearance="Primary"
-                                   Margin="0,0,0,8"/>
-                        <ui:Button Content="Delete Selected" 
-                                   Command="{Binding DeleteListCommand}" 
-                                   HorizontalAlignment="Stretch"
-                                   Appearance="Secondary"/>
-                    </StackPanel>
-
-                    <ListBox ItemsSource="{Binding FriendsLists}" 
-                             SelectedItem="{Binding SelectedList}"
-                             BorderThickness="0"
-                             Background="Transparent"/>
-                </DockPanel>
-            </ui:Card>
-
-            <!-- Content Area -->
-            <ScrollViewer Grid.Column="1">
-                <StackPanel>
-                    <!-- Global Options -->
-                    <ui:Card Margin="0,0,0,16" Padding="16">
-                        <StackPanel>
-                            <ui:TextBlock Text="Global Options" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                            <UniformGrid Columns="2">
-                                <CheckBox Content="Auto-accept Party" IsChecked="{Binding AutoAcceptParty}" Margin="0,4"/>
-                                <CheckBox Content="Prevent Attack on Friends" IsChecked="{Binding PreventAttack}" Margin="0,4"/>
-                                <CheckBox Content="Include Party Members" IsChecked="{Binding IncludeParty}" Margin="0,4"/>
-                                <CheckBox Content="Faction: SL" IsChecked="{Binding SLFriend}" Margin="0,4"/>
-                                <CheckBox Content="Faction: TB" IsChecked="{Binding TBFriend}" Margin="0,4"/>
-                                <CheckBox Content="Faction: CoM" IsChecked="{Binding COMFriend}" Margin="0,4"/>
-                                <CheckBox Content="Faction: MiN" IsChecked="{Binding MINFriend}" Margin="0,4"/>
-                            </UniformGrid>
-                        </StackPanel>
-                    </ui:Card>
-
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Players List -->
-                        <ui:Card Grid.Column="0" Margin="0,0,8,0" Padding="16">
-                            <DockPanel Height="300">
-                                <ui:TextBlock Text="Friends (Players)" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" DockPanel.Dock="Top"/>
-                                <ui:Button Content="Add Friend (Target)" 
-                                           Icon="{ui:SymbolIcon Target24}" 
-                                           Command="{Binding AddFriendTargetCommand}" 
-                                           DockPanel.Dock="Bottom" 
-                                           Margin="0,12,0,0"
-                                           Appearance="Primary"/>
-                                
-                                <DataGrid ItemsSource="{Binding Players}" 
-                                          AutoGenerateColumns="False" 
-                                          CanUserAddRows="False"
-                                          HeadersVisibility="Column"
-                                          Background="Transparent"
-                                          BorderThickness="0">
-                                    <DataGrid.Columns>
-                                        <DataGridCheckBoxColumn Header="En" Binding="{Binding Enabled}" Width="Auto"/>
-                                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
-                                        <DataGridTextColumn Header="Serial" Binding="{Binding Serial, StringFormat=0x{0:X8}}" Width="Auto"/>
-                                        <DataGridTemplateColumn Width="Auto">
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <ui:Button Icon="{ui:SymbolIcon Delete24}" 
-                                                               Command="{Binding DataContext.RemoveFriendCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                               CommandParameter="{Binding}"
-                                                               Appearance="Secondary"
-                                                               Padding="4"/>
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </DockPanel>
-                        </ui:Card>
-
-                        <!-- Guilds List -->
-                        <ui:Card Grid.Column="1" Margin="8,0,0,0" Padding="16">
-                            <DockPanel Height="300">
-                                <ui:TextBlock Text="Friends (Guilds)" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" DockPanel.Dock="Top"/>
-                                <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <ui:TextBox PlaceholderText="Guild Tag" Text="{Binding NewGuildName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
-                                        <ui:Button Grid.Column="1" Icon="{ui:SymbolIcon Add24}" Command="{Binding AddGuildCommand}" Appearance="Primary"/>
-                                    </Grid>
-                                </StackPanel>
-
-                                <DataGrid ItemsSource="{Binding Guilds}" 
-                                          AutoGenerateColumns="False" 
-                                          CanUserAddRows="False"
-                                          HeadersVisibility="Column"
-                                          Background="Transparent"
-                                          BorderThickness="0">
-                                    <DataGrid.Columns>
-                                        <DataGridCheckBoxColumn Header="En" Binding="{Binding Enabled}" Width="Auto"/>
-                                        <DataGridTextColumn Header="Tag" Binding="{Binding Name}" Width="*"/>
-                                        <DataGridTemplateColumn Width="Auto">
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <ui:Button Icon="{ui:SymbolIcon Delete24}" 
-                                                               Command="{Binding DataContext.RemoveGuildCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                               CommandParameter="{Binding}"
-                                                               Appearance="Secondary"
-                                                               Padding="4"/>
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </DockPanel>
-                        </ui:Card>
-                    </Grid>
-                </StackPanel>
-            </ScrollViewer>
-        </Grid>
+        <ui:Card Grid.Row="1" VerticalAlignment="Top">
+            <TextBlock Text="{loc:Loc Agents.Friends.Management}" />
+        </ui:Card>
     </Grid>
 </Page>

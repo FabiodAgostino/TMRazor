@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
@@ -13,6 +14,7 @@ namespace TMRazorImproved.UI.ViewModels
     {
         private readonly ISkillsService _skillsService;
         private readonly IMessenger _messenger;
+        private readonly ILanguageService _languageService;
         private readonly object _skillsLock = new();
 
         [ObservableProperty]
@@ -35,10 +37,11 @@ namespace TMRazorImproved.UI.ViewModels
         public IRelayCommand SetAllLocksCommand { get; }
         public IRelayCommand CopyAllCommand { get; }
 
-        public SkillsViewModel(ISkillsService skillsService, IMessenger messenger)
+        public SkillsViewModel(ISkillsService skillsService, IMessenger messenger, ILanguageService languageService)
         {
             _skillsService = skillsService;
             _messenger = messenger;
+            _languageService = languageService;
             ResetDeltaCommand = new RelayCommand(() => _skillsService.ResetDelta());
             SetAllLocksCommand = new RelayCommand(SetAllLocks);
             CopyAllCommand = new RelayCommand(CopyAll);
@@ -57,6 +60,10 @@ namespace TMRazorImproved.UI.ViewModels
         {
             RunOnUIThread(() =>
             {
+                // SkillInfo properties sono aggiornate da un thread di background (timer).
+                // WPF non garantisce il marshaling cross-thread degli eventi PropertyChanged
+                // per gli item di un DataGrid → forziamo un refresh esplicito della view.
+                System.Windows.Data.CollectionViewSource.GetDefaultView(Skills).Refresh();
                 UpdateTotals();
                 RefreshHistory();
             });
@@ -65,6 +72,14 @@ namespace TMRazorImproved.UI.ViewModels
         private void RefreshSkills()
         {
             SyncCollection(Skills, _skillsService.Skills, _skillsLock);
+            foreach (var skill in Skills)
+                skill.PropertyChanged += OnSkillLockChanged;
+        }
+
+        private void OnSkillLockChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(SkillInfo.Lock) && sender is SkillInfo skill)
+                _skillsService.SetLock(skill.ID, skill.Lock);
         }
 
         private void RefreshHistory()
@@ -83,19 +98,19 @@ namespace TMRazorImproved.UI.ViewModels
             {
                 skill.Lock = SelectedLockAll;
             }
-            StatusText = $"All skills set to {SelectedLockAll}";
+            StatusText = $"{_languageService.GetString("Skills.Status.AllSet")} {SelectedLockAll}";
         }
 
         private void CopyAll()
         {
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("Skill Name\tReal\tBase\tCap");
+            sb.AppendLine($"{_languageService.GetString("Skills.Column.Name")}\t{_languageService.GetString("Skills.Column.Real")}\t{_languageService.GetString("Skills.Column.Base")}\t{_languageService.GetString("Skills.Column.Cap")}");
             foreach (var s in Skills)
             {
                 sb.AppendLine($"{s.Name}\t{s.Value:F1}\t{s.BaseValue:F1}\t{s.Cap:F1}");
             }
             System.Windows.Clipboard.SetText(sb.ToString());
-            StatusText = "Skill list copied to clipboard.";
+            StatusText = _languageService.GetString("Skills.Status.Copied");
         }
 
         private void UpdateTotals()

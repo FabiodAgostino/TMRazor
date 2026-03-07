@@ -13,7 +13,7 @@ namespace TMRazorImproved.UI.Views.Pages
         public HotkeysPage(HotkeysViewModel viewModel)
         {
             ViewModel = viewModel;
-            DataContext = this;
+            DataContext = ViewModel;
 
             InitializeComponent();
         }

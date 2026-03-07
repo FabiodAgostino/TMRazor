@@ -1,4 +1,4 @@
-<Page x:Class="TMRazorImproved.UI.Views.Pages.ScriptingPage"
+﻿<Page x:Class="TMRazorImproved.UI.Views.Pages.ScriptingPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -10,13 +10,16 @@
       xmlns:util="clr-namespace:TMRazorImproved.UI.Utilities"
       mc:Ignorable="d"
       d:DesignHeight="700" d:DesignWidth="1000"
-      Title="Scripting">
+      Title="{loc:Loc Scripting.Title}"
+      ScrollViewer.VerticalScrollBarVisibility="Disabled"
+      VerticalAlignment="Stretch">
 
-    <Grid Margin="16,8,16,16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <Grid Height="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
+        <Grid Margin="16,8,16,16" VerticalAlignment="Stretch">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
         <!-- ===== TOOLBAR ===== -->
         <ui:Card Grid.Row="0" Margin="0,0,0,8" Padding="10,6">
@@ -29,16 +32,16 @@
                 <!-- Left: file operations + script name -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <ui:Button Content="{loc:Loc Scripting.New}" Command="{Binding NewScriptCommand}"
-                               Margin="0,0,4,0" ToolTip="Nuovo script vuoto"/>
+                               Margin="0,0,4,0" ToolTip="{loc:Loc Scripting.New.ToolTip}"/>
                     <ui:Button Content="{loc:Loc Scripting.Open}"  Command="{Binding OpenScriptCommand}"
-                               Margin="0,0,4,0" ToolTip="Apri file .py"/>
+                               Margin="0,0,4,0" ToolTip="{loc:Loc Scripting.Open.ToolTip}"/>
                     <ui:Button Content="{loc:Loc Scripting.Save}" Command="{Binding SaveScriptCommand}"
-                               Margin="0,0,12,0" ToolTip="Salva script su file"/>
+                               Margin="0,0,12,0" ToolTip="{loc:Loc Scripting.Save.ToolTip}"/>
 
                     <Border Width="1" Background="{DynamicResource ControlBorderColorBrush}"
                             Margin="0,4,12,4"/>
 
-                    <ui:TextBlock Text="Language:" VerticalAlignment="Center" Margin="0,0,6,0"
+                    <ui:TextBlock Text="{loc:Loc Scripting.Language}" VerticalAlignment="Center" Margin="0,0,6,0"
                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                     <ComboBox Width="100" Margin="0,0,12,0"
                               ItemsSource="{Binding AvailableLanguages}"
@@ -48,33 +51,28 @@
                     <Border Width="1" Background="{DynamicResource ControlBorderColorBrush}"
                             Margin="0,4,12,4"/>
 
-                    <ui:TextBlock Text="Script:" VerticalAlignment="Center" Margin="0,0,6,0"
+                    <ui:TextBlock Text="{loc:Loc Scripting.Script}" VerticalAlignment="Center" Margin="0,0,6,0"
                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                     <ui:TextBox Width="200"
                                 Text="{Binding ScriptName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                PlaceholderText="nome_script.py"
+                                PlaceholderText="{loc:Loc Scripting.ScriptName.Placeholder}"
                                 VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Right: Run / Stop + status -->
+                <!-- Right: Run / Stop -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <ui:TextBlock Text="{Binding StatusText}"
-                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                  VerticalAlignment="Center"
-                                  Margin="0,0,16,0" FontSize="12"/>
-
                     <ui:Button Content="{loc:Loc Scripting.Run}"
                                Appearance="Primary"
                                Command="{Binding RunScriptCommand}"
                                Padding="16,6"
                                Margin="0,0,6,0"
-                               ToolTip="Esegui lo script (F5)"/>
+                               ToolTip="{loc:Loc Scripting.Run.ToolTip}"/>
 
                     <ui:Button Content="{loc:Loc Scripting.Stop}"
                                Appearance="Danger"
                                Command="{Binding StopScriptCommand}"
                                Padding="16,6"
-                               ToolTip="Interrompi lo script"/>
+                               ToolTip="{loc:Loc Scripting.Stop.ToolTip}"/>
                 </StackPanel>
             </Grid>
         </ui:Card>
@@ -87,7 +85,7 @@
                 <RowDefinition Height="1*" MinHeight="80"/>
             </Grid.RowDefinitions>
 
-            <!-- ── Code Editor ── -->
+            <!-- â”€â”€ Code Editor â”€â”€ -->
             <Border Grid.Row="0"
                     Background="#1E1E1E"
                     BorderBrush="{DynamicResource ControlBorderColorBrush}"
@@ -108,7 +106,7 @@
                     util:AvalonEditBehavior.IsTextBindingActive="True"/>
             </Border>
 
-            <!-- ── GridSplitter ── -->
+            <!-- â”€â”€ GridSplitter â”€â”€ -->
             <GridSplitter Grid.Row="1"
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch"
@@ -116,7 +114,7 @@
                           ResizeBehavior="PreviousAndNext"
                           Cursor="SizeNS"/>
 
-            <!-- ── Output Console ── -->
+            <!-- â”€â”€ Output Console â”€â”€ -->
             <Border Grid.Row="2"
                     Background="#141414"
                     BorderBrush="{DynamicResource ControlBorderColorBrush}"
@@ -128,25 +126,32 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Console header bar -->
                     <Border Grid.Row="0"
                             Background="#252526"
                             BorderBrush="{DynamicResource ControlBorderColorBrush}"
                             BorderThickness="0,0,0,1"
                             Padding="10,4">
                         <Grid>
-                            <ui:TextBlock Text="Output"
-                                          FontWeight="SemiBold"
-                                          FontSize="12"
-                                          Foreground="#CCCCCC"
-                                          VerticalAlignment="Center"/>
-                            <ui:Button Content="Pulisci"
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <ui:TextBlock Text="{loc:Loc Scripting.Output}"
+                                              FontWeight="SemiBold"
+                                              FontSize="12"
+                                              Foreground="#CCCCCC"
+                                              VerticalAlignment="Center"/>
+                                <ui:TextBlock Text="{Binding ExecutionStatus}"
+                                              FontSize="11"
+                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                              VerticalAlignment="Center"
+                                              Margin="10,0,0,0"
+                                              FontStyle="Italic"/>
+                            </StackPanel>
+                            <ui:Button Content="{loc:Loc Scripting.Clear}"
                                        HorizontalAlignment="Right"
                                        Appearance="Secondary"
                                        Padding="10,2"
                                        FontSize="11"
                                        Command="{Binding ClearLogCommand}"
-                                       ToolTip="Pulisci output"/>
+                                       ToolTip="{loc:Loc Scripting.Clear.ToolTip}"/>
                         </Grid>
                     </Border>
 
@@ -157,6 +162,8 @@
                              Background="Transparent"
                              BorderThickness="0"
                              Padding="4,2"
+                             SelectionMode="Extended"
+                             KeyDown="LogListBox_KeyDown"
                              VirtualizingPanel.IsVirtualizing="True"
                              VirtualizingPanel.VirtualizationMode="Recycling"
                              ScrollViewer.HorizontalScrollBarVisibility="Auto"
@@ -172,30 +179,55 @@
                         </ListBox.ItemContainerStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:ScriptLogEntry}">
-                                <TextBlock FontFamily="Consolas, 'Courier New', monospace"
-                                           FontSize="12"
-                                           TextWrapping="NoWrap">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <!-- default: normal output (light gray) -->
-                                            <Setter Property="Foreground" Value="#D4D4D4"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Type}"
-                                                             Value="{x:Static vm:ScriptLogType.Error}">
-                                                    <Setter Property="Foreground" Value="#F44747"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Type}"
-                                                             Value="{x:Static vm:ScriptLogType.System}">
-                                                    <Setter Property="Foreground" Value="#DCDCAA"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                    <Run Text="{Binding FormattedTime, Mode=OneWay}"
-                                         Foreground="#858585"/>
-                                    <Run Text=" "/>
-                                    <Run Text="{Binding Text, Mode=OneWay}"/>
-                                </TextBlock>
+                                <Grid Background="Transparent">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <!-- Timestamp (not selectable, let clicks pass to ListBoxItem) -->
+                                    <TextBlock Grid.Column="0" 
+                                               FontFamily="Consolas, 'Courier New', monospace"
+                                               FontSize="12"
+                                               Text="{Binding FormattedTime, StringFormat='[{0}] ', Mode=OneWay}"
+                                               Foreground="#858585"
+                                               VerticalAlignment="Top"
+                                               Margin="0,0,4,0"
+                                               IsHitTestVisible="False"/>
+
+                                    <!-- Message Text (Selectable TextBox) -->
+                                    <TextBox Grid.Column="1"
+                                             Text="{Binding Text, Mode=OneWay}"
+                                             IsReadOnly="True"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             FontFamily="Consolas, 'Courier New', monospace"
+                                             FontSize="12"
+                                             TextWrapping="NoWrap"
+                                             VerticalAlignment="Top"
+                                             Padding="0"
+                                             Margin="0"
+                                             IsTabStop="False"
+                                             SelectionBrush="{DynamicResource SystemAccentColorBrush}"
+                                             CaretBrush="Transparent">
+                                        <TextBox.Style>
+                                            <Style TargetType="TextBox">
+                                                <!-- default: normal output (light gray) -->
+                                                <Setter Property="Foreground" Value="#D4D4D4"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Type}"
+                                                                 Value="{x:Static vm:ScriptLogType.Error}">
+                                                        <Setter Property="Foreground" Value="#F44747"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Type}"
+                                                                 Value="{x:Static vm:ScriptLogType.System}">
+                                                        <Setter Property="Foreground" Value="#DCDCAA"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBox.Style>
+                                    </TextBox>
+                                </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
@@ -203,4 +235,5 @@
             </Border>
         </Grid>
     </Grid>
-</Page>
+    </Grid>
+    </Page>

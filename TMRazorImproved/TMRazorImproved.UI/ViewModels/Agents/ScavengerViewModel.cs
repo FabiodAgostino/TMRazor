@@ -15,6 +15,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private readonly IConfigService _config;
         private readonly ITargetingService _targeting;
         private readonly ILogService _log;
+        private readonly ILanguageService _lang;
         private readonly object _lock = new();
 
         [ObservableProperty]
@@ -24,7 +25,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private uint _containerSerial;
 
         [ObservableProperty]
-        private string _containerName = "Not Set";
+        private string _containerName = string.Empty;
 
         [ObservableProperty]
         private int _range = 2;
@@ -55,12 +56,15 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         public IRelayCommand RemoveListCommand { get; }
         public IRelayCommand CloneListCommand { get; }
 
-        public ScavengerViewModel(IConfigService config, ITargetingService targeting, ILogService log)
+        public ScavengerViewModel(IConfigService config, ITargetingService targeting, ILogService log, ILanguageService languageService)
         {
             _config = config;
             _targeting = targeting;
             _log = log;
+            _lang = languageService;
             
+            _containerName = _lang.GetString("Agents.General.NotSet");
+
             EnableThreadSafeCollection(Lists, _lock);
             EnableThreadSafeCollection(LootItems, _lock);
             EnableThreadSafeCollection(Logs, _lock);
@@ -120,7 +124,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
             IsEnabled = SelectedList.Enabled;
             ContainerSerial = SelectedList.Container;
-            ContainerName = ContainerSerial != 0 ? $"0x{ContainerSerial:X8}" : "Not Set";
+            ContainerName = ContainerSerial != 0 ? $"0x{ContainerSerial:X8}" : _lang.GetString("Agents.General.NotSet");
             Range = SelectedList.Range;
             Delay = SelectedList.Delay;
             AutoStart = SelectedList.AutoStart;
@@ -135,7 +139,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         private void AddList()
         {
-            var name = $"New List {Lists.Count + 1}";
+            var name = $"{_lang.GetString("Agents.General.NewList")} {Lists.Count + 1}";
             var newList = new ScavengerConfig { Name = name };
             _config.CurrentProfile?.ScavengerLists.Add(newList);
             Lists.Add(newList);
@@ -156,7 +160,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             if (SelectedList == null) return;
             var clone = new ScavengerConfig
             {
-                Name = $"{SelectedList.Name} (Copy)",
+                Name = $"{SelectedList.Name} ({_lang.GetString("Agents.General.Copy")})",
                 Enabled = SelectedList.Enabled,
                 Container = SelectedList.Container,
                 Range = SelectedList.Range,
@@ -174,7 +178,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         private async Task SetContainerAsync()
         {
-            StatusText = "Seleziona il contenitore per lo scavenger...";
+            StatusText = _lang.GetString("Agents.General.SelectContainer");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
@@ -186,7 +190,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                     config.Container = serial;
                     _config.Save();
                 }
-                StatusText = $"Contenitore Scavenger impostato: {ContainerName}";
+                StatusText = $"{_lang.GetString("Agents.General.ContainerSet")} {ContainerName}";
             }
         }
 
@@ -195,15 +199,16 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             var config = GetActiveConfig();
             if (config == null) return;
 
-            StatusText = "Seleziona l'oggetto da aggiungere alla lista...";
+            StatusText = _lang.GetString("Agents.General.SelectItem");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
+                // In a real scenario we'd get the item graphic/color from world data
                 var item = new LootItem((int)0x0F0E, -1, "Targeted Item");
                 config.ItemList.Add(item);
                 LootItems.Add(item);
                 _config.Save();
-                StatusText = "Oggetto aggiunto via target.";
+                StatusText = _lang.GetString("Agents.General.ItemAdded");
             }
         }
 
@@ -216,15 +221,14 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                 config.ItemList.Add(item);
                 LootItems.Add(item);
                 _config.Save();
-                StatusText = "Oggetto vuoto aggiunto. Modifica ID e Colore nella lista.";
+                StatusText = _lang.GetString("Agents.General.ManualItemAdded");
             }
         }
 
         private void EditItem(LootItem? item)
         {
             if (item == null) return;
-            // TODO: Aprire dialog per la modifica delle proprietà
-            StatusText = $"Modifica proprietà per {item.Name} non ancora implementata.";
+            StatusText = _lang.GetString("Agents.General.EditNotImplemented");
         }
 
         private void RemoveItem(LootItem? item)

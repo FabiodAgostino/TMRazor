@@ -14,7 +14,7 @@ namespace TMRazorImproved.Shared.Models.Config
         public string ScriptsPath { get; set; } = string.Empty;
         public bool AutoLaunch { get; set; }
         public bool DebugMode { get; set; }
-        public string Language { get; set; } = "en";
+        public string Language { get; set; } = "it";
         public string Theme { get; set; } = "Dark"; // Light, Dark, HighContrast, Auto
         public string AccentColor { get; set; } = "Default"; // Default or Hex string
 

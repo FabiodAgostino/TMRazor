@@ -1,4 +1,4 @@
-<Page x:Class="TMRazorImproved.UI.Views.Pages.HotkeysPage"
+﻿<Page x:Class="TMRazorImproved.UI.Views.Pages.HotkeysPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -9,7 +9,7 @@
       xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="1000"
-      Title="Hotkeys"
+      Title="{loc:Loc Hotkeys.Title}"
       PreviewKeyDown="Page_PreviewKeyDown">
 
     <Grid Margin="32">
@@ -57,8 +57,12 @@
                     <ui:TextBlock Text="{loc:Loc Hotkeys.CurrentHotkeys}" FontSize="18" FontWeight="SemiBold" DockPanel.Dock="Top" Margin="0,0,0,12"/>
                     
                     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-                        <ui:Button Content="{loc:Loc EnhancedAgentAddList.agentaddItemList.Text}" Icon="Add24" Command="{Binding AddHotkeyCommand}" Margin="0,0,8,0"/>
-                        <ui:Button Content="{loc:Loc MainForm.targetremoveButton.Text}" Icon="Delete24" Command="{Binding RemoveHotkeyCommand}" Appearance="Danger"/>
+                        <ui:Button Content="{loc:Loc EnhancedAgentAddList.agentaddItemList.Text}" Icon="Add24" 
+                                   Command="{Binding AddHotkeyCommand}" Margin="0,0,8,0"
+                                   ToolTip="{loc:Loc Hotkeys.Add.ToolTip}"/>
+                        <ui:Button Content="{loc:Loc MainForm.targetremoveButton.Text}" Icon="Delete24" 
+                                   Command="{Binding RemoveHotkeyCommand}" Appearance="Danger"
+                                   ToolTip="{loc:Loc Hotkeys.Remove.ToolTip}"/>
                     </StackPanel>
 
                     <ListView ItemsSource="{Binding CurrentHotkeys}" 
@@ -66,8 +70,8 @@
                               Background="Transparent" BorderThickness="0">
                         <ListView.View>
                             <GridView>
-                                <GridViewColumn Header="Action" DisplayMemberBinding="{Binding Action}" Width="200"/>
-                                <GridViewColumn Header="Key Combination">
+                                <GridViewColumn Header="{loc:Loc Hotkeys.Action}" DisplayMemberBinding="{Binding Action}" Width="200"/>
+                                <GridViewColumn Header="{loc:Loc Hotkeys.KeyCombination}">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding Converter={StaticResource HotkeyDisplayConverter}}"/>
@@ -87,10 +91,10 @@
                 <StackPanel>
                     <ui:TextBlock Text="{loc:Loc Hotkeys.Edit}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
                     
-                    <ui:TextBlock Text="Action:" Appearance="Secondary" Margin="0,0,0,4"/>
+                    <ui:TextBlock Text="{loc:Loc Hotkeys.Action}" Appearance="Secondary" Margin="0,0,0,4"/>
                     <ui:TextBlock Text="{Binding SelectedHotkey.Action}" FontWeight="Bold" Margin="0,0,0,16"/>
 
-                    <ui:TextBlock Text="Current Binding:" Appearance="Secondary" Margin="0,0,0,4"/>
+                    <ui:TextBlock Text="{loc:Loc Hotkeys.CurrentBinding}" Appearance="Secondary" Margin="0,0,0,4"/>
                     <ui:TextBlock Text="{Binding SelectedHotkey, Converter={StaticResource HotkeyDisplayConverter}}" 
                                   FontSize="20" FontWeight="Bold" Foreground="{ui:ThemeResource SystemAccentColorPrimaryBrush}"
                                   Margin="0,0,0,24" HorizontalAlignment="Center"/>
@@ -98,12 +102,13 @@
                     <ui:Button Content="{loc:Loc Hotkeys.Set}" Icon="Keyboard24" 
                                HorizontalAlignment="Stretch" Padding="12"
                                Command="{Binding StartCaptureCommand}"
-                               Appearance="{Binding IsCapturing, Converter={StaticResource CaptureAppearanceConverter}}"/>
+                               Appearance="{Binding IsCapturing, Converter={StaticResource CaptureAppearanceConverter}}"
+                               ToolTip="{loc:Loc Hotkeys.Set.ToolTip}"/>
 
-                    <ui:ToggleSwitch Content="Pass-through to Client" 
+                    <ui:ToggleSwitch Content="{loc:Loc Hotkeys.PassThrough}" 
                                      IsChecked="{Binding SelectedHotkeyPassThrough, Mode=TwoWay}"
                                      Margin="0,16,0,0"
-                                     ToolTip="If enabled, the key press is also sent to the game client."/>
+                                     ToolTip="{loc:Loc Hotkeys.PassThrough.ToolTip}"/>
 
                     <ui:TextBlock Text="{Binding CaptureStatus}" 
                                   Margin="0,12,0,0" HorizontalAlignment="Center"

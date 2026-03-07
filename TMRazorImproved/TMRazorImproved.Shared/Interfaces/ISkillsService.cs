@@ -32,5 +32,6 @@ namespace TMRazorImproved.Shared.Interfaces
 
         void ResetDelta();
         void SetLock(int skillId, SkillLock lockType);
+        void LoadNamesFromDataPath(string dataPath);
     }
 }

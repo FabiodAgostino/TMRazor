@@ -42,46 +42,8 @@ namespace TMRazorImproved.UI
             // Sottoscrizione agli aggiornamenti del titolo dinamico
             _titleBarService.TitleChanged += OnTitleChanged;
 
-            // Sottoscrizione agli eventi di scripting per notifiche UI
-            _scriptingService.ErrorReceived += OnScriptError;
-            _scriptingService.ScriptCompleted += OnScriptCompleted;
-
             Loaded += OnLoaded;
             Unloaded += OnUnloaded;
-        }
-
-        private void OnScriptError(string message)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                _snackbarService.Show(
-                    "Script Error",
-                    message,
-                    ControlAppearance.Danger,
-                    new SymbolIcon(SymbolRegular.ErrorCircle24),
-                    TimeSpan.FromSeconds(5));
-            });
-        }
-
-        private void OnScriptCompleted(ScriptCompletionInfo info)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                var title = info.WasCancelled ? "Script Stopped" : "Script Completed";
-                var message = info.WasCancelled 
-                    ? $"The script '{info.ScriptName}' was manually stopped." 
-                    : $"The script '{info.ScriptName}' finished in {info.Elapsed.TotalSeconds:F2}s.";
-                
-                var appearance = info.WasCancelled ? ControlAppearance.Info : ControlAppearance.Success;
-                var icon = info.WasCancelled ? SymbolRegular.Stop24 : SymbolRegular.CheckmarkCircle24;
-
-                _snackbarService.Show(
-                    title,
-                    message,
-                    appearance,
-                    new SymbolIcon(icon),
-                    TimeSpan.FromSeconds(3));
-            });
         }
 
         private void OnTitleChanged(string newTitle)
@@ -97,8 +59,6 @@ namespace TMRazorImproved.UI
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             _titleBarService.TitleChanged -= OnTitleChanged;
-            _scriptingService.ErrorReceived -= OnScriptError;
-            _scriptingService.ScriptCompleted -= OnScriptCompleted;
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -114,6 +74,12 @@ namespace TMRazorImproved.UI
         {
             try
             {
+                // Diagnostica: Log dei messaggi di rete (WM_USER + 1 = 0x401)
+                if (msg == 0x401)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[WndProc] Received WM_UONETEVENT: wParam={wParam}, lParam={lParam}");
+                }
+
                 // Passa il messaggio al PacketService per la gestione delle comunicazioni native da Crypt.dll
                 if (_packetService.OnMessage(hwnd, msg, wParam, lParam))
                 {

@@ -12,12 +12,8 @@
 
     <RuleSet>
         <!-- Comments (// or #) -->
-        <Span color="Comment">
-            <Begin>//</Begin>
-        </Span>
-        <Span color="Comment">
-            <Begin>#</Begin>
-        </Span>
+        <Rule color="Comment">//.*</Rule>
+        <Rule color="Comment">\#.*</Rule>
 
         <!-- Strings -->
         <Span color="String">

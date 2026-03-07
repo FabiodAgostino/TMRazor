@@ -10,7 +10,7 @@ namespace TMRazorImproved.UI.Views.Pages
         public OptionsPage(OptionsViewModel viewModel)
         {
             ViewModel = viewModel;
-            DataContext = this;
+            DataContext = viewModel;
 
             InitializeComponent();
         }

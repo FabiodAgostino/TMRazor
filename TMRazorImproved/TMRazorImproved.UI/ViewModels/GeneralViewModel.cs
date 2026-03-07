@@ -2,9 +2,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Enums;
+using TMRazorImproved.UI.Utilities;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Wpf.Ui;
 
 namespace TMRazorImproved.UI.ViewModels
@@ -19,9 +23,11 @@ namespace TMRazorImproved.UI.ViewModels
         private readonly IConfigService _configService;
         private readonly ILanguageService _languageService;
         private readonly IClientInteropService _clientInterop;
+        private readonly IPacketService _packetService;
         private readonly IContentDialogService _dialogService;
         private readonly ISnackbarService _snackbarService;
         private readonly IUOModService _uoModService;
+        private readonly ILogger<GeneralViewModel> _logger;
 
         [ObservableProperty]
         private string _clientPath;
@@ -68,6 +74,14 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty]
         private bool _removeStaminaCheck;
 
+        [ObservableProperty]
+        private bool _isGameRunning;
+
+        [ObservableProperty]
+        private string _launchButtonText = "Launch";
+
+        private readonly System.Windows.Threading.DispatcherTimer _processCheckTimer;
+
         partial void OnRemoveStaminaCheckChanged(bool value)
         {
             _configService.Global.RemoveStaminaCheck = value;
@@ -78,24 +92,35 @@ namespace TMRazorImproved.UI.ViewModels
         private Views.Windows.FloatingToolbarWindow? _toolbar;
         private Views.Windows.DPSMeterWindow? _dpsMeter;
 
+        private readonly ISkillsService _skillsService;
+
         public GeneralViewModel(
-            IConfigService configService, 
+            IConfigService configService,
             ILanguageService languageService,
             IClientInteropService clientInterop,
+            IPacketService packetService,
+            ISkillsService skillsService,
             IContentDialogService dialogService,
             ISnackbarService snackbarService,
-            IUOModService uoModService)
+            IUOModService uoModService,
+            ILogger<GeneralViewModel> logger)
         {
             _configService = configService;
             _languageService = languageService;
             _clientInterop = clientInterop;
+            _packetService = packetService;
+            _skillsService = skillsService;
             _dialogService = dialogService;
             _snackbarService = snackbarService;
             _uoModService = uoModService;
+            _logger = logger;
 
             // Carica i dati iniziali dal file di configurazione globale
             _clientPath = _configService.Global.ClientPath;
             _dataPath = _configService.Global.DataPath;
+
+            // Carica i nomi delle skill dai file dati del client (se disponibili)
+            _skillsService.LoadNamesFromDataPath(_dataPath);
             _patchEncryption = _configService.Global.PatchEncryption;
             _allowMultiClient = _configService.Global.AllowMultiClient;
             _negotiateFeatures = _configService.Global.NegotiateFeatures;
@@ -105,6 +130,25 @@ namespace TMRazorImproved.UI.ViewModels
             LoadAvailableProfiles();
 
             _statusMessage = _languageService.GetString("Status.Ready");
+            _launchButtonText = _languageService.GetString("General.Action.Launch");
+
+            _processCheckTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(2)
+            };
+            _processCheckTimer.Tick += (s, e) => CheckProcessStatus();
+            _processCheckTimer.Start();
+            CheckProcessStatus();
+        }
+
+        private void CheckProcessStatus()
+        {
+            if (string.IsNullOrEmpty(ClientPath)) return;
+            string clientDir = System.IO.Path.GetDirectoryName(ClientPath) ?? "";
+            uint pid = _clientInterop.FindRunningGameProcess(clientDir);
+            
+            IsGameRunning = pid != 0;
+            LaunchButtonText = IsGameRunning ? _languageService.GetString("General.Action.Connect") : _languageService.GetString("General.Action.Launch");
         }
 
         private void LoadAvailableProfiles()
@@ -125,8 +169,8 @@ namespace TMRazorImproved.UI.ViewModels
                 _configService.SwitchProfile(value);
                 _configService.Global.LastProfile = value;
                 _configService.Save();
-                StatusMessage = $"Profile switched to: {value}";
-                _snackbarService.Show("Profile Changed", $"Active profile is now '{value}'", Wpf.Ui.Controls.ControlAppearance.Info, null, TimeSpan.FromSeconds(3));
+                StatusMessage = $"{_languageService.GetString("General.Status.ProfileSwitched")}: {value}";
+                _snackbarService.Show(_languageService.GetString("General.Snackbar.ProfileChanged"), $"{_languageService.GetString("General.Snackbar.ProfileActive")} '{value}'", Wpf.Ui.Controls.ControlAppearance.Info, null, TimeSpan.FromSeconds(3));
             }
         }
 
@@ -135,16 +179,16 @@ namespace TMRazorImproved.UI.ViewModels
         {
             var textBox = new Wpf.Ui.Controls.TextBox
             {
-                PlaceholderText = "Enter profile name...",
+                PlaceholderText = _languageService.GetString("General.Profile.Create.Placeholder"),
                 Margin = new System.Windows.Thickness(0, 10, 0, 0)
             };
 
             var dialog = new Wpf.Ui.Controls.ContentDialog(_dialogService.GetDialogHost())
             {
-                Title = "Create New Profile",
+                Title = _languageService.GetString("General.Profile.Create.Title"),
                 Content = textBox,
-                PrimaryButtonText = "Create",
-                CloseButtonText = "Cancel",
+                PrimaryButtonText = _languageService.GetString("General.Dialog.Create"),
+                CloseButtonText = _languageService.GetString("General.Dialog.Cancel"),
                 DefaultButton = Wpf.Ui.Controls.ContentDialogButton.Primary
             };
 
@@ -156,7 +200,7 @@ namespace TMRazorImproved.UI.ViewModels
                 _configService.CreateProfile(newName);
                 LoadAvailableProfiles();
                 SelectedProfile = newName;
-                _snackbarService.Show("Success", $"Profile '{newName}' created.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
+                _snackbarService.Show(_languageService.GetString("General.Snackbar.Success"), $"{_languageService.GetString("General.Snackbar.ProfileCreated")} '{newName}'.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
             }
         }
 
@@ -169,7 +213,7 @@ namespace TMRazorImproved.UI.ViewModels
             _configService.DeleteProfile(toDelete);
             LoadAvailableProfiles();
             SelectedProfile = AvailableProfiles.FirstOrDefault() ?? "Default";
-            _snackbarService.Show("Profile Deleted", $"Profile '{toDelete}' has been removed.", Wpf.Ui.Controls.ControlAppearance.Caution, null, TimeSpan.FromSeconds(3));
+            _snackbarService.Show(_languageService.GetString("General.Snackbar.ProfileDeleted"), $"{_languageService.GetString("General.Snackbar.ProfileRemoved")} '{toDelete}'.", Wpf.Ui.Controls.ControlAppearance.Caution, null, TimeSpan.FromSeconds(3));
         }
 
         [RelayCommand]
@@ -180,16 +224,16 @@ namespace TMRazorImproved.UI.ViewModels
             var textBox = new Wpf.Ui.Controls.TextBox
             {
                 Text = $"{SelectedProfile}_Copy",
-                PlaceholderText = "Enter new profile name...",
+                PlaceholderText = _languageService.GetString("General.Profile.Create.Placeholder"),
                 Margin = new System.Windows.Thickness(0, 10, 0, 0)
             };
 
             var dialog = new Wpf.Ui.Controls.ContentDialog(_dialogService.GetDialogHost())
             {
-                Title = $"Clone Profile: {SelectedProfile}",
+                Title = $"{_languageService.GetString("General.Profile.Clone.Title")}: {SelectedProfile}",
                 Content = textBox,
-                PrimaryButtonText = "Clone",
-                CloseButtonText = "Cancel",
+                PrimaryButtonText = _languageService.GetString("General.Dialog.Clone"),
+                CloseButtonText = _languageService.GetString("General.Dialog.Cancel"),
                 DefaultButton = Wpf.Ui.Controls.ContentDialogButton.Primary
             };
 
@@ -201,7 +245,7 @@ namespace TMRazorImproved.UI.ViewModels
                 _configService.CloneProfile(SelectedProfile, newName);
                 LoadAvailableProfiles();
                 SelectedProfile = newName;
-                _snackbarService.Show("Success", $"Profile cloned to '{newName}'.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
+                _snackbarService.Show(_languageService.GetString("General.Snackbar.Success"), $"{_languageService.GetString("General.Snackbar.ProfileCloned")} '{newName}'.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
             }
         }
 
@@ -214,16 +258,16 @@ namespace TMRazorImproved.UI.ViewModels
             var textBox = new Wpf.Ui.Controls.TextBox
             {
                 Text = oldName,
-                PlaceholderText = "Enter new profile name...",
+                PlaceholderText = _languageService.GetString("General.Profile.Create.Placeholder"),
                 Margin = new System.Windows.Thickness(0, 10, 0, 0)
             };
 
             var dialog = new Wpf.Ui.Controls.ContentDialog(_dialogService.GetDialogHost())
             {
-                Title = $"Rename Profile: {oldName}",
+                Title = $"{_languageService.GetString("General.Profile.Rename.Title")}: {oldName}",
                 Content = textBox,
-                PrimaryButtonText = "Rename",
-                CloseButtonText = "Cancel",
+                PrimaryButtonText = _languageService.GetString("General.Dialog.Rename"),
+                CloseButtonText = _languageService.GetString("General.Dialog.Cancel"),
                 DefaultButton = Wpf.Ui.Controls.ContentDialogButton.Primary
             };
 
@@ -237,15 +281,37 @@ namespace TMRazorImproved.UI.ViewModels
                 _configService.RenameProfile(oldName, newName);
                 LoadAvailableProfiles();
                 SelectedProfile = newName;
-                _snackbarService.Show("Success", $"Profile renamed to '{newName}'.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
+                _snackbarService.Show(_languageService.GetString("General.Snackbar.Success"), $"{_languageService.GetString("General.Snackbar.ProfileRenamed")} '{newName}'.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
             }
         }
 
         [RelayCommand]
         private void BrowseClient()
         {
-            // Implementazione futura con OpenFileDialog
-            StatusMessage = _languageService.GetString("Status.Browsing");
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Executables (*.exe)|*.exe|All files (*.*)|*.*",
+                Title = "Select Ultima Online Client"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                ClientPath = dialog.FileName;
+                _configService.Global.ClientPath = ClientPath;
+                
+                // Auto-detect DataPath from the executable's directory
+                var directory = System.IO.Path.GetDirectoryName(ClientPath);
+                if (!string.IsNullOrEmpty(directory))
+                {
+                    DataPath = directory;
+                    _configService.Global.DataPath = DataPath;
+                    _skillsService.LoadNamesFromDataPath(DataPath);
+                }
+
+                _configService.Save();
+                StatusMessage = "Client and Data paths updated.";
+                _snackbarService.Show("Settings Updated", "Client path has been configured successfully.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
+            }
         }
 
         [RelayCommand]
@@ -253,11 +319,11 @@ namespace TMRazorImproved.UI.ViewModels
         {
             if (string.IsNullOrEmpty(ClientPath))
             {
-                StatusMessage = _languageService.GetString("Status.ErrorEmptyPath");
+                StatusMessage = LanguageHelper.Status.ErrorEmptyPath;
                 return;
             }
 
-            StatusMessage = _languageService.GetString("Status.Launching");
+            StatusMessage = LanguageHelper.Status.Launching;
             
             // Salviamo le impostazioni prima di lanciare
             _configService.Global.ClientPath = ClientPath;
@@ -270,43 +336,152 @@ namespace TMRazorImproved.UI.ViewModels
 
             try
             {
-                // Logica di lancio tramite il servizio interop
-                uint pid = _clientInterop.LaunchClient(ClientPath, "Crypt.dll");
-
-                // Get MainWindow handle
-                IntPtr windowHandle = new System.Windows.Interop.WindowInteropHelper(System.Windows.Application.Current.MainWindow).Handle;
+                // Get MainWindow handle (necessario per InstallLibrary)
+                var mainWindow = System.Windows.Application.Current.MainWindow;
+                if (mainWindow == null) { _logger.LogError("MainWindow is NULL."); return; }
+                IntPtr windowHandle = new System.Windows.Interop.WindowInteropHelper(mainWindow).Handle;
+                System.Diagnostics.Trace.WriteLine($"[Launch] MainWindow Handle: 0x{windowHandle.ToInt64():X}");
 
                 // Calcola le flag (features)
                 int flags = 0;
-                if (NegotiateFeatures)
-                    flags |= 0x04;
-                if (PatchEncryption)
-                    flags |= 0x08; // Client Encrypted bit
+                if (NegotiateFeatures) flags |= 0x04;
+                if (PatchEncryption) flags |= 0x08;
 
-                // TODO: Aggiungi ServerEncrypted se necessario (0x10)
+                string clientDir = System.IO.Path.GetDirectoryName(ClientPath) ?? "";
 
-                // Esegui in background per non bloccare l'UI
+                // CASO 1: il gioco è già in esecuzione — non deployare il plugin (DLL locked dal processo)
+                uint runningPid = _clientInterop.FindRunningGameProcess(clientDir);
+
+                // Deploy TMRazorPlugin.dll only when launching a new client instance.
+                // If the game is already running, the plugin is already loaded and the DLL is locked.
+                if (runningPid == 0)
+                    DeployPlugin(clientDir);
+
                 await Task.Run(() =>
                 {
-                    _clientInterop.WaitForWindow(pid);
-                    _clientInterop.InstallLibrary(windowHandle, (int)pid, flags);
+                    int gamePid = 0;
 
-                    // Inject UOMod.dll if any feature requires it
-                    // MultiClient requires injection
-                    if (AllowMultiClient) // O altre condizioni future per UOMod
+                    if (runningPid != 0)
                     {
-                        _uoModService.InjectUoMod((int)pid);
-                        // Abilita la patch MultiUO (sebbene UOMod spesso l'abiliti di default se iniettata, 
-                        // mandiamo il comando per sicurezza).
+                        System.Diagnostics.Trace.WriteLine($"[Launch] Game already running, attaching to PID {runningPid}");
+                        gamePid = (int)runningPid;
+                    }
+                    else
+                    {
+                        // CASO 2: il gioco non è in esecuzione.
+                        // Usa Process.Start direttamente: Loader.dll inietta nel launcher (sbagliato)
+                        // se TmClient.exe è un launcher che spawna il vero client.
+                        // L'iniezione di Crypt.dll avviene comunque dopo via SetWindowsHookEx.
+                        _clientInterop.PrepareForLaunch(); // snapshot PID prima del lancio
+                        System.Diagnostics.Trace.WriteLine($"[Launch] Starting client via Process.Start: {ClientPath}");
+                        var proc = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ClientPath)
+                        {
+                            WorkingDirectory = clientDir,
+                            UseShellExecute = true
+                        });
+                        uint launcherPid = (uint)(proc?.Id ?? 0);
+                        System.Diagnostics.Trace.WriteLine($"[Launch] Process started. PID: {launcherPid}");
+
+                        _clientInterop.WaitForWindow(launcherPid);
+                        gamePid = _clientInterop.GetUOProcessId();
+                        if (gamePid == 0) gamePid = (int)launcherPid;
+                        System.Diagnostics.Trace.WriteLine($"[Launch] Game PID after wait: {gamePid} (launcher was {launcherPid})");
+                    }
+
+                    System.Diagnostics.Trace.WriteLine($"[Launch] Installing shared memory for game PID: {gamePid}");
+                    _clientInterop.InstallLibrary(windowHandle, gamePid, flags);
+                    // Signal PacketService that Crypt.dll is ready: enables packet processing
+                    // and resets any buffer state from premature timer ticks.
+                    _packetService.NotifyCryptReady();
+                    System.Diagnostics.Trace.WriteLine($"[Launch] Shared memory ready (PID: {gamePid})");
+                    _logger.LogInformation("Shared memory ready (PID: {Pid})", gamePid);
+
+                    // InstallLibrary apre la shared memory creata da TMRazorPlugin.dll (già caricata
+                    // da TmClient) e popola PacketTable in modo che GetPacketLength funzioni.
+                    // I WH hook non funzionano su TmClient (x64) ma non sono più necessari.
+
+                    if (AllowMultiClient && gamePid != 0)
+                    {
+                        _uoModService.InjectUoMod(gamePid);
                         _uoModService.EnablePatch(UOPatchType.MultiUO, true);
                     }
                 });
 
-                StatusMessage = _languageService.GetString("Status.ClientReady");
+                StatusMessage = LanguageHelper.Status.ClientReady;
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Errore avvio: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Copies TMRazorPlugin.dll to the ClassicUO plugin directory and updates settings.json
+        /// (merging with existing plugins) so that the client loads it on next startup.
+        /// Works with any ClassicUO-based client that uses the standard plugin API.
+        /// </summary>
+        private void DeployPlugin(string clientDir)
+        {
+            try
+            {
+                string appDir    = System.AppContext.BaseDirectory;
+                string pluginSrc = System.IO.Path.Combine(appDir, "TMRazorPlugin.dll");
+                if (!System.IO.File.Exists(pluginSrc))
+                {
+                    System.Diagnostics.Trace.WriteLine($"[Deploy] TMRazorPlugin.dll not found in {appDir}, skipping deploy.");
+                    return;
+                }
+
+                string pluginDir = System.IO.Path.Combine(clientDir, "Data", "Plugins", "TMRazorImproved");
+                System.IO.Directory.CreateDirectory(pluginDir);
+
+                string pluginDst = System.IO.Path.Combine(pluginDir, "TMRazorPlugin.dll");
+                System.IO.File.Copy(pluginSrc, pluginDst, overwrite: true);
+                System.Diagnostics.Trace.WriteLine($"[Deploy] TMRazorPlugin.dll → {pluginDst}");
+
+                // Update settings.json plugins array to point to TMRazorPlugin.dll
+                string settingsPath = System.IO.Path.Combine(clientDir, "settings.json");
+                if (System.IO.File.Exists(settingsPath))
+                {
+                    try
+                    {
+                        string raw  = System.IO.File.ReadAllText(settingsPath);
+                        var    node = JsonNode.Parse(raw);
+                        if (node != null)
+                        {
+                            // Merge: keep existing plugins, add ours if not already present
+                            var existing = node["plugins"] as JsonArray ?? new JsonArray();
+                            bool alreadyPresent = false;
+                            foreach (var item in existing)
+                                if (string.Equals(item?.GetValue<string>(), pluginDst, StringComparison.OrdinalIgnoreCase))
+                                { alreadyPresent = true; break; }
+
+                            if (!alreadyPresent)
+                            {
+                                var merged = new JsonArray();
+                                foreach (var item in existing)
+                                    merged.Add(item?.GetValue<string>());
+                                merged.Add(pluginDst);
+                                node["plugins"] = merged;
+                                var opts = new JsonSerializerOptions { WriteIndented = true };
+                                System.IO.File.WriteAllText(settingsPath, node.ToJsonString(opts));
+                                System.Diagnostics.Trace.WriteLine($"[Deploy] settings.json updated → plugin={pluginDst}");
+                            }
+                            else
+                            {
+                                System.Diagnostics.Trace.WriteLine($"[Deploy] settings.json already contains plugin entry, skipping.");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Trace.WriteLine($"[Deploy] settings.json update warning: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine($"[Deploy] DeployPlugin warning: {ex.Message}");
             }
         }
 

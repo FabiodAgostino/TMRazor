@@ -12,6 +12,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private readonly IConfigService _config;
         private readonly ITargetingService _targeting;
         private readonly ILogService _log;
+        private readonly ILanguageService _lang;
         private readonly object _lock = new();
 
         [ObservableProperty]
@@ -27,7 +28,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private uint _bandageSerial;
 
         [ObservableProperty]
-        private string _bandageName = "Not Set";
+        private string _bandageName = string.Empty;
 
         [ObservableProperty]
         private int _customDelay = 0;
@@ -85,11 +86,14 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         public IAsyncRelayCommand SetBandageCommand { get; }
 
-        public BandageHealViewModel(IConfigService config, ITargetingService targeting, ILogService log)
+        public BandageHealViewModel(IConfigService config, ITargetingService targeting, ILogService log, ILanguageService languageService)
         {
             _config = config;
             _targeting = targeting;
             _log = log;
+            _lang = languageService;
+
+            _bandageName = _lang.GetString("Agents.General.NotSet");
 
             EnableThreadSafeCollection(Logs, _lock);
 
@@ -119,7 +123,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                 HpStart = bh.HpStart;
                 PoisonPriority = bh.PoisonPriority;
                 BandageSerial = bh.BandageSerial;
-                BandageName = BandageSerial != 0 ? $"0x{BandageSerial:X8}" : "Not Set";
+                BandageName = BandageSerial != 0 ? $"0x{BandageSerial:X8}" : _lang.GetString("Agents.General.NotSet");
                 CustomDelay = bh.CustomDelay;
                 HealPoison = bh.HealPoison;
                 HealMortal = bh.HealMortal;
@@ -142,7 +146,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         private async Task SetBandageAsync()
         {
-            StatusText = "Seleziona le bende (Target Item)...";
+            StatusText = _lang.GetString("Agents.General.SelectItem");
             var serial = await _targeting.AcquireTargetAsync();
             if (serial != 0)
             {
@@ -153,7 +157,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                     _config.CurrentProfile.BandageHeal.BandageSerial = serial;
                     _config.Save();
                 }
-                StatusText = $"Bende impostate: {BandageName}";
+                StatusText = $"{_lang.GetString("Agents.General.ContainerSet")} {BandageName}";
             }
         }
 

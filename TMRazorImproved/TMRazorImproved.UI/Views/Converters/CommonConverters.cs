@@ -12,7 +12,11 @@ namespace TMRazorImproved.UI.Views.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value == null ? Visibility.Collapsed : Visibility.Visible;
+            bool isNull = value == null;
+            if (parameter is string p && p.Equals("Invert", StringComparison.OrdinalIgnoreCase))
+                return isNull ? Visibility.Visible : Visibility.Collapsed;
+            
+            return isNull ? Visibility.Collapsed : Visibility.Visible;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -87,6 +91,27 @@ namespace TMRazorImproved.UI.Views.Converters
         }
     }
 
+    public class BooleanInvertConverter : InvertBooleanConverter { }
+
+    public class IntToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is int intValue)
+            {
+                if (parameter is string p && int.TryParse(p, out int targetValue))
+                {
+                    return intValue == targetValue ? Visibility.Visible : Visibility.Collapsed;
+                }
+                return intValue > 0 ? Visibility.Visible : Visibility.Collapsed;
+            }
+            return Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
+
     public class SpellIconConverter : IValueConverter
     {
         private static TMRazorImproved.UI.Services.IUltimaImageCache? _cache;
@@ -152,5 +177,52 @@ namespace TMRazorImproved.UI.Views.Converters
             }
             return Binding.DoNothing;
         }
+    }
+
+    public class BooleanToTextConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool b && parameter is string p)
+            {
+                var parts = p.Split('|');
+                if (parts.Length == 2) return b ? parts[0] : parts[1];
+            }
+            return value?.ToString() ?? "";
+        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class BooleanToIconConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool b && parameter is string p)
+            {
+                var parts = p.Split('|');
+                if (parts.Length == 2) return b ? parts[0] : parts[1];
+            }
+            return null;
+        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class BooleanToAppearanceConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool b && parameter is string p)
+            {
+                var parts = p.Split('|');
+                if (parts.Length == 2)
+                {
+                    var val = b ? parts[0] : parts[1];
+                    if (Enum.TryParse<ControlAppearance>(val, true, out var result))
+                        return result;
+                }
+            }
+            return ControlAppearance.Primary;
+        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 }

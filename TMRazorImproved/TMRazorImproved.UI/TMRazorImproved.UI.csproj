@@ -2,11 +2,20 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TMRazorImproved.Core\TMRazorImproved.Core.csproj" />
+    <!-- Build TMRazorPlugin but do NOT add a managed reference (it's net48, different runtime) -->
+    <ProjectReference Include="..\TMRazorPlugin\TMRazorPlugin.csproj" ReferenceOutputAssembly="false" Private="false" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\Highlighting\Python.xshd" />
     <EmbeddedResource Include="Resources\Highlighting\UOSteam.xshd" />
+    <EmbeddedResource Include="Resources\Highlighting\CSharp.xshd" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="nlog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -26,5 +35,49 @@
     <UseWPF>true</UseWPF>
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Priorità alla configurazione corrente, fallback su Release se manca Debug -->
+    <None Include="..\..\Loader\bin\Win32\$(Configuration)\Loader.dll" Link="Loader.dll" Condition="Exists('..\..\Loader\bin\Win32\$(Configuration)\Loader.dll')">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\Loader\bin\Win32\Release\Loader.dll" Link="Loader.dll" Condition="!Exists('..\..\Loader\bin\Win32\$(Configuration)\Loader.dll')">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+
+    <!-- Cerca prima nell'output del progetto TMRazorImproved/Crypt (compilato standalone) -->
+    <None Include="..\Crypt\bin\Win32\$(Configuration)\Crypt.dll" Link="Crypt.dll" Condition="Exists('..\Crypt\bin\Win32\$(Configuration)\Crypt.dll')">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="..\Crypt\bin\Win32\Release\Crypt.dll" Link="Crypt.dll" Condition="!Exists('..\Crypt\bin\Win32\$(Configuration)\Crypt.dll') And Exists('..\Crypt\bin\Win32\Release\Crypt.dll')">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <!-- Fallback: output del progetto TMRazor/Crypt (compilato da Razor.sln) -->
+    <None Include="..\..\Crypt\bin\Win32\$(Configuration)\Crypt.dll" Link="Crypt.dll" Condition="!Exists('..\Crypt\bin\Win32\$(Configuration)\Crypt.dll') And !Exists('..\Crypt\bin\Win32\Release\Crypt.dll') And Exists('..\..\Crypt\bin\Win32\$(Configuration)\Crypt.dll')">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\Crypt\bin\Win32\Release\Crypt.dll" Link="Crypt.dll" Condition="!Exists('..\Crypt\bin\Win32\$(Configuration)\Crypt.dll') And !Exists('..\Crypt\bin\Win32\Release\Crypt.dll') And !Exists('..\..\Crypt\bin\Win32\$(Configuration)\Crypt.dll')">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Remove="..\TMRazorPlugin\bin\Debug\net48\TMRazorPlugin.dll" />
+
+    <!-- TMRazorPlugin.dll: copied to output so GeneralViewModel can deploy it to TmClient's plugin dir -->
+    <None Include="..\TMRazorPlugin\bin\$(Configuration)\net48\TMRazorPlugin.dll" Link="TMRazorPlugin.dll" Condition="Exists('..\TMRazorPlugin\bin\$(Configuration)\net48\TMRazorPlugin.dll')">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="..\TMRazorPlugin\bin\Release\net48\TMRazorPlugin.dll" Link="TMRazorPlugin.dll" Condition="!Exists('..\TMRazorPlugin\bin\$(Configuration)\net48\TMRazorPlugin.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+
+    <None Include="..\publish\TMRazorImproved\UOMod.dll" Link="UOMod.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\publish\TMRazorImproved\uo.dll" Link="uo.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\publish\TMRazorImproved\zlib.dll" Link="zlib.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
 </Project>

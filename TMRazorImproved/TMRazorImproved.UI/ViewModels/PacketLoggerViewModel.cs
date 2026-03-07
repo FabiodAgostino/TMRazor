@@ -7,17 +7,21 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TMRazorImproved.Shared.Enums;
 using TMRazorImproved.Shared.Interfaces;
+using TMRazorImproved.Shared.Utilities;
 
 namespace TMRazorImproved.UI.ViewModels
 {
     public partial class PacketLoggerViewModel : ViewModelBase, IDisposable
     {
         private readonly IPacketService _packetService;
+        private readonly ILanguageService _languageService;
         private readonly object _lock = new();
 
         public ObservableCollection<PacketEntry> Packets { get; } = new();
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ToggleRecordingText))]
+        [NotifyPropertyChangedFor(nameof(ToggleRecordingToolTip))]
         private bool _isRecording = true;
 
         [ObservableProperty]
@@ -26,9 +30,18 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty]
         private PacketEntry? _selectedPacket;
 
-        public PacketLoggerViewModel(IPacketService packetService)
+        public string ToggleRecordingText => IsRecording 
+            ? _languageService.GetString("PacketLogger.Pause") 
+            : _languageService.GetString("PacketLogger.Record");
+
+        public string ToggleRecordingToolTip => IsRecording 
+            ? _languageService.GetString("PacketLogger.Pause.ToolTip") 
+            : _languageService.GetString("PacketLogger.Record.ToolTip");
+
+        public PacketLoggerViewModel(IPacketService packetService, ILanguageService languageService)
         {
             _packetService = packetService;
+            _languageService = languageService;
             BindingOperations.EnableCollectionSynchronization(Packets, _lock);
             
             _packetService.PacketReceived += OnPacketReceived;
@@ -83,6 +96,7 @@ namespace TMRazorImproved.UI.ViewModels
         public PacketPath Direction { get; }
         public int Length { get; }
         public byte Id { get; }
+        public string Name { get; }
         public string Hex { get; }
         public string RawHex { get; }
 
@@ -92,6 +106,7 @@ namespace TMRazorImproved.UI.ViewModels
             Direction = direction;
             Length = data.Length;
             Id = data[0];
+            Name = PacketNames.GetName(direction, Id);
             RawHex = BitConverter.ToString(data).Replace("-", " ");
             Hex = FormatHexDump(data);
         }

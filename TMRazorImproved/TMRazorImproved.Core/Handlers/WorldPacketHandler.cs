@@ -80,6 +80,9 @@ namespace TMRazorImproved.Core.Handlers
             }
         }
 
+        // Sent once after the first SetPlayer to request current stats from the server.
+        private bool _playerStatusRequested = false;
+
         private void RegisterHandlers()
         {
             // ── Login / Session ─────────────────────────────────────────────────────────
@@ -219,8 +222,31 @@ namespace TMRazorImproved.Core.Handlers
             reader.ReadByte(); // 0x1B
             uint serial = reader.ReadUInt32();
 
-            var player = new Mobile(serial);
+            // Reuse the existing mobile object so HP/stats already accumulated are preserved.
+            // Creating a new Mobile would break the reference shared with _worldService._mobiles.
+            var player = _worldService.FindMobile(serial);
+            if (player == null)
+            {
+                player = new Mobile(serial);
+                _worldService.AddMobile(player);
+            }
+
+            bool wasNull = _worldService.Player == null;
             _worldService.SetPlayer(player);
+
+            // On first SetPlayer, request current stats via 0x34 so the UI populates immediately.
+            // wasNull guard prevents spamming (synthetic 0x1B fires every ~100ms).
+            if (wasNull && !_playerStatusRequested)
+            {
+                _playerStatusRequested = true;
+                System.Diagnostics.Trace.WriteLine($"[WorldHandler] 0x1B — serial=0x{serial:X8}, requesting stats+skills (0x34)");
+                // Request player status (type=0x04 → server replies with 0x11)
+                _packetService.SendToServer(new byte[] { 0x34, 0xED, 0xED, 0xED, 0xED, 0x04,
+                    (byte)(serial >> 24), (byte)(serial >> 16), (byte)(serial >> 8), (byte)serial });
+                // Request skills (type=0x05 → server replies with 0x3A on servers that support it)
+                _packetService.SendToServer(new byte[] { 0x34, 0xED, 0xED, 0xED, 0xED, 0x05,
+                    (byte)(serial >> 24), (byte)(serial >> 16), (byte)(serial >> 8), (byte)serial });
+            }
         }
 
         private void HandleLoginComplete(byte[] data)
@@ -232,6 +258,7 @@ namespace TMRazorImproved.Core.Handlers
         private void HandleRelayServer(byte[] data)
         {
             // 0x8C: ip(4) port(2) key(4) — il server reindirizza, azzeriamo il mondo
+            System.Diagnostics.Trace.WriteLine("[WorldHandler] 0x8C RelayServer — world cleared");
             _worldService.Clear();
         }
 
@@ -524,7 +551,11 @@ namespace TMRazorImproved.Core.Handlers
                 }
             }
 
-            if (isPlayer) _worldService.SetPlayer(mobile);
+            if (isPlayer)
+            {
+                System.Diagnostics.Trace.WriteLine($"[WorldHandler] 0x78 MobileIncoming — player serial=0x{mobile.Serial:X8}");
+                _worldService.SetPlayer(mobile);
+            }
             return true;
         }
 
@@ -1181,6 +1212,7 @@ namespace TMRazorImproved.Core.Handlers
 
             if (_worldService.Player?.Serial == serial)
             {
+                System.Diagnostics.Trace.WriteLine($"[WorldHandler] 0x11 MobileStatus — HP={hits}/{maxHits} Mana={m.Mana}/{m.ManaMax} Stam={m.Stam}/{m.StamMax} type={type}");
                 _messenger.Send(new PlayerStatusMessage(StatType.Hits, serial, hits, maxHits));
                 if (type >= 1)
                 {

@@ -13,15 +13,24 @@ namespace TMRazorImproved.Core.Services
     {
         private readonly IPacketService _packetService;
         private readonly ILogger<SecureTradeService> _logger;
+        // BUG-NEW-02 FIX: Dictionary non thread-safe — il packet thread (Receive) e il thread UI
+        // (CancelTrade, GetTrade, ActiveTrades) accedono concorrentemente. Usiamo _tradesLock.
         private readonly Dictionary<uint, TradeData> _trades = new();
+        private readonly object _tradesLock = new();
 
         public event Action<uint>? TradeStarted;
         public event Action<uint>? TradeUpdated;
         public event Action<uint>? TradeClosed;
 
-        public IReadOnlyList<uint> ActiveTrades => _trades.Keys.ToList().AsReadOnly();
+        public IReadOnlyList<uint> ActiveTrades
+        {
+            get { lock (_tradesLock) return _trades.Keys.ToList().AsReadOnly(); }
+        }
 
-        public TradeData? GetTrade(uint tradeSerial) => _trades.GetValueOrDefault(tradeSerial);
+        public TradeData? GetTrade(uint tradeSerial)
+        {
+            lock (_tradesLock) return _trades.GetValueOrDefault(tradeSerial);
+        }
 
         public SecureTradeService(IPacketService packetService, IMessenger messenger, ILogger<SecureTradeService> logger)
         {
@@ -68,70 +77,75 @@ namespace TMRazorImproved.Core.Services
             pkt[6] = (byte)(tradeSerial >> 8);
             pkt[7] = (byte)tradeSerial;
             _packetService.SendToServer(pkt);
-            
-            if (_trades.ContainsKey(tradeSerial))
-            {
-                _trades.Remove(tradeSerial);
-                TradeClosed?.Invoke(tradeSerial);
-            }
+
+            bool removed;
+            lock (_tradesLock) { removed = _trades.Remove(tradeSerial); }
+            if (removed) TradeClosed?.Invoke(tradeSerial);
         }
 
         public void Receive(TradeMessage message)
         {
             var (action, serial, data) = message.Value;
+            // Tutte le modifiche a _trades avvengono sotto _tradesLock per evitare
+            // corse con CancelTrade/GetTrade/ActiveTrades chiamati dal thread UI.
+            Action? postLockEvent = null;
 
-            if (action == 0 && data != null) // Start
+            lock (_tradesLock)
             {
-                _trades[serial] = data;
-                _logger.LogInformation("Trade opened with {Serial}, Name: {Name}", serial, data.NameTrader);
-                TradeStarted?.Invoke(serial);
-            }
-            else if (action == 1) // Cancel
-            {
-                if (_trades.Remove(serial))
+                if (action == 0 && data != null) // Start
                 {
-                    _logger.LogInformation("Trade cancelled/closed with {Serial}", serial);
-                    TradeClosed?.Invoke(serial);
+                    _trades[serial] = data;
+                    _logger.LogInformation("Trade opened with {Serial}, Name: {Name}", serial, data.NameTrader);
+                    postLockEvent = () => TradeStarted?.Invoke(serial);
                 }
-            }
-            else if (action == 2 && data != null) // Update
-            {
-                if (_trades.TryGetValue(serial, out var existing))
+                else if (action == 1) // Cancel
                 {
-                    existing.AcceptMe = data.AcceptMe;
-                    existing.AcceptTrader = data.AcceptTrader;
-                    _logger.LogInformation("Trade updated for {Serial}. AcceptMe: {Me}, AcceptTrader: {Trader}", serial, existing.AcceptMe, existing.AcceptTrader);
-                    TradeUpdated?.Invoke(serial);
-                }
-            }
-            else if (action == 3 && data != null) // MoneyUpdate
-            {
-                if (_trades.TryGetValue(serial, out var existing))
-                {
-                    // Server o Client? Dipende da dove è stato parsato.
-                    // Il WorldPacketHandler ora lo fa sia C2S che S2C, popolando i rispettivi campi
-                    if (data.GoldTrader > 0 || data.PlatinumTrader > 0)
+                    if (_trades.Remove(serial))
                     {
-                        existing.GoldTrader = data.GoldTrader;
-                        existing.PlatinumTrader = data.PlatinumTrader;
+                        _logger.LogInformation("Trade cancelled/closed with {Serial}", serial);
+                        postLockEvent = () => TradeClosed?.Invoke(serial);
                     }
-                    if (data.GoldMe > 0 || data.PlatinumMe > 0)
-                    {
-                        existing.GoldMe = data.GoldMe;
-                        existing.PlatinumMe = data.PlatinumMe;
-                    }
-                    TradeUpdated?.Invoke(serial);
                 }
-            }
-            else if (action == 4 && data != null) // MoneyLimit
-            {
-                if (_trades.TryGetValue(serial, out var existing))
+                else if (action == 2 && data != null) // Update
                 {
-                    existing.GoldMax = data.GoldMax;
-                    existing.PlatinumMax = data.PlatinumMax;
-                    TradeUpdated?.Invoke(serial);
+                    if (_trades.TryGetValue(serial, out var existing))
+                    {
+                        existing.AcceptMe = data.AcceptMe;
+                        existing.AcceptTrader = data.AcceptTrader;
+                        _logger.LogInformation("Trade updated for {Serial}. AcceptMe: {Me}, AcceptTrader: {Trader}", serial, existing.AcceptMe, existing.AcceptTrader);
+                        postLockEvent = () => TradeUpdated?.Invoke(serial);
+                    }
+                }
+                else if (action == 3 && data != null) // MoneyUpdate
+                {
+                    if (_trades.TryGetValue(serial, out var existing))
+                    {
+                        if (data.GoldTrader > 0 || data.PlatinumTrader > 0)
+                        {
+                            existing.GoldTrader = data.GoldTrader;
+                            existing.PlatinumTrader = data.PlatinumTrader;
+                        }
+                        if (data.GoldMe > 0 || data.PlatinumMe > 0)
+                        {
+                            existing.GoldMe = data.GoldMe;
+                            existing.PlatinumMe = data.PlatinumMe;
+                        }
+                        postLockEvent = () => TradeUpdated?.Invoke(serial);
+                    }
+                }
+                else if (action == 4 && data != null) // MoneyLimit
+                {
+                    if (_trades.TryGetValue(serial, out var existing))
+                    {
+                        existing.GoldMax = data.GoldMax;
+                        existing.PlatinumMax = data.PlatinumMax;
+                        postLockEvent = () => TradeUpdated?.Invoke(serial);
+                    }
                 }
             }
+
+            // Invoca gli eventi fuori dal lock per evitare deadlock con i subscriber
+            postLockEvent?.Invoke();
         }
     }
 }

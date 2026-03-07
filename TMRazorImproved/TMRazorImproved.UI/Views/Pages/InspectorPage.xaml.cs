@@ -10,7 +10,7 @@ namespace TMRazorImproved.UI.Views.Pages
         public InspectorPage(InspectorViewModel viewModel)
         {
             ViewModel = viewModel;
-            DataContext = this;
+            DataContext = ViewModel;
 
             InitializeComponent();
         }

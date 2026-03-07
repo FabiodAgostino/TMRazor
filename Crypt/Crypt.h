@@ -135,7 +135,7 @@ extern HINSTANCE hInstance;
 extern SharedMemory *pShared;
 extern HANDLE CommMutex;
 
-DLLFUNCTION int InstallLibrary(HWND PostWindow, DWORD pId);
+DLLFUNCTION int InstallLibrary(HWND PostWindow, DWORD pId, int flags);
 DLLFUNCTION void Shutdown(bool closeClient);
 DLLFUNCTION HWND FindUOWindow();
 DLLFUNCTION void *GetSharedAddress();

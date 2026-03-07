@@ -44,5 +44,12 @@ namespace TMRazorImproved.Shared.Interfaces
         /// Gestisce i messaggi in arrivo dal loop dei messaggi di Windows (WndProc)
         /// </summary>
         bool OnMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
+
+        /// <summary>
+        /// Chiamato dopo che InstallLibrary ha completato con successo l'inizializzazione di
+        /// Crypt.dll (pShared impostato, PacketTable valida). Abilita il processing dei pacchetti
+        /// e resetta i buffer per scartare dati letti prima dell'inizializzazione.
+        /// </summary>
+        void NotifyCryptReady();
     }
 }

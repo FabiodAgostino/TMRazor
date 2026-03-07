@@ -12,6 +12,7 @@ namespace TMRazorImproved.Core.Services
     {
         private readonly ResourceManager _resourceManager;
         private Ultima.StringList? _cliloc;
+        private CultureInfo _currentCulture = new CultureInfo("en-US");
 
         public string CurrentLanguage { get; private set; } = "en";
 
@@ -29,7 +30,7 @@ namespace TMRazorImproved.Core.Services
         {
             try
             {
-                string? val = _resourceManager.GetString(key);
+                string? val = _resourceManager.GetString(key, _currentCulture);
                 return val ?? $"[{key}]";
             }
             catch
@@ -54,9 +55,9 @@ namespace TMRazorImproved.Core.Services
             CurrentLanguage = langCode;
             
             // Imposta la cultura del thread per il ResourceManager
-            CultureInfo culture = new CultureInfo(langCode == "it" ? "it-IT" : "en-US");
-            Thread.CurrentThread.CurrentUICulture = culture;
-            Thread.CurrentThread.CurrentCulture = culture;
+            _currentCulture = new CultureInfo(langCode == "it" ? "it-IT" : "en-US");
+            Thread.CurrentThread.CurrentUICulture = _currentCulture;
+            Thread.CurrentThread.CurrentCulture = _currentCulture;
 
             // Caricamento Cliloc tramite UltimaSDK
             try

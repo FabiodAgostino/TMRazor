@@ -11,7 +11,7 @@ namespace TMRazorImproved.UI.Views.Windows
         public HuePickerWindow(HuePickerViewModel viewModel)
         {
             ViewModel = viewModel;
-            DataContext = this;
+            DataContext = this.ViewModel;
             InitializeComponent();
         }
 

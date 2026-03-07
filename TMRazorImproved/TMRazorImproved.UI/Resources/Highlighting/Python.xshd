@@ -7,15 +7,17 @@
     <Color name="Keyword"  foreground="#569CD6" fontWeight="bold"/>
     <Color name="UOApi"    foreground="#4EC9B0" fontWeight="bold"/>
     <Color name="Builtin"  foreground="#DCDCAA"/>
+    <Color name="MethodCall" foreground="#DCDCAA"/>
     <Color name="Number"   foreground="#B5CEA8"/>
     <Color name="Self"     foreground="#9CDCFE" fontStyle="italic"/>
 
     <RuleSet>
 
         <!-- Single-line comments -->
-        <Span color="Comment">
-            <Begin>#</Begin>
-        </Span>
+        <Rule color="Comment">\#.*</Rule>
+
+        <!-- Method calls -->
+        <Rule color="MethodCall">\b[\w_]+(?=\s*\()</Rule>
 
         <!-- Triple double-quoted strings (multiline) -->
         <Span color="String" multiline="true">

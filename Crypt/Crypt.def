@@ -2,6 +2,7 @@ LIBRARY	Crypt
 
 EXPORTS
 	InstallLibrary
+	SetUOWindowHandle
 	Shutdown
 	FindUOWindow
 	GetSharedAddress
@@ -19,4 +20,5 @@ EXPORTS
 	OnAttach
 	SetServer
 	GetUOVersion
-	
+	AttachAndPatch
+

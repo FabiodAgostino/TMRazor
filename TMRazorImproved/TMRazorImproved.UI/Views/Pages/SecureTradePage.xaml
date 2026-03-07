@@ -5,9 +5,10 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="800"
-      Title="Secure Trade"
+      Title="{loc:Loc SecureTrade.Title}"
       d:DataContext="{d:DesignInstance vm:SecureTradeViewModel}">
 
     <Grid Margin="24">
@@ -18,8 +19,8 @@
 
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,24">
-            <TextBlock Text="Secure Trade Monitor" Style="{StaticResource TitleTextBlockStyle}" />
-            <TextBlock Text="Monitor and control active trade sessions" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            <TextBlock Text="{loc:Loc SecureTrade.Monitor.Title}" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="{loc:Loc SecureTrade.Monitor.Description}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
         </StackPanel>
 
         <!-- Active Trades List -->
@@ -53,21 +54,21 @@
                                         <!-- My Side -->
                                         <Border Grid.Column="0" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="8">
                                             <StackPanel>
-                                                <TextBlock Text="You Offer" FontWeight="SemiBold" Margin="0,0,0,8" />
+                                                <TextBlock Text="{loc:Loc SecureTrade.YouOffer}" FontWeight="SemiBold" Margin="0,0,0,8" />
                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                                                     <ui:SymbolIcon Symbol="Money24" Foreground="Gold" Margin="0,0,4,0"/>
                                                     <TextBlock Text="{Binding MyGold}" VerticalAlignment="Center"/>
-                                                    <TextBlock Text=" Gold" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,12,0"/>
+                                                    <TextBlock Text="{loc:Loc SecureTrade.Gold}" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,12,0"/>
                                                     
                                                     <ui:SymbolIcon Symbol="Money24" Foreground="LightGray" Margin="0,0,4,0"/>
                                                     <TextBlock Text="{Binding MyPlatinum}" VerticalAlignment="Center"/>
-                                                    <TextBlock Text=" Plat" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                    <TextBlock Text="{loc:Loc SecureTrade.Plat}" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                                 </StackPanel>
-                                                <TextBlock Text="Items:" Margin="0,8,0,4" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                <TextBlock Text="{loc:Loc SecureTrade.Items}" Margin="0,8,0,4" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                                 <ItemsControl ItemsSource="{Binding MyItems}">
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <TextBlock Text="{Binding Amount, StringFormat={}{0}x Item}" FontSize="11" />
+                                                            <TextBlock Text="{Binding Amount, StringFormat={loc:Loc SecureTrade.ItemCount}}" FontSize="11" />
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
@@ -77,21 +78,21 @@
                                         <!-- Their Side -->
                                         <Border Grid.Column="2" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="8">
                                             <StackPanel>
-                                                <TextBlock Text="{Binding TargetName, StringFormat={}{0} Offers}" FontWeight="SemiBold" Margin="0,0,0,8" />
+                                                <TextBlock Text="{Binding TargetName, StringFormat={loc:Loc SecureTrade.TargetOffers}}" FontWeight="SemiBold" Margin="0,0,0,8" />
                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                                                     <ui:SymbolIcon Symbol="Money24" Foreground="Gold" Margin="0,0,4,0"/>
                                                     <TextBlock Text="{Binding TheirGold}" VerticalAlignment="Center"/>
-                                                    <TextBlock Text=" Gold" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,12,0"/>
+                                                    <TextBlock Text="{loc:Loc SecureTrade.Gold}" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,12,0"/>
                                                     
                                                     <ui:SymbolIcon Symbol="Money24" Foreground="LightGray" Margin="0,0,4,0"/>
                                                     <TextBlock Text="{Binding TheirPlatinum}" VerticalAlignment="Center"/>
-                                                    <TextBlock Text=" Plat" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                    <TextBlock Text="{loc:Loc SecureTrade.Plat}" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                                 </StackPanel>
-                                                <TextBlock Text="Items:" Margin="0,8,0,4" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                <TextBlock Text="{loc:Loc SecureTrade.Items}" Margin="0,8,0,4" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                                 <ItemsControl ItemsSource="{Binding TheirItems}">
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <TextBlock Text="{Binding Amount, StringFormat={}{0}x Item}" FontSize="11" />
+                                                            <TextBlock Text="{Binding Amount, StringFormat={loc:Loc SecureTrade.ItemCount}}" FontSize="11" />
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
@@ -107,29 +108,31 @@
                                         
                                         <!-- My Status -->
                                         <StackPanel Grid.Column="0">
-                                            <TextBlock Text="Your Status" Style="{StaticResource CaptionTextBlockStyle}" Margin="0,0,0,4" />
-                                            <ui:InfoBar Title="You Accepted" IsOpen="{Binding MyAccepted}" Severity="Success" IsClosable="False" />
-                                            <ui:InfoBar Title="Waiting for you" IsOpen="{Binding MyAccepted, Converter={StaticResource BooleanInvertConverter}}" Severity="Informational" IsClosable="False" />
+                                            <TextBlock Text="{loc:Loc SecureTrade.YourStatus}" Style="{StaticResource CaptionTextBlockStyle}" Margin="0,0,0,4" />
+                                            <ui:InfoBar Title="{loc:Loc SecureTrade.YouAccepted}" IsOpen="{Binding MyAccepted}" Severity="Success" IsClosable="False" />
+                                            <ui:InfoBar Title="{loc:Loc SecureTrade.WaitingForYou}" IsOpen="{Binding MyAccepted, Converter={StaticResource BooleanInvertConverter}}" Severity="Informational" IsClosable="False" />
                                         </StackPanel>
 
                                         <!-- Their Status -->
                                         <StackPanel Grid.Column="1" Margin="16,0,0,0">
-                                            <TextBlock Text="Their Status" Style="{StaticResource CaptionTextBlockStyle}" Margin="0,0,0,4" />
-                                            <ui:InfoBar Title="They Accepted" IsOpen="{Binding TheirAccepted}" Severity="Success" IsClosable="False" />
-                                            <ui:InfoBar Title="Waiting for them" IsOpen="{Binding TheirAccepted, Converter={StaticResource BooleanInvertConverter}}" Severity="Informational" IsClosable="False" />
+                                            <TextBlock Text="{loc:Loc SecureTrade.TheirStatus}" Style="{StaticResource CaptionTextBlockStyle}" Margin="0,0,0,4" />
+                                            <ui:InfoBar Title="{loc:Loc SecureTrade.TheyAccepted}" IsOpen="{Binding TheirAccepted}" Severity="Success" IsClosable="False" />
+                                            <ui:InfoBar Title="{loc:Loc SecureTrade.WaitingForThem}" IsOpen="{Binding TheirAccepted, Converter={StaticResource BooleanInvertConverter}}" Severity="Informational" IsClosable="False" />
                                         </StackPanel>
                                     </Grid>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="24,0,0,0">
-                                    <ui:Button Content="Accept" 
+                                    <ui:Button Content="{loc:Loc SecureTrade.Accept}" 
+                                               ToolTip="{loc:Loc SecureTrade.Accept.ToolTip}"
                                                Icon="Checkmark24" 
                                                Appearance="Primary" 
                                                Command="{Binding DataContext.AcceptCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
                                                CommandParameter="{Binding Serial}"
                                                Margin="0,0,0,8" 
                                                HorizontalAlignment="Stretch"/>
-                                    <ui:Button Content="Cancel" 
+                                    <ui:Button Content="{loc:Loc SecureTrade.Cancel}" 
+                                               ToolTip="{loc:Loc SecureTrade.Cancel.ToolTip}"
                                                Icon="Dismiss24" 
                                                Appearance="Secondary" 
                                                Command="{Binding DataContext.CancelCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
@@ -147,8 +150,8 @@
         <Grid Grid.Row="1" Visibility="{Binding ActiveTrades.Count, Converter={StaticResource IntToVisibilityConverter}, ConverterParameter='0'}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <ui:SymbolIcon Symbol="ArrowSwap24" FontSize="48" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,16" />
-                <TextBlock Text="No active trade sessions" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="16" />
-                <TextBlock Text="Start a trade in-game by dropping an item on a character" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center" />
+                <TextBlock Text="{loc:Loc SecureTrade.NoActiveTrades}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="16" />
+                <TextBlock Text="{loc:Loc SecureTrade.StartTradeHint}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center" />
             </StackPanel>
         </Grid>
     </Grid>

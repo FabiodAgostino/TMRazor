@@ -8,16 +8,16 @@
       xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="800"
-      Title="General">
+      Title="{loc:Loc Nav.General}">
 
     <ScrollViewer Margin="32">
         <StackPanel>
-            <ui:TextBlock Text="{loc:Loc EnhancedLauncher.groupBox2.Text}" FontSize="28" FontWeight="Bold" Margin="0,0,0,24"/>
+            <ui:TextBlock Text="{loc:Loc Nav.General}" FontSize="28" FontWeight="Bold" Margin="0,0,0,24"/>
 
             <!-- Profile Management Card -->
             <ui:Card Margin="0,0,0,16">
                 <StackPanel>
-                    <ui:TextBlock Text="Profile Management" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <ui:TextBlock Text="{loc:Loc General.ProfileManagement}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -25,7 +25,7 @@
                         </Grid.ColumnDefinitions>
                         
                         <StackPanel Orientation="Horizontal">
-                            <ui:TextBlock Text="Active Profile:" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"/>
+                            <ui:TextBlock Text="{loc:Loc General.ActiveProfile}" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"/>
                             <ComboBox Width="250" 
                                       ItemsSource="{Binding AvailableProfiles}" 
                                       SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
@@ -34,19 +34,19 @@
                             <ui:Button Command="{Binding CreateProfileCommand}" 
                                        Icon="{ui:SymbolIcon Add24}" 
                                        Margin="12,0,4,0" 
-                                       ToolTip="Create New Profile"/>
+                                       ToolTip="{loc:Loc General.Profile.Create.ToolTip}"/>
                             <ui:Button Command="{Binding CloneProfileCommand}" 
                                        Icon="{ui:SymbolIcon Copy24}" 
                                        Margin="0,0,4,0" 
-                                       ToolTip="Clone Current Profile"/>
+                                       ToolTip="{loc:Loc General.Profile.Clone.ToolTip}"/>
                             <ui:Button Command="{Binding RenameProfileCommand}" 
                                        Icon="{ui:SymbolIcon Edit24}" 
                                        Margin="0,0,4,0" 
-                                       ToolTip="Rename Current Profile"/>
+                                       ToolTip="{loc:Loc General.Profile.Rename.ToolTip}"/>
                             <ui:Button Command="{Binding DeleteProfileCommand}" 
                                        Icon="{ui:SymbolIcon Delete24}" 
                                        Appearance="Secondary" 
-                                       ToolTip="Delete Current Profile"/>
+                                       ToolTip="{loc:Loc General.Profile.Delete.ToolTip}"/>
                         </StackPanel>
                     </Grid>
                 </StackPanel>
@@ -55,7 +55,7 @@
             <!-- Client Configuration Card -->
             <ui:Card Margin="0,0,0,16">
                 <StackPanel>
-                    <ui:TextBlock Text="{loc:Loc EnhancedLauncher.groupBox2.Text}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <ui:TextBlock Text="{loc:Loc General.ClientConfig}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
                     
                     <Grid Margin="0,0,0,12">
                         <Grid.ColumnDefinitions>
@@ -77,7 +77,7 @@
             <!-- Connection Card -->
             <ui:Card Margin="0,0,0,16">
                 <StackPanel>
-                    <ui:TextBlock Text="{loc:Loc EnhancedLauncher.groupBox1.Text}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <ui:TextBlock Text="{loc:Loc General.Connection}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
                     
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -96,20 +96,24 @@
             <!-- Engine Patches Card -->
             <ui:Card Margin="0,0,0,16" Padding="16">
                 <StackPanel>
-                    <ui:TextBlock Text="Engine Patches" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <ui:TextBlock Text="{loc:Loc General.EnginePatches}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
                     <UniformGrid Columns="2">
-                        <ui:ToggleSwitch Content="Patch Encryption" 
+                        <ui:ToggleSwitch Content="{loc:Loc General.Patch.Encryption}" 
                                          IsChecked="{Binding PatchEncryption, Mode=TwoWay}"
-                                         Margin="0,0,0,8" />
-                        <ui:ToggleSwitch Content="Allow Multi-Client" 
+                                         Margin="0,0,0,8"
+                                         ToolTip="{loc:Loc General.Patch.Encryption.ToolTip}"/>
+                        <ui:ToggleSwitch Content="{loc:Loc General.Patch.MultiClient}" 
                                          IsChecked="{Binding AllowMultiClient, Mode=TwoWay}"
-                                         Margin="0,0,0,8" />
-                        <ui:ToggleSwitch Content="Negotiate Features" 
+                                         Margin="0,0,0,8"
+                                         ToolTip="{loc:Loc General.Patch.MultiClient.ToolTip}"/>
+                        <ui:ToggleSwitch Content="{loc:Loc General.Patch.Negotiate}" 
                                          IsChecked="{Binding NegotiateFeatures, Mode=TwoWay}"
-                                         Margin="0,0,0,8" />
-                        <ui:ToggleSwitch Content="Remove Stamina Check" 
+                                         Margin="0,0,0,8"
+                                         ToolTip="{loc:Loc General.Patch.Negotiate.ToolTip}"/>
+                        <ui:ToggleSwitch Content="{loc:Loc General.Patch.Stamina}" 
                                          IsChecked="{Binding RemoveStaminaCheck, Mode=TwoWay}"
-                                         Margin="0,0,0,8" />
+                                         Margin="0,0,0,8"
+                                         ToolTip="{loc:Loc General.Patch.Stamina.ToolTip}"/>
                     </UniformGrid>
                 </StackPanel>
             </ui:Card>
@@ -123,31 +127,33 @@
                     </Grid.ColumnDefinitions>
                     
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <ui:TextBlock Text="Engine Status" FontWeight="SemiBold"/>
+                        <ui:TextBlock Text="{loc:Loc General.EngineStatus}" FontWeight="SemiBold"/>
                         <ui:TextBlock Text="{Binding StatusMessage}" Appearance="Secondary"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <ui:Button Content="Toolbar" 
+                        <ui:Button Content="{loc:Loc General.Action.Toolbar}" 
                                    Icon="{ui:SymbolIcon PanelLeft24}"
                                    Command="{Binding ToggleToolbarCommand}"
-                                   Margin="0,0,8,0"/>
+                                   Margin="0,0,8,0"
+                                   ToolTip="{loc:Loc General.Action.Toolbar.ToolTip}"/>
 
-                        <ui:Button Content="DPS Meter" 
+                        <ui:Button Content="{loc:Loc General.Action.DPSMeter}" 
                                    Icon="{ui:SymbolIcon Timer24}"
                                    Command="{Binding ToggleDPSMeterCommand}"
-                                   Margin="0,0,8,0"/>
+                                   Margin="0,0,8,0"
+                                   ToolTip="{loc:Loc General.Action.DPSMeter.ToolTip}"/>
                         
-                        <ui:Button Content="Test SpellGrid" 
+                        <ui:Button Content="{loc:Loc General.Action.SpellGrid}" 
                                    Icon="{ui:SymbolIcon Flash24}"
                                    Command="{Binding ToggleSpellGridCommand}"
-                                   Margin="0,0,8,0"/>
+                                   Margin="0,0,8,0"
+                                   ToolTip="{loc:Loc General.Action.SpellGrid.ToolTip}"/>
                         
-                        <ui:Button Content="{loc:Loc EnhancedLauncher.launch.Text}" 
-                                   Appearance="Primary" 
+                        <ui:Button Content="{Binding LaunchButtonText}"
+                                   Appearance="{Binding IsGameRunning, Converter={StaticResource BooleanToAppearanceConverter}, ConverterParameter='Success|Primary'}"
                                    Padding="32,8"
-                                   Command="{Binding LaunchClientCommand}"/>
-                    </StackPanel>
+                                   Command="{Binding LaunchClientCommand}"/>                    </StackPanel>
                 </Grid>
             </ui:Card>
         </StackPanel>

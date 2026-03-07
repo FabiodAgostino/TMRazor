@@ -2,9 +2,8 @@ using IronPython.Hosting;
 using IronPython.Runtime.Exceptions;
 using Microsoft.Scripting.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.CodeAnalysis.CSharp.Scripting;
-using Microsoft.CodeAnalysis.Scripting;
 using CommunityToolkit.Mvvm.Messaging;
+using TMRazorImproved.Core.Services.Scripting.Engines;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -89,15 +88,9 @@ namespace TMRazorImproved.Core.Services.Scripting
         private const string TracePreamble = @"
 import sys as _sys_
 
-# --- 1. Redirect output ---
 _sys_.stdout = __stdout__
 _sys_.stderr = __stderr__
 
-# --- 2. Override time.sleep() → Misc.Pause() (cancellation-aware) ---
-# Sostituisce sys.modules['time'] con un wrapper.
-# 'import time; time.sleep(x)' e 'from time import sleep; sleep(x)' vengono
-# intercettati. Tutti gli altri attributi del modulo time sono inoltrati
-# all'originale via __getattr__.
 import time as _time_orig_
 class _SafeTime_:
     def sleep(self, secs): Misc.Pause(int(secs * 1000))
@@ -105,23 +98,19 @@ class _SafeTime_:
 _sys_.modules['time'] = _SafeTime_()
 del _SafeTime_, _time_orig_
 
-# --- 3. sys.settrace con check periodico ---
-# _t_ viene chiamato per ogni riga Python (overhead di frame inevitabile),
-# ma IsCancelled (cross-boundary DLR call) è letto solo ogni _INTERVAL_ righe.
-_INTERVAL_ = __trace_interval__
-def _make_tracer_(_c_):
+def _make_tracer_(_c_, _interval_):
     _n_ = [0]
     def _t_(frame, event, arg):
         _n_[0] += 1
-        if _n_[0] >= _INTERVAL_:
+        if _n_[0] >= _interval_:
             _n_[0] = 0
             if _c_.IsCancelled:
                 raise SystemExit('Script stopped by user')
         return _t_
     return _t_
 
-_sys_.settrace(_make_tracer_(__cancel__))
-del _make_tracer_, _INTERVAL_, _sys_
+_sys_.settrace(_make_tracer_(__cancel__, __trace_interval__))
+del _make_tracer_, _sys_
 ";
 
         // Rimuove il trace handler a fine esecuzione.
@@ -129,6 +118,7 @@ del _make_tracer_, _INTERVAL_, _sys_
 
         private readonly IWorldService _world;
         private readonly IPacketService _packetService;
+        private readonly IClientInteropService _interopService;
         private readonly ITargetingService _targetingService;
         private readonly IJournalService _journalService;
         private readonly ISkillsService _skillsService;
@@ -159,6 +149,7 @@ del _make_tracer_, _INTERVAL_, _sys_
         public ScriptingService(
             IWorldService world,
             IPacketService packetService,
+            IClientInteropService interopService,
             ITargetingService targetingService,
             IJournalService journalService,
             ISkillsService skillsService,
@@ -170,6 +161,7 @@ del _make_tracer_, _INTERVAL_, _sys_
         {
             _world = world;
             _packetService = packetService;
+            _interopService = interopService;
             _targetingService = targetingService;
             _journalService = journalService;
             _skillsService = skillsService;
@@ -373,7 +365,7 @@ del _make_tracer_, _INTERVAL_, _sys_
             var stderr = new ScriptOutputWriter(line => ErrorReceived?.Invoke(line));
 
             var cancelCtrl = new ScriptCancellationController(cts.Token);
-            var miscApi    = new MiscApi(_world, cancelCtrl, line => OutputReceived?.Invoke(line));
+            var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line));
 
             scope.SetVariable("__stdout__",        stdout);
             scope.SetVariable("__stderr__",        stderr);
@@ -391,6 +383,7 @@ del _make_tracer_, _INTERVAL_, _sys_
             scope.SetVariable("Statics", new StaticsApi(cancelCtrl));
             scope.SetVariable("Friend",  new FriendApi(_friendsService, cancelCtrl));
             scope.SetVariable("Filters", new FiltersApi(_config, cancelCtrl));
+            scope.SetVariable("Timer",   new TimerApi(cancelCtrl, miscApi));
 
             engine.Execute(TracePreamble, scope);
 
@@ -422,7 +415,7 @@ del _make_tracer_, _INTERVAL_, _sys_
             _scriptThread = Thread.CurrentThread;
             
             var cancelCtrl = new ScriptCancellationController(cts.Token);
-            var miscApi    = new MiscApi(_world, cancelCtrl, line => OutputReceived?.Invoke(line));
+            var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line));
             var itemsApi   = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
             var mobilesApi = new MobilesApi(_world, _friendsService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
             var playerApi  = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _loggerFactory.CreateLogger<PlayerApi>());
@@ -440,7 +433,7 @@ del _make_tracer_, _INTERVAL_, _sys_
         }
 
         // ------------------------------------------------------------------
-        // Esecuzione C# (Roslyn)
+        // Esecuzione C# (Roslyn) — delegata a CSharpScriptEngine
         // ------------------------------------------------------------------
 
         private void ExecuteCSharpInternal(string code, string scriptName, CancellationTokenSource cts)
@@ -449,48 +442,34 @@ del _make_tracer_, _INTERVAL_, _sys_
             _logger.LogDebug("Starting Roslyn C# script execution: {ScriptName}", scriptName);
 
             var cancelCtrl = new ScriptCancellationController(cts.Token);
+            var misc = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line));
             var globals = new ScriptGlobals
             {
-                Player   = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _loggerFactory.CreateLogger<PlayerApi>()),
-                Items    = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger),
-                Mobiles  = new MobilesApi(_world, _friendsService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>()),
-                Misc     = new MiscApi(_world, cancelCtrl, line => OutputReceived?.Invoke(line)),
-                Journal  = new JournalApi(_journalService, cancelCtrl),
-                Gumps    = new GumpsApi(_world, _packetService, cancelCtrl, _messenger),
-                Target   = new TargetApi(_targetingService, cancelCtrl),
-                Skills   = new SkillsApi(_skillsService, _packetService, cancelCtrl),
-                Spells   = new SpellsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<SpellsApi>()),
-                Statics  = new StaticsApi(cancelCtrl),
-                Friend   = new FriendApi(_friendsService, cancelCtrl),
-                Filters  = new FiltersApi(_config, cancelCtrl)
+                Player      = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _loggerFactory.CreateLogger<PlayerApi>()),
+                Items       = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger),
+                Mobiles     = new MobilesApi(_world, _friendsService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>()),
+                Misc        = misc,
+                Journal     = new JournalApi(_journalService, cancelCtrl),
+                Gumps       = new GumpsApi(_world, _packetService, cancelCtrl, _messenger),
+                Target      = new TargetApi(_targetingService, cancelCtrl),
+                Skills      = new SkillsApi(_skillsService, _packetService, cancelCtrl),
+                Spells      = new SpellsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<SpellsApi>()),
+                Statics     = new StaticsApi(cancelCtrl),
+                Friend      = new FriendApi(_friendsService, cancelCtrl),
+                Filters     = new FiltersApi(_config, cancelCtrl),
+                Timer       = new TimerApi(cancelCtrl, misc),
+                // Espone il token direttamente agli script per cancellazione cooperativa:
+                // ScriptToken.ThrowIfCancellationRequested() in qualsiasi loop dello script.
+                ScriptToken = cts.Token
             };
 
-            var options = ScriptOptions.Default
-                .WithReferences(
-                    typeof(ScriptGlobals).Assembly,
-                    typeof(ScriptLanguage).Assembly,
-                    typeof(object).Assembly,
-                    typeof(System.Linq.Enumerable).Assembly,
-                    typeof(System.Collections.Generic.List<>).Assembly)
-                .WithImports(
-                    "System",
-                    "System.Collections.Generic",
-                    "System.Linq",
-                    "System.Threading.Tasks",
-                    "TMRazorImproved.Core.Services.Scripting.Api",
-                    "TMRazorImproved.Shared.Models");
+            var engine = new CSharpScriptEngine(
+                line => OutputReceived?.Invoke(line),
+                line => ErrorReceived?.Invoke(line));
 
             try
             {
-                // Esecuzione sincrona del task asincrono Roslyn all'interno del thread worker dello script
-                CSharpScript.RunAsync(code, options, globals, typeof(ScriptGlobals), cts.Token).Wait();
-            }
-            catch (AggregateException aggEx)
-            {
-                // Roslyn wrappa le eccezioni in AggregateException
-                if (aggEx.InnerException != null)
-                    throw aggEx.InnerException;
-                throw;
+                engine.Execute(code, globals);
             }
             finally
             {

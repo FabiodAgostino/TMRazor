@@ -4,214 +4,34 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels.Agents"
-      xmlns:cfg="clr-namespace:TMRazorImproved.Shared.Models.Config;assembly=TMRazorImproved.Shared"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="800"
-      Title="Targeting &amp; Friends">
+      Title="Targeting">
 
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TextBlock Text="Targeting &amp; Friends" FontSize="24" FontWeight="Bold" Margin="0,0,0,16" Grid.Row="0" />
+        <ui:TextBlock Text="{loc:Loc Agents.Targeting.Title}" FontSize="24" FontWeight="Bold" Margin="0,0,0,16" Grid.Row="0" />
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="350" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <!-- Sinistra: Filtri e Settings -->
-            <ScrollViewer Grid.Column="0" Margin="0,0,12,0">
-                <StackPanel>
-                    <!-- Liste Filtri -->
-                    <ui:Card Padding="8" Margin="0,0,0,12">
-                        <StackPanel>
-                            <ui:TextBlock Text="Target Filters" FontWeight="SemiBold" Margin="0,0,0,8" />
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <ComboBox ItemsSource="{Binding ViewModel.TargetLists}" 
-                                          SelectedItem="{Binding ViewModel.SelectedFilter, Mode=TwoWay}"
-                                          DisplayMemberPath="Name" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
-                                    <ui:Button Command="{Binding ViewModel.AddFilterCommand}" Icon="{ui:SymbolIcon Add24}" Margin="0,0,4,0" Padding="4"/>
-                                    <ui:Button Command="{Binding ViewModel.RemoveFilterCommand}" Icon="{ui:SymbolIcon Delete24}" Appearance="Secondary" Padding="4"/>
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
-                    </ui:Card>
-
-                    <!-- Configurazione Filtro Selezionato -->
-                    <ui:Card Padding="12" Margin="0,0,0,12" IsEnabled="{Binding ViewModel.SelectedFilter, Converter={StaticResource NullToVisibilityConverter}}">
-                        <StackPanel>
-                            <ui:TextBlock Text="Filter Flags" FontWeight="SemiBold" Margin="0,0,0,12" />
-                            
-                            <!-- Poisoned -->
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <ui:TextBlock Text="Poisoned" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <RadioButton Content="Both" IsChecked="{Binding ViewModel.SelectedFilter.Poisoned, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=0}" Margin="0,0,8,0" />
-                                    <RadioButton Content="Yes" IsChecked="{Binding ViewModel.SelectedFilter.Poisoned, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}" Margin="0,0,8,0" />
-                                    <RadioButton Content="No" IsChecked="{Binding ViewModel.SelectedFilter.Poisoned, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=2}" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Blessed -->
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <ui:TextBlock Text="Blessed" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <RadioButton Content="Both" IsChecked="{Binding ViewModel.SelectedFilter.Blessed, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=0}" Margin="0,0,8,0" />
-                                    <RadioButton Content="Yes" IsChecked="{Binding ViewModel.SelectedFilter.Blessed, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}" Margin="0,0,8,0" />
-                                    <RadioButton Content="No" IsChecked="{Binding ViewModel.SelectedFilter.Blessed, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=2}" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Human -->
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <ui:TextBlock Text="Is Human" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <RadioButton Content="Both" IsChecked="{Binding ViewModel.SelectedFilter.IsHuman, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=0}" Margin="0,0,8,0" />
-                                    <RadioButton Content="Yes" IsChecked="{Binding ViewModel.SelectedFilter.IsHuman, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}" Margin="0,0,8,0" />
-                                    <RadioButton Content="No" IsChecked="{Binding ViewModel.SelectedFilter.IsHuman, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=2}" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Ghost -->
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <ui:TextBlock Text="Is Ghost" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <RadioButton Content="Both" IsChecked="{Binding ViewModel.SelectedFilter.IsGhost, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=0}" Margin="0,0,8,0" />
-                                    <RadioButton Content="Yes" IsChecked="{Binding ViewModel.SelectedFilter.IsGhost, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}" Margin="0,0,8,0" />
-                                    <RadioButton Content="No" IsChecked="{Binding ViewModel.SelectedFilter.IsGhost, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=2}" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Warmode -->
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <ui:TextBlock Text="In Warmode" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <RadioButton Content="Both" IsChecked="{Binding ViewModel.SelectedFilter.Warmode, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=0}" Margin="0,0,8,0" />
-                                    <RadioButton Content="Yes" IsChecked="{Binding ViewModel.SelectedFilter.Warmode, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}" Margin="0,0,8,0" />
-                                    <RadioButton Content="No" IsChecked="{Binding ViewModel.SelectedFilter.Warmode, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=2}" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Paralyzed -->
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <ui:TextBlock Text="Paralyzed" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <RadioButton Content="Both" IsChecked="{Binding ViewModel.SelectedFilter.Paralyzed, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=0}" Margin="0,0,8,0" />
-                                    <RadioButton Content="Yes" IsChecked="{Binding ViewModel.SelectedFilter.Paralyzed, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}" Margin="0,0,8,0" />
-                                    <RadioButton Content="No" IsChecked="{Binding ViewModel.SelectedFilter.Paralyzed, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}, ConverterParameter=2}" />
-                                </StackPanel>
-                            </Grid>
-
-                            <Separator Margin="0,8" />
-
-                            <!-- Body IDs & Hues -->
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                
-                                <StackPanel Margin="0,0,4,0">
-                                    <ui:TextBlock Text="Body IDs" FontSize="11" Appearance="Secondary" />
-                                    <ListBox ItemsSource="{Binding ViewModel.SelectedFilter.BodyIDs}" Height="80" Margin="0,4" />
-                                    <ui:Button Command="{Binding ViewModel.AddBodyIDCommand}" Content="Add ID" Icon="{ui:SymbolIcon Add24}" HorizontalAlignment="Stretch" Padding="2" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="1" Margin="4,0,0,0">
-                                    <ui:TextBlock Text="Hues" FontSize="11" Appearance="Secondary" />
-                                    <ListBox ItemsSource="{Binding ViewModel.SelectedFilter.Hues}" Height="80" Margin="0,4" />
-                                    <ui:Button Command="{Binding ViewModel.AddHueCommand}" Content="Add Hue" Icon="{ui:SymbolIcon Add24}" HorizontalAlignment="Stretch" Padding="2" />
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
-                    </ui:Card>
-
-                    <!-- Settings Globali -->
-                    <ui:Card Padding="12">
-                        <StackPanel>
-                            <ui:TextBlock Text="Global Settings" FontWeight="SemiBold" Margin="0,0,0,12" />
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <ui:TextBlock Text="Default Range" VerticalAlignment="Center" />
-                                <ui:NumberBox Grid.Column="1" Value="{Binding ViewModel.Range, Mode=TwoWay}" Width="100" />
-                            </Grid>
-                            <ui:ToggleSwitch IsChecked="{Binding ViewModel.TargetInnocents, Mode=TwoWay}" Content="Allow Target Blue" Margin="0,0,0,4" />
-                            <ui:ToggleSwitch IsChecked="{Binding ViewModel.TargetFriends, Mode=TwoWay}" Content="Allow Target Friends" />
-                        </StackPanel>
-                    </ui:Card>
-                </StackPanel>
-            </ScrollViewer>
-
-            <!-- Destra: Amici -->
-            <ui:Card Grid.Column="1" Padding="0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="12,8">
-                        <ui:TextBlock Text="Friend List" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,16,0" />
-                        <ui:Button Content="Add (Target)" Icon="{ui:SymbolIcon Add24}" 
-                                   Command="{Binding ViewModel.AddFriendCommand}" Margin="0,0,8,0" />
-                        <ui:Button Content="Clear Targets" Icon="{ui:SymbolIcon Delete24}" 
-                                   Command="{Binding ViewModel.ClearTargetCommand}" Appearance="Secondary" />
-                    </StackPanel>
-
-                    <ListView Grid.Row="1" ItemsSource="{Binding ViewModel.FriendList}" BorderThickness="0">
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn Header="Serial" Width="100">
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Serial, StringFormat='0x{0:X8}'}" FontFamily="Consolas" VerticalAlignment="Center" />
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                                <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="200" />
-                                <GridViewColumn Header="Actions" Width="60">
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <ui:Button Icon="{ui:SymbolIcon Delete24}" 
-                                                       Appearance="Transparent" 
-                                                       Padding="4"
-                                                       Command="{Binding DataContext.ViewModel.RemoveFriendCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
-                                                       CommandParameter="{Binding}" />
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
-                </Grid>
-            </ui:Card>
-        </Grid>
-
-        <!-- Status Bar -->
-        <ui:InfoBar Grid.Row="2" Margin="0,12,0,0"
-                   Title="Status" 
-                   Message="{Binding ViewModel.StatusText}" 
-                   IsOpen="True" 
-                   Severity="Informational" />
+        <ui:Card Grid.Row="1" VerticalAlignment="Top">
+            <StackPanel>
+                <ui:ToggleSwitch Content="{loc:Loc Agents.Targeting.SmartTarget}" 
+                                 IsChecked="{Binding SmartTarget}" 
+                                 Margin="0,0,0,12"
+                                 ToolTip="{loc:Loc Agents.Targeting.SmartTarget.ToolTip}"/>
+                <ui:ToggleSwitch Content="{loc:Loc Agents.Targeting.AutoQueue}" 
+                                 IsChecked="{Binding AutoQueue}" 
+                                 Margin="0,0,0,12"
+                                 ToolTip="{loc:Loc Agents.Targeting.AutoQueue.ToolTip}"/>
+                <ui:ToggleSwitch Content="{loc:Loc Agents.Targeting.RangeCheck}" 
+                                 IsChecked="{Binding RangeCheck}" 
+                                 Margin="0,0,0,12"
+                                 ToolTip="{loc:Loc Agents.Targeting.RangeCheck.ToolTip}"/>
+            </StackPanel>
+        </ui:Card>
     </Grid>
 </Page>

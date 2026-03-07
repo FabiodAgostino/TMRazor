@@ -48,11 +48,12 @@ namespace TMRazorImproved.Core.Services
             hotkeyService.RegisterAction("Scavenger Toggle", () => { if (IsRunning) _ = StopAsync(); else Start(); });
         }
 
-        private ScavengerConfig GetActiveConfig()
+        // BUG-P1-04 FIX: return type non-nullable con possibile return null → CS8603
+        private ScavengerConfig? GetActiveConfig()
         {
             var profile = _configService.CurrentProfile;
             if (profile == null) return null;
-            return profile.ScavengerLists.FirstOrDefault(l => l.Name == profile.ActiveScavengerList) 
+            return profile.ScavengerLists.FirstOrDefault(l => l.Name == profile.ActiveScavengerList)
                    ?? profile.ScavengerLists.FirstOrDefault();
         }
 

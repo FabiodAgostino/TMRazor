@@ -1,7 +1,15 @@
 <Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Crypt/Crypt.vcxproj" Id="b32a4d9e-3af1-4c75-989d-d62c4e8f08b1" />
+  <Project Path="Loader/Loader.vcxproj" Id="f308e8d5-2b4f-40ad-9bf7-9a8f5dda420d" />
   <Project Path="../UltimaSDK/Ultima.csproj" />
   <Project Path="TMRazorImproved.Core/TMRazorImproved.Core.csproj" />
   <Project Path="TMRazorImproved.Shared/TMRazorImproved.Shared.csproj" />
   <Project Path="TMRazorImproved.Tests/TMRazorImproved.Tests.csproj" />
   <Project Path="TMRazorImproved.UI/TMRazorImproved.UI.csproj" />
+  <Project Path="TMRazorPlugin/TMRazorPlugin.csproj" />
 </Solution>
