@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using CommunityToolkit.Mvvm.Messaging;
+using TMRazorImproved.Core.Utilities;
 using TMRazorImproved.Shared.Enums;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Messages;
@@ -313,13 +314,41 @@ namespace TMRazorImproved.Core.Handlers
                     // Solo tracking — non modifica world state principale
                     break;
 
-                case 0x14: // Context Menu 2D
-                    if (reader.Remaining >= 5)
+                case 0x14: // Context Menu
+                    if (reader.Remaining >= 6)
                     {
-                        reader.ReadByte();              // unknown (always 0x00)
-                        reader.ReadByte();              // sub-format: 0x01=2D, 0x02=KR
-                        uint entSerial = reader.ReadUInt32();
-                        _messenger.Send(new ContextMenuMessage(entSerial));
+                        reader.ReadByte();                  // unknown (always 0x00)
+                        byte ctxFmt    = reader.ReadByte(); // 0x01=2D, 0x02=KR/SA
+                        uint ctxSerial = reader.ReadUInt32();
+                        var  ctxList   = new List<ContextMenuEntry>();
+                        if (reader.Remaining >= 2)
+                        {
+                            ushort ctxCount = reader.ReadUInt16();
+                            for (int ci = 0; ci < ctxCount; ci++)
+                            {
+                                if (ctxFmt == 0x01) // 2D
+                                {
+                                    if (reader.Remaining < 6) break;
+                                    ushort clilocId = reader.ReadUInt16();
+                                    ushort flags    = reader.ReadUInt16();
+                                    ushort respId   = reader.ReadUInt16();
+                                    if ((flags & 0x20) != 0 && reader.Remaining >= 2)
+                                        reader.ReadUInt16(); // optional hue
+                                    string text = _languageService.GetCliloc(clilocId);
+                                    ctxList.Add(new ContextMenuEntry(respId, text));
+                                }
+                                else // 0x02 KR/SA
+                                {
+                                    if (reader.Remaining < 6) break;
+                                    uint   clilocId = reader.ReadUInt32();
+                                    ushort flags    = reader.ReadUInt16();
+                                    string text     = _languageService.GetCliloc((int)clilocId);
+                                    ctxList.Add(new ContextMenuEntry(ci, text));
+                                }
+                            }
+                        }
+                        ContextMenuStore.Set(ctxSerial, ctxList);
+                        _messenger.Send(new ContextMenuMessage(ctxSerial));
                     }
                     break;
 

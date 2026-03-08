@@ -84,6 +84,7 @@ namespace TMRazorImproved.Shared.Models
         // Fame e Karma (aggiornabili da messaggi server o handshake)
         public short Fame { get; set; }
         public short Karma { get; set; }
+        public string KarmaTitle { get; set; } = string.Empty;
 
         // Posizione mappa (cambia con 0x76/0xBF sub)
         public int MapId { get; set; }
@@ -94,6 +95,45 @@ namespace TMRazorImproved.Shared.Models
 
         // Feature flags del server (0xB9)
         public ushort Features { get; set; }
+
+        // Flags fisici aggiuntivi
+        public bool Female { get; set; }
+        public bool Paralyzed { get; set; }
+        public bool Flying { get; set; }
+        public bool IsGhost { get; set; }
+
+        // Extended stats AOS+ (da 0x11 type>=5 / type>=6)
+        public int AR { get; set; }
+        public int HitChanceIncrease { get; set; }
+        public int SwingSpeedIncrease { get; set; }
+        public int DamageChanceIncrease { get; set; }
+        public int LowerReagentCost { get; set; }
+        public int HitPointsRegeneration { get; set; }
+        public int StaminaRegeneration { get; set; }
+        public int ManaRegeneration { get; set; }
+        public int ReflectPhysicalDamage { get; set; }
+        public int EnhancePotions { get; set; }
+        public int DefenseChanceIncrease { get; set; }
+        public int SpellDamageIncrease { get; set; }
+        public int FasterCastRecovery { get; set; }
+        public int FasterCasting { get; set; }
+        public int LowerManaCost { get; set; }
+        public int StrengthIncrease { get; set; }
+        public int DexterityIncrease { get; set; }
+        public int IntelligenceIncrease { get; set; }
+        public int HitPointsIncrease { get; set; }
+        public int StaminaIncrease { get; set; }
+        public int ManaIncrease { get; set; }
+        public int MaximumHitPointsIncrease { get; set; }
+        public int MaximumStaminaIncrease { get; set; }
+
+        // Buff attivi (nome → secondi rimanenti; -1 = senza durata definita)
+        public System.Collections.Generic.Dictionary<string, int> ActiveBuffs { get; }
+            = new System.Collections.Generic.Dictionary<string, int>(System.StringComparer.OrdinalIgnoreCase);
+
+        // Corporei (corpses raccolti alla morte)
+        public System.Collections.Generic.HashSet<uint> CorpseSerials { get; }
+            = new System.Collections.Generic.HashSet<uint>();
 
         /// <summary>Item che rappresenta il backpack del giocatore (null se non ancora rilevato).</summary>
         public Item? Backpack { get; set; }
