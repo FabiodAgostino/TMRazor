@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 <#
 .SYNOPSIS
     Analyzes TMRazor vs TMRazor Improved API migration coverage.
@@ -300,3 +300,4 @@ if ($OutputFile) {
     Write-Host ""
     Write-Host "Report saved to: $OutputFile" -ForegroundColor Green
 }
+
