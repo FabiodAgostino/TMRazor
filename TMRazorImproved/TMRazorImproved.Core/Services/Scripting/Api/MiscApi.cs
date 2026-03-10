@@ -114,7 +114,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         // Physical mouse clicks (Win32)
         // ------------------------------------------------------------------
 
-        [DllImport("user32.dll")] private static extern bool SetCursorPos(int x, int y);
+        [DllImport("user32.dll", EntryPoint = "SetCursorPos")] private static extern bool SetCursorPos_PInvoke(int x, int y);
         [DllImport("user32.dll")] private static extern bool GetCursorPos(ref System.Drawing.Point lp);
         [DllImport("user32.dll")] private static extern bool ClientToScreen(IntPtr hWnd, ref System.Drawing.Point lp);
         [DllImport("user32.dll")] private static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtra);
@@ -139,10 +139,10 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                     ClientToScreen(hwnd, ref pnt);
                     xpos = pnt.X; ypos = pnt.Y;
                 }
-                SetCursorPos(xpos, ypos);
+                SetCursorPos_PInvoke(xpos, ypos);
                 mouse_event(MOUSEEVENTF_LEFTDOWN, xpos, ypos, 0, 0);
                 mouse_event(MOUSEEVENTF_LEFTUP,   xpos, ypos, 0, 0);
-                SetCursorPos(old.X, old.Y);
+                SetCursorPos_PInvoke(old.X, old.Y);
             }
             catch { }
         }
@@ -162,10 +162,10 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                     ClientToScreen(hwnd, ref pnt);
                     xpos = pnt.X; ypos = pnt.Y;
                 }
-                SetCursorPos(xpos, ypos);
+                SetCursorPos_PInvoke(xpos, ypos);
                 mouse_event(MOUSEEVENTF_RIGHTDOWN, xpos, ypos, 0, 0);
                 mouse_event(MOUSEEVENTF_RIGHTUP,   xpos, ypos, 0, 0);
-                SetCursorPos(old.X, old.Y);
+                SetCursorPos_PInvoke(old.X, old.Y);
             }
             catch { }
         }
@@ -852,6 +852,134 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             return _sharedValues.Keys.ToList();
         }
+
+        // ------------------------------------------------------------------
+        // Missing Misc API additions
+        // ------------------------------------------------------------------
+
+        public class Context
+        {
+            public int Response { get; set; }
+            public string Entry { get; set; } = string.Empty;
+        }
+
+        public ConcurrentDictionary<string, object> SharedScriptData
+        {
+            get => _sharedValues;
+            set
+            {
+                _sharedValues.Clear();
+                if (value != null)
+                {
+                    foreach (var kvp in value)
+                        _sharedValues.TryAdd(kvp.Key, kvp.Value);
+                }
+            }
+        }
+
+        public virtual void ChangeProfile(string profileName)
+        {
+            _cancel.ThrowIfCancelled();
+            Engine.MainWindow.SafeAction(s => s.changeProfile(profileName));
+        }
+
+        public virtual void CloseBackpack()
+        {
+            _cancel.ThrowIfCancelled();
+            RazorEnhanced.UoWarper.UODLLHandleClass = new RazorEnhanced.UoWarper.UO();
+
+            if (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
+            {
+                while (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
+                {
+                    Thread.Sleep(50);
+                }
+            }
+            RazorEnhanced.UoWarper.UODLLHandleClass.CloseBackpack();
+        }
+
+        public virtual string CurrentScriptDirectory()
+        {
+            return ScriptDirectory();
+        }
+
+        public virtual void ExportPythonAPI(string path = null, bool pretty = true)
+        {
+            _cancel.ThrowIfCancelled();
+            AutoDocIO.ExportPythonAPI(path, pretty);
+        }
+
+        public virtual Point GetContPosition()
+        {
+            _cancel.ThrowIfCancelled();
+            RazorEnhanced.UoWarper.UODLLHandleClass = new RazorEnhanced.UoWarper.UO();
+
+            if (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
+            {
+                while (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
+                {
+                    Thread.Sleep(50);
+                }
+            }
+            var point = RazorEnhanced.UoWarper.UODLLHandleClass.GetContPosition();
+            return new Point(point.X, point.Y);
+        }
+
+        public virtual void Inspect()
+        {
+            _cancel.ThrowIfCancelled();
+            Assistant.Targeting.OneTimeTarget(true, new Assistant.Targeting.TargetResponseCallback(Assistant.Commands.GetInfoTarget_Callback));
+        }
+
+        public virtual object? LastHotKey()
+        {
+            _cancel.ThrowIfCancelled();
+            return HotKeyEvent.LastEvent;
+        }
+
+        public virtual void NextContPosition(int x, int y)
+        {
+            _cancel.ThrowIfCancelled();
+            RazorEnhanced.UoWarper.UODLLHandleClass = new RazorEnhanced.UoWarper.UO();
+
+            if (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
+            {
+                while (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
+                {
+                    Thread.Sleep(50);
+                }
+            }
+            RazorEnhanced.UoWarper.UODLLHandleClass.NextContPosition(x, y);
+        }
+
+        public virtual void OpenPaperdoll()
+        {
+            _cancel.ThrowIfCancelled();
+            RazorEnhanced.UoWarper.UODLLHandleClass = new RazorEnhanced.UoWarper.UO();
+
+            if (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
+            {
+                while (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
+                {
+                    Thread.Sleep(50);
+                }
+            }
+            RazorEnhanced.UoWarper.UODLLHandleClass.OpenPaperdoll();
+        }
+
+        public virtual void ResetPrompt()
+        {
+            _cancel.ThrowIfCancelled();
+            if (_targeting != null)
+                _targeting.SetPrompt(false);
+        }
+
+        public virtual bool SetCursorPos(int x, int y)
+        {
+            return SetCursorPos_PInvoke(x, y);
+        }
+
+        public virtual void ConcurrentDictionary() { }
 
         // ------------------------------------------------------------------
         // Named Lists — compatibilità RazorEnhanced/UOSteam

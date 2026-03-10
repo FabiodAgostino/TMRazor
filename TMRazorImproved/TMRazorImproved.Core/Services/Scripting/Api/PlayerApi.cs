@@ -703,7 +703,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         // ──────────────────────────────────────────────────────────────────────
         // Mount e Volo
         // ──────────────────────────────────────────────────────────────────────
-        public virtual void Mount(uint serial = 0)
+        public virtual void MountAnimal(uint serial = 0)
         {
             _cancel.ThrowIfCancelled();
             if (serial != 0)
@@ -957,7 +957,6 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         }
 
         public virtual void UseSkillOnly(string skillName)    => UseSkill(skillName);
-        public virtual void GetAllSkills() { /* use GetAllSkillsDict */ }
 
         /// <summary>Ritorna tutti gli skill come dizionario nome→valore corrente.</summary>
         public virtual Dictionary<string, double> GetAllSkillsDict()

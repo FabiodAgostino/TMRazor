@@ -12,6 +12,10 @@ namespace TMRazorImproved.Shared.Interfaces
         bool Contains(string text);
         JournalEntry? GetLast();
         
+        void AddFilter(string text);
+        void RemoveFilter(string text);
+        IEnumerable<string> GetFilters();
+
         event Action<JournalEntry> OnNewEntry;
     }
 }

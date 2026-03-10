@@ -11,13 +11,15 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         private readonly IWorldService _world;
         private readonly IPacketService _packet;
         private readonly ScriptCancellationController _cancel;
+        private readonly ITargetingService _targeting;
         private readonly ILogger<SpellsApi>? _logger;
 
-        public SpellsApi(IWorldService world, IPacketService packet, ScriptCancellationController cancel, ILogger<SpellsApi>? logger = null)
+        public SpellsApi(IWorldService world, IPacketService packet, ScriptCancellationController cancel, ITargetingService targeting, ILogger<SpellsApi>? logger = null)
         {
             _world = world;
             _packet = packet;
             _cancel = cancel;
+            _targeting = targeting;
             _logger = logger;
         }
 
@@ -64,6 +66,85 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void CastNinjitsu(string name) => Cast(name);
         public virtual void CastSpellweaving(string name) => Cast(name);
         public virtual void CastMysticism(string name) => Cast(name);
+        public virtual void CastCleric(string name) => Cast(name);
+        public virtual void CastDruid(string name) => Cast(name);
+
+        public virtual void CastLastSpell()
+        {
+            _cancel.ThrowIfCancelled();
+            if (!string.IsNullOrEmpty(_lastSpellName))
+            {
+                Cast(_lastSpellName);
+            }
+            else
+            {
+                _logger?.LogWarning("CastLastSpell: No last spell recorded.");
+            }
+        }
+
+        public virtual void CastLastSpellLastTarget()
+        {
+            _cancel.ThrowIfCancelled();
+            if (!string.IsNullOrEmpty(_lastSpellName))
+            {
+                Cast(_lastSpellName);
+                
+                var tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
+                Action<uint> handler = _ => tcs.TrySetResult(true);
+                _targeting.TargetCursorRequested += handler;
+                try
+                {
+                    var deadline = Environment.TickCount64 + 10000;
+                    while (Environment.TickCount64 < deadline)
+                    {
+                        _cancel.ThrowIfCancelled();
+                        if (_targeting.HasTargetCursor || tcs.Task.IsCompleted)
+                        {
+                            _targeting.SendTarget(_targeting.LastTarget);
+                            return;
+                        }
+                        System.Threading.Thread.Sleep(50);
+                    }
+                }
+                finally
+                {
+                    _targeting.TargetCursorRequested -= handler;
+                }
+            }
+            else
+            {
+                _logger?.LogWarning("CastLastSpellLastTarget: No last spell recorded.");
+            }
+        }
+
+        public virtual void ExportSpellsToJson()
+        {
+            _cancel.ThrowIfCancelled();
+            try
+            {
+                var basePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
+                if (!System.IO.Directory.Exists(basePath))
+                {
+                    System.IO.Directory.CreateDirectory(basePath);
+                }
+                
+                var customSpellsPath = System.IO.Path.Combine(basePath, "CustomSpells.json");
+                var spellsDict = new System.Collections.Generic.Dictionary<string, int>();
+                
+                foreach (var spell in SpellDefinitions.All)
+                {
+                    spellsDict[spell.Name] = spell.ID;
+                }
+                
+                string jsonContent = System.Text.Json.JsonSerializer.Serialize(spellsDict, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                System.IO.File.WriteAllText(customSpellsPath, jsonContent);
+                _logger?.LogInformation("Exported {Count} spells to {Path}", spellsDict.Count, customSpellsPath);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError("Error exporting spells to JSON: {Message}", ex.Message);
+            }
+        }
 
         /// <summary>Ritorna l'ID di un incantesimo dal suo nome. 0 se non trovato.</summary>
         public virtual int GetSpellId(string name)

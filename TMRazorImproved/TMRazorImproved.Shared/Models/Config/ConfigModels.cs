@@ -69,6 +69,7 @@ namespace TMRazorImproved.Shared.Models.Config
         public uint BoneCutterBlade { get; set; }
         public bool AutoRemount { get; set; }
         public uint RemountSerial { get; set; }
+        public int AutoRemountEDelay { get; set; }
         
         // Display Tweaks
         public int ForceWidth { get; set; } = 0; // 0 = disabled

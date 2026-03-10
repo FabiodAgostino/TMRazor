@@ -16,6 +16,53 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel = cancel;
         }
 
+        // TMRazor Legacy Classes
+        public class FriendPlayer
+        {
+            public string Name { get; set; } = string.Empty;
+            public int Serial { get; set; }
+        }
+
+        public class FriendGuild
+        {
+            public string Name { get; set; } = string.Empty;
+        }
+
+        // TMRazor Legacy Methods
+        public virtual void AddFriendTarget()
+        {
+            _cancel.ThrowIfCancelled();
+            // TODO: Delega al TargetService per ottenere il target e aggiungerlo
+        }
+
+        public virtual void AddPlayer(string friendlist, string name, int serial)
+        {
+            _cancel.ThrowIfCancelled();
+            _friends.AddFriend((uint)serial, name);
+        }
+
+        public virtual void ChangeList(string friendlist)
+        {
+            _cancel.ThrowIfCancelled();
+            // Stub per compatibilità
+        }
+
+        public virtual List<int> GetList(string friendlist)
+        {
+            _cancel.ThrowIfCancelled();
+            return _friends.ActiveList?.Players?
+                .Select(p => (int)p.Serial)
+                .ToList() ?? new List<int>();
+        }
+
+        public virtual bool RemoveFriend(string friendlist, int serial)
+        {
+            _cancel.ThrowIfCancelled();
+            bool existed = _friends.IsFriend((uint)serial);
+            _friends.RemoveFriend((uint)serial);
+            return existed;
+        }
+
         public virtual bool IsFriend(uint serial)
         {
             _cancel.ThrowIfCancelled();

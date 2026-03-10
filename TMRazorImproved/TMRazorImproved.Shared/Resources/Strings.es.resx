@@ -1,0 +1,3251 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute mimetype="xsd:string" name="mimetype" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+</root>  <data name="EnhancedLauncher.Text" xml:space="preserve">
+    <value>Bienvenido a TM Razor</value>
+  </data>
+  <data name="EnhancedLauncher.label1.Text" xml:space="preserve">
+    <value>Servidor:</value>
+  </data>
+  <data name="EnhancedLauncher.groupBox1.Text" xml:space="preserve">
+    <value>Selección de Servidor</value>
+  </data>
+  <data name="EnhancedLauncher.addShard.Text" xml:space="preserve">
+    <value>Añadir</value>
+  </data>
+  <data name="EnhancedLauncher.removeShard.Text" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="EnhancedLauncher.groupBox2.Text" xml:space="preserve">
+    <value>Configuración de Servidor</value>
+  </data>
+  <data name="EnhancedLauncher.label4.Text" xml:space="preserve">
+    <value>Cliente CUO:</value>
+  </data>
+  <data name="EnhancedLauncher.osiEnc.Text" xml:space="preserve">
+    <value>Usar Cifrado OSI</value>
+  </data>
+  <data name="EnhancedLauncher.patchEnc.Text" xml:space="preserve">
+    <value>Cifrado del cliente del parche</value>
+  </data>
+  <data name="EnhancedLauncher.label7.Text" xml:space="preserve">
+    <value>Puerto:</value>
+  </data>
+  <data name="EnhancedLauncher.label6.Text" xml:space="preserve">
+    <value>Dirección del Servidor:</value>
+  </data>
+  <data name="EnhancedLauncher.label5.Text" xml:space="preserve">
+    <value>Carpeta UO:</value>
+  </data>
+  <data name="EnhancedLauncher.label2.Text" xml:space="preserve">
+    <value>Ubicación del Cliente:</value>
+  </data>
+  <data name="EnhancedLauncher.checkupdatebutton.Text" xml:space="preserve">
+    <value>Buscar Actualización</value>
+  </data>
+  <data name="EnhancedLauncher.quit.Text" xml:space="preserve">
+    <value>Salir</value>
+  </data>
+  <data name="EnhancedLauncher.launch.Text" xml:space="preserve">
+    <value>Lanzar</value>
+  </data>
+  <data name="EnhancedLauncher.launchCUO.Text" xml:space="preserve">
+    <value>Lanzar CUO</value>
+  </data>
+  <data name="EnhancedLauncher.labelLanguage.Text" xml:space="preserve">
+    <value>Idioma:</value>
+  </data>
+  <data name="MainForm.moreOptTab.Text" xml:space="preserve">
+    <value>Opciones</value>
+  </data>
+  <data name="MainForm.overrideGroupBox.Text" xml:space="preserve">
+    <value>Anulaciones</value>
+  </data>
+  <data name="MainForm.lblMsgHue.Text" xml:space="preserve">
+    <value>Tonalidad de Mensaje de TM Razor</value>
+  </data>
+  <data name="MainForm.setMsgHue.Text" xml:space="preserve">
+    <value>Establecer</value>
+  </data>
+  <data name="MainForm.lblWarnHue.Text" xml:space="preserve">
+    <value>Tonalidad de Mensaje de Advertencia</value>
+  </data>
+  <data name="MainForm.setWarnHue.Text" xml:space="preserve">
+    <value>Establecer</value>
+  </data>
+  <data name="MainForm.chkForceSpeechHue.Text" xml:space="preserve">
+    <value>Anular Tonalidad de Discurso</value>
+  </data>
+  <data name="MainForm.setSpeechHue.Text" xml:space="preserve">
+    <value>Establecer</value>
+  </data>
+  <data name="MainForm.lthilight.Text" xml:space="preserve">
+    <value>Resaltado de Último Objetivo:</value>
+  </data>
+  <data name="MainForm.setLTHilight.Text" xml:space="preserve">
+    <value>Establecer</value>
+  </data>
+  <data name="MainForm.chkForceSpellHue.Text" xml:space="preserve">
+    <value>Anular Tonalidades de Hechizos:</value>
+  </data>
+  <data name="MainForm.lblBeneHue.Text" xml:space="preserve">
+    <value>Beneficioso</value>
+  </data>
+  <data name="MainForm.lblHarmHue.Text" xml:space="preserve">
+    <value>Dañino</value>
+  </data>
+  <data name="MainForm.lblNeuHue.Text" xml:space="preserve">
+    <value>Neutral</value>
+  </data>
+  <data name="MainForm.setBeneHue.Text" xml:space="preserve">
+    <value>Establecer</value>
+  </data>
+  <data name="MainForm.setHarmHue.Text" xml:space="preserve">
+    <value>Establecer</value>
+  </data>
+  <data name="MainForm.setNeuHue.Text" xml:space="preserve">
+    <value>Establecer</value>
+  </data>
+  <data name="MainForm.label3.Text" xml:space="preserve">
+    <value>Formato de Hechizo:</value>
+  </data>
+  <data name="MainForm.targetGroupBox.Text" xml:space="preserve">
+    <value>Objetivos</value>
+  </data>
+  <data name="MainForm.smartLT.Text" xml:space="preserve">
+    <value>Usar último objetivo inteligente</value>
+  </data>
+  <data name="MainForm.rangeCheckLT.Text" xml:space="preserve">
+    <value>Comprobación de rango en Último Objetivo</value>
+  </data>
+  <data name="MainForm.label8.Text" xml:space="preserve">
+    <value>Casillas:</value>
+  </data>
+  <data name="MainForm.showtargtext.Text" xml:space="preserve">
+    <value>Mostrar bandera de objetivo al hacer un solo clic</value>
+  </data>
+  <data name="MainForm.queueGroupBox.Text" xml:space="preserve">
+    <value>Colas</value>
+  </data>
+  <data name="MainForm.actionStatusMsg.Text" xml:space="preserve">
+    <value>Mostrar mensajes de estado de Cola de Acciones</value>
+  </data>
+  <data name="MainForm.QueueActions.Text" xml:space="preserve">
+    <value>Auto-encolar acciones de Retraso de Objetos</value>
+  </data>
+  <data name="MainForm.label5.Text" xml:space="preserve">
+    <value>Retraso de objetos:</value>
+  </data>
+  <data name="MainForm.label6.Text" xml:space="preserve">
+    <value>ms</value>
+  </data>
+  <data name="MainForm.queueTargets.Text" xml:space="preserve">
+    <value>Encolar Último Objetivo y Objetivo Propio</value>
+  </data>
+  <data name="MainForm.containeruseGroupBox.Text" xml:space="preserve">
+    <value>Contenedores</value>
+  </data>
+  <data name="MainForm.openCorpses.Text" xml:space="preserve">
+    <value>Abrir nuevos cadáveres en</value>
+  </data>
+  <data name="MainForm.label4.Text" xml:space="preserve">
+    <value>casillas</value>
+  </data>
+  <data name="MainForm.autosearchcontainers.Text" xml:space="preserve">
+    <value>Búsqueda automática de nuevos contenedores</value>
+  </data>
+  <data name="MainForm.nosearchpouches.Text" xml:space="preserve">
+    <value>Ignorar bolsas</value>
+  </data>
+  <data name="MainForm.showmobileGroupBox.Text" xml:space="preserve">
+    <value>Visual</value>
+  </data>
+  <data name="MainForm.incomingMob.Text" xml:space="preserve">
+    <value>Mostrar nombres de nuevos móviles/entrantes</value>
+  </data>
+  <data name="MainForm.incomingCorpse.Text" xml:space="preserve">
+    <value>Mostrar nombres de nuevos cadáveres/entrantes</value>
+  </data>
+  <data name="MainForm.showHealthOH.Text" xml:space="preserve">
+    <value>Mostrar salud sobre los móviles</value>
+  </data>
+  <data name="MainForm.label10.Text" xml:space="preserve">
+    <value>Formato de salud:</value>
+  </data>
+  <data name="MainForm.chkPartyOverhead.Text" xml:space="preserve">
+    <value>Mostrar maná/estam de miembros del grupo</value>
+  </data>
+  <data name="MainForm.stealthGroupBox.Text" xml:space="preserve">
+    <value>Sigilo</value>
+  </data>
+  <data name="MainForm.chkStealth.Text" xml:space="preserve">
+    <value>Contar pasos en sigilo</value>
+  </data>
+  <data name="MainForm.chknorunStealth.Text" xml:space="preserve">
+    <value>Bloquear correr si está en sigilo</value>
+  </data>
+  <data name="MainForm.miscellaneousGroupBox.Text" xml:space="preserve">
+    <value>Miscelánea</value>
+  </data>
+  <data name="MainForm.blockDis.Text" xml:space="preserve">
+    <value>Bloquear desmontar en modo guerra</value>
+  </data>
+  <data name="MainForm.autoStackRes.Text" xml:space="preserve">
+    <value>Apilar automáticamente mena/peces/troncos a los pies</value>
+  </data>
+  <data name="MainForm.autoOpenDoors.Text" xml:space="preserve">
+    <value>Abrir puertas automáticamente</value>
+  </data>
+  <data name="MainForm.hiddedAutoOpenDoors.Text" xml:space="preserve">
+    <value>Desactivar si está oculto</value>
+  </data>
+  <data name="MainForm.spellspotionsGroupBox.Text" xml:space="preserve">
+    <value>Hechizos / Pociones</value>
+  </data>
+  <data name="MainForm.potionEquip.Text" xml:space="preserve">
+    <value>Equipar/Desequipar manos automáticamente para pociones</value>
+  </data>
+  <data name="MainForm.spellUnequip.Text" xml:space="preserve">
+    <value>Desequipar manos automáticamente antes de lanzar</value>
+  </data>
+  <data name="MainForm.druidClericPackets.Text" xml:space="preserve">
+    <value>Usar paquetes para hechizos de Druida/Clérigo</value>
+  </data>
+  <data name="MainForm.preaosstatusGroupBox.Text" xml:space="preserve">
+    <value>Ventana de Estado</value>
+  </data>
+  <data name="MainForm.preAOSstatbar.Text" xml:space="preserve">
+    <value>Usar ventana de estado Pre-AOS</value>
+  </data>
+  <data name="MainForm.razormessagesGroupBox.Text" xml:space="preserve">
+    <value>Advertencias y Errores</value>
+  </data>
+  <data name="MainForm.label17.Text" xml:space="preserve">
+    <value>TM Razor</value>
+  </data>
+  <data name="MainForm.groupBox17.Text" xml:space="preserve">
+    <value>Integración de Mapa</value>
+  </data>
+  <data name="MainForm.label72.Text" xml:space="preserve">
+    <value>Ruta:</value>
+  </data>
+  <data name="MainForm.enhancedFilterTab.Text" xml:space="preserve">
+    <value>Filtros</value>
+  </data>
+  <data name="MainForm.AllScripts.Text" xml:space="preserve">
+    <value>Scripts</value>
+  </data>
+  <data name="MainForm.MacrosTab.Text" xml:space="preserve">
+    <value>Macros</value>
+  </data>
+  <data name="MainForm.macroActGroup.Text" xml:space="preserve">
+    <value>Acciones</value>
+  </data>
+  <data name="MainForm.newMacro.Text" xml:space="preserve">
+    <value>Nuevo</value>
+  </data>
+  <data name="MainForm.delMacro.Text" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="MainForm.btnMacroSave.Text" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="MainForm.recMacro.Text" xml:space="preserve">
+    <value>Grabar</value>
+  </data>
+  <data name="MainForm.btnMacroStopRecord.Text" xml:space="preserve">
+    <value>Detener Grabación</value>
+  </data>
+  <data name="MainForm.playMacro.Text" xml:space="preserve">
+    <value>Reproducir</value>
+  </data>
+  <data name="MainForm.btnMacroStop.Text" xml:space="preserve">
+    <value>Detener</value>
+  </data>
+  <data name="MainForm.loopMacro.Text" xml:space="preserve">
+    <value>Bucle</value>
+  </data>
+  <data name="MainForm.macroActionsListView.Action.Text" xml:space="preserve">
+    <value>Acción</value>
+  </data>
+  <data name="MainForm.macroActionsListView.Details.Text" xml:space="preserve">
+    <value>Detalles</value>
+  </data>
+  <data name="MainForm.lblMacroStatus.Text" xml:space="preserve">
+    <value>Listo</value>
+  </data>
+  <data name="MainForm.EnhancedAgent.Text" xml:space="preserve">
+    <value>Agentes</value>
+  </data>
+  <data name="MainForm.toolbarTab.Text" xml:space="preserve">
+    <value>Barras de herramientas</value>
+  </data>
+  <data name="MainForm.tabPage2.Text" xml:space="preserve">
+    <value>Barra de Estado</value>
+  </data>
+  <data name="MainForm.tabPage3.Text" xml:space="preserve">
+    <value>Cuadrícula de Hechizos</value>
+  </data>
+  <data name="MainForm.skillsTab.Text" xml:space="preserve">
+    <value>Habilidades</value>
+  </data>
+  <data name="MainForm.enhancedHotKeytabPage.Text" xml:space="preserve">
+    <value>Teclas Rápidas</value>
+  </data>
+  <data name="MainForm.advancedTab.Text" xml:space="preserve">
+    <value>Avanzado</value>
+  </data>
+  <data name="MainForm.technicalTab.Text" xml:space="preserve">
+    <value>Técnico</value>
+  </data>
+  <data name="MainForm.generalTab.Text" xml:space="preserve">
+    <value>Ajustes de TM Razor</value>
+  </data>
+  <data name="MainForm.statusTab.Text" xml:space="preserve">
+    <value>Ayuda / Estado</value>
+  </data>
+  <data name="MainForm.screenshotTab.Text" xml:space="preserve">
+    <value>Capturas de Pantalla</value>
+  </data>
+  <data name="MainForm.videoTab.Text" xml:space="preserve">
+    <value>Grabadora de Video</value>
+  </data>
+  <data name="MainForm.showlauncher.Text" xml:space="preserve">
+    <value>Mostrar lanzador al inicio</value>
+  </data>
+  <data name="MainForm.alwaysTop.Text" xml:space="preserve">
+    <value>Siempre al frente</value>
+  </data>
+  <data name="MainForm.smartCPU.Text" xml:space="preserve">
+    <value>Reducir uso de CPU</value>
+  </data>
+  <data name="MainForm.opacityGroupBox.Text" xml:space="preserve">
+    <value>Opacidad</value>
+  </data>
+  <data name="MainForm.groupBox29.Text" xml:space="preserve">
+    <value>Perfiles</value>
+  </data>
+  <data name="MainForm.columnHeader28.Text" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.columnHeader29.Text" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="MainForm.columnHeader30.Text" xml:space="preserve">
+    <value>Serial</value>
+  </data>
+  <data name="MainForm.columnHeader63.Text" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.columnHeader64.Text" xml:space="preserve">
+    <value>Clan</value>
+  </data>
+  <data name="MainForm.groupBox1.Text" xml:space="preserve">
+    <value>Filtros</value>
+  </data>
+  <data name="MainForm.morefilterLabel.Text" xml:space="preserve">
+    <value>Más Filtros:</value>
+  </data>
+  <data name="MainForm.filterNPC.Text" xml:space="preserve">
+    <value>Mensajes de Monstruos</value>
+  </data>
+  <data name="MainForm.filterPoison.Text" xml:space="preserve">
+    <value>Mensajes de Veneno</value>
+  </data>
+  <data name="MainForm.filterSnoop.Text" xml:space="preserve">
+    <value>Mensajes de Fisgoneo</value>
+  </data>
+  <data name="MainForm.spamFilter.Text" xml:space="preserve">
+    <value>Repetir Mensajes de Sistema</value>
+  </data>
+  <data name="MainForm.JournalFilterPage.Text" xml:space="preserve">
+    <value>Virtual</value>
+  </data>
+  <data name="MainForm.deleteRowToolStripMenuItem.Text" xml:space="preserve">
+    <value>Eliminar Fila</value>
+  </data>
+  <data name="MainForm.targettingTab.Text" xml:space="preserve">
+    <value>Objetivos</value>
+  </data>
+  <data name="MainForm.groupBox43.Text" xml:space="preserve">
+    <value>Acceso Rápido</value>
+  </data>
+  <data name="MainForm.label76.Text" xml:space="preserve">
+    <value>Nombre:</value>
+  </data>
+  <data name="MainForm.targetremoveButton.Text" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="MainForm.targetaddButton.Text" xml:space="preserve">
+    <value>Añadir</value>
+  </data>
+  <data name="MainForm.groupBox44.Text" xml:space="preserve">
+    <value>Filtro de Cuerpo</value>
+  </data>
+  <data name="MainForm.targetChoseBody.Text" xml:space="preserve">
+    <value>ID de Cuerpo de Objetivo</value>
+  </data>
+  <data name="MainForm.targetbodyCheckBox.Text" xml:space="preserve">
+    <value>Activar</value>
+  </data>
+  <data name="MainForm.groupBox45.Text" xml:space="preserve">
+    <value>Filtro de Color</value>
+  </data>
+  <data name="MainForm.targetChoseHue.Text" xml:space="preserve">
+    <value>ID de Tonalidad de Objetivo</value>
+  </data>
+  <data name="MainForm.targetcoloCheckBox.Text" xml:space="preserve">
+    <value>Activar</value>
+  </data>
+  <data name="MainForm.groupBox48.Text" xml:space="preserve">
+    <value>Rango</value>
+  </data>
+  <data name="MainForm.label73.Text" xml:space="preserve">
+    <value>Establecer -1 para sin límite</value>
+  </data>
+  <data name="MainForm.label74.Text" xml:space="preserve">
+    <value>Máx:</value>
+  </data>
+  <data name="MainForm.targetRangeMaxTextBox.Text" xml:space="preserve">
+    <value>-1</value>
+  </data>
+  <data name="MainForm.label75.Text" xml:space="preserve">
+    <value>Mín:</value>
+  </data>
+  <data name="MainForm.targetRangeMinTextBox.Text" xml:space="preserve">
+    <value>-1</value>
+  </data>
+  <data name="MainForm.groupBox57.Text" xml:space="preserve">
+    <value>Color de Notoriedad</value>
+  </data>
+  <data name="MainForm.targetYellowCheckBox.Text" xml:space="preserve">
+    <value>Amarillo</value>
+  </data>
+  <data name="MainForm.targetRedCheckBox.Text" xml:space="preserve">
+    <value>Rojo</value>
+  </data>
+  <data name="MainForm.targetOrangeCheckBox.Text" xml:space="preserve">
+    <value>Naranja</value>
+  </data>
+  <data name="MainForm.targetCriminalCheckBox.Text" xml:space="preserve">
+    <value>Gris (Aggro)</value>
+  </data>
+  <data name="MainForm.targetGreyCheckBox.Text" xml:space="preserve">
+    <value>Gris</value>
+  </data>
+  <data name="MainForm.targetGreenCheckBox.Text" xml:space="preserve">
+    <value>Verde</value>
+  </data>
+  <data name="MainForm.targetBlueCheckBox.Text" xml:space="preserve">
+    <value>Azul</value>
+  </data>
+  <data name="MainForm.groupBox46.Text" xml:space="preserve">
+    <value>Banderas</value>
+  </data>
+  <data name="MainForm.groupBox47.Text" xml:space="preserve">
+    <value>Paralizado</value>
+  </data>
+  <data name="MainForm.paralizedBoth.Text" xml:space="preserve">
+    <value>Ambos</value>
+  </data>
+  <data name="MainForm.paralizedOff.Text" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="MainForm.paralizedOn.Text" xml:space="preserve">
+    <value>Sí</value>
+  </data>
+  <data name="MainForm.groupBox49.Text" xml:space="preserve">
+    <value>Amigo</value>
+  </data>
+  <data name="MainForm.friendOn.Text" xml:space="preserve">
+    <value>Sí</value>
+  </data>
+  <data name="MainForm.friendBoth.Text" xml:space="preserve">
+    <value>Ambos</value>
+  </data>
+  <data name="MainForm.friendOff.Text" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="MainForm.groupBox50.Text" xml:space="preserve">
+    <value>Modo Guerra</value>
+  </data>
+  <data name="MainForm.warmodeOn.Text" xml:space="preserve">
+    <value>Sí</value>
+  </data>
+  <data name="MainForm.warmodeBoth.Text" xml:space="preserve">
+    <value>Ambos</value>
+  </data>
+  <data name="MainForm.warmodeOff.Text" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="MainForm.groupBox51.Text" xml:space="preserve">
+    <value>Fantasma</value>
+  </data>
+  <data name="MainForm.ghostOn.Text" xml:space="preserve">
+    <value>Sí</value>
+  </data>
+  <data name="MainForm.ghostBoth.Text" xml:space="preserve">
+    <value>Ambos</value>
+  </data>
+  <data name="MainForm.ghostOff.Text" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="MainForm.groupBox52.Text" xml:space="preserve">
+    <value>Humano</value>
+  </data>
+  <data name="MainForm.humanOn.Text" xml:space="preserve">
+    <value>Sí</value>
+  </data>
+  <data name="MainForm.humanOff.Text" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="MainForm.humanBoth.Text" xml:space="preserve">
+    <value>Ambos</value>
+  </data>
+  <data name="MainForm.groupBox53.Text" xml:space="preserve">
+    <value>Golpes Amarillos</value>
+  </data>
+  <data name="MainForm.blessedOn.Text" xml:space="preserve">
+    <value>Sí</value>
+  </data>
+  <data name="MainForm.blessedOff.Text" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="MainForm.blessedBoth.Text" xml:space="preserve">
+    <value>Ambos</value>
+  </data>
+  <data name="MainForm.groupBox54.Text" xml:space="preserve">
+    <value>Envenenado</value>
+  </data>
+  <data name="MainForm.poisonedOn.Text" xml:space="preserve">
+    <value>Sí</value>
+  </data>
+  <data name="MainForm.poisonedOff.Text" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="MainForm.poisonedBoth.Text" xml:space="preserve">
+    <value>Ambos</value>
+  </data>
+  <data name="MainForm.groupBox56.Text" xml:space="preserve">
+    <value>Selector</value>
+  </data>
+  <data name="MainForm.groupBox55.Text" xml:space="preserve">
+    <value>Nombre de Objetivo (Char/Mob)</value>
+  </data>
+  <data name="MainForm.targetTestButton.Text" xml:space="preserve">
+    <value>Probar Objetivo</value>
+  </data>
+  <data name="MainForm.targetsaveButton.Text" xml:space="preserve">
+    <value>Guardar Cambio</value>
+  </data>
+  <data name="MainForm.MiscFilterPage.Text" xml:space="preserve">
+    <value>Misc</value>
+  </data>
+  <data name="MainForm.groupBox24.Text" xml:space="preserve">
+    <value>Misc</value>
+  </data>
+  <data name="MainForm.colorflagsselfHighlightCheckBox.Text" xml:space="preserve">
+    <value>Resaltado de Bandera de Color Propia</value>
+  </data>
+  <data name="MainForm.showagentmessageCheckBox.Text" xml:space="preserve">
+    <value>Mostrar Mensaje de Agente</value>
+  </data>
+  <data name="MainForm.showmessagefieldCheckBox.Text" xml:space="preserve">
+    <value>Mostrar mensaje presentado</value>
+  </data>
+  <data name="MainForm.colorflagsHighlightCheckBox.Text" xml:space="preserve">
+    <value>Resaltado de Bandera de Color</value>
+  </data>
+  <data name="MainForm.blockchivalryhealCheckBox.Text" xml:space="preserve">
+    <value>Bloquear ChivaHeal si no es necesario</value>
+  </data>
+  <data name="MainForm.blockbighealCheckBox.Text" xml:space="preserve">
+    <value>Bloquear Hechizo de Curación Mayor si no es necesario</value>
+  </data>
+  <data name="MainForm.blockminihealCheckBox.Text" xml:space="preserve">
+    <value>Bloquear Hechizo de Curación Menor si no es necesario</value>
+  </data>
+  <data name="MainForm.blockhealpoisonCheckBox.Text" xml:space="preserve">
+    <value>Bloquear Curación si está Envenenado/Mortal</value>
+  </data>
+  <data name="MainForm.showheadtargetCheckBox.Text" xml:space="preserve">
+    <value>Mostrar Objetivo en la Cabeza</value>
+  </data>
+  <data name="MainForm.blockpartyinviteCheckBox.Text" xml:space="preserve">
+    <value>Bloquear Invitación de Grupo</value>
+  </data>
+  <data name="MainForm.blocktraderequestCheckBox.Text" xml:space="preserve">
+    <value>Bloquear Solicitud de Comercio</value>
+  </data>
+  <data name="MainForm.highlighttargetCheckBox.Text" xml:space="preserve">
+    <value>Texto de Objetivo Actual</value>
+  </data>
+  <data name="MainForm.flagsHighlightCheckBox.Text" xml:space="preserve">
+    <value>Resaltado de Banderas de Texto</value>
+  </data>
+  <data name="MainForm.showstaticfieldCheckBox.Text" xml:space="preserve">
+    <value>Mostrar Campo Estático</value>
+  </data>
+  <data name="MainForm.groupBox23.Text" xml:space="preserve">
+    <value>Filtro de Cambio de Gráficos de Móviles</value>
+  </data>
+  <data name="MainForm.mobfilterCheckBox.Text" xml:space="preserve">
+    <value>Activar</value>
+  </data>
+  <data name="MainForm.uomodgroupbox.Text" xml:space="preserve">
+    <value>UoMod (Cliente > 7.0.0.0)</value>
+  </data>
+  <data name="MainForm.uomodpaperdollCheckBox.Text" xml:space="preserve">
+    <value>Mostrar ranura de Paperdoll</value>
+  </data>
+  <data name="MainForm.uomodglobalsoundCheckBox.Text" xml:space="preserve">
+    <value>Sonido Global</value>
+  </data>
+  <data name="MainForm.uomodFPSCheckBox.Text" xml:space="preserve">
+    <value>Aumentar FPS</value>
+  </data>
+  <data name="MainForm.groupBox10.Text" xml:space="preserve">
+    <value>Auto Trinchar</value>
+  </data>
+  <data name="MainForm.autocarverbladeLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.label34.Text" xml:space="preserve">
+    <value>Serial de Hoja:</value>
+  </data>
+  <data name="MainForm.autocarverrazorButton.Text" xml:space="preserve">
+    <value>Establecer Hoja</value>
+  </data>
+  <data name="MainForm.autocarverCheckBox.Text" xml:space="preserve">
+    <value>Activar</value>
+  </data>
+  <data name="MainForm.groupBox9.Text" xml:space="preserve">
+    <value>Cortador de Huesos</value>
+  </data>
+  <data name="MainForm.bonebladeLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.label16.Text" xml:space="preserve">
+    <value>Serial de Hoja:</value>
+  </data>
+  <data name="MainForm.boneCutterrazorButton.Text" xml:space="preserve">
+    <value>Establecer Hoja</value>
+  </data>
+  <data name="MainForm.bonecutterCheckBox.Text" xml:space="preserve">
+    <value>Activar</value>
+  </data>
+  <data name="MainForm.groupBox32.Text" xml:space="preserve">
+    <value>Auto Remontar</value>
+  </data>
+  <data name="MainForm.label48.Text" xml:space="preserve">
+    <value>Retraso Etéreo:</value>
+  </data>
+  <data name="MainForm.label40.Text" xml:space="preserve">
+    <value>Retraso de Montura:</value>
+  </data>
+  <data name="MainForm.remountseriallabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.label47.Text" xml:space="preserve">
+    <value>Serial de Montura:</value>
+  </data>
+  <data name="MainForm.remountsetbutton.Text" xml:space="preserve">
+    <value>Establecer Montura</value>
+  </data>
+  <data name="MainForm.remountcheckbox.Text" xml:space="preserve">
+    <value>Activar</value>
+  </data>
+  <data name="MainForm.DmgDsplyGroup.Text" xml:space="preserve">
+    <value>Visualización de Daño</value>
+  </data>
+  <data name="MainForm.label81.Text" xml:space="preserve">
+    <value>Daño Mín:</value>
+  </data>
+  <data name="MainForm.limitDamageDisplayEnable.Text" xml:space="preserve">
+    <value>Suprimir Visualización de Daño</value>
+  </data>
+  <data name="MainForm.pythonScriptingTab.Text" xml:space="preserve">
+    <value>Python</value>
+  </data>
+  <data name="MainForm.filename.Text" xml:space="preserve">
+    <value>Nombre de archivo</value>
+  </data>
+  <data name="MainForm.status.Text" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="MainForm.loop.Text" xml:space="preserve">
+    <value>Bucle</value>
+  </data>
+  <data name="MainForm.autostart.Text" xml:space="preserve">
+    <value>Inicio Auto.</value>
+  </data>
+  <data name="MainForm.wait.Text" xml:space="preserve">
+    <value>Esperar</value>
+  </data>
+  <data name="MainForm.hotkey.Text" xml:space="preserve">
+    <value>Teclas Rápidas</value>
+  </data>
+  <data name="MainForm.heypass.Text" xml:space="preserve">
+    <value>Paso de Teclas</value>
+  </data>
+  <data name="MainForm.index.Text" xml:space="preserve">
+    <value>#</value>
+  </data>
+  <data name="MainForm.preload.Text" xml:space="preserve">
+    <value>Precargar</value>
+  </data>
+  <data name="MainForm.fullFilePath.Text" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="MainForm.uosScriptingTab.Text" xml:space="preserve">
+    <value>UOS</value>
+  </data>
+  <data name="MainForm.columnHeader1.Text" xml:space="preserve">
+    <value>Nombre de archivo</value>
+  </data>
+  <data name="MainForm.columnHeader2.Text" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="MainForm.columnHeader3.Text" xml:space="preserve">
+    <value>Bucle</value>
+  </data>
+  <data name="MainForm.columnHeader4.Text" xml:space="preserve">
+    <value>Inicio Auto.</value>
+  </data>
+  <data name="MainForm.columnHeader5.Text" xml:space="preserve">
+    <value>Esperar</value>
+  </data>
+  <data name="MainForm.columnHeader6.Text" xml:space="preserve">
+    <value>Teclas Rápidas</value>
+  </data>
+  <data name="MainForm.columnHeader7.Text" xml:space="preserve">
+    <value>Paso de Teclas</value>
+  </data>
+  <data name="MainForm.columnHeader8.Text" xml:space="preserve">
+    <value>#</value>
+  </data>
+  <data name="MainForm.columnHeader19.Text" xml:space="preserve">
+    <value>Precargar</value>
+  </data>
+  <data name="MainForm.columnHeader9.Text" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="MainForm.csScriptingTab.Text" xml:space="preserve">
+    <value>C#</value>
+  </data>
+  <data name="MainForm.columnHeader10.Text" xml:space="preserve">
+    <value>Nombre de archivo</value>
+  </data>
+  <data name="MainForm.columnHeader11.Text" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="MainForm.columnHeader12.Text" xml:space="preserve">
+    <value>Bucle</value>
+  </data>
+  <data name="MainForm.columnHeader13.Text" xml:space="preserve">
+    <value>Inicio Auto.</value>
+  </data>
+  <data name="MainForm.columnHeader14.Text" xml:space="preserve">
+    <value>Esperar</value>
+  </data>
+  <data name="MainForm.columnHeader15.Text" xml:space="preserve">
+    <value>Teclas Rápidas</value>
+  </data>
+  <data name="MainForm.columnHeader16.Text" xml:space="preserve">
+    <value>Paso de Teclas</value>
+  </data>
+  <data name="MainForm.columnHeader17.Text" xml:space="preserve">
+    <value>#</value>
+  </data>
+  <data name="MainForm.columnHeader20.Text" xml:space="preserve">
+    <value>Precargar</value>
+  </data>
+  <data name="MainForm.columnHeader18.Text" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="MainForm.autoScriptReload.Text" xml:space="preserve">
+    <value>Recarga Automática de Script</value>
+  </data>
+  <data name="MainForm.scriptPacketLogCheckBox.Text" xml:space="preserve">
+    <value>Activar Registro de Paquetes</value>
+  </data>
+  <data name="MainForm.InspectGumpsButton.Text" xml:space="preserve">
+    <value>î§¹ Gump</value>
+  </data>
+  <data name="MainForm.InspectContextButton.Text" xml:space="preserve">
+    <value>îœ¡ Inspeccionar</value>
+  </data>
+  <data name="MainForm.scriptshowStartStopCheckBox.Text" xml:space="preserve">
+    <value>Mostrar Msj Inicio/Fin</value>
+  </data>
+  <data name="MainForm.groupBox30.Text" xml:space="preserve">
+    <value>î¥† Información de Script</value>
+  </data>
+  <data name="MainForm.scriptpreload.Text" xml:space="preserve">
+    <value>Precargar</value>
+  </data>
+  <data name="MainForm.scriptautostartcheckbox.Text" xml:space="preserve">
+    <value>Inicio Auto.</value>
+  </data>
+  <data name="MainForm.scriptwaitmodecheckbox.Text" xml:space="preserve">
+    <value>Esperar</value>
+  </data>
+  <data name="MainForm.scriptloopmodecheckbox.Text" xml:space="preserve">
+    <value>Bucle</value>
+  </data>
+  <data name="MainForm.groupBox42.Text" xml:space="preserve">
+    <value>îœ¡ Buscar</value>
+  </data>
+  <data name="MainForm.scripterrorlogCheckBox.Text" xml:space="preserve">
+    <value>Registrar Error de Script</value>
+  </data>
+  <data name="MainForm.scriptOperationsBox.Text" xml:space="preserve">
+    <value>îœ Operaciones</value>
+  </data>
+  <data name="MainForm.buttonScriptTo.Text" xml:space="preserve">
+    <value>î£ž</value>
+  </data>
+  <data name="MainForm.buttonScriptEditorNew.Text" xml:space="preserve">
+    <value>îŸƒ Nuevo</value>
+  </data>
+  <data name="MainForm.buttonAddScript.Text" xml:space="preserve">
+    <value>îœ Añadir</value>
+  </data>
+  <data name="MainForm.buttonRemoveScript.Text" xml:space="preserve">
+    <value>îœ¸ Eliminar</value>
+  </data>
+  <data name="MainForm.buttonScriptDown.Text" xml:space="preserve">
+    <value>î‹</value>
+  </data>
+  <data name="MainForm.textBoxDelay.Text" xml:space="preserve">
+    <value>100</value>
+  </data>
+  <data name="MainForm.buttonScriptUp.Text" xml:space="preserve">
+    <value>îŠ</value>
+  </data>
+  <data name="MainForm.buttonScriptEditor.Text" xml:space="preserve">
+    <value>îœ Editar</value>
+  </data>
+  <data name="MainForm.showscriptmessageCheckBox.Text" xml:space="preserve">
+    <value>Mostrar Msj de Error de Script</value>
+  </data>
+  <data name="MainForm.eautoloot.Text" xml:space="preserve">
+    <value>AutoSaqueo</value>
+  </data>
+  <data name="MainForm.allowHiddenLooting.Text" xml:space="preserve">
+    <value>Permitir saqueo mientras está oculto</value>
+  </data>
+  <data name="MainForm.autoLootButtonListClone.Text" xml:space="preserve">
+    <value>Clonar</value>
+  </data>
+  <data name="MainForm.autolootautostartCheckBox.Text" xml:space="preserve">
+    <value>Inicio automático al iniciar sesión</value>
+  </data>
+  <data name="MainForm.label60.Text" xml:space="preserve">
+    <value>Rango Máx</value>
+  </data>
+  <data name="MainForm.autolootItemPropsB.Text" xml:space="preserve">
+    <value>Editar Propiedades</value>
+  </data>
+  <data name="MainForm.groupBox14.Text" xml:space="preserve">
+    <value>Bolsa de AutoSaqueo</value>
+  </data>
+  <data name="MainForm.label55.Text" xml:space="preserve">
+    <value>Serial:</value>
+  </data>
+  <data name="MainForm.autolootContainerLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.autolootContainerButton.Text" xml:space="preserve">
+    <value>Establecer Bolsa</value>
+  </data>
+  <data name="MainForm.autolootAddItemBTarget.Text" xml:space="preserve">
+    <value>Añadir Objeto</value>
+  </data>
+  <data name="MainForm.autoLootnoopenCheckBox.Text" xml:space="preserve">
+    <value>No Abrir Cadáveres</value>
+  </data>
+  <data name="MainForm.label21.Text" xml:space="preserve">
+    <value>Retraso (ms)</value>
+  </data>
+  <data name="MainForm.autoLootButtonRemoveList.Text" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="MainForm.autolootButtonAddList.Text" xml:space="preserve">
+    <value>Añadir</value>
+  </data>
+  <data name="MainForm.label20.Text" xml:space="preserve">
+    <value>Lista de AutoSaqueo:</value>
+  </data>
+  <data name="MainForm.groupBox13.Text" xml:space="preserve">
+    <value>Registro de AutoSaqueo</value>
+  </data>
+  <data name="MainForm.autoLootCheckBox.Text" xml:space="preserve">
+    <value>Activar autosaqueo</value>
+  </data>
+  <data name="MainForm.escavenger.Text" xml:space="preserve">
+    <value>Recolector</value>
+  </data>
+  <data name="MainForm.scavengerButtonClone.Text" xml:space="preserve">
+    <value>Clonar</value>
+  </data>
+  <data name="MainForm.scavengerautostartCheckBox.Text" xml:space="preserve">
+    <value>Inicio automático al iniciar sesión</value>
+  </data>
+  <data name="MainForm.label61.Text" xml:space="preserve">
+    <value>Rango Máx</value>
+  </data>
+  <data name="MainForm.groupBox41.Text" xml:space="preserve">
+    <value>Bolsa de Recolector</value>
+  </data>
+  <data name="MainForm.label54.Text" xml:space="preserve">
+    <value>Serial:</value>
+  </data>
+  <data name="MainForm.scavengerContainerLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.scavengerButtonSetContainer.Text" xml:space="preserve">
+    <value>Establecer Bolsa</value>
+  </data>
+  <data name="MainForm.groupBox12.Text" xml:space="preserve">
+    <value>Registro de Recolector</value>
+  </data>
+  <data name="MainForm.label23.Text" xml:space="preserve">
+    <value>Retraso (ms)</value>
+  </data>
+  <data name="MainForm.label22.Text" xml:space="preserve">
+    <value>Lista de Recolector:</value>
+  </data>
+  <data name="MainForm.scavengerButtonEditProps.Text" xml:space="preserve">
+    <value>Editar Propiedades</value>
+  </data>
+  <data name="MainForm.scavengerButtonAddTarget.Text" xml:space="preserve">
+    <value>Añadir Objeto</value>
+  </data>
+  <data name="MainForm.scavengerCheckBox.Text" xml:space="preserve">
+    <value>Activar recolector</value>
+  </data>
+  <data name="MainForm.scavengerButtonRemoveList.Text" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="MainForm.scavengerButtonAddList.Text" xml:space="preserve">
+    <value>Añadir</value>
+  </data>
+  <data name="MainForm.organizer.Text" xml:space="preserve">
+    <value>Organizador</value>
+  </data>
+  <data name="MainForm.organizerCloneListB.Text" xml:space="preserve">
+    <value>Clonar</value>
+  </data>
+  <data name="MainForm.groupBox11.Text" xml:space="preserve">
+    <value>Bolsas de Organizador</value>
+  </data>
+  <data name="MainForm.label57.Text" xml:space="preserve">
+    <value>Destino:</value>
+  </data>
+  <data name="MainForm.label56.Text" xml:space="preserve">
+    <value>Origen:</value>
+  </data>
+  <data name="MainForm.organizerSetSourceB.Text" xml:space="preserve">
+    <value>Establecer Origen</value>
+  </data>
+  <data name="MainForm.organizerSetDestinationB.Text" xml:space="preserve">
+    <value>Establecer Destino</value>
+  </data>
+  <data name="MainForm.organizerSourceLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.groupBox16.Text" xml:space="preserve">
+    <value>Registro de Organizador</value>
+  </data>
+  <data name="MainForm.label27.Text" xml:space="preserve">
+    <value>Retraso al arrastrar objeto (ms)</value>
+  </data>
+  <data name="MainForm.label24.Text" xml:space="preserve">
+    <value>Lista de Organizador:</value>
+  </data>
+  <data name="MainForm.organizerAddTargetB.Text" xml:space="preserve">
+    <value>Añadir Objeto</value>
+  </data>
+  <data name="MainForm.organizerRemoveListB.Text" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="MainForm.organizerAddListB.Text" xml:space="preserve">
+    <value>Añadir</value>
+  </data>
+  <data name="MainForm.VendorBuy.Text" xml:space="preserve">
+    <value>Compra de Vendedor</value>
+  </data>
+  <data name="MainForm.buyToCompleteAmount.Text" xml:space="preserve">
+    <value>Reponer</value>
+  </data>
+  <data name="MainForm.buyCompareNameCheckBox.Text" xml:space="preserve">
+    <value>Comparar nombre de objeto</value>
+  </data>
+  <data name="MainForm.buyCloneButton.Text" xml:space="preserve">
+    <value>Clonar</value>
+  </data>
+  <data name="MainForm.groupBox18.Text" xml:space="preserve">
+    <value>Registro de Compra</value>
+  </data>
+  <data name="MainForm.label25.Text" xml:space="preserve">
+    <value>Compra de Vendedor:</value>
+  </data>
+  <data name="MainForm.buyAddTargetB.Text" xml:space="preserve">
+    <value>Añadir Objeto</value>
+  </data>
+  <data name="MainForm.buyEnableCheckBox.Text" xml:space="preserve">
+    <value>Activar Lista de Compra</value>
+  </data>
+  <data name="MainForm.buyRemoveListButton.Text" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="MainForm.buyAddListButton.Text" xml:space="preserve">
+    <value>Añadir</value>
+  </data>
+  <data name="MainForm.VendorSell.Text" xml:space="preserve">
+    <value>Venta de Vendedor</value>
+  </data>
+  <data name="MainForm.sellCloneListButton.Text" xml:space="preserve">
+    <value>Clonar</value>
+  </data>
+  <data name="MainForm.groupBox19.Text" xml:space="preserve">
+    <value>Bolsa de Venta</value>
+  </data>
+  <data name="MainForm.sellSetBagButton.Text" xml:space="preserve">
+    <value>Establecer Bolsa</value>
+  </data>
+  <data name="MainForm.label50.Text" xml:space="preserve">
+    <value>Serial:</value>
+  </data>
+  <data name="MainForm.sellBagLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.groupBox20.Text" xml:space="preserve">
+    <value>Registro de Venta</value>
+  </data>
+  <data name="MainForm.label26.Text" xml:space="preserve">
+    <value>Venta de Vendedor:</value>
+  </data>
+  <data name="MainForm.sellAddTargerButton.Text" xml:space="preserve">
+    <value>Añadir Objeto</value>
+  </data>
+  <data name="MainForm.sellEnableCheckBox.Text" xml:space="preserve">
+    <value>Activar Lista de Venta</value>
+  </data>
+  <data name="MainForm.sellRemoveListButton.Text" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="MainForm.sellAddListButton.Text" xml:space="preserve">
+    <value>Añadir</value>
+  </data>
+  <data name="MainForm.Dress.Text" xml:space="preserve">
+    <value>Vestir / Armar</value>
+  </data>
+  <data name="MainForm.useUo3D.Text" xml:space="preserve">
+    <value>Usar Equipar y Desequipar UO3D</value>
+  </data>
+  <data name="MainForm.dressStopButton.Text" xml:space="preserve">
+    <value>Detener</value>
+  </data>
+  <data name="MainForm.dressConflictCheckB.Text" xml:space="preserve">
+    <value>Eliminar objeto en conflicto</value>
+  </data>
+  <data name="MainForm.dressBagLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.groupBox22.Text" xml:space="preserve">
+    <value>Lista de Objetos</value>
+  </data>
+  <data name="MainForm.dressAddTargetB.Text" xml:space="preserve">
+    <value>Añadir Objetivo</value>
+  </data>
+  <data name="MainForm.dressAddManualB.Text" xml:space="preserve">
+    <value>Añadir Limpiar Capa</value>
+  </data>
+  <data name="MainForm.dressRemoveB.Text" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="MainForm.dressClearListB.Text" xml:space="preserve">
+    <value>Limpiar Lista</value>
+  </data>
+  <data name="MainForm.dressReadB.Text" xml:space="preserve">
+    <value>Leer Actual</value>
+  </data>
+  <data name="MainForm.label29.Text" xml:space="preserve">
+    <value>Retraso al arrastrar objeto (ms)</value>
+  </data>
+  <data name="MainForm.groupBox21.Text" xml:space="preserve">
+    <value>Registro de Organizador</value>
+  </data>
+  <data name="MainForm.dressSetBagB.Text" xml:space="preserve">
+    <value>Bolsa para Desvestir</value>
+  </data>
+  <data name="MainForm.undressExecuteButton.Text" xml:space="preserve">
+    <value>Desvestir</value>
+  </data>
+  <data name="MainForm.dressExecuteButton.Text" xml:space="preserve">
+    <value>Vestir</value>
+  </data>
+  <data name="MainForm.columnHeader24.Text" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.columnHeader25.Text" xml:space="preserve">
+    <value>Capa</value>
+  </data>
+  <data name="MainForm.columnHeader26.Text" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="MainForm.columnHeader27.Text" xml:space="preserve">
+    <value>Serial</value>
+  </data>
+  <data name="MainForm.label28.Text" xml:space="preserve">
+    <value>Lista de Vestimenta:</value>
+  </data>
+  <data name="MainForm.dressRemoveListB.Text" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="MainForm.dressAddListB.Text" xml:space="preserve">
+    <value>Añadir</value>
+  </data>
+  <data name="MainForm.friends.Text" xml:space="preserve">
+    <value>Amigos</value>
+  </data>
+  <data name="MainForm.groupBox34.Text" xml:space="preserve">
+    <value>Amigo de Clan</value>
+  </data>
+  <data name="MainForm.FriendGuildAddButton.Text" xml:space="preserve">
+    <value>Añadir Manual</value>
+  </data>
+  <data name="MainForm.FriendGuildRemoveButton.Text" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="MainForm.groupBox33.Text" xml:space="preserve">
+    <value>Amigo de Facción</value>
+  </data>
+  <data name="MainForm.MINfriendCheckBox.Text" xml:space="preserve">
+    <value>MIN</value>
+  </data>
+  <data name="MainForm.SLfriendCheckBox.Text" xml:space="preserve">
+    <value>SL</value>
+  </data>
+  <data name="MainForm.TBfriendCheckBox.Text" xml:space="preserve">
+    <value>TB</value>
+  </data>
+  <data name="MainForm.COMfriendCheckBox.Text" xml:space="preserve">
+    <value>CoM</value>
+  </data>
+  <data name="MainForm.friendGroupBox.Text" xml:space="preserve">
+    <value>Amigo de Usuario</value>
+  </data>
+  <data name="MainForm.friendAddTargetButton.Text" xml:space="preserve">
+    <value>Añadir Objetivo</value>
+  </data>
+  <data name="MainForm.friendRemoveButton.Text" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="MainForm.friendAddButton.Text" xml:space="preserve">
+    <value>Añadir Manual</value>
+  </data>
+  <data name="MainForm.friendloggroupBox.Text" xml:space="preserve">
+    <value>Registro de Amigos</value>
+  </data>
+  <data name="MainForm.friendIncludePartyCheckBox.Text" xml:space="preserve">
+    <value>Incluir miembros del grupo en la Lista de Amigos</value>
+  </data>
+  <data name="MainForm.friendAttackCheckBox.Text" xml:space="preserve">
+    <value>Evitar atacar amigos en modo guerra</value>
+  </data>
+  <data name="MainForm.friendPartyCheckBox.Text" xml:space="preserve">
+    <value>Aceptar automáticamente grupo de Amigos</value>
+  </data>
+  <data name="MainForm.labelfriend.Text" xml:space="preserve">
+    <value>Lista de Amigos:</value>
+  </data>
+  <data name="MainForm.friendButtonRemoveList.Text" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="MainForm.friendButtonAddList.Text" xml:space="preserve">
+    <value>Añadir</value>
+  </data>
+  <data name="MainForm.restock.Text" xml:space="preserve">
+    <value>Reponer</value>
+  </data>
+  <data name="MainForm.restockCloneListB.Text" xml:space="preserve">
+    <value>Clonar</value>
+  </data>
+  <data name="MainForm.groupBox3.Text" xml:space="preserve">
+    <value>Bolsas de Reposición</value>
+  </data>
+  <data name="MainForm.label59.Text" xml:space="preserve">
+    <value>Destino:</value>
+  </data>
+  <data name="MainForm.label58.Text" xml:space="preserve">
+    <value>Origen:</value>
+  </data>
+  <data name="MainForm.restockSetSourceButton.Text" xml:space="preserve">
+    <value>Establecer Bolsa</value>
+  </data>
+  <data name="MainForm.restockSourceLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.restockDestinationLabel.Text" xml:space="preserve">
+    <value>0x00000000</value>
+  </data>
+  <data name="MainForm.restockSetDestinationButton.Text" xml:space="preserve">
+    <value>Establecer Bolsa</value>
+  </data>
+  <data name="MainForm.groupBox2.Text" xml:space="preserve">
+    <value>Registro de Reposición</value>
+  </data>
+  <data name="MainForm.label13.Text" xml:space="preserve">
+    <value>Retraso al arrastrar objeto (ms)</value>
+  </data>
+  <data name="MainForm.label7.Text" xml:space="preserve">
+    <value>Lista de Reposición:</value>
+  </data>
+  <data name="MainForm.restockAddTargetButton.Text" xml:space="preserve">
+    <value>Añadir Objeto</value>
+  </data>
+  <data name="MainForm.restockRemoveListB.Text" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="MainForm.restockAddListB.Text" xml:space="preserve">
+    <value>Añadir</value>
+  </data>
+  <data name="MainForm.bandageheal.Text" xml:space="preserve">
+    <value>Curación con Vendas</value>
+  </data>
+  <data name="MainForm.BandageHealSettingsBox.Text" xml:space="preserve">
+    <value>Ajustes</value>
+  </data>
+  <data name="MainForm.bandagehealAutostartCheckBox.Text" xml:space="preserve">
+    <value>Inicio automático al iniciar sesión</value>
+  </data>
+  <data name="MainForm.bandageHealIgnoreCount.Text" xml:space="preserve">
+    <value>Ignorar Cantidad</value>
+  </data>
+  <data name="MainForm.bandagehealTimeWithBufCheckBox.Text" xml:space="preserve">
+    <value>Tiempo con Buff</value>
+  </data>
+  <data name="MainForm.label78.Text" xml:space="preserve">
+    <value>Otro:</value>
+  </data>
+  <data name="MainForm.bandagehealenableCheckBox.Text" xml:space="preserve">
+    <value>Activar Curación con Vendas</value>
+  </data>
+  <data name="MainForm.label77.Text" xml:space="preserve">
+    <value>Propio:</value>
+  </data>
+  <data name="MainForm.bandagehealusetextContent.Text" xml:space="preserve">
+    <value>[band</value>
+  </data>
+  <data name="MainForm.bandagehealusetextSelfContent.Text" xml:space="preserve">
+    <value>[bandself</value>
+  </data>
+  <data name="MainForm.bandagehealusetext.Text" xml:space="preserve">
+    <value>Enviar texto para autocuración</value>
+  </data>
+  <data name="MainForm.bandagehealusetarget.Text" xml:space="preserve">
+    <value>Usar Objetivo Normal</value>
+  </data>
+  <data name="MainForm.label46.Text" xml:space="preserve">
+    <value>Rango Máx:</value>
+  </data>
+  <data name="MainForm.bandagehealcountdownCheckBox.Text" xml:space="preserve">
+    <value>Mostrar Cuenta Atrás de Curación</value>
+  </data>
+  <data name="MainForm.bandagehealhiddedCheckBox.Text" xml:space="preserve">
+    <value>Bloquear curación si está oculto</value>
+  </data>
+  <data name="MainForm.bandagehealmortalCheckBox.Text" xml:space="preserve">
+    <value>Bloquear curación si tiene mortal</value>
+  </data>
+  <data name="MainForm.bandagehealpoisonCheckBox.Text" xml:space="preserve">
+    <value>Bloquear curación si está envenenado</value>
+  </data>
+  <data name="MainForm.label33.Text" xml:space="preserve">
+    <value>% vida</value>
+  </data>
+  <data name="MainForm.label32.Text" xml:space="preserve">
+    <value>Empezar por debajo de:</value>
+  </data>
+  <data name="MainForm.label31.Text" xml:space="preserve">
+    <value>Retraso Personalizado:</value>
+  </data>
+  <data name="MainForm.bandagehealdexformulaCheckBox.Text" xml:space="preserve">
+    <value>Usar fórmula de retraso por DEX</value>
+  </data>
+  <data name="MainForm.label30.Text" xml:space="preserve">
+    <value>Color:</value>
+  </data>
+  <data name="MainForm.label19.Text" xml:space="preserve">
+    <value>ID:</value>
+  </data>
+  <data name="MainForm.bandagehealcustomCheckBox.Text" xml:space="preserve">
+    <value>Usar Venda Personalizada</value>
+  </data>
+  <data name="MainForm.bandagehealtargetLabel.Text" xml:space="preserve">
+    <value>Nulo (0x00000000)</value>
+  </data>
+  <data name="MainForm.label15.Text" xml:space="preserve">
+    <value>Objetivo:</value>
+  </data>
+  <data name="MainForm.bandagehealsettargetButton.Text" xml:space="preserve">
+    <value>Establecer Objetivo</value>
+  </data>
+  <data name="MainForm.label14.Text" xml:space="preserve">
+    <value>Objetivo de Curación:</value>
+  </data>
+  <data name="MainForm.groupBox5.Text" xml:space="preserve">
+    <value>Registro de Curación con Vendas</value>
+  </data>
+  <data name="MainForm.skillActionsCard.Text" xml:space="preserve">
+    <value>Acciones</value>
+  </data>
+  <data name="MainForm.skillSetLocksLabel.Text" xml:space="preserve">
+    <value>Establecer todos los bloqueos:</value>
+  </data>
+  <data name="MainForm.hotkeyKeyMaster.Prefix" xml:space="preserve">
+    <value>Tecla ON/OFF: </value>
+  </data>
+  <data name="MainForm.hotkeyKeyMaster.None" xml:space="preserve">
+    <value>Tecla ON/OFF: Ninguna</value>
+  </data>
+  <data name="MainForm.hotkeyStatus.Enabled" xml:space="preserve">
+    <value>Estado: Activado</value>
+  </data>
+  <data name="MainForm.hotkeyStatus.Disabled" xml:space="preserve">
+    <value>Estado: Desactivado</value>
+  </data>
+  <data name="HotKey.Category.General" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="HotKey.Category.Actions" xml:space="preserve">
+    <value>Acciones</value>
+  </data>
+  <data name="HotKey.Category.Agents" xml:space="preserve">
+    <value>Agentes</value>
+  </data>
+  <data name="HotKey.Category.Combat" xml:space="preserve">
+    <value>Combate</value>
+  </data>
+  <data name="HotKey.Category.Skills" xml:space="preserve">
+    <value>Habilidades</value>
+  </data>
+  <data name="HotKey.Category.Spells" xml:space="preserve">
+    <value>Hechizos</value>
+  </data>
+  <data name="HotKey.Category.Target" xml:space="preserve">
+    <value>Objetivo</value>
+  </data>
+  <data name="HotKey.Category.Script" xml:space="preserve">
+    <value>Script</value>
+  </data>
+  <data name="HotKey.Category.Virtue" xml:space="preserve">
+    <value>Virtud</value>
+  </data>
+  <data name="HotKey.Category.HotKeys" xml:space="preserve">
+    <value>Teclas Rápidas</value>
+  </data>
+  <data name="HotKey.Category.Use" xml:space="preserve">
+    <value>Usar</value>
+  </data>
+  <data name="HotKey.Category.ShowNames" xml:space="preserve">
+    <value>Mostrar Nombres</value>
+  </data>
+  <data name="HotKey.Category.PetCommands" xml:space="preserve">
+    <value>Comandos de Mascota</value>
+  </data>
+  <data name="HotKey.Category.Autoloot" xml:space="preserve">
+    <value>AutoSaqueo</value>
+  </data>
+  <data name="HotKey.Category.Scavenger" xml:space="preserve">
+    <value>Recolector</value>
+  </data>
+  <data name="HotKey.Category.Organizer" xml:space="preserve">
+    <value>Organizador</value>
+  </data>
+  <data name="HotKey.Category.Sell" xml:space="preserve">
+    <value>Venta</value>
+  </data>
+  <data name="HotKey.Category.Buy" xml:space="preserve">
+    <value>Compra</value>
+  </data>
+  <data name="HotKey.Category.Dress" xml:space="preserve">
+    <value>Vestimenta</value>
+  </data>
+  <data name="HotKey.Category.Restock" xml:space="preserve">
+    <value>Reposición</value>
+  </data>
+  <data name="HotKey.Category.BandageHeal" xml:space="preserve">
+    <value>Curación con Vendas</value>
+  </data>
+  <data name="HotKey.Category.BoneCutter" xml:space="preserve">
+    <value>Cortador de Huesos</value>
+  </data>
+  <data name="HotKey.Category.AutoCarver" xml:space="preserve">
+    <value>Auto Trinchar</value>
+  </data>
+  <data name="HotKey.Category.AutoRemount" xml:space="preserve">
+    <value>Auto Remontar</value>
+  </data>
+  <data name="HotKey.Category.GraphicsFilter" xml:space="preserve">
+    <value>Filtro de Gráficos</value>
+  </data>
+  <data name="HotKey.Category.Friend" xml:space="preserve">
+    <value>Amigo</value>
+  </data>
+  <data name="HotKey.Category.Abilities" xml:space="preserve">
+    <value>Habilidades</value>
+  </data>
+  <data name="HotKey.Category.Attack" xml:space="preserve">
+    <value>Atacar</value>
+  </data>
+  <data name="HotKey.Category.Bandage" xml:space="preserve">
+    <value>Vendar</value>
+  </data>
+  <data name="HotKey.Category.Consumable" xml:space="preserve">
+    <value>Consumible</value>
+  </data>
+  <data name="HotKey.Category.Potions" xml:space="preserve">
+    <value>Pociones</value>
+  </data>
+  <data name="HotKey.Category.Hands" xml:space="preserve">
+    <value>Manos</value>
+  </data>
+  <data name="HotKey.Category.EquipWands" xml:space="preserve">
+    <value>Equipar Varitas</value>
+  </data>
+  <data name="HotKey.Category.List" xml:space="preserve">
+    <value>Lista</value>
+  </data>
+  <data name="HotKey.Category.Other" xml:space="preserve">
+    <value>Otro</value>
+  </data>
+  <data name="MainForm.autolootConfigCard.Text" xml:space="preserve">
+    <value>Ajustes</value>
+  </data>
+  <data name="MainForm.scavengerConfigCard.Text" xml:space="preserve">
+    <value>Ajustes</value>
+  </data>
+  <data name="MainForm.AutolootColumnX.HeaderText" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.AutolootColumnItemName.HeaderText" xml:space="preserve">
+    <value>Nombre de Objeto</value>
+  </data>
+  <data name="MainForm.AutolootColumnItemID.HeaderText" xml:space="preserve">
+    <value>Gráficos</value>
+  </data>
+  <data name="MainForm.AutolootColumnColor.HeaderText" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="MainForm.AutolootColumnProps.HeaderText" xml:space="preserve">
+    <value>Propiedades</value>
+  </data>
+  <data name="MainForm.organizerConfigCard.Text" xml:space="preserve">
+    <value>Ajustes</value>
+  </data>
+  <data name="MainForm.organizerExecuteButton.Text" xml:space="preserve">
+    <value>Ejecutar</value>
+  </data>
+  <data name="MainForm.organizerStopButton.Text" xml:space="preserve">
+    <value>Detener</value>
+  </data>
+  <data name="MainForm.OrganizerColumnX.HeaderText" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.OrganizerColumnItemName.HeaderText" xml:space="preserve">
+    <value>Nombre de Objeto</value>
+  </data>
+  <data name="MainForm.OrganizerColumnGraphics.HeaderText" xml:space="preserve">
+    <value>Gráficos</value>
+  </data>
+  <data name="MainForm.OrganizerColumnColor.HeaderText" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="MainForm.OrganizerColumnAmount.HeaderText" xml:space="preserve">
+    <value>Cantidad</value>
+  </data>
+  <data name="MainForm.vendorbuyItemsCard.Text" xml:space="preserve">
+    <value>Compra de Vendedor</value>
+  </data>
+  <data name="MainForm.vendorbuyConfigCard.Text" xml:space="preserve">
+    <value>Ajustes</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnX.HeaderText" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnName.HeaderText" xml:space="preserve">
+    <value>Nombre de Objeto</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnGraphics.HeaderText" xml:space="preserve">
+    <value>Gráficos</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnAmount.HeaderText" xml:space="preserve">
+    <value>Cantidad</value>
+  </data>
+  <data name="MainForm.vendorbuyColumnColor.HeaderText" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="MainForm.dressItemsCard.Text" xml:space="preserve">
+    <value>Vestimenta / Armar</value>
+  </data>
+  <data name="MainForm.dressConfigCard.Text" xml:space="preserve">
+    <value>Ajustes</value>
+  </data>
+  <data name="MainForm.dressConfigCard.Log" xml:space="preserve">
+    <value>Registro de Vestimenta</value>
+  </data>
+  <data name="sellListLabel" xml:space="preserve">
+    <value>Lista:</value>
+  </data>
+  <data name="sellAddListButton" xml:space="preserve">
+    <value>Añadir</value>
+  </data>
+  <data name="sellRemoveListButton" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="sellCloneListButton" xml:space="preserve">
+    <value>Clonar</value>
+  </data>
+  <data name="vendorSellDataGridX" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="vendorSellDataGridItemName" xml:space="preserve">
+    <value>Nombre de Objeto</value>
+  </data>
+  <data name="vendorSellDataGridGraphics" xml:space="preserve">
+    <value>Gráficos</value>
+  </data>
+  <data name="vendorSellDataGridAmount" xml:space="preserve">
+    <value>Cantidad</value>
+  </data>
+  <data name="vendorSellDataGridColor" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="sellAddItemButton" xml:space="preserve">
+    <value>Añadir Objeto</value>
+  </data>
+  <data name="sellSettingsCard" xml:space="preserve">
+    <value>Ajustes</value>
+  </data>
+  <data name="sellEnableCheckBox" xml:space="preserve">
+    <value>Activar Lista de Venta</value>
+  </data>
+  <data name="sellBagLabel" xml:space="preserve">
+    <value>Bolsa de Venta</value>
+  </data>
+  <data name="sellSetBagButton" xml:space="preserve">
+    <value>Establecer Bolsa</value>
+  </data>
+  <data name="sellLogLabel" xml:space="preserve">
+    <value>Registro de Venta</value>
+  </data>
+  <data name="MainForm.vendorsellItemsCard.Text" xml:space="preserve">
+    <value>Ventas de Vendedor</value>
+  </data>
+  <data name="MainForm.friendsConfigCard.Text" xml:space="preserve">
+    <value>Ajustes</value>
+  </data>
+  <data name="restockAddListButton" xml:space="preserve">
+    <value>Añadir</value>
+  </data>
+  <data name="restockRemoveListButton" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="restockCloneListButton" xml:space="preserve">
+    <value>Clonar</value>
+  </data>
+  <data name="restockDataGridX" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="restockDataGridItemName" xml:space="preserve">
+    <value>Nombre de Objeto</value>
+  </data>
+  <data name="restockDataGridGraphics" xml:space="preserve">
+    <value>Gráficos</value>
+  </data>
+  <data name="restockDataGridColor" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="restockDataGridLimit" xml:space="preserve">
+    <value>Límite</value>
+  </data>
+  <data name="restockAddItemButton" xml:space="preserve">
+    <value>Añadir Objeto</value>
+  </data>
+  <data name="restockConfigCard" xml:space="preserve">
+    <value>Ajustes</value>
+  </data>
+  <data name="restockBagsLabel" xml:space="preserve">
+    <value>Bolsas de Reposición</value>
+  </data>
+  <data name="restockSourceLabel" xml:space="preserve">
+    <value>Origen:</value>
+  </data>
+  <data name="restockSetSourceButton" xml:space="preserve">
+    <value>Establecer Origen</value>
+  </data>
+  <data name="restockDestinationLabel" xml:space="preserve">
+    <value>Destino:</value>
+  </data>
+  <data name="restockSetDestinationButton" xml:space="preserve">
+    <value>Establecer Destino</value>
+  </data>
+  <data name="restockExecuteButton" xml:space="preserve">
+    <value>Ejecutar</value>
+  </data>
+  <data name="restockStopButton" xml:space="preserve">
+    <value>Detener</value>
+  </data>
+  <data name="restockDragDelayLabel" xml:space="preserve">
+    <value>Retraso al arrastrar objeto (ms)</value>
+  </data>
+  <data name="restockLogLabel" xml:space="preserve">
+    <value>Registro de Reposición</value>
+  </data>
+  <data name="Filters.Title" xml:space="preserve">
+    <value>Opciones y Filtros</value>
+  </data>
+  <data name="Filters.Classic" xml:space="preserve">
+    <value>Filtros Clásicos</value>
+  </data>
+  <data name="Filters.Light" xml:space="preserve">
+    <value>Filtro de Luz (Día Estático)</value>
+  </data>
+  <data name="Filters.Weather" xml:space="preserve">
+    <value>Filtro de Clima</value>
+  </data>
+  <data name="Filters.Sound" xml:space="preserve">
+    <value>Filtro de Sonido</value>
+  </data>
+  <data name="Filters.Death" xml:space="preserve">
+    <value>Filtro de Pantalla de Muerte</value>
+  </data>
+  <data name="Filters.Staff" xml:space="preserve">
+    <value>Filtro de NPCs del Staff</value>
+  </data>
+  <data name="Filters.Poison" xml:space="preserve">
+    <value>Filtro de Mensaje de Veneno</value>
+  </data>
+  <data name="Filters.Snoop" xml:space="preserve">
+    <value>Filtro de Mensaje de Fisgoneo</value>
+  </data>
+  <data name="Hotkeys.Title" xml:space="preserve">
+    <value>Gestión de Teclas Rápidas</value>
+  </data>
+  <data name="Hotkeys.AvailableActions" xml:space="preserve">
+    <value>Acciones Disponibles</value>
+  </data>
+  <data name="Hotkeys.CurrentHotkeys" xml:space="preserve">
+    <value>Teclas Rápidas Actuales</value>
+  </data>
+  <data name="Hotkeys.Edit" xml:space="preserve">
+    <value>Editar Tecla Rápida</value>
+  </data>
+  <data name="Hotkeys.Set" xml:space="preserve">
+    <value>Establecer Tecla Rápida</value>
+  </data>
+  <data name="Inspector.Title" xml:space="preserve">
+    <value>Inspector de Objetos</value>
+  </data>
+  <data name="Inspector.BasicInfo" xml:space="preserve">
+    <value>Información Básica</value>
+  </data>
+  <data name="Inspector.Properties" xml:space="preserve">
+    <value>Propiedades (OPL)</value>
+  </data>
+  <data name="Inspector.InspectButton" xml:space="preserve">
+    <value>Inspeccionar Objeto</value>
+  </data>
+  <data name="Scripting.Title" xml:space="preserve">
+    <value>Motor de Scripting</value>
+  </data>
+  <data name="Scripting.Run" xml:space="preserve">
+    <value>Ejecutar</value>
+  </data>
+  <data name="Scripting.Stop" xml:space="preserve">
+    <value>Detener</value>
+  </data>
+  <data name="Scripting.New" xml:space="preserve">
+    <value>Nuevo</value>
+  </data>
+  <data name="Scripting.Open" xml:space="preserve">
+    <value>Abrir</value>
+  </data>
+  <data name="Scripting.Save" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="Status.Ready" xml:space="preserve">
+    <value>Listo</value>
+  </data>
+  <data name="Status.ErrorEmptyPath" xml:space="preserve">
+    <value>Error: ¡La ruta del cliente está vacía!</value>
+  </data>
+  <data name="Status.Launching" xml:space="preserve">
+    <value>Iniciando cliente...</value>
+  </data>
+  <data name="Status.Browsing" xml:space="preserve">
+    <value>Buscando cliente...</value>
+  </data>
+  <data name="Hotkeys.Status.ClickSet" xml:space="preserve">
+    <value>Haz clic en 'Establecer' para grabar una tecla</value>
+  </data>
+  <data name="Hotkeys.Status.PressAnyKey" xml:space="preserve">
+    <value>Presiona cualquier tecla (con modificadores)...</value>
+  </data>
+  <data name="Hotkeys.Status.KeySet" xml:space="preserve">
+    <value>Tecla establecida: {0}</value>
+  </data>
+  <data name="Inspector.Status.ClickInspect" xml:space="preserve">
+    <value>Haz clic en 'Inspeccionar' para apuntar a un objeto en el juego</value>
+  </data>
+  <data name="Inspector.Status.WaitingTarget" xml:space="preserve">
+    <value>Esperando objetivo en el juego...</value>
+  </data>
+  <data name="Inspector.Status.Inspected" xml:space="preserve">
+    <value>Inspeccionado: 0x{0:X}</value>
+  </data>
+  <data name="Inspector.Status.NotFound" xml:space="preserve">
+    <value>Entidad 0x{0:X} no encontrada en el caché del mundo.</value>
+  </data>
+  <data name="Status.ClientReady" xml:space="preserve">
+    <value>¡El cliente está listo!</value>
+  </data>
+  <data name="Dashboard.CoreEngine.ToolTip" xml:space="preserve">
+    <value>Indica la versión actual y el estado del motor central de TMRazor.</value>
+  </data>
+  <data name="Dashboard.Diagnostics.ToolTip" xml:space="preserve">
+    <value>Abre el panel de diagnóstico para verificar la salud del sistema y métricas avanzadas.</value>
+  </data>
+  <data name="Dashboard.Network" xml:space="preserve">
+    <value>Red</value>
+  </data>
+  <data name="Dashboard.Diagnostics" xml:space="preserve">
+    <value>Diagnósticos</value>
+  </data>
+  <data name="Dashboard.Welcome" xml:space="preserve">
+    <value>Bienvenido de nuevo. Todos los sistemas están operativos.</value>
+  </data>
+  <data name="Dashboard.Network.ToolTip" xml:space="preserve">
+    <value>Muestra si la herramienta está conectada correctamente al cliente de juego Ultima Online.</value>
+  </data>
+  <data name="Dashboard.RecordVideo.ToolTip" xml:space="preserve">
+    <value>Iniciar o detener la grabación de un video de la ventana del juego.</value>
+  </data>
+  <data name="Dashboard.Screenshot" xml:space="preserve">
+    <value>Captura de pantalla</value>
+  </data>
+  <data name="Dashboard.SystemStatus" xml:space="preserve">
+    <value>Estado del sistema</value>
+  </data>
+  <data name="Dashboard.Header" xml:space="preserve">
+    <value>Panel de Control de TMRazor Improved</value>
+  </data>
+  <data name="Dashboard.Language" xml:space="preserve">
+    <value>Idioma:</value>
+  </data>
+  <data name="Dashboard.Screenshot.ToolTip" xml:space="preserve">
+    <value>Tomar una captura de pantalla de la ventana actual del juego.</value>
+  </data>
+  <data name="Dashboard.RecentCaptures" xml:space="preserve">
+    <value>Capturas recientes</value>
+  </data>
+  <data name="Dashboard.OpenGallery" xml:space="preserve">
+    <value>Abrir carpeta de galería</value>
+  </data>
+  <data name="Dashboard.MediaCapture" xml:space="preserve">
+    <value>Multimedia y Captura</value>
+  </data>
+  <data name="Dashboard.CoreEngine" xml:space="preserve">
+    <value>Motor Central</value>
+  </data>
+  <data name="Dashboard.Title" xml:space="preserve">
+    <value>Panel de Control</value>
+  </data>
+  <data name="Dashboard.Language.ToolTip" xml:space="preserve">
+    <value>Selecciona el idioma de la interfaz para TMRazor.</value>
+  </data>
+  <data name="Dashboard.RecordVideo" xml:space="preserve">
+    <value>Grabar video</value>
+  </data>
+  <data name="Dashboard.OpenGallery.ToolTip" xml:space="preserve">
+    <value>Abre la carpeta donde se guardan las capturas de pantalla y videos.</value>
+  </data>
+  <data name="Dashboard.Network.Connected" xml:space="preserve">
+    <value>Conectado al Cliente UO</value>
+  </data>
+  <data name="Nav.SecureTrade" xml:space="preserve">
+    <value>Comercio Seguro</value>
+  </data>
+  <data name="Nav.Agents.Friends" xml:space="preserve">
+    <value>Amigos</value>
+  </data>
+  <data name="Nav.Gallery" xml:space="preserve">
+    <value>Galería</value>
+  </data>
+  <data name="Nav.Tools" xml:space="preserve">
+    <value>Herramientas</value>
+  </data>
+  <data name="Nav.Options" xml:space="preserve">
+    <value>Opciones</value>
+  </data>
+  <data name="Nav.Hotkeys" xml:space="preserve">
+    <value>Teclas Rápidas</value>
+  </data>
+  <data name="Nav.Agents.Vendor" xml:space="preserve">
+    <value>Vendedor</value>
+  </data>
+  <data name="Nav.Journal" xml:space="preserve">
+    <value>Diario</value>
+  </data>
+  <data name="Nav.Agents.BandageHeal" xml:space="preserve">
+    <value>Curación con Vendas</value>
+  </data>
+  <data name="Nav.Agents.Restock" xml:space="preserve">
+    <value>Reposición</value>
+  </data>
+  <data name="Nav.Skills" xml:space="preserve">
+    <value>Habilidades</value>
+  </data>
+  <data name="Nav.Agents.Targeting" xml:space="preserve">
+    <value>Objetivos</value>
+  </data>
+  <data name="Nav.Tools.GumpList" xml:space="preserve">
+    <value>Lista de Gumps</value>
+  </data>
+  <data name="Nav.Macros" xml:space="preserve">
+    <value>Macros</value>
+  </data>
+  <data name="Nav.Network" xml:space="preserve">
+    <value>Red</value>
+  </data>
+  <data name="Nav.General" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="Nav.Agents" xml:space="preserve">
+    <value>Agentes</value>
+  </data>
+  <data name="Nav.Agents.Scavenger" xml:space="preserve">
+    <value>Recolector</value>
+  </data>
+  <data name="Nav.Tools.ObjectInspector" xml:space="preserve">
+    <value>Inspector de Objetos</value>
+  </data>
+  <data name="Nav.Display" xml:space="preserve">
+    <value>Pantalla</value>
+  </data>
+  <data name="Nav.Scripting" xml:space="preserve">
+    <value>Scripting</value>
+  </data>
+  <data name="Nav.Agents.Organizer" xml:space="preserve">
+    <value>Organizador</value>
+  </data>
+  <data name="Nav.Dashboard" xml:space="preserve">
+    <value>Panel de Control</value>
+  </data>
+  <data name="Nav.Agents.Dress" xml:space="preserve">
+    <value>Vestimenta</value>
+  </data>
+  <data name="Nav.Agents.AutoLoot" xml:space="preserve">
+    <value>AutoSaqueo</value>
+  </data>
+  <data name="Journal.Export" xml:space="preserve">
+    <value>Exportar</value>
+  </data>
+  <data name="Journal.Filter.ToolTip" xml:space="preserve">
+    <value>Busca palabras clave o nombres específicos dentro de las entradas del diario.</value>
+  </data>
+  <data name="Journal.Filter.Placeholder" xml:space="preserve">
+    <value>Filtrar diario...</value>
+  </data>
+  <data name="Journal.Column.Time" xml:space="preserve">
+    <value>Hora</value>
+  </data>
+  <data name="Journal.Description" xml:space="preserve">
+    <value>Monitorea los mensajes del sistema y del mundo en el juego</value>
+  </data>
+  <data name="Journal.Column.Message" xml:space="preserve">
+    <value>Mensaje</value>
+  </data>
+  <data name="Journal.Column.Name" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="Journal.Clear.ToolTip" xml:space="preserve">
+    <value>Elimina todas las entradas actuales de la pantalla del diario.</value>
+  </data>
+  <data name="Journal.Title" xml:space="preserve">
+    <value>Diario</value>
+  </data>
+  <data name="Journal.Footer.TotalEntries" xml:space="preserve">
+    <value>Total de entradas: </value>
+  </data>
+  <data name="Journal.Export.ToolTip" xml:space="preserve">
+    <value>Guarda el registro actual del diario en un archivo de texto.</value>
+  </data>
+  <data name="Journal.Header" xml:space="preserve">
+    <value>Registro del Diario</value>
+  </data>
+  <data name="Journal.Clear" xml:space="preserve">
+    <value>Limpiar</value>
+  </data>
+  <data name="General.Action.DPSMeter" xml:space="preserve">
+    <value>Medidor de DPS</value>
+  </data>
+  <data name="General.EngineStatus" xml:space="preserve">
+    <value>Estado del Motor</value>
+  </data>
+  <data name="General.Profile.Delete.ToolTip" xml:space="preserve">
+    <value>Eliminar Perfil Actual</value>
+  </data>
+  <data name="General.ProfileManagement" xml:space="preserve">
+    <value>Gestión de Perfiles</value>
+  </data>
+  <data name="General.Patch.Encryption.ToolTip" xml:space="preserve">
+    <value>Elimina el cifrado del cliente para permitir que la herramienta lea el tráfico de red.</value>
+  </data>
+  <data name="General.Connection" xml:space="preserve">
+    <value>Conexión</value>
+  </data>
+  <data name="General.Patch.Negotiate" xml:space="preserve">
+    <value>Negociar Funciones</value>
+  </data>
+  <data name="General.Action.SpellGrid" xml:space="preserve">
+    <value>Cuadrícula de Hechizos</value>
+  </data>
+  <data name="General.Action.DPSMeter.ToolTip" xml:space="preserve">
+    <value>Activa/Desactiva la superposición del medidor de Daño Por Segundo.</value>
+  </data>
+  <data name="General.ActiveProfile" xml:space="preserve">
+    <value>Perfil Activo:</value>
+  </data>
+  <data name="General.Profile.Create.Title" xml:space="preserve">
+    <value>Crear Nuevo Perfil</value>
+  </data>
+  <data name="General.Action.Connect" xml:space="preserve">
+    <value>Conectar</value>
+  </data>
+  <data name="General.Patch.MultiClient" xml:space="preserve">
+    <value>Permitir Multicliente</value>
+  </data>
+  <data name="General.Profile.Create.ToolTip" xml:space="preserve">
+    <value>Crear Nuevo Perfil</value>
+  </data>
+  <data name="General.Patch.Negotiate.ToolTip" xml:space="preserve">
+    <value>Negocia funciones avanzadas con el servidor (ej. caminar rápido).</value>
+  </data>
+  <data name="General.Profile.Create.Placeholder" xml:space="preserve">
+    <value>Ingresa el nombre del perfil...</value>
+  </data>
+  <data name="General.Profile.Rename.ToolTip" xml:space="preserve">
+    <value>Renombrar Perfil Actual</value>
+  </data>
+  <data name="Hotkeys.Action" xml:space="preserve">
+    <value>Acción</value>
+  </data>
+  <data name="Hotkeys.KeyCombination" xml:space="preserve">
+    <value>Combinación de Teclas</value>
+  </data>
+  <data name="Hotkeys.CurrentBinding" xml:space="preserve">
+    <value>Asignación Actual:</value>
+  </data>
+  <data name="Hotkeys.PassThrough" xml:space="preserve">
+    <value>Pasar al Cliente</value>
+  </data>
+  <data name="Hotkeys.PassThrough.ToolTip" xml:space="preserve">
+    <value>Si está activado, la pulsación de tecla también se envía al cliente del juego.</value>
+  </data>
+  <data name="Hotkeys.Add.ToolTip" xml:space="preserve">
+    <value>Añade una nueva tecla rápida para la acción seleccionada.</value>
+  </data>
+  <data name="Hotkeys.Remove.ToolTip" xml:space="preserve">
+    <value>Elimina la tecla rápida seleccionada.</value>
+  </data>
+  <data name="Hotkeys.Set.ToolTip" xml:space="preserve">
+    <value>Haz clic para empezar a grabar una nueva combinación de teclas.</value>
+  </data>
+  <data name="PacketLogger.Title" xml:space="preserve">
+    <value>Registrador de Paquetes</value>
+  </data>
+  <data name="PacketLogger.Record" xml:space="preserve">
+    <value>Grabar</value>
+  </data>
+  <data name="PacketLogger.Pause" xml:space="preserve">
+    <value>Pausa</value>
+  </data>
+  <data name="PacketLogger.Clear" xml:space="preserve">
+    <value>Limpiar</value>
+  </data>
+  <data name="PacketLogger.Filter.Placeholder" xml:space="preserve">
+    <value>ID de Filtro (hex)...</value>
+  </data>
+  <data name="PacketLogger.Column.Dir" xml:space="preserve">
+    <value>Dir</value>
+  </data>
+  <data name="PacketLogger.Column.Id" xml:space="preserve">
+    <value>ID</value>
+  </data>
+  <data name="PacketLogger.Column.Name" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="PacketLogger.Column.Len" xml:space="preserve">
+    <value>Lon</value>
+  </data>
+  <data name="PacketLogger.Column.HexPreview" xml:space="preserve">
+    <value>Vista Previa Hex</value>
+  </data>
+  <data name="PacketLogger.Details" xml:space="preserve">
+    <value>Detalles del Paquete</value>
+  </data>
+  <data name="PacketLogger.Timestamp" xml:space="preserve">
+    <value>Marca de tiempo:</value>
+  </data>
+  <data name="PacketLogger.Direction" xml:space="preserve">
+    <value>Dirección:</value>
+  </data>
+  <data name="PacketLogger.Length" xml:space="preserve">
+    <value>Longitud:</value>
+  </data>
+  <data name="PacketLogger.HexDump" xml:space="preserve">
+    <value>Volcado Hexadecimal</value>
+  </data>
+  <data name="PacketLogger.SelectPacket" xml:space="preserve">
+    <value>Selecciona un paquete para inspeccionar detalles</value>
+  </data>
+  <data name="PacketLogger.Record.ToolTip" xml:space="preserve">
+    <value>Empieza a capturar paquetes entrantes y salientes.</value>
+  </data>
+  <data name="PacketLogger.Pause.ToolTip" xml:space="preserve">
+    <value>Detén la captura de paquetes temporalmente.</value>
+  </data>
+  <data name="PacketLogger.Clear.ToolTip" xml:space="preserve">
+    <value>Limpia la lista actual de paquetes capturados.</value>
+  </data>
+  <data name="PacketLogger.Filter.ToolTip" xml:space="preserve">
+    <value>Filtra la lista por ID de paquete en formato hexadecimal.</value>
+  </data>
+  <data name="General.Profile.Rename.Title" xml:space="preserve">
+    <value>Renombrar Perfil</value>
+  </data>
+  <data name="General.Patch.Stamina.ToolTip" xml:space="preserve">
+    <value>Omite las comprobaciones de estamina para ciertas acciones como empujar a través de los móviles.</value>
+  </data>
+  <data name="General.EnginePatches" xml:space="preserve">
+    <value>Parches del Motor</value>
+  </data>
+  <data name="General.Profile.Clone.ToolTip" xml:space="preserve">
+    <value>Clonar Perfil Actual</value>
+  </data>
+  <data name="General.Patch.MultiClient.ToolTip" xml:space="preserve">
+    <value>Permite que se ejecuten simultáneamente múltiples instancias del cliente del juego.</value>
+  </data>
+  <data name="General.Patch.Stamina" xml:space="preserve">
+    <value>Eliminar Comprobación de Estamina</value>
+  </data>
+  <data name="General.ClientConfig" xml:space="preserve">
+    <value>Configuración del Cliente</value>
+  </data>
+  <data name="General.Action.Toolbar" xml:space="preserve">
+    <value>Barra de Herramientas</value>
+  </data>
+  <data name="General.Action.SpellGrid.ToolTip" xml:space="preserve">
+    <value>Abre la ventana de prueba de la cuadrícula de hechizos.</value>
+  </data>
+  <data name="General.Action.Toolbar.ToolTip" xml:space="preserve">
+    <value>Muestra/Oculta la barra de herramientas flotante para un acceso rápido a agentes y herramientas.</value>
+  </data>
+  <data name="General.Patch.Encryption" xml:space="preserve">
+    <value>Parchear Cifrado</value>
+  </data>
+  <data name="General.Profile.Clone.Title" xml:space="preserve">
+    <value>Clonar Perfil</value>
+  </data>
+  <data name="General.Action.Launch" xml:space="preserve">
+    <value>Lanzar</value>
+  </data>
+  <data name="General.Snackbar.ProfileActive" xml:space="preserve">
+    <value>El perfil activo ahora es</value>
+  </data>
+  <data name="General.Snackbar.ProfileChanged" xml:space="preserve">
+    <value>Perfil Cambiado</value>
+  </data>
+  <data name="General.Dialog.Create" xml:space="preserve">
+    <value>Crear</value>
+  </data>
+  <data name="General.Snackbar.ProfileDeleted" xml:space="preserve">
+    <value>Perfil Eliminado</value>
+  </data>
+  <data name="General.Snackbar.ProfileCloned" xml:space="preserve">
+    <value>Perfil clonado en</value>
+  </data>
+  <data name="General.Dialog.Rename" xml:space="preserve">
+    <value>Renombrar</value>
+  </data>
+  <data name="General.Snackbar.Success" xml:space="preserve">
+    <value>Éxito</value>
+  </data>
+  <data name="General.Dialog.Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="General.Status.ProfileSwitched" xml:space="preserve">
+    <value>Perfil cambiado a</value>
+  </data>
+  <data name="General.Snackbar.ProfileRenamed" xml:space="preserve">
+    <value>Perfil renombrado a</value>
+  </data>
+  <data name="General.Snackbar.ProfileCreated" xml:space="preserve">
+    <value>Perfil creado</value>
+  </data>
+  <data name="General.Dialog.Clone" xml:space="preserve">
+    <value>Clonar</value>
+  </data>
+  <data name="General.Snackbar.ProfileRemoved" xml:space="preserve">
+    <value>El perfil ha sido eliminado</value>
+  </data>
+  <data name="Options.AlwaysOnTop" xml:space="preserve">
+    <value>Siempre al Frente</value>
+  </data>
+  <data name="Options.AutoRemount" xml:space="preserve">
+    <value>Auto Remontar</value>
+  </data>
+  <data name="Options.UiOpacity" xml:space="preserve">
+    <value>Opacidad de IU</value>
+  </data>
+  <data name="Options.SetBlade.ToolTip" xml:space="preserve">
+    <value>Haz clic y selecciona una hoja en tu inventario para usar en esta automatización.</value>
+  </data>
+  <data name="Options.BoneCutter.ToolTip" xml:space="preserve">
+    <value>Corta automáticamente los huesos en piezas más pequeñas cuando se encuentran en cadáveres.</value>
+  </data>
+  <data name="Options.BlockTradeRequests.ToolTip" xml:space="preserve">
+    <value>Evita que otros jugadores abran ventanas de comercio contigo.</value>
+  </data>
+  <data name="Options.AutomationBehaviors" xml:space="preserve">
+    <value>Automatización y Comportamientos</value>
+  </data>
+  <data name="Options.Width" xml:space="preserve">
+    <value>Ancho</value>
+  </data>
+  <data name="Options.AlwaysOnTop.ToolTip" xml:space="preserve">
+    <value>Mantén la ventana de TMRazor Improved por encima de todas las demás ventanas.</value>
+  </data>
+  <data name="Options.Mount" xml:space="preserve">
+    <value>Montura: </value>
+  </data>
+  <data name="Options.ForceWindowSize" xml:space="preserve">
+    <value>Forzar Tamaño de Ventana</value>
+  </data>
+  <data name="Options.Blade" xml:space="preserve">
+    <value>Hoja: </value>
+  </data>
+  <data name="Options.DisplayTweaks" xml:space="preserve">
+    <value>Pantalla y Ajustes</value>
+  </data>
+  <data name="Options.SetMount.ToolTip" xml:space="preserve">
+    <value>Haz clic y selecciona tu montura en el mundo del juego para asignarla para el auto-remontado.</value>
+  </data>
+  <data name="Options.UiOpacity.ToolTip" xml:space="preserve">
+    <value>Ajusta el nivel de transparencia de la interfaz de usuario de TMRazor Improved.</value>
+  </data>
+  <data name="Options.AutoScreenshotOnDeath" xml:space="preserve">
+    <value>Captura Automática al Morir</value>
+  </data>
+  <data name="Options.AutoScreenshotOnDeath.ToolTip" xml:space="preserve">
+    <value>Toma una captura de pantalla de la ventana del juego automáticamente cuando tu personaje muere.</value>
+  </data>
+  <data name="Options.BlockPartyInvites.ToolTip" xml:space="preserve">
+    <value>Rechaza automáticamente las invitaciones a grupo de otros jugadores.</value>
+  </data>
+  <data name="Options.ForceWindowSize.ToolTip" xml:space="preserve">
+    <value>Anula el tamaño predeterminado de la ventana del juego Ultima Online.</value>
+  </data>
+  <data name="Options.ScaleItems" xml:space="preserve">
+    <value>Escalar Objetos</value>
+  </data>
+  <data name="Options.Set" xml:space="preserve">
+    <value>Establecer</value>
+  </data>
+  <data name="Options.AutoCarver" xml:space="preserve">
+    <value>Auto Trinchar</value>
+  </data>
+  <data name="Options.BoneCutter" xml:space="preserve">
+    <value>Cortador de Huesos</value>
+  </data>
+  <data name="Options.Header" xml:space="preserve">
+    <value>Opciones Generales</value>
+  </data>
+  <data name="Options.BlockTradeRequests" xml:space="preserve">
+    <value>Bloquear Solicitudes de Comercio</value>
+  </data>
+  <data name="Options.AutoRemount.ToolTip" xml:space="preserve">
+    <value>Intenta remontar automáticamente tu montura asignada si eres desmontado.</value>
+  </data>
+  <data name="Options.ScaleItems.ToolTip" xml:space="preserve">
+    <value>Activa el escalado de los iconos de objetos del juego para una mejor visibilidad.</value>
+  </data>
+  <data name="Options.Height" xml:space="preserve">
+    <value>Altura</value>
+  </data>
+  <data name="Options.BlockPartyInvites" xml:space="preserve">
+    <value>Bloquear Invitaciones a Grupo</value>
+  </data>
+  <data name="Options.AutoCarver.ToolTip" xml:space="preserve">
+    <value>Usa automáticamente una hoja en los cadáveres al alcance para recolectar recursos.</value>
+  </data>
+  <data name="Options.Visuals.ShowHealth" xml:space="preserve">
+    <value>Mostrar Salud sobre Móviles</value>
+  </data>
+  <data name="Options.Visuals.ShowNames" xml:space="preserve">
+    <value>Mostrar Nombres sobre Móviles</value>
+  </data>
+  <data name="Options.Action.TargetHP" xml:space="preserve">
+    <value>Alternar Superposición de HP de Objetivo</value>
+  </data>
+  <data name="Options.Visuals.ShowIncomingDamage.ToolTip" xml:space="preserve">
+    <value>Muestra números de daño sobre los personajes cuando reciben golpes.</value>
+  </data>
+  <data name="Options.Visuals.IncomingNames" xml:space="preserve">
+    <value>Mostrar Nombres Entrantes</value>
+  </data>
+  <data name="Options.Visuals.IncomingNames.ToolTip" xml:space="preserve">
+    <value>Muestra los nombres de nuevos jugadores o NPCs que entran en el rango de tu pantalla.</value>
+  </data>
+  <data name="Options.Action.OverheadMessages.ToolTip" xml:space="preserve">
+    <value>Alterna la superposición que muestra mensajes personalizados del sistema sobre tu personaje.</value>
+  </data>
+  <data name="Options.Action.FloatingToolbar" xml:space="preserve">
+    <value>Alternar Barra de Herramientas Flotante</value>
+  </data>
+  <data name="Options.Visuals.HighlightTarget.ToolTip" xml:space="preserve">
+    <value>Dibuja un indicador visual alrededor del objetivo seleccionado actualmente.</value>
+  </data>
+  <data name="Options.Visuals.ShowNames.ToolTip" xml:space="preserve">
+    <value>Muestra el nombre de los jugadores y NPCs directamente sobre sus cabezas en el mundo del juego.</value>
+  </data>
+  <data name="Options.Action.TargetHP.ToolTip" xml:space="preserve">
+    <value>Abre o cierra la ventana de estado de salud dedicada para tu objetivo actual.</value>
+  </data>
+  <data name="Options.Action.OverheadMessages" xml:space="preserve">
+    <value>Alternar Mensajes sobre la Cabeza</value>
+  </data>
+  <data name="Options.Action.FloatingToolbar.ToolTip" xml:space="preserve">
+    <value>Alterna la pequeÃ±a barra flotante para un acceso rÃ¡pido a agentes y herramientas.</value>
+  </data>
+  <data name="Options.Visuals.ShowIncomingDamage" xml:space="preserve">
+    <value>Mostrar DaÃ±o Entrante</value>
+  </data>
+  <data name="Options.Visuals.ShowHealth.ToolTip" xml:space="preserve">
+    <value>Muestra una barra de salud o porcentaje para jugadores y NPCs sobre sus cabezas.</value>
+  </data>
+  <data name="Options.GameVisuals" xml:space="preserve">
+    <value>Visuales del Juego</value>
+  </data>
+  <data name="Options.Visuals.HighlightTarget" xml:space="preserve">
+    <value>Resaltar Objetivo Actual</value>
+  </data>
+  <data name="Skills.Tab.History" xml:space="preserve">
+    <value>Historial de Ganancias</value>
+  </data>
+  <data name="Skills.Column.Base" xml:space="preserve">
+    <value>Base</value>
+  </data>
+  <data name="Skills.Title" xml:space="preserve">
+    <value>Habilidades</value>
+  </data>
+  <data name="Skills.Tab.List" xml:space="preserve">
+    <value>Lista de Habilidades</value>
+  </data>
+  <data name="Skills.Column.Real" xml:space="preserve">
+    <value>Real</value>
+  </data>
+  <data name="Skills.Column.Lock" xml:space="preserve">
+    <value>Bloqueo</value>
+  </data>
+  <data name="Skills.Column.Gain" xml:space="preserve">
+    <value>Ganancia</value>
+  </data>
+  <data name="Skills.History.Header" xml:space="preserve">
+    <value>Historial de Ganancias de Habilidades</value>
+  </data>
+  <data name="Skills.Action.ResetDelta.ToolTip" xml:space="preserve">
+    <value>Restablece todos los valores 'Delta' de las habilidades a cero para comenzar a rastrear nuevas ganancias.</value>
+  </data>
+  <data name="Skills.Column.Name" xml:space="preserve">
+    <value>Nombre de Habilidad</value>
+  </data>
+  <data name="Skills.DisplayChanges" xml:space="preserve">
+    <value>Mostrar Cambios</value>
+  </data>
+  <data name="Skills.Column.NewValue" xml:space="preserve">
+    <value>Nuevo Valor</value>
+  </data>
+  <data name="Skills.SetAllLocks" xml:space="preserve">
+    <value>Establecer Todos los Bloqueos:</value>
+  </data>
+  <data name="Skills.Column.Cap" xml:space="preserve">
+    <value>LÃ­mite</value>
+  </data>
+  <data name="Skills.Status.AllSet" xml:space="preserve">
+    <value>Todas las habilidades establecidas en</value>
+  </data>
+  <data name="Skills.Column.Delta" xml:space="preserve">
+    <value>Delta</value>
+  </data>
+  <data name="Skills.Column.Time" xml:space="preserve">
+    <value>Hora</value>
+  </data>
+  <data name="Skills.Action.CopyList.ToolTip" xml:space="preserve">
+    <value>Copia la lista completa de habilidades con valores al portapapeles en un formato separado por tabulaciones.</value>
+  </data>
+  <data name="Skills.History.ChartHeader" xml:space="preserve">
+    <value>GrÃ¡fico de Historial de Ganancias</value>
+  </data>
+  <data name="Skills.Action.ResetDelta" xml:space="preserve">
+    <value>Restablecer Delta</value>
+  </data>
+  <data name="Skills.Footer.TotalBase" xml:space="preserve">
+    <value>Base Total: </value>
+  </data>
+  <data name="Skills.Status.Copied" xml:space="preserve">
+    <value>Lista de habilidades copiada al portapapeles.</value>
+  </data>
+  <data name="Skills.Footer.TotalReal" xml:space="preserve">
+    <value>Real Total: </value>
+  </data>
+  <data name="Skills.ApplyAll.ToolTip" xml:space="preserve">
+    <value>Aplica el estado de bloqueo seleccionado a todas las habilidades de la lista.</value>
+  </data>
+  <data name="Skills.Action.CopyList" xml:space="preserve">
+    <value>Copiar Lista</value>
+  </data>
+  <data name="Skills.DisplayChanges.ToolTip" xml:space="preserve">
+    <value>Alterna la visibilidad de la columna 'Delta', que muestra las ganancias de habilidades desde el Ãºltimo restablecimiento.</value>
+  </data>
+  <data name="Skills.Column.OldValue" xml:space="preserve">
+    <value>Valor Anterior</value>
+  </data>
+  <data name="Skills.SetAllLocks.ToolTip" xml:space="preserve">
+    <value>Establece el estado de bloqueo (Arriba, Abajo o Bloqueado) para todas las habilidades simultÃ¡neamente.</value>
+  </data>
+  <data name="SecureTrade.Title" xml:space="preserve">
+    <value>Comercio Seguro</value>
+  </data>
+  <data name="SecureTrade.Monitor.Title" xml:space="preserve">
+    <value>Monitor de Comercio Seguro</value>
+  </data>
+  <data name="SecureTrade.Monitor.Description" xml:space="preserve">
+    <value>Monitorea y controla las sesiones de comercio activas</value>
+  </data>
+  <data name="SecureTrade.YouOffer" xml:space="preserve">
+    <value>TÃº Ofreces</value>
+  </data>
+  <data name="SecureTrade.Gold" xml:space="preserve">
+    <value> Oro</value>
+  </data>
+  <data name="SecureTrade.Plat" xml:space="preserve">
+    <value> Plat</value>
+  </data>
+  <data name="SecureTrade.Items" xml:space="preserve">
+    <value>Objetos:</value>
+  </data>
+  <data name="SecureTrade.TargetOffers" xml:space="preserve">
+    <value>{0} Ofrece</value>
+  </data>
+  <data name="SecureTrade.YourStatus" xml:space="preserve">
+    <value>Tu Estado</value>
+  </data>
+  <data name="SecureTrade.YouAccepted" xml:space="preserve">
+    <value>Has Aceptado</value>
+  </data>
+  <data name="SecureTrade.WaitingForYou" xml:space="preserve">
+    <value>Esperando por ti</value>
+  </data>
+  <data name="SecureTrade.TheirStatus" xml:space="preserve">
+    <value>Su Estado</value>
+  </data>
+  <data name="SecureTrade.TheyAccepted" xml:space="preserve">
+    <value>Han Aceptado</value>
+  </data>
+  <data name="SecureTrade.WaitingForThem" xml:space="preserve">
+    <value>Esperando por ellos</value>
+  </data>
+  <data name="SecureTrade.Accept" xml:space="preserve">
+    <value>Aceptar</value>
+  </data>
+  <data name="SecureTrade.Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="SecureTrade.NoActiveTrades" xml:space="preserve">
+    <value>No hay sesiones de comercio activas</value>
+  </data>
+  <data name="SecureTrade.StartTradeHint" xml:space="preserve">
+    <value>Inicia un comercio en el juego soltando un objeto sobre un personaje</value>
+  </data>
+  <data name="SecureTrade.Accept.ToolTip" xml:space="preserve">
+    <value>Acepta la sesiÃ³n de comercio actual.</value>
+  </data>
+  <data name="SecureTrade.Cancel.ToolTip" xml:space="preserve">
+    <value>Cancela la sesiÃ³n de comercio actual.</value>
+  </data>
+  <data name="SecureTrade.ItemCount" xml:space="preserve">
+    <value>{0}x Objeto</value>
+  </data>
+  <data name="Gallery.Title" xml:space="preserve">
+    <value>GalerÃ­a</value>
+  </data>
+  <data name="Gallery.Header" xml:space="preserve">
+    <value>GalerÃ­a de Medios</value>
+  </data>
+  <data name="Gallery.Description" xml:space="preserve">
+    <value>Ver y gestionar tus capturas de pantalla del juego</value>
+  </data>
+  <data name="Gallery.Refresh" xml:space="preserve">
+    <value>Actualizar</value>
+  </data>
+  <data name="Gallery.OpenFolder" xml:space="preserve">
+    <value>Abrir Carpeta</value>
+  </data>
+  <data name="Gallery.Empty.Title" xml:space="preserve">
+    <value>No se encontraron capturas de pantalla</value>
+  </data>
+  <data name="Gallery.Empty.Hint" xml:space="preserve">
+    <value>Toma una captura de pantalla en el juego usando la tecla PrintScreen o el botÃ³n del asistente</value>
+  </data>
+  <data name="Gallery.Refresh.ToolTip" xml:space="preserve">
+    <value>Escanea la carpeta de capturas de pantalla en busca de nuevos archivos.</value>
+  </data>
+  <data name="Gallery.OpenFolder.ToolTip" xml:space="preserve">
+    <value>Abre la carpeta donde se guardan las capturas de pantalla en el Explorador de Windows.</value>
+  </data>
+  <data name="Gallery.Delete.ToolTip" xml:space="preserve">
+    <value>Elimina permanentemente esta captura de pantalla.</value>
+  </data>
+  <data name="Gallery.Error.Delete" xml:space="preserve">
+    <value>Error al eliminar el archivo: {0}</value>
+  </data>
+  <data name="Scripting.New.ToolTip" xml:space="preserve">
+    <value>Nuevo script vacÃ­o</value>
+  </data>
+  <data name="Scripting.Open.ToolTip" xml:space="preserve">
+    <value>Abrir archivo .py</value>
+  </data>
+  <data name="Scripting.Save.ToolTip" xml:space="preserve">
+    <value>Guardar script en archivo</value>
+  </data>
+  <data name="Scripting.Language" xml:space="preserve">
+    <value>Idioma:</value>
+  </data>
+  <data name="Scripting.Script" xml:space="preserve">
+    <value>Script:</value>
+  </data>
+  <data name="Scripting.ScriptName.Placeholder" xml:space="preserve">
+    <value>nombre_del_script.py</value>
+  </data>
+  <data name="Scripting.Run.ToolTip" xml:space="preserve">
+    <value>Ejecutar el script (F5)</value>
+  </data>
+  <data name="Scripting.Stop.ToolTip" xml:space="preserve">
+    <value>Detener el script</value>
+  </data>
+  <data name="Scripting.Output" xml:space="preserve">
+    <value>Salida</value>
+  </data>
+  <data name="Scripting.Clear" xml:space="preserve">
+    <value>Limpiar</value>
+  </data>
+  <data name="Scripting.Clear.ToolTip" xml:space="preserve">
+    <value>Limpiar salida</value>
+  </data>
+  <data name="Scripting.Status.Running" xml:space="preserve">
+    <value>Ejecutando: {0}...</value>
+  </data>
+  <data name="Scripting.Status.Starting" xml:space="preserve">
+    <value>--- Iniciando '{0}' [{1}] ---</value>
+  </data>
+  <data name="Scripting.Status.Stopping" xml:space="preserve">
+    <value>--- Parada solicitada ---</value>
+  </data>
+  <data name="Scripting.Status.Loaded" xml:space="preserve">
+    <value>Cargado: {0} ({1})" </value>
+  </data>
+  <data name="Scripting.Status.LoadError" xml:space="preserve">
+    <value>Error de carga: {0}</value>
+  </data>
+  <data name="Scripting.Status.Saved" xml:space="preserve">
+    <value>Guardado: {0}</value>
+  </data>
+  <data name="Scripting.Status.SaveError" xml:space="preserve">
+    <value>Error de guardado: {0}</value>
+  </data>
+  <data name="Scripting.Status.Cancelled" xml:space="preserve">
+    <value>Cancelado â€” {0} ({1:F1}s)</value>
+  </data>
+  <data name="Scripting.Status.Error" xml:space="preserve">
+    <value>Error â€” {0} ({1:F1}s)</value>
+  </data>
+  <data name="Scripting.Status.Completed" xml:space="preserve">
+    <value>Completado â€” {0} ({1:F1}s)</value>
+  </data>
+  <data name="Scripting.Dialog.OpenTitle" xml:space="preserve">
+    <value>Abrir Script</value>
+  </data>
+  <data name="Scripting.Dialog.SaveTitle" xml:space="preserve">
+    <value>Guardar Script</value>
+  </data>
+  <data name="Scripting.Dialog.Filter" xml:space="preserve">
+    <value>Script de Python (*.py)|*.py|Script de UOSteam (*.uos)|*.uos|Script de C# (*.cs)|*.cs|Todos los archivos (*.*)|*.*</value>
+  </data>
+  <data name="Scripting.Default.Python" xml:space="preserve">
+    <value># Script de Python para TMRazor
+# Objetos disponibles: Player, Items, Mobiles, Misc
+
+print('Â¡Hola desde TMRazor!')
+print('HP:', Player.Hits, '/', Player.HitsMax)</value>
+  </data>
+  <data name="Scripting.Default.NewPython" xml:space="preserve">
+    <value># Nuevo script de Python
+</value>
+  </data>
+  <data name="Scripting.Default.NewUOSteam" xml:space="preserve">
+    <value>// Nuevo script de UOSteam
+</value>
+  </data>
+  <data name="Scripting.Default.NewCSharp" xml:space="preserve">
+    <value>// Nuevo script de C#
+</value>
+  </data>
+  <data name="Scripting.Default.NamePython" xml:space="preserve">
+    <value>nuevo_script.py</value>
+  </data>
+  <data name="Scripting.Default.NameUOSteam" xml:space="preserve">
+    <value>nuevo_script.uos</value>
+  </data>
+  <data name="Scripting.Default.NameCSharp" xml:space="preserve">
+    <value>nuevo_script.cs</value>
+  </data>
+  <data name="Macros.Title" xml:space="preserve">
+    <value>Macros</value>
+  </data>
+  <data name="Macros.Available" xml:space="preserve">
+    <value>Macros Disponibles</value>
+  </data>
+  <data name="Macros.NewName.Placeholder" xml:space="preserve">
+    <value>Nombre de Nueva Macro</value>
+  </data>
+  <data name="Macros.Record.ToolTip" xml:space="preserve">
+    <value>Grabar Nueva Macro</value>
+  </data>
+  <data name="Macros.DeleteSelected" xml:space="preserve">
+    <value>Eliminar Seleccionada</value>
+  </data>
+  <data name="Macros.NoMacroSelected" xml:space="preserve">
+    <value>Ninguna Macro Seleccionada</value>
+  </data>
+  <data name="Macros.Play" xml:space="preserve">
+    <value>Reproducir</value>
+  </data>
+  <data name="Macros.Stop" xml:space="preserve">
+    <value>Detener</value>
+  </data>
+  <data name="Macros.SaveChanges" xml:space="preserve">
+    <value>Guardar Cambios</value>
+  </data>
+  <data name="Macros.Recording" xml:space="preserve">
+    <value>GRABANDO</value>
+  </data>
+  <data name="Macros.Steps" xml:space="preserve">
+    <value>Pasos de la Macro</value>
+  </data>
+  <data name="Macros.Column.Order" xml:space="preserve">
+    <value>Orden</value>
+  </data>
+  <data name="Macros.Column.Enabled" xml:space="preserve">
+    <value>En</value>
+  </data>
+  <data name="Macros.Column.Command" xml:space="preserve">
+    <value>Comando</value>
+  </data>
+  <data name="Macros.Column.Description" xml:space="preserve">
+    <value>DescripciÃ³n</value>
+  </data>
+  <data name="Macros.Column.Actions" xml:space="preserve">
+    <value>Acciones</value>
+  </data>
+  <data name="Inspector.Tab.Entity" xml:space="preserve">
+    <value>Inspector de Entidades</value>
+  </data>
+  <data name="Inspector.Tab.GumpList" xml:space="preserve">
+    <value>Lista de Gumps</value>
+  </data>
+  <data name="Inspector.Tab.GumpInspector" xml:space="preserve">
+    <value>Inspector de Gumps</value>
+  </data>
+  <data name="Inspector.Tab.MapInspector" xml:space="preserve">
+    <value>Inspector de Mapas</value>
+  </data>
+  <data name="Inspector.Entity.BasicInfo" xml:space="preserve">
+    <value>InformaciÃ³n BÃ¡sica</value>
+  </data>
+  <data name="Inspector.Entity.InspectButton" xml:space="preserve">
+    <value>Inspeccionar Objetivo</value>
+  </data>
+  <data name="Inspector.Entity.Serial" xml:space="preserve">
+    <value>Serial</value>
+  </data>
+  <data name="Inspector.Entity.Graphic" xml:space="preserve">
+    <value>GrÃ¡fico</value>
+  </data>
+  <data name="Inspector.Entity.Position" xml:space="preserve">
+    <value>PosiciÃ³n</value>
+  </data>
+  <data name="Inspector.Entity.RecentTargets" xml:space="preserve">
+    <value>Objetivos Recientes</value>
+  </data>
+  <data name="Inspector.Entity.Properties" xml:space="preserve">
+    <value>Propiedades del Objeto (OPL)</value>
+  </data>
+  <data name="Inspector.GumpList.Title" xml:space="preserve">
+    <value>Gestor de Lista de Gumps</value>
+  </data>
+  <data name="Inspector.GumpList.Description" xml:space="preserve">
+    <value>Lista de Gumps abiertos actualmente</value>
+  </data>
+  <data name="Inspector.GumpList.Refresh" xml:space="preserve">
+    <value>Actualizar</value>
+  </data>
+  <data name="Inspector.GumpList.Refresh.ToolTip" xml:space="preserve">
+    <value>Actualizar Gumps</value>
+  </data>
+  <data name="Inspector.GumpList.Column.ID" xml:space="preserve">
+    <value>ID de Gump</value>
+  </data>
+  <data name="Inspector.GumpList.Column.Serial" xml:space="preserve">
+    <value>Serial</value>
+  </data>
+  <data name="Inspector.GumpList.Column.X" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="Inspector.GumpList.Column.Y" xml:space="preserve">
+    <value>Y</value>
+  </data>
+  <data name="Inspector.GumpList.Column.Controls" xml:space="preserve">
+    <value>Controles</value>
+  </data>
+  <data name="Inspector.GumpList.Column.Lines" xml:space="preserve">
+    <value>LÃ­neas de Texto</value>
+  </data>
+  <data name="Inspector.GumpList.Column.Type" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
+  <data name="Inspector.GumpList.Column.Commands" xml:space="preserve">
+    <value>Comandos</value>
+  </data>
+  <data name="Inspector.GumpList.Column.Actions" xml:space="preserve">
+    <value>Acciones</value>
+  </data>
+  <data name="Inspector.GumpList.Action.Inspect" xml:space="preserve">
+    <value>Inspeccionar</value>
+  </data>
+  <data name="Inspector.GumpList.Action.Close" xml:space="preserve">
+    <value>Cerrar</value>
+  </data>
+  <data name="Inspector.Gump.CurrentInfo" xml:space="preserve">
+    <value>InformaciÃ³n del Gump Actual</value>
+  </data>
+  <data name="Inspector.Gump.Refresh" xml:space="preserve">
+    <value>Actualizar / Inspeccionar Gump</value>
+  </data>
+  <data name="Inspector.Gump.ControlsTree" xml:space="preserve">
+    <value>Ãrbol de Controles</value>
+  </data>
+  <data name="Inspector.Gump.Action.Execute" xml:space="preserve">
+    <value>Ejecutar</value>
+  </data>
+  <data name="Inspector.Gump.Action.CopyPython" xml:space="preserve">
+    <value>Copiar como Python</value>
+  </data>
+  <data name="Inspector.Gump.Action.CopyCSharp" xml:space="preserve">
+    <value>Copiar como C#" </value>
+  </data>
+  <data name="Inspector.Map.Title" xml:space="preserve">
+    <value>Mapa del Mundo</value>
+  </data>
+  <data name="Inspector.Map.Refresh" xml:space="preserve">
+    <value>Actualizar PosiciÃ³n</value>
+  </data>
+  <data name="Inspector.Status.MapUpdated" xml:space="preserve">
+    <value>Mapa actualizado a la posiciÃ³n actual.</value>
+  </data>
+  <data name="Inspector.Status.GumpListUpdated" xml:space="preserve">
+    <value>Lista de Gumps actualizada. Encontrados: {0}</value>
+  </data>
+  <data name="Inspector.Status.GumpInspected" xml:space="preserve">
+    <value>Gump 0x{0:X8} inspeccionado.</value>
+  </data>
+  <data name="Inspector.Status.InspectingGump" xml:space="preserve">
+    <value>Inspeccionando Gump...</value>
+  </data>
+  <data name="Inspector.Status.GumpSuccess" xml:space="preserve">
+    <value>Gump inspeccionado con Ã©xito.</value>
+  </data>
+  <data name="Inspector.Status.NoGumpFound" xml:space="preserve">
+    <value>No se encontrÃ³ ningÃºn Gump activo.</value>
+  </data>
+  <data name="Inspector.Status.GumpResponse" xml:space="preserve">
+    <value>Respuesta de Gump enviada: BotÃ³n {0}</value>
+  </data>
+  <data name="Inspector.Status.ActionNotSupported" xml:space="preserve">
+    <value>Este control no admite acciones directas.</value>
+  </data>
+  <data name="Inspector.Status.PythonCopied" xml:space="preserve">
+    <value>CÃ³digo de Python copiado al portapapeles.</value>
+  </data>
+  <data name="Inspector.Status.CSharpCopied" xml:space="preserve">
+    <value>CÃ³digo de C# copiado al portapapeles.</value>
+  </data>
+  <data name="Inspector.Status.SelectMapLocation" xml:space="preserve">
+    <value>Selecciona una ubicaciÃ³n en el mapa...</value>
+  </data>
+  <data name="Inspector.Gump.NoGumpInspected" xml:space="preserve">
+    <value>NingÃºn Gump inspeccionado.</value>
+  </data>
+  <data name="Inspector.Map.NoMapData" xml:space="preserve">
+    <value>No se han inspeccionado datos del mapa.</value>
+  </data>
+  <data name="Inspector.Entity.InspectButton.ToolTip" xml:space="preserve">
+    <value>Apunta a un objeto en el juego para ver sus detalles.</value>
+  </data>
+  <data name="Inspector.GumpList.Action.Inspect.ToolTip" xml:space="preserve">
+    <value>Inspecciona los controles y propiedades de este gump especÃ­fico.</value>
+  </data>
+  <data name="Inspector.GumpList.Action.Close.ToolTip" xml:space="preserve">
+    <value>Cierra este gump en el cliente del juego.</value>
+  </data>
+  <data name="Inspector.Gump.Refresh.ToolTip" xml:space="preserve">
+    <value>Actualiza o inspecciona manualmente el gump abierto actualmente.</value>
+  </data>
+  <data name="Inspector.Gump.Action.Execute.ToolTip" xml:space="preserve">
+    <value>Ejecuta la acciÃ³n asociada con este control de gump (p. ej., hacer clic en un botÃ³n).</value>
+  </data>
+  <data name="Inspector.Map.Refresh.ToolTip" xml:space="preserve">
+    <value>Actualiza la posiciÃ³n del jugador en el mapa.</value>
+  </data>
+  <data name="Inspector.Status.Title" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="Agents.Organizer.Description" xml:space="preserve">
+    <value>Mueve objetos automÃ¡ticamente entre contenedores.</value>
+  </data>
+  <data name="Agents.Dress.Description" xml:space="preserve">
+    <value>Gestiona y equipa automÃ¡ticamente conjuntos de equipo.</value>
+  </data>
+  <data name="Agents.General.Clear" xml:space="preserve">
+    <value>Limpiar Lista</value>
+  </data>
+  <data name="Agents.General.ListHeader" xml:space="preserve">
+    <value>Objetos Objetivo</value>
+  </data>
+  <data name="Agents.General.Enabled.ToolTip" xml:space="preserve">
+    <value>Habilita o deshabilita la funcionalidad de este agente.</value>
+  </data>
+  <data name="Agents.Vendor.Description" xml:space="preserve">
+    <value>Gestiona la compra y venta automatizada de NPCs.</value>
+  </data>
+  <data name="Agents.Scavenger.Description" xml:space="preserve">
+    <value>Recoge objetos del suelo automÃ¡ticamente.</value>
+  </data>
+  <data name="Agents.General.Add.ToolTip" xml:space="preserve">
+    <value>AÃ±ade un nuevo objeto a la lista apuntÃ¡ndolo en el mundo del juego.</value>
+  </data>
+  <data name="Agents.General.Clear.ToolTip" xml:space="preserve">
+    <value>Elimina todos los objetos de la lista.</value>
+  </data>
+  <data name="Agents.Friends.Description" xml:space="preserve">
+    <value>Configura listas de amigos y enemigos para resaltar.</value>
+  </data>
+  <data name="Agents.BandageHeal.Description" xml:space="preserve">
+    <value>Usa vendas automÃ¡ticamente para curarte a ti mismo o a otros.</value>
+  </data>
+  <data name="Agents.Restock.Description" xml:space="preserve">
+    <value>Repone suministros automÃ¡ticamente desde un banco o contenedor.</value>
+  </data>
+  <data name="Agents.Targeting.Description" xml:space="preserve">
+    <value>Configura lÃ³gica y prioridades de objetivos avanzadas.</value>
+  </data>
+  <data name="Agents.General.Remove.ToolTip" xml:space="preserve">
+    <value>Elimina el objeto seleccionado de la lista.</value>
+  </data>
+  <data name="Agents.General.Enabled" xml:space="preserve">
+    <value>Habilitado</value>
+  </data>
+  <data name="Agents.General.Remove" xml:space="preserve">
+    <value>Eliminar Objeto</value>
+  </data>
+  <data name="Agents.AutoLoot.Description" xml:space="preserve">
+    <value>Mueve objetos de los cadÃ¡veres a tu mochila automÃ¡ticamente.</value>
+  </data>
+  <data name="Agents.General.Add" xml:space="preserve">
+    <value>AÃ±adir Objeto</value>
+  </data>
+  <data name="AutoLoot.Title" xml:space="preserve">
+    <value>AutoLoot</value>
+  </data>
+  <data name="AutoLoot.ActivityLog" xml:space="preserve">
+    <value>Registro de Actividad</value>
+  </data>
+  <data name="AutoLoot.Delay" xml:space="preserve">
+    <value>Retraso de Saqueo (ms)</value>
+  </data>
+  <data name="AutoLoot.AddItem" xml:space="preserve">
+    <value>AÃ±adir Objeto</value>
+  </data>
+  <data name="AutoLoot.Col.Props" xml:space="preserve">
+    <value>Propiedades</value>
+  </data>
+  <data name="AutoLoot.ClearList" xml:space="preserve">
+    <value>Limpiar Lista</value>
+  </data>
+  <data name="AutoLoot.MaxRange" xml:space="preserve">
+    <value>Rango MÃ¡ximo</value>
+  </data>
+  <data name="AutoLoot.SetContainer.ToolTip" xml:space="preserve">
+    <value>Apunta a un contenedor en el juego para ser usado como destino del saqueo.</value>
+  </data>
+  <data name="AutoLoot.Status.Title" xml:space="preserve">
+    <value>Estado de AutoLoot</value>
+  </data>
+  <data name="AutoLoot.Container" xml:space="preserve">
+    <value>Contenedor de Destino</value>
+  </data>
+  <data name="AutoLoot.NoOpenCorpse" xml:space="preserve">
+    <value>No Abrir CadÃ¡veres</value>
+  </data>
+  <data name="AutoLoot.CloneList.ToolTip" xml:space="preserve">
+    <value>Clona la lista de AutoLoot seleccionada actualmente.</value>
+  </data>
+  <data name="AutoLoot.Col.ID" xml:space="preserve">
+    <value>GrÃ¡fico</value>
+  </data>
+  <data name="AutoLoot.ActiveList" xml:space="preserve">
+    <value>Lista Activa:</value>
+  </data>
+  <data name="AutoLoot.Action.Edit.ToolTip" xml:space="preserve">
+    <value>Editar propiedades de este objeto de saqueo.</value>
+  </data>
+  <data name="AutoLoot.AddList.ToolTip" xml:space="preserve">
+    <value>Crear una nueva lista de AutoLoot.</value>
+  </data>
+  <data name="AutoLoot.Enabled" xml:space="preserve">
+    <value>Habilitado</value>
+  </data>
+  <data name="AutoLoot.Col.Name" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="AutoLoot.Col.Color" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="AutoLoot.LootWhileHidden" xml:space="preserve">
+    <value>Saquear Mientras EstÃ¡s Oculto</value>
+  </data>
+  <data name="AutoLoot.ClearList.ToolTip" xml:space="preserve">
+    <value>Elimina todos los objetos de la lista de saqueo actual.</value>
+  </data>
+  <data name="AutoLoot.SetContainer" xml:space="preserve">
+    <value>Establecer Contenedor</value>
+  </data>
+  <data name="AutoLoot.Col.Actions" xml:space="preserve">
+    <value>Acciones</value>
+  </data>
+  <data name="AutoLoot.Col.Enabled" xml:space="preserve">
+    <value>Act</value>
+  </data>
+  <data name="AutoLoot.RemoveList.ToolTip" xml:space="preserve">
+    <value>Eliminar la lista de AutoLoot seleccionada actualmente.</value>
+  </data>
+  <data name="AutoLoot.AddItem.ToolTip" xml:space="preserve">
+    <value>Apunta a un objeto en el juego para aÃ±adirlo a la lista de saqueo.</value>
+  </data>
+  <data name="AutoLoot.Action.Remove.ToolTip" xml:space="preserve">
+    <value>Elimina este objeto de la lista de saqueo.</value>
+  </data>
+  <data name="AutoLoot.Autostart" xml:space="preserve">
+    <value>Inicio AutomÃ¡tico</value>
+  </data>
+  <data name="Agents.General.CloneList.ToolTip" xml:space="preserve">
+    <value>Duplica la lista de configuraciÃ³n actual.</value>
+  </data>
+  <data name="Agents.Dress.UndressNow" xml:space="preserve">
+    <value>Desvestirse</value>
+  </data>
+  <data name="Agents.Organizer.OrganizeNow" xml:space="preserve">
+    <value>Organizar Ahora</value>
+  </data>
+  <data name="Agents.General.AddItem" xml:space="preserve">
+    <value>AÃ±adir mediante Objetivo</value>
+  </data>
+  <data name="Agents.General.Col.Actions" xml:space="preserve">
+    <value>Acciones</value>
+  </data>
+  <data name="Agents.Scavenger.Title" xml:space="preserve">
+    <value>Agente Scavenger</value>
+  </data>
+  <data name="Agents.General.AddList.ToolTip" xml:space="preserve">
+    <value>Crear una nueva lista de configuraciÃ³n.</value>
+  </data>
+  <data name="Agents.BandageHeal.Other" xml:space="preserve">
+    <value>Objetivo...</value>
+  </data>
+  <data name="Agents.Organizer.Destination" xml:space="preserve">
+    <value>Contenedor de Destino</value>
+  </data>
+  <data name="Agents.Dress.Conflict" xml:space="preserve">
+    <value>Gestionar Conflictos</value>
+  </data>
+  <data name="Agents.AutoLoot.Title" xml:space="preserve">
+    <value>Agente AutoLoot</value>
+  </data>
+  <data name="Agents.General.Log" xml:space="preserve">
+    <value>Registro de Actividad</value>
+  </data>
+  <data name="Agents.General.Action.Edit.ToolTip" xml:space="preserve">
+    <value>Modificar propiedades de la entrada.</value>
+  </data>
+  <data name="Agents.General.Col.Enabled" xml:space="preserve">
+    <value>Act</value>
+  </data>
+  <data name="Agents.General.SetContainer" xml:space="preserve">
+    <value>Establecer Contenedor</value>
+  </data>
+  <data name="Agents.Restock.Source" xml:space="preserve">
+    <value>Fuente de ReposiciÃ³n</value>
+  </data>
+  <data name="Agents.BandageHeal.Title" xml:space="preserve">
+    <value>Agente Bandage Heal</value>
+  </data>
+  <data name="Agents.Organizer.Title" xml:space="preserve">
+    <value>Agente Organizer</value>
+  </data>
+  <data name="Agents.BandageHeal.Target" xml:space="preserve">
+    <value>Objetivo de CuraciÃ³n</value>
+  </data>
+  <data name="Agents.Dress.DressNow" xml:space="preserve">
+    <value>Vestirse</value>
+  </data>
+  <data name="Agents.General.SetContainer.ToolTip" xml:space="preserve">
+    <value>Apunta a un contenedor en el mundo del juego para ser usado por este agente.</value>
+  </data>
+  <data name="Agents.Restock.RestockNow" xml:space="preserve">
+    <value>Reponer Ahora</value>
+  </data>
+  <data name="Agents.General.AddManual" xml:space="preserve">
+    <value>AÃ±adir Manual</value>
+  </data>
+  <data name="Agents.General.AddItem.ToolTip" xml:space="preserve">
+    <value>Apunta a un objeto en el juego para aÃ±adir su grÃ¡fico y color a la lista.</value>
+  </data>
+  <data name="Agents.Scavenger.Container" xml:space="preserve">
+    <value>Destino de Scavenge</value>
+  </data>
+  <data name="Agents.General.Status" xml:space="preserve">
+    <value>Estado del Agente</value>
+  </data>
+  <data name="Agents.General.RemoveList.ToolTip" xml:space="preserve">
+    <value>Eliminar la lista de configuraciÃ³n actual.</value>
+  </data>
+  <data name="Agents.General.Autostart" xml:space="preserve">
+    <value>Inicio AutomÃ¡tico</value>
+  </data>
+  <data name="Agents.General.ClearList" xml:space="preserve">
+    <value>Limpiar Lista</value>
+  </data>
+  <data name="Agents.Friends.Title" xml:space="preserve">
+    <value>Agente Friends</value>
+  </data>
+  <data name="Agents.AutoLoot.Container" xml:space="preserve">
+    <value>Destino de Saqueo</value>
+  </data>
+  <data name="Agents.Organizer.Source" xml:space="preserve">
+    <value>Contenedor de Origen</value>
+  </data>
+  <data name="Agents.BandageHeal.Self" xml:space="preserve">
+    <value>Uno mismo</value>
+  </data>
+  <data name="Agents.General.Delay" xml:space="preserve">
+    <value>Retraso de AcciÃ³n (ms)</value>
+  </data>
+  <data name="Agents.General.Col.Name" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="Agents.General.Col.Color" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="Agents.General.Col.Props" xml:space="preserve">
+    <value>Propiedades</value>
+  </data>
+  <data name="Agents.AutoLoot.NoOpen" xml:space="preserve">
+    <value>No Abrir CadÃ¡veres</value>
+  </data>
+  <data name="Agents.Targeting.Title" xml:space="preserve">
+    <value>Agente Targeting</value>
+  </data>
+  <data name="Agents.General.AddManual.ToolTip" xml:space="preserve">
+    <value>Ingresa manualmente los detalles del objeto para aÃ±adirlo a la lista.</value>
+  </data>
+  <data name="Agents.General.Col.Graphic" xml:space="preserve">
+    <value>GrÃ¡fico</value>
+  </data>
+  <data name="Agents.Dress.Title" xml:space="preserve">
+    <value>Agente Dress</value>
+  </data>
+  <data name="Agents.General.ActiveList" xml:space="preserve">
+    <value>Lista Activa:</value>
+  </data>
+  <data name="Agents.General.Action.Remove.ToolTip" xml:space="preserve">
+    <value>Eliminar esta entrada.</value>
+  </data>
+  <data name="Agents.General.Autostart.ToolTip" xml:space="preserve">
+    <value>Inicia automÃ¡ticamente este agente cuando se carga la aplicaciÃ³n o el perfil.</value>
+  </data>
+  <data name="Agents.Restock.Title" xml:space="preserve">
+    <value>Agente Restock</value>
+  </data>
+  <data name="Agents.General.Range" xml:space="preserve">
+    <value>Rango MÃ¡ximo</value>
+  </data>
+  <data name="Agents.Vendor.Title" xml:space="preserve">
+    <value>Agente Vendor</value>
+  </data>
+  <data name="Agents.General.ClearList.ToolTip" xml:space="preserve">
+    <value>Elimina todas las entradas de la lista actual.</value>
+  </data>
+  <data name="Agents.General.WhileHidden" xml:space="preserve">
+    <value>Trabajar Mientras EstÃ¡s Oculto</value>
+  </data>
+  <data name="Agents.Dress.Dressing" xml:space="preserve">
+    <value>Equipando objetos...</value>
+  </data>
+  <data name="Agents.Restock.Started" xml:space="preserve">
+    <value>ReposiciÃ³n iniciada...</value>
+  </data>
+  <data name="Agents.Organizer.Error.NoContainers" xml:space="preserve">
+    <value>Error: Establece origen y destino antes de comenzar.</value>
+  </data>
+  <data name="Agents.Dress.Undressing" xml:space="preserve">
+    <value>Desequipando objetos...</value>
+  </data>
+  <data name="Agents.General.NewList" xml:space="preserve">
+    <value>Nueva Lista</value>
+  </data>
+  <data name="Agents.Organizer.Stopped" xml:space="preserve">
+    <value>Organizer detenido.</value>
+  </data>
+  <data name="Agents.General.ContainerSet" xml:space="preserve">
+    <value>Contenedor establecido: </value>
+  </data>
+  <data name="Agents.BandageHeal.SelectTarget" xml:space="preserve">
+    <value>Selecciona objetivo para curaciÃ³n...</value>
+  </data>
+  <data name="Agents.General.Copy" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="Agents.BandageHeal.TargetSet" xml:space="preserve">
+    <value>Objetivo de curaciÃ³n establecido: </value>
+  </data>
+  <data name="Agents.Dress.Complete" xml:space="preserve">
+    <value>OperaciÃ³n de vestirse completada.</value>
+  </data>
+  <data name="Agents.General.SelectItem" xml:space="preserve">
+    <value>Selecciona objeto para aÃ±adir...</value>
+  </data>
+  <data name="Agents.General.EditNotImplemented" xml:space="preserve">
+    <value>La ediciÃ³n de propiedades aÃºn no estÃ¡ implementada.</value>
+  </data>
+  <data name="Agents.Organizer.Started" xml:space="preserve">
+    <value>Organizer iniciado...</value>
+  </data>
+  <data name="Agents.General.ItemAdded" xml:space="preserve">
+    <value>Objeto aÃ±adido.</value>
+  </data>
+  <data name="Agents.General.ManualItemAdded" xml:space="preserve">
+    <value>Objeto manual aÃ±adido. Edita el ID y el Color en la lista.</value>
+  </data>
+  <data name="Agents.General.SelectContainer" xml:space="preserve">
+    <value>Seleccionar contenedor...</value>
+  </data>
+  <data name="Agents.Restock.Stopped" xml:space="preserve">
+    <value>Restock detenido.</value>
+  </data>
+  <data name="Agents.General.NotSet" xml:space="preserve">
+    <value>No Establecido</value>
+  </data>
+  <data name="Agents.General.WhileHidden.ToolTip" xml:space="preserve">
+    <value>Si estÃ¡ habilitado, el agente continuarÃ¡ trabajando incluso si tu personaje estÃ¡ oculto (Hiding/Stealth).</value>
+  </data>
+  <data name="Agents.AutoLoot.NoOpen.ToolTip" xml:space="preserve">
+    <value>Si estÃ¡ habilitado, el agente no intentarÃ¡ abrir cadÃ¡veres automÃ¡ticamente. Solo saquearÃ¡ los que ya hayan sido abiertos por ti u otros.</value>
+  </data>
+  <data name="Agents.BandageHeal.ShowHP" xml:space="preserve">
+    <value>Mostrar HP sobre el Cuerpo</value>
+  </data>
+  <data name="Agents.BandageHeal.ShowHP.ToolTip" xml:space="preserve">
+    <value>Muestra el porcentaje de salud del objetivo directamente sobre el cuerpo de su personaje en el mundo del juego.</value>
+  </data>
+  <data name="Agents.Targeting.AutoQueue" xml:space="preserve">
+    <value>Auto Cola de Objetivo</value>
+  </data>
+  <data name="Agents.Targeting.AutoQueue.ToolTip" xml:space="preserve">
+    <value>Pone en cola una solicitud de objetivo si no hay uno disponible de inmediato, luego la ejecuta tan pronto como se encuentra un objetivo.</value>
+  </data>
+  <data name="Agents.Targeting.RangeCheck" xml:space="preserve">
+    <value>ComprobaciÃ³n de Rango de Objetivos</value>
+  </data>
+  <data name="Agents.Targeting.SmartTarget" xml:space="preserve">
+    <value>Objetivo Inteligente</value>
+  </data>
+  <data name="Agents.Targeting.RangeCheck.ToolTip" xml:space="preserve">
+    <value>Asegura que los objetivos potenciales estÃ©n dentro de un rango vÃ¡lido antes de intentar apuntarles.</value>
+  </data>
+  <data name="Agents.Targeting.SmartTarget.ToolTip" xml:space="preserve">
+    <value>Apunta automÃ¡ticamente al mÃ³vil mÃ¡s apropiado segÃºn la proximidad y la notoriedad (p. ej., apunta primero a los enemigos).</value>
+  </data>
+  <data name="Agents.Vendor.BuySettings" xml:space="preserve">
+    <value>ConfiguraciÃ³n del Agente de Compra</value>
+  </data>
+  <data name="Agents.Vendor.Buy" xml:space="preserve">
+    <value>Comprar</value>
+  </data>
+  <data name="Agents.Vendor.Sell" xml:space="preserve">
+    <value>Vender</value>
+  </data>
+  <data name="Agents.Vendor.SellSettings" xml:space="preserve">
+    <value>ConfiguraciÃ³n del Agente de Venta</value>
+  </data>
+  <data name="Agents.Friends.Management" xml:space="preserve">
+    <value>GestiÃ³n de Lista de Amigos y Enemigos</value>
+  </data>
+  <data name="Agents.Organizer.Stack.ToolTip" xml:space="preserve">
+    <value>Apila automÃ¡ticamente objetos del mismo tipo en el contenedor de destino.</value>
+  </data>
+  <data name="Agents.Organizer.CompleteMsg" xml:space="preserve">
+    <value>Mostrar Mensaje de Completado</value>
+  </data>
+  <data name="Agents.Organizer.Loop.ToolTip" xml:space="preserve">
+    <value>Ejecuta continuamente el agente organizador con el retraso especificado.</value>
+  </data>
+  <data name="Agents.Organizer.CompleteMsg.ToolTip" xml:space="preserve">
+    <value>Muestra un mensaje del sistema cuando el proceso de organizaciÃ³n ha finalizado.</value>
+  </data>
+  <data name="Agents.Organizer.Loop" xml:space="preserve">
+    <value>Bucle</value>
+  </data>
+  <data name="Agents.Organizer.Stack" xml:space="preserve">
+    <value>Apilar Objetos</value>
+  </data>
+  <data name="Agents.Organizer.OrganizeNow.ToolTip" xml:space="preserve">
+    <value>Activa manualmente el proceso de organizaciÃ³n de inmediato.</value>
+  </data>
+  <data name="Agents.Restock.RestockNow.ToolTip" xml:space="preserve">
+    <value>Activa manualmente el proceso de reposiciÃ³n de inmediato.</value>
+  </data>
+  <data name="Agents.Vendor.SellEnabled" xml:space="preserve">
+    <value>Habilitar Venta</value>
+  </data>
+  <data name="Agents.Vendor.CompareName.ToolTip" xml:space="preserve">
+    <value>Al coincidir objetos, tambiÃ©n comprueba si el nombre del objeto coincide exactamente.</value>
+  </data>
+  <data name="Agents.Vendor.LogPurchases" xml:space="preserve">
+    <value>Registrar Compras</value>
+  </data>
+  <data name="Agents.Vendor.SellEnabled.ToolTip" xml:space="preserve">
+    <value>Si estÃ¡ habilitado, el agente venderÃ¡ automÃ¡ticamente objetos de la Lista de Venta cuando se abra un vendedor.</value>
+  </data>
+  <data name="Agents.Vendor.MaxSell.ToolTip" xml:space="preserve">
+    <value>Limita el nÃºmero de objetos vendidos en una sola transacciÃ³n.</value>
+  </data>
+  <data name="Agents.Vendor.SellListHeader" xml:space="preserve">
+    <value>Objetos para Vender</value>
+  </data>
+  <data name="Agents.Vendor.CompareName" xml:space="preserve">
+    <value>Comparar Nombre</value>
+  </data>
+  <data name="Agents.Vendor.MaxSell" xml:space="preserve">
+    <value>Cantidad MÃ¡xima de Venta</value>
+  </data>
+  <data name="Agents.Vendor.BuyBag" xml:space="preserve">
+    <value>Bolsa de Compra</value>
+  </data>
+  <data name="Agents.Vendor.BuyEnabled" xml:space="preserve">
+    <value>Habilitar Compra</value>
+  </data>
+  <data name="Agents.Vendor.LogPurchases.ToolTip" xml:space="preserve">
+    <value>Registra todas las acciones de compra en el registro de actividad.</value>
+  </data>
+  <data name="Agents.Vendor.BuyEnabled.ToolTip" xml:space="preserve">
+    <value>Si estÃ¡ habilitado, el agente comprarÃ¡ automÃ¡ticamente objetos de la Lista de Compra cuando se abra un vendedor.</value>
+  </data>
+  <data name="Agents.Vendor.BuyListHeader" xml:space="preserve">
+    <value>Objetos para Comprar</value>
+  </data>
+  <data name="Agents.Vendor.SellBag" xml:space="preserve">
+    <value>Bolsa de Origen de Venta</value>
+  </data>
+</root>

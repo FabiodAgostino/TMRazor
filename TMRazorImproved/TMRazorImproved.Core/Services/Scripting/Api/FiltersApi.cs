@@ -15,6 +15,45 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel = cancel;
         }
 
+        // TMRazor Legacy Properties
+        public virtual int AutoRemountEDelay 
+        { 
+            get 
+            {
+                _cancel.ThrowIfCancelled();
+                return _config.CurrentProfile?.AutoRemountEDelay ?? 0;
+            }
+            set
+            {
+                _cancel.ThrowIfCancelled();
+                if (_config.CurrentProfile != null)
+                    _config.CurrentProfile.AutoRemountEDelay = value;
+            }
+        }
+
+        public virtual int AutoRemountSerial 
+        { 
+            get 
+            {
+                _cancel.ThrowIfCancelled();
+                return (int)(_config.CurrentProfile?.RemountSerial ?? 0);
+            }
+            set
+            {
+                _cancel.ThrowIfCancelled();
+                if (_config.CurrentProfile != null)
+                    _config.CurrentProfile.RemountSerial = (uint)value;
+            }
+        }
+
+        public class GraphChangeData
+        {
+            public bool Selected { get; set; }
+            public int GraphReal { get; set; }
+            public int GraphNew { get; set; }
+            public int ColorNew { get; set; }
+        }
+
         public virtual void Enable(string name)
         {
             _cancel.ThrowIfCancelled();

@@ -55,7 +55,12 @@ namespace TMRazorImproved.Core.Services
             CurrentLanguage = langCode;
             
             // Imposta la cultura del thread per il ResourceManager
-            _currentCulture = new CultureInfo(langCode == "it" ? "it-IT" : "en-US");
+            _currentCulture = langCode switch
+            {
+                "it" => new CultureInfo("it-IT"),
+                "es" => new CultureInfo("es-ES"),
+                _ => new CultureInfo("en-US")
+            };
             Thread.CurrentThread.CurrentUICulture = _currentCulture;
             Thread.CurrentThread.CurrentCulture = _currentCulture;
 
@@ -88,6 +93,7 @@ namespace TMRazorImproved.Core.Services
         {
             yield return "en";
             yield return "it";
+            yield return "es";
         }
     }
 }

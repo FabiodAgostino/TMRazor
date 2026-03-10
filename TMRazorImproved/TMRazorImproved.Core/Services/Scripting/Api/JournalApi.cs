@@ -20,6 +20,30 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel = cancel;
         }
 
+        public class JournalEntry
+        {
+            private readonly TMRazorImproved.Shared.Models.JournalEntry _internalEntry;
+
+            public JournalEntry(TMRazorImproved.Shared.Models.JournalEntry internalEntry)
+            {
+                _internalEntry = internalEntry;
+            }
+
+            public string Text { get { return _internalEntry.Text; } }
+            public string Type { get { return "Regular"; } }
+            public int Color { get { return _internalEntry.Hue; } }
+            public string Name { get { return _internalEntry.Name; } }
+            public int Serial { get { return (int)_internalEntry.Serial; } }
+            
+            private static readonly DateTime UnixTimeBegin = new DateTime(1970, 1, 1);
+            public double Timestamp { get { return _internalEntry.Timestamp.Subtract(UnixTimeBegin).TotalSeconds; } }
+
+            public JournalEntry Copy()
+            {
+                return new JournalEntry(_internalEntry);
+            }
+        }
+
         public virtual bool InJournal(string text)
         {
             _cancel.ThrowIfCancelled();
@@ -87,7 +111,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual bool WaitForJournal(string text, int timeoutMs = 5000)
         {
             var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-            Action<JournalEntry> handler = entry =>
+            Action<TMRazorImproved.Shared.Models.JournalEntry> handler = entry =>
             {
                 if (entry.Text.Contains(text, StringComparison.OrdinalIgnoreCase))
                     tcs.TrySetResult(true);
@@ -200,6 +224,132 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                     .ToList();
             }
             catch (RegexParseException) { return new List<string>(); }
+        }
+
+        // ------------------------------------------------------------------
+        // Missing RazorEnhanced Compatibility Methods
+        // ------------------------------------------------------------------
+
+        public virtual void FilterText(string text)
+        {
+            _cancel.ThrowIfCancelled();
+            _journal.AddFilter(text);
+        }
+
+        public virtual void RemoveFilterText(string text)
+        {
+            _cancel.ThrowIfCancelled();
+            _journal.RemoveFilter(text);
+        }
+
+        public virtual string GetLineText(string text, bool addname = false)
+        {
+            _cancel.ThrowIfCancelled();
+            var entry = _journal.Entries.LastOrDefault(e => e.Text.Contains(text, StringComparison.OrdinalIgnoreCase));
+            if (entry == null) return string.Empty;
+            return addname ? $"{entry.Name}: {entry.Text}" : entry.Text;
+        }
+
+        public virtual List<string> GetSpeechName()
+        {
+            _cancel.ThrowIfCancelled();
+            return _journal.Entries
+                .Where(e => !string.IsNullOrEmpty(e.Name))
+                .Select(e => e.Name)
+                .Distinct()
+                .ToList();
+        }
+
+        public virtual List<string> GetTextByColor(int color, bool addname = false)
+        {
+            _cancel.ThrowIfCancelled();
+            return _journal.Entries
+                .Where(e => e.Hue == color)
+                .Select(e => addname ? $"{e.Name}: {e.Text}" : e.Text)
+                .ToList();
+        }
+
+        public virtual List<string> GetTextByName(string name, bool addname = false)
+        {
+            _cancel.ThrowIfCancelled();
+            return _journal.Entries
+                .Where(e => e.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                .Select(e => addname ? $"{e.Name}: {e.Text}" : e.Text)
+                .ToList();
+        }
+
+        public virtual List<string> GetTextBySerial(int serial, bool addname = false)
+        {
+            _cancel.ThrowIfCancelled();
+            return _journal.Entries
+                .Where(e => e.Serial == serial)
+                .Select(e => addname ? $"{e.Name}: {e.Text}" : e.Text)
+                .ToList();
+        }
+
+        public virtual List<string> GetTextByType(string type, bool addname = false)
+        {
+            _cancel.ThrowIfCancelled();
+            // JournalEntry in TMRazorImproved doesn't have Type, so fallback to checking by Name just like InJournalByType does
+            return _journal.Entries
+                .Where(e => string.Equals(e.Name, type, StringComparison.OrdinalIgnoreCase))
+                .Select(e => addname ? $"{e.Name}: {e.Text}" : e.Text)
+                .ToList();
+        }
+
+        public virtual bool Search(string text)
+        {
+            _cancel.ThrowIfCancelled();
+            return SearchJournal(text);
+        }
+
+        public virtual bool SearchByColor(string text, int color)
+        {
+            _cancel.ThrowIfCancelled();
+            return _journal.Entries.Any(e => e.Hue == color && e.Text.Contains(text, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public virtual bool SearchByName(string text, string name)
+        {
+            _cancel.ThrowIfCancelled();
+            return _journal.Entries.Any(e => 
+                e.Name.Equals(name, StringComparison.OrdinalIgnoreCase) && 
+                e.Text.Contains(text, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public virtual bool SearchByType(string text, string type)
+        {
+            _cancel.ThrowIfCancelled();
+            return _journal.Entries.Any(e => 
+                e.Name.Equals(type, StringComparison.OrdinalIgnoreCase) && 
+                e.Text.Contains(text, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public virtual bool WaitByName(string name, int delay)
+        {
+            var deadline = Environment.TickCount64 + delay;
+            while (Environment.TickCount64 < deadline)
+            {
+                _cancel.ThrowIfCancelled();
+                if (_journal.Entries.Any(e => e.Name.Equals(name, StringComparison.OrdinalIgnoreCase))) return true;
+                System.Threading.Thread.Sleep(50);
+            }
+            return false;
+        }
+
+        public virtual string WaitJournal(List<string> msgs, int delay)
+        {
+            var deadline = Environment.TickCount64 + delay;
+            while (Environment.TickCount64 < deadline)
+            {
+                _cancel.ThrowIfCancelled();
+                foreach (var msg in msgs)
+                {
+                    if (_journal.Contains(msg)) return msg;
+                }
+                System.Threading.Thread.Sleep(50);
+            }
+            return string.Empty;
         }
     }
 }
