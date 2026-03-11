@@ -122,7 +122,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             try
             {
-                return GetItemData(staticID)?.Name ?? "";
+                return GetItemData(staticID).Name ?? "";
             }
             catch { return ""; }
         }
@@ -132,7 +132,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             try
             {
-                return GetItemData(staticID)?.Height ?? 0;
+                return GetItemData(staticID).Height;
             }
             catch { return 0; }
         }

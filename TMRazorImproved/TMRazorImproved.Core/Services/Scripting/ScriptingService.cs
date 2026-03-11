@@ -381,7 +381,7 @@ del _make_tracer_, _sys_
             scope.SetVariable("Player",  new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, logger: _loggerFactory.CreateLogger<PlayerApi>()));
             scope.SetVariable("Journal", new JournalApi(_journalService, cancelCtrl));
             scope.SetVariable("Gumps",   new GumpsApi(_world, _packetService, cancelCtrl, _messenger));
-            scope.SetVariable("Target",  new TargetApi(_targetingService, cancelCtrl, _world, _packetService, _config, staticsApi, mobilesApi, itemsApi, misc));
+            scope.SetVariable("Target",  new TargetApi(_targetingService, cancelCtrl));
             scope.SetVariable("Skills",  new SkillsApi(_skillsService, _packetService, cancelCtrl));
             scope.SetVariable("Spells",  new SpellsApi(_world, _packetService, cancelCtrl, _targetingService, _loggerFactory.CreateLogger<SpellsApi>()));
             scope.SetVariable("Statics", staticsApi);
@@ -458,7 +458,7 @@ del _make_tracer_, _sys_
                 Misc        = misc,
                 Journal     = new JournalApi(_journalService, cancelCtrl),
                 Gumps       = new GumpsApi(_world, _packetService, cancelCtrl, _messenger),
-                Target      = new TargetApi(_targetingService, cancelCtrl, _world, _packetService, _config, staticsApi, mobilesApi, itemsApi, misc),
+                Target      = new TargetApi(_targetingService, cancelCtrl),
                 Skills      = new SkillsApi(_skillsService, _packetService, cancelCtrl),
                 Spells      = new SpellsApi(_world, _packetService, cancelCtrl, _targetingService, _loggerFactory.CreateLogger<SpellsApi>()),
                 Statics     = staticsApi,

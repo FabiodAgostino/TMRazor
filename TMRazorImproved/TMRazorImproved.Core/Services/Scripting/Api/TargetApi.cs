@@ -141,5 +141,98 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             _targeting.TargetNext();
         }
+
+        // --- Migrated Missing APIs ---
+
+        public virtual void AttackTargetFromList(string target_name) { throw new NotImplementedException("Target GUI filters not fully implemented yet."); }
+        
+        public virtual void ClearLast()
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.LastTarget = 0;
+        }
+
+        public virtual void ClearLastandQueue()
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.LastTarget = 0;
+            _targeting.Clear();
+        }
+
+        public virtual void ClearLastAttack() { /* Need LastAttack property in ITargetingService */ throw new NotImplementedException(); }
+
+        public virtual void ClearQueue()
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.Clear();
+        }
+
+        public virtual int GetLastAttack() { throw new NotImplementedException(); }
+
+        public virtual object GetTargetFromList(string target_name) { throw new NotImplementedException("Target GUI filters not fully implemented yet."); }
+
+        public virtual void LastQueued()
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.SendTarget(_targeting.LastTarget); // Queuing system to be fully implemented
+        }
+
+        public virtual int LastUsedObject() { throw new NotImplementedException(); }
+
+        public virtual void PerformTargetFromList(string target_name) { throw new NotImplementedException("Target GUI filters not fully implemented yet."); }
+
+        public virtual object PromptGroundTarget(string message = "Select Ground Position", int color = 945)
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.SendPrompt(message);
+            throw new NotImplementedException("Full ground target prompting requires UI/Point3D integration.");
+        }
+
+        public virtual int PromptTarget(string message = "Select Item or Mobile", int color = 945)
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.SendPrompt(message);
+            throw new NotImplementedException("Full target prompting requires UI integration.");
+        }
+
+        public virtual void SelfQueued()
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.TargetSelf(); // Queuing system to be fully implemented
+        }
+
+        public virtual void SetLast(int serial, bool wait = true)
+        {
+            _cancel.ThrowIfCancelled();
+            _targeting.SetLastTarget((uint)serial);
+        }
+
+        public virtual void SetLast(object mob) { throw new NotImplementedException("Requires Mobile wrapper resolution."); }
+
+        public virtual void SetLastTargetFromList(string target_name) { throw new NotImplementedException("Target GUI filters not fully implemented yet."); }
+
+        public virtual void TargetExecuteRelative(int serial, int offset) { throw new NotImplementedException("Requires Mobile wrapper and Position resolution."); }
+
+        public virtual void TargetExecuteRelative(object mobile, int offset) { throw new NotImplementedException("Requires Mobile wrapper and Position resolution."); }
+
+        public virtual void TargetResource(int item_serial, int resource_number) { throw new NotImplementedException(); }
+
+        public virtual void TargetResource(int item_serial, string resource_name) { throw new NotImplementedException(); }
+
+        public virtual void TargetResource(object item, string resource_name) { throw new NotImplementedException(); }
+
+        public virtual void TargetResource(object item, int resource_number) { throw new NotImplementedException(); }
+
+        public virtual bool TargetType(int graphic, int color = -1, int range = 20, string selector = "Nearest", System.Collections.Generic.List<byte> notoriety = null)
+        {
+            throw new NotImplementedException("Requires Item/Mobile search and filtering implementation.");
+        }
+
+        public virtual bool WaitForTargetOrFizzle(int delay = 5000, bool noshow = false)
+        {
+            _cancel.ThrowIfCancelled();
+            // Basic fallback to WaitForTarget
+            return WaitForTarget(delay);
+        }
     }
 }

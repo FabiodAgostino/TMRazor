@@ -1,4 +1,5 @@
 using System.Linq;
+using System.ComponentModel.DataAnnotations;
 using Moq;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.UI.ViewModels.Agents;
@@ -15,14 +16,15 @@ namespace TMRazorImproved.Tests.MockTests
             var config = new Mock<IConfigService>();
             var target = new Mock<ITargetingService>();
             var log = new Mock<ILogService>();
-            var vm = new AutoLootViewModel(config.Object, target.Object, log.Object);
+            var lang = new Mock<ILanguageService>();
+            var vm = new AutoLootViewModel(config.Object, target.Object, log.Object, lang.Object);
 
             // Act
             vm.Delay = 50; // Min is 100
 
             // Assert
             Assert.True(vm.HasErrors);
-            var errors = vm.GetErrors(nameof(vm.Delay)).ToList();
+            var errors = vm.GetErrors(nameof(vm.Delay)).Cast<ValidationResult>().ToList();
             Assert.Single(errors);
             Assert.Contains("Delay must be between 100 and 5000ms", errors[0].ErrorMessage);
         }
@@ -34,7 +36,8 @@ namespace TMRazorImproved.Tests.MockTests
             var config = new Mock<IConfigService>();
             var target = new Mock<ITargetingService>();
             var log = new Mock<ILogService>();
-            var vm = new AutoLootViewModel(config.Object, target.Object, log.Object);
+            var lang = new Mock<ILanguageService>();
+            var vm = new AutoLootViewModel(config.Object, target.Object, log.Object, lang.Object);
 
             // Act
             vm.Delay = 1000; 

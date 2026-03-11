@@ -38,7 +38,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         public void Execute_SimpleMsg_ShouldCallPlayerChatSay()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null, null);
             var interpreter = CreateInterpreter(playerMock.Object);
             string code = "msg 'hello world'";
 
@@ -53,7 +53,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         public void Execute_IfCondition_ShouldWork()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null, null);
             playerMock.Setup(p => p.Hits).Returns(50);
             var interpreter = CreateInterpreter(playerMock.Object);
             
@@ -76,7 +76,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         public void Execute_WhileLoop_ShouldExecuteMultipleTimes()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null, null);
             
             // Simula hits che scendono ogni volta che viene letto
             int callCount = 0;
@@ -100,7 +100,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         public void Execute_SetAlias_ShouldPersist()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null, null);
             var interpreter = CreateInterpreter(playerMock.Object);
             
             string code = @"

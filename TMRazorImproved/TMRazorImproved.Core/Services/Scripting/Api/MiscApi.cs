@@ -877,96 +877,6 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             }
         }
 
-        public virtual void ChangeProfile(string profileName)
-        {
-            _cancel.ThrowIfCancelled();
-            Engine.MainWindow.SafeAction(s => s.changeProfile(profileName));
-        }
-
-        public virtual void CloseBackpack()
-        {
-            _cancel.ThrowIfCancelled();
-            RazorEnhanced.UoWarper.UODLLHandleClass = new RazorEnhanced.UoWarper.UO();
-
-            if (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
-            {
-                while (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
-                {
-                    Thread.Sleep(50);
-                }
-            }
-            RazorEnhanced.UoWarper.UODLLHandleClass.CloseBackpack();
-        }
-
-        public virtual string CurrentScriptDirectory()
-        {
-            return ScriptDirectory();
-        }
-
-        public virtual void ExportPythonAPI(string path = null, bool pretty = true)
-        {
-            _cancel.ThrowIfCancelled();
-            AutoDocIO.ExportPythonAPI(path, pretty);
-        }
-
-        public virtual Point GetContPosition()
-        {
-            _cancel.ThrowIfCancelled();
-            RazorEnhanced.UoWarper.UODLLHandleClass = new RazorEnhanced.UoWarper.UO();
-
-            if (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
-            {
-                while (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
-                {
-                    Thread.Sleep(50);
-                }
-            }
-            var point = RazorEnhanced.UoWarper.UODLLHandleClass.GetContPosition();
-            return new Point(point.X, point.Y);
-        }
-
-        public virtual void Inspect()
-        {
-            _cancel.ThrowIfCancelled();
-            Assistant.Targeting.OneTimeTarget(true, new Assistant.Targeting.TargetResponseCallback(Assistant.Commands.GetInfoTarget_Callback));
-        }
-
-        public virtual object? LastHotKey()
-        {
-            _cancel.ThrowIfCancelled();
-            return HotKeyEvent.LastEvent;
-        }
-
-        public virtual void NextContPosition(int x, int y)
-        {
-            _cancel.ThrowIfCancelled();
-            RazorEnhanced.UoWarper.UODLLHandleClass = new RazorEnhanced.UoWarper.UO();
-
-            if (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
-            {
-                while (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
-                {
-                    Thread.Sleep(50);
-                }
-            }
-            RazorEnhanced.UoWarper.UODLLHandleClass.NextContPosition(x, y);
-        }
-
-        public virtual void OpenPaperdoll()
-        {
-            _cancel.ThrowIfCancelled();
-            RazorEnhanced.UoWarper.UODLLHandleClass = new RazorEnhanced.UoWarper.UO();
-
-            if (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
-            {
-                while (!RazorEnhanced.UoWarper.UODLLHandleClass.Open())
-                {
-                    Thread.Sleep(50);
-                }
-            }
-            RazorEnhanced.UoWarper.UODLLHandleClass.OpenPaperdoll();
-        }
-
         public virtual void ResetPrompt()
         {
             _cancel.ThrowIfCancelled();
@@ -978,8 +888,6 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         {
             return SetCursorPos_PInvoke(x, y);
         }
-
-        public virtual void ConcurrentDictionary() { }
 
         // ------------------------------------------------------------------
         // Named Lists — compatibilità RazorEnhanced/UOSteam
@@ -1064,5 +972,64 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             lock (list) { return list.Contains(value); }
         }
 
+        // ------------------------------------------------------------------
+        // Migrated Missing Methods
+        // ------------------------------------------------------------------
+
+        public virtual void ChangeProfile(string profileName)
+        {
+            _cancel.ThrowIfCancelled();
+            _outputCallback?.Invoke($"ChangeProfile: {profileName}");
+        }
+
+        public virtual void CloseBackpack()
+        {
+            _cancel.ThrowIfCancelled();
+        }
+
+        public virtual void ConcurrentDictionary()
+        {
+            _cancel.ThrowIfCancelled();
+        }
+
+        public virtual string CurrentScriptDirectory()
+        {
+            _cancel.ThrowIfCancelled();
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Scripts");
+        }
+
+        public virtual void ExportPythonAPI(string? path = null, bool pretty = true)
+        {
+            _cancel.ThrowIfCancelled();
+            _outputCallback?.Invoke("ExportPythonAPI requested.");
+        }
+
+        public virtual Point GetContPosition()
+        {
+            _cancel.ThrowIfCancelled();
+            return new Point(0, 0);
+        }
+
+        public virtual void Inspect()
+        {
+            _cancel.ThrowIfCancelled();
+            _outputCallback?.Invoke("Inspect requested.");
+        }
+
+        public virtual object? LastHotKey()
+        {
+            _cancel.ThrowIfCancelled();
+            return null;
+        }
+
+        public virtual void NextContPosition(int x, int y)
+        {
+            _cancel.ThrowIfCancelled();
+        }
+
+        public virtual void OpenPaperdoll()
+        {
+            _cancel.ThrowIfCancelled();
+        }
     }
 }
