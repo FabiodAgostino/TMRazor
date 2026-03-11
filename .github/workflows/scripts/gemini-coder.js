@@ -6,7 +6,7 @@ async function run() {
   try {
     // 1. Inizializza l'SDK con la chiave API e imposta Gemini 3.1 Pro
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
 
     // 2. Recupera il commento dall'Issue di GitHub
     const commentBody = process.env.COMMENT_BODY;
