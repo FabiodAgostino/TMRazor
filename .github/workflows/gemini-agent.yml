@@ -33,7 +33,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           COMMENT_BODY: ${{ github.event.comment.body }}
-        run: node .github/scripts/gemini-coder.js
+        run: node .github/workflows/scripts/gemini-coder.js
 
       - name: Salva e pusha le modifiche sul repository
         run: |
