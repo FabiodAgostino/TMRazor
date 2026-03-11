@@ -1,0 +1,44 @@
+name: Gemini Remote Agent
+
+# 1. Quando deve attivarsi? Quando viene creato un commento su una Issue.
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  gemini_coder:
+    # 2. Esegui solo se il commento inizia con "/gemini"
+    if: startsWith(github.event.comment.body, '/gemini')
+    runs-on: ubuntu-latest
+    
+    # 3. Dai i permessi al bot di scrivere sul codice e sulle issue
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - name: Clona il repository
+        uses: actions/checkout@v4
+
+      - name: Prepara l'ambiente Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Installa SDK ufficiale di Google
+        run: npm install @google/generative-ai
+
+      - name: Esegui la logica di Gemini
+        # Passiamo la tua chiave API segreta e il testo del commento allo script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: node .github/scripts/gemini-coder.js
+
+      - name: Salva e pusha le modifiche sul repository
+        run: |
+          git config --global user.name "Gemini Agent"
+          git config --global user.email "gemini-agent@users.noreply.github.com"
+          git add .
+          git commit -m "🤖 Modifiche generate da Gemini (Richiesta Issue #${{ github.event.issue.number }})" || echo "Nessuna modifica da salvare"
+          git push
