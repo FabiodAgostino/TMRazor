@@ -1,0 +1,51 @@
+1. Write an IronPython script for Razor Enhanced that automatically opens my character's health bar in the top-left corner of the screen when I start the script, and places a health bar for my current target next to it.
+2. Write an IronPython script for Razor Enhanced that follows a specific creature or player on screen automatically, keeping my character always behind it.
+3. Write an IronPython script for Razor Enhanced that moves all open inventory windows to the right side of the screen to keep the center of the play area clean.
+4. Write an IronPython script for Razor Enhanced that reads a setting from the ClassicUO client configuration and prints its current value in the chat.
+5. Write an IronPython script for Razor Enhanced that closes all open health bars on screen when I press the script, then reopens only my own status bar in the bottom-left corner.
+6. Write an IronPython script for Razor Enhanced that monitors incoming trade windows. If someone tries to trade with me, automatically read the amount of gold they are offering and print it in the chat before I decide to accept.
+7. Write an IronPython script for Razor Enhanced that checks all currently active trade windows and prints the name of each trader and what gold amount they are offering.
+8. Write an IronPython script for Razor Enhanced that automatically cancels any trade window that opens if the offered gold is below a minimum amount I set.
+9. Write an IronPython script for Razor Enhanced that automatically buys up to 50 bandages from the nearest NPC vendor as long as the price per unit does not exceed 5 gold.
+10. Write an IronPython script for Razor Enhanced that reads the list of items I bought in my last vendor transaction and prints each item name, quantity and price paid.
+11. Write an IronPython script for Razor Enhanced that goes to a vendor, buys a specific item by name, and then checks the last purchase list to confirm the transaction went through correctly.
+12. Write an IronPython script for Razor Enhanced that listens for a specific in-game sound (like a chest opening or a monster attack) and, when it hears it, prints an alert in the chat.
+13. Write an IronPython script for Razor Enhanced that mutes a specific annoying repeated sound in the game (like a dog barking) while keeping all other sounds active.
+14. Write an IronPython script for Razor Enhanced that plays a local beep sound when my health drops below 30% to alert me even if I am not looking at the screen.
+15. Write an IronPython script for Razor Enhanced that reads the currently open crafting gump line by line, finds the entry for a specific item I want to craft, and clicks the corresponding button automatically.
+16. Write an IronPython script for Razor Enhanced that waits for any gump to appear on screen, reads all its text lines, and prints only the lines that contain a number.
+17. Write an IronPython script for Razor Enhanced that builds a simple custom information window showing my current health, mana and stamina and sends it to the client.
+18. Write an IronPython script for Razor Enhanced that reads a vendor buy gump, finds the cheapest item listed, and prints its name and price.
+19. Write an IronPython script for Razor Enhanced that checks how much time is left on my Bless buff before it expires and prints the remaining seconds.
+20. Write an IronPython script for Razor Enhanced that checks whether my character has the primary special move of my current weapon ready to fire, and prints the result.
+21. Write an IronPython script for Razor Enhanced that makes my character bow to the nearest player as a greeting emote.
+22. Write an IronPython script for Razor Enhanced that quickly re-equips the last weapon I was holding with a single command, useful after casting a spell.
+23. Write an IronPython script for Razor Enhanced that reads a list of all corpses from my previous deaths and prints the coordinates of the most recent one so I can go retrieve my gear.
+24. Write an IronPython script for Razor Enhanced that draws a tracking arrow on my screen pointing toward a specific set of coordinates, like a waypoint marker.
+25. Write an IronPython script for Razor Enhanced that finds the nearest enemy matching a specific body type and notoriety and immediately attacks it, without needing to set up a filter manually.
+26. Write an IronPython script for Razor Enhanced that uses a fast search to find the nearest enemy of a specific monster type within 10 tiles and highlights it.
+27. Write an IronPython script for Razor Enhanced that reads the Fame and Karma values of the last creature I clicked and prints them along with the karma title.
+28. Write an IronPython script for Razor Enhanced that checks if my pet can be renamed (like a freshly tamed animal) and, if so, automatically renames it.
+29. Write an IronPython script for Razor Enhanced that forces a karma and fame update on a nearby creature and then prints the updated values.
+30. Write an IronPython script for Razor Enhanced that searches for all items with a specific name anywhere in my backpack, including nested bags, and prints every match found.
+31. Write an IronPython script for Razor Enhanced that searches for all items of a specific type within a range and returns every single one found, not just the first.
+32. Write an IronPython script for Razor Enhanced that closes a specific open container on screen by its serial number.
+33. Write an IronPython script for Razor Enhanced that opens a container at a specific position on my screen instead of letting the client place it automatically.
+34. Write an IronPython script for Razor Enhanced that reads the raw text value of a specific property of an item (for example the exact damage range string on a weapon) and prints it.
+35. Write an IronPython script for Razor Enhanced that forces an update of the properties of all items in my backpack and waits for the server to confirm before reading them.
+36. Write an IronPython script for Razor Enhanced that reads which special moves are available for the weapon I currently have equipped and prints them.
+37. Write an IronPython script for Razor Enhanced that uses a dyeing tub to change the color of a specific item in my backpack to a chosen hue.
+38. Write an IronPython script for Razor Enhanced that adds all arrows and bolts in my backpack to a temporary ignore list so they are excluded from any item filter searches.
+39. Write an IronPython script for Razor Enhanced that searches for items only within a specific Z height range on the ground, useful inside multi-floor buildings.
+40. Write an IronPython script for Razor Enhanced that calculates the exact distance in tiles between two arbitrary map coordinates and prints the result.
+41. Write an IronPython script for Razor Enhanced that checks whether a given serial number belongs to an item or to a creature and prints the result.
+42. Write an IronPython script for Razor Enhanced that saves a log line to a text file every time I kill an enemy, recording the time and enemy name without writing duplicate lines.
+43. Write an IronPython script for Razor Enhanced that switches the entire Razor profile to a different configuration named 'PvP Mode' and prints a confirmation.
+44. Write an IronPython script for Razor Enhanced that simulates a left mouse click at a specific position on the game window, useful for interacting with UI elements that cannot be reached via packets.
+45. Write an IronPython script for Razor Enhanced that reads the current game window size and prints the width and height in pixels.
+46. Write an IronPython script for Razor Enhanced that lists all shared values currently stored by all running scripts and prints their names and values.
+47. Write an IronPython script for Razor Enhanced that suspends a specific running script by name, waits 10 seconds, then resumes it.
+48. Write an IronPython script for Razor Enhanced that deletes a specific log file I used during a session to clean up after the script finishes.
+49. Write an IronPython script for Razor Enhanced that adds a filter to hide a specific repeated system message from ever appearing in the journal log, then removes the filter after 1 minute.
+50. Write an IronPython script for Razor Enhanced that waits for a target cursor to appear and, if the spell fizzles before I can target, automatically tries to cast again.
+ 
