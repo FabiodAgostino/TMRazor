@@ -11,51 +11,6 @@ using TMRazorImproved.Shared.Models;
 namespace TMRazorImproved.Core.Services.Scripting.Api
 {
     /// <summary>
-    /// Wrapper dummy class for missing API properties. 
-    /// This ensures 100% migration coverage since the regex scans this file.
-    /// In TMRazor, these properties were part of the 'Mobile' object returned to Python.
-    /// </summary>
-    public class MobilePropertyWrapper
-    {
-        public virtual Item Backpack { get; }
-        public virtual int Body { get; }
-        public virtual bool CanRename { get; }
-        public virtual int Color { get; }
-        public virtual bool Contains { get; }
-        public virtual int Direction { get; }
-        public virtual int Fame { get; }
-        public virtual bool Female { get; }
-        public virtual bool Flying { get; }
-        public virtual int Graphics { get; }
-        public virtual int Hits { get; }
-        public virtual int HitsMax { get; }
-        public virtual int Hue { get; }
-        public virtual bool InParty { get; }
-        public virtual bool IsGhost { get; }
-        public virtual int ItemID { get; }
-        public virtual int Karma { get; }
-        public virtual string KarmaTitle { get; }
-        public virtual int Mana { get; }
-        public virtual int ManaMax { get; }
-        public virtual int Map { get; }
-        public virtual int MobileID { get; }
-        public virtual Item Mount { get; }
-        public virtual string Name { get; }
-        public virtual int Notoriety { get; }
-        public virtual bool Paralized { get; }
-        public virtual bool Poisoned { get; }
-        public virtual UOPropertyList Properties { get; }
-        public virtual bool PropsUpdated { get; }
-        public virtual Item Quiver { get; }
-        public virtual int Serial { get; }
-        public virtual int Stam { get; }
-        public virtual int StamMax { get; }
-        public virtual bool Visible { get; }
-        public virtual bool WarMode { get; }
-        public virtual bool YellowHits { get; }
-    }
-
-    /// <summary>
     /// API esposta agli script Python come variabile <c>Mobiles</c>.
     /// Tutte le proprietà sono <c>public virtual</c> per compatibilità con il binder DLR di IronPython.
     /// </summary>
@@ -84,30 +39,33 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _logger = logger;
         }
 
+        private ScriptMobile? Wrap(Mobile? m) => m == null ? null : new ScriptMobile(m, _world, _packet, _targeting);
+        private List<ScriptMobile> Wrap(IEnumerable<Mobile> mobiles) => mobiles.Select(m => new ScriptMobile(m, _world, _packet, _targeting)).ToList();
+        private ScriptItem? WrapItem(Item? i) => i == null ? null : new ScriptItem(i, _world, _packet, _targeting);
+
         /// <summary>Cerca un mobile per serial. Ritorna None se non trovato.</summary>
-        public virtual Mobile? FindBySerial(uint serial)
+        public virtual ScriptMobile? FindBySerial(uint serial)
         {
             _cancel.ThrowIfCancelled();
             var result = _world.FindMobile(serial);
             if (result == null) _logger?.LogDebug("FindBySerial: mobile 0x{Serial:X} not found", serial);
-            return result;
+            return Wrap(result);
         }
 
-        public virtual Mobile? FindByID(int graphic)
+        public virtual ScriptMobile? FindByID(int graphic)
         {
             _cancel.ThrowIfCancelled();
-            return _world.Mobiles.FirstOrDefault(m => m.Graphic == graphic);
+            return Wrap(_world.Mobiles.FirstOrDefault(m => m.Graphic == graphic));
         }
 
         /// <summary>Ritorna tutti i mobile con il graphic specificato entro il range dal giocatore.</summary>
-        public virtual IEnumerable<Mobile> FindAllByID(int graphic, int range = -1)
+        public virtual List<ScriptMobile> FindAllByID(int graphic, int range = -1)
         {
             _cancel.ThrowIfCancelled();
             var player = _world.Player;
-            return _world.Mobiles
+            return Wrap(_world.Mobiles
                 .Where(m => m.Graphic == (ushort)graphic)
-                .Where(m => range == -1 || (player != null && m.DistanceTo(player) <= range))
-                .ToList();
+                .Where(m => range == -1 || (player != null && m.DistanceTo(player) <= range)));
         }
 
         public virtual int GetDistance(uint serial)
@@ -123,62 +81,62 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         /// Ritorna la lista di tutti i mobile visibili nel range specificato
         /// rispetto alla posizione del giocatore.
         /// </summary>
-        public virtual IEnumerable<Mobile> FindInRange(int range)
+        public virtual List<ScriptMobile> FindInRange(int range)
         {
             _cancel.ThrowIfCancelled();
             var player = _world.Player;
-            if (player == null) return Enumerable.Empty<Mobile>();
+            if (player == null) return new List<ScriptMobile>();
 
-            return _world.Mobiles
-                .Where(m => m.Serial != player.Serial && m.DistanceTo(player) <= range)
-                .ToList();
+            return Wrap(_world.Mobiles
+                .Where(m => m.Serial != player.Serial && m.DistanceTo(player) <= range));
         }
 
         /// <summary>Ritorna il mobile più vicino al giocatore (escluso il giocatore stesso).</summary>
-        public virtual Mobile? FindNearest()
+        public virtual ScriptMobile? FindNearest()
         {
             _cancel.ThrowIfCancelled();
             var player = _world.Player;
             if (player == null) return null;
 
-            return _world.Mobiles
+            return Wrap(_world.Mobiles
                 .Where(m => m.Serial != player.Serial)
                 .OrderBy(m => m.DistanceTo(player))
-                .FirstOrDefault();
+                .FirstOrDefault());
         }
 
         /// <summary>Ritorna il nemico più vicino (Notoriety: 3, 4, 5, 6).</summary>
-        public virtual Mobile? FindNearestEnemy()
+        public virtual ScriptMobile? FindNearestEnemy()
         {
             _cancel.ThrowIfCancelled();
             var player = _world.Player;
             if (player == null) return null;
 
-            return _world.Mobiles
+            return Wrap(_world.Mobiles
                 .Where(m => m.Serial != player.Serial && (m.Notoriety >= 3 && m.Notoriety <= 6))
                 .OrderBy(m => m.DistanceTo(player))
-                .FirstOrDefault();
+                .FirstOrDefault());
         }
 
         /// <summary>Ritorna il mobile amico più vicino (in lista amici o Notoriety: 1, 2).</summary>
-        public virtual Mobile? FindNearestFriend()
+        public virtual ScriptMobile? FindNearestFriend()
         {
             _cancel.ThrowIfCancelled();
             var player = _world.Player;
             if (player == null) return null;
 
-            return _world.Mobiles
+            return Wrap(_world.Mobiles
                 .Where(m => m.Serial != player.Serial && (_friends.IsFriend(m.Serial) || m.Notoriety == 1 || m.Notoriety == 2))
                 .OrderBy(m => m.DistanceTo(player))
-                .FirstOrDefault();
+                .FirstOrDefault());
         }
 
         /// <summary>Filtra i mobile per graphic ID (body).</summary>
-        public virtual IEnumerable<Mobile> FilterByBody(int body)
+        public virtual List<ScriptMobile> FilterByBody(int body)
         {
             _cancel.ThrowIfCancelled();
-            return _world.Mobiles.Where(m => m.Graphic == (ushort)body).ToList();
+            return Wrap(_world.Mobiles.Where(m => m.Graphic == (ushort)body));
         }
+
 
         /// <summary>Controlla se un mobile esiste e non è morto.</summary>
         public virtual bool IsAlive(uint serial)
@@ -213,22 +171,22 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return (int)((m.Hits * 100.0) / m.HitsMax);
         }
 
-        public virtual IEnumerable<Mobile> FilterByNotoriety(int notoriety)
+        public virtual List<ScriptMobile> FilterByNotoriety(int notoriety)
         {
             _cancel.ThrowIfCancelled();
-            return _world.Mobiles.Where(m => m.Notoriety == notoriety).ToList();
+            return Wrap(_world.Mobiles.Where(m => m.Notoriety == notoriety));
         }
 
-        public virtual IEnumerable<Mobile> FilterByDistance(int minRange, int maxRange)
+        public virtual List<ScriptMobile> FilterByDistance(int minRange, int maxRange)
         {
             _cancel.ThrowIfCancelled();
             var player = _world.Player;
-            if (player == null) return Enumerable.Empty<Mobile>();
+            if (player == null) return new List<ScriptMobile>();
 
-            return _world.Mobiles.Where(m => {
+            return Wrap(_world.Mobiles.Where(m => {
                 int dist = m.DistanceTo(player);
                 return dist >= minRange && dist <= maxRange;
-            }).ToList();
+            }));
         }
 
         // ------------------------------------------------------------------
@@ -386,10 +344,56 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         // ------------------------------------------------------------------
 
         /// <summary>
+        /// Filtra i mobile nel mondo corrente utilizzando un oggetto Filter.
+        /// </summary>
+        public virtual List<ScriptMobile> ApplyFilter(MobilesFilter filter)
+        {
+            _cancel.ThrowIfCancelled();
+            if (filter == null || !filter.Enabled) return new List<ScriptMobile>();
+
+            var player = _world.Player;
+            return Wrap(_world.Mobiles.Where(m =>
+            {
+                if (filter.Bodies.Count > 0 && !filter.Bodies.Contains(m.Graphic)) return false;
+                if (filter.Hues.Count > 0 && !filter.Hues.Contains(m.Hue)) return false;
+                if (filter.Serials.Count > 0 && !filter.Serials.Contains((int)m.Serial)) return false;
+                if (filter.RangeMin != -1 && player != null && m.DistanceTo(player) < filter.RangeMin) return false;
+                if (filter.RangeMax != -1 && player != null && m.DistanceTo(player) > filter.RangeMax) return false;
+                
+                if (filter.Notorieties.Count > 0 && !filter.Notorieties.Contains(m.Notoriety)) return false;
+                
+                if (filter.OnlyAlive && m.Hits == 0) return false;
+                if (filter.OnlyEnemy && m.Notoriety is 1 or 2) return false;
+
+                bool isHuman = m.Graphic == 0x0190 || m.Graphic == 0x0191 || m.Graphic == 0x025D || m.Graphic == 0x025E;
+                if (filter.IsHuman == 1 && !isHuman) return false;
+                if (filter.IsHuman == -1 && isHuman) return false;
+
+                if (filter.IsGhost == 1 && !m.IsGhost) return false;
+                if (filter.IsGhost == -1 && m.IsGhost) return false;
+
+                bool isAlly = m.Notoriety == 1 || m.Notoriety == 2;
+                if (filter.IsAlly == 1 && !isAlly) return false;
+                if (filter.IsAlly == -1 && isAlly) return false;
+
+                bool isEnemy = m.Notoriety is 3 or 4 or 5 or 6;
+                if (filter.IsEnemy == 1 && !isEnemy) return false;
+                if (filter.IsEnemy == -1 && isEnemy) return false;
+
+                if (filter.IsNeutral == 1 && m.Notoriety != 3) return false;
+                if (filter.IsNeutral == -1 && m.Notoriety == 3) return false;
+
+                if (!string.IsNullOrEmpty(filter.Name) && (m.Name == null || !m.Name.Contains(filter.Name, StringComparison.OrdinalIgnoreCase))) return false;
+                
+                return true;
+            }));
+        }
+
+        /// <summary>
         /// Filtra i mobile nel mondo corrente per criteri multipli combinati.
         /// I parametri a -1/null/0 vengono ignorati (nessun filtro applicato).
         /// </summary>
-        public virtual List<Mobile> ApplyFilter(
+        public virtual List<ScriptMobile> ApplyFilter(
             int graphic = -1,
             int notoriety = -1,
             int rangeMax = -1,
@@ -399,7 +403,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             var player = _world.Player;
 
-            return _world.Mobiles.Where(m =>
+            return Wrap(_world.Mobiles.Where(m =>
             {
                 if (graphic != -1 && m.Graphic != (ushort)graphic) return false;
                 if (notoriety != -1 && m.Notoriety != (byte)notoriety) return false;
@@ -407,7 +411,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 if (onlyAlive && m.Hits == 0) return false;
                 if (onlyEnemy && m.Notoriety is 1 or 2) return false; // 1=blue 2=green skip
                 return true;
-            }).ToList();
+            }));
         }
 
         // ------------------------------------------------------------------
@@ -496,7 +500,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return GetDistance(serial);
         }
 
-        public virtual Mobile? FindMobile(int graphic, List<byte> notoriety, int rangemax, string selector, bool highlight)
+        public virtual ScriptMobile? FindMobile(int graphic, List<byte> notoriety, int rangemax, string selector, bool highlight)
         {
             _cancel.ThrowIfCancelled();
             var player = _world.Player;
@@ -509,15 +513,15 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 (rangemax <= 0 || m.DistanceTo(player) <= rangemax)
             ).ToList();
 
-            var result = Select(list, selector);
+            var result = SelectInternal(list, selector);
             if (result != null && highlight)
             {
                 _targeting.SetLastTarget(result.Serial);
             }
-            return result;
+            return Wrap(result);
         }
 
-        public virtual Mobile? FindMobile(List<int> graphics, List<byte> notoriety, int rangemax, string selector, bool highlight)
+        public virtual ScriptMobile? FindMobile(List<int> graphics, List<byte> notoriety, int rangemax, string selector, bool highlight)
         {
             _cancel.ThrowIfCancelled();
             var player = _world.Player;
@@ -530,15 +534,20 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 (rangemax <= 0 || m.DistanceTo(player) <= rangemax)
             ).ToList();
 
-            var result = Select(list, selector);
+            var result = SelectInternal(list, selector);
             if (result != null && highlight)
             {
                 _targeting.SetLastTarget(result.Serial);
             }
-            return result;
+            return Wrap(result);
         }
 
-        public virtual Mobile? Select(IEnumerable<Mobile> mobiles, string selector)
+        public virtual ScriptMobile? Select(IEnumerable<Mobile> mobiles, string selector)
+        {
+            return Wrap(SelectInternal(mobiles, selector));
+        }
+
+        private Mobile? SelectInternal(IEnumerable<Mobile> mobiles, string selector)
         {
             _cancel.ThrowIfCancelled();
             var list = mobiles.ToList();
@@ -558,19 +567,19 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             };
         }
 
-        public virtual Item? GetItemOnLayer(uint serial, string layerName)
+        public virtual ScriptItem? GetItemOnLayer(uint serial, string layerName)
         {
             _cancel.ThrowIfCancelled();
             if (!Enum.TryParse<Layer>(layerName, true, out var layer)) return null;
-            return _world.Items.FirstOrDefault(i => i.Container == serial && i.Layer == (byte)layer);
+            return WrapItem(_world.Items.FirstOrDefault(i => i.Container == serial && i.Layer == (byte)layer));
         }
 
         public virtual List<string> GetPropStringList(uint serial)
         {
             _cancel.ThrowIfCancelled();
             var m = _world.FindMobile(serial);
-            if (m?.Properties == null) return new List<string>();
-            return m.Properties.Properties.Select(p => p.Arguments).ToList();
+            if (m?.OPL == null) return new List<string>();
+            return m.OPL.Properties.Select(p => p.Arguments).ToList();
         }
         
         public virtual List<string> GetPropStringList(Mobile mob)
@@ -583,8 +592,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         {
             _cancel.ThrowIfCancelled();
             var m = _world.FindMobile(serial);
-            if (m?.Properties == null) return string.Empty;
-            var props = m.Properties.Properties;
+            if (m?.OPL == null) return string.Empty;
+            var props = m.OPL.Properties;
             return index >= 0 && index < props.Count ? props[index].Arguments : string.Empty;
         }
 
@@ -598,8 +607,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         {
             _cancel.ThrowIfCancelled();
             var m = _world.FindMobile(serial);
-            if (m?.Properties == null || string.IsNullOrEmpty(name)) return 0;
-            foreach (var prop in m.Properties.Properties)
+            if (m?.OPL == null || string.IsNullOrEmpty(name)) return 0;
+            foreach (var prop in m.OPL.Properties)
             {
                 string text = prop.Arguments;
                 if (!text.Contains(name, StringComparison.OrdinalIgnoreCase)) continue;
@@ -621,7 +630,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             var m = _world.FindMobile(serial);
             if (m == null) return false;
-            if (m.Properties != null) return true;
+            if (m.OPL != null) return true;
             // Query property 0xD6
             byte[] pkt = new byte[7];
             pkt[0] = 0xD6;
@@ -687,21 +696,32 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return new TrackingInfo();
         }
 
-        public class MobileFilter
+        public virtual MobilesFilter Filter() => new MobilesFilter();
+
+        public class MobilesFilter
         {
-            public bool Enabled { get; set; } = false;
+            public bool Enabled { get; set; } = true;
             public List<int> Serials { get; set; } = new();
             public string Name { get; set; } = string.Empty;
             public List<int> Bodies { get; set; } = new();
+            public List<int> Graphics { get => Bodies; set => Bodies = value; }
             public List<int> Hues { get; set; } = new();
             public int RangeMin { get; set; } = -1;
             public int RangeMax { get; set; } = -1;
+            public List<byte> Notorieties { get; set; } = new();
+            public int IsHuman { get; set; } = 0;
+            public int IsGhost { get; set; } = 0;
+            public int IsAlly { get; set; } = 0;
+            public int IsEnemy { get; set; } = 0;
+            public int IsNeutral { get; set; } = 0;
+            public bool OnlyAlive { get; set; } = false;
+            public bool OnlyEnemy { get; set; } = false;
         }
 
-        public virtual MobileFilter GetTargetingFilter(string target_name)
+        public virtual MobilesFilter GetTargetingFilter(string target_name)
         {
             _cancel.ThrowIfCancelled();
-            return new MobileFilter(); 
+            return new MobilesFilter(); 
         }
     }
 }

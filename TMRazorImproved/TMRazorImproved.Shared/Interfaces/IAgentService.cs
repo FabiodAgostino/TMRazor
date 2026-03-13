@@ -11,16 +11,17 @@ namespace TMRazorImproved.Shared.Interfaces
     
     public interface IAutoLootService : IAgentService
     {
-        // Metodi specifici per l'AutoLoot se necessari (es. settaggio manuale del container)
+        void ChangeList(string listName);
     }
 
     public interface IScavengerService : IAgentService
     {
+        void ChangeList(string listName);
     }
 
     public interface IOrganizerService : IAgentService
     {
-        // Evento lanciato al completamento dell'operazione di riordino
+        void ChangeList(string listName);
         event Action OnComplete;
     }
 
@@ -30,8 +31,11 @@ namespace TMRazorImproved.Shared.Interfaces
 
     public interface IDressService : IAgentService
     {
+        void ChangeList(string listName);
         void Dress(string listName);
         void Undress(string listName);
+        void DressUp();
+        void Undress();
     }
 
     public interface IVendorService : IAgentService
@@ -40,6 +44,7 @@ namespace TMRazorImproved.Shared.Interfaces
 
     public interface IRestockService : IAgentService
     {
+        void ChangeList(string listName);
         event Action OnComplete;
     }
 }

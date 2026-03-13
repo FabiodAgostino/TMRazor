@@ -44,9 +44,9 @@ namespace TMRazorImproved.Core.Services
             if (mobile == null) return false;
 
             // 3. Check Guilds and Factions via OPL
-            if (mobile.Properties != null && mobile.Properties.Properties.Count > 0)
+            if (mobile.OPL != null && mobile.OPL.Properties.Count > 0)
             {
-                string firstProp = mobile.Properties.Properties[0].Arguments;
+                string firstProp = mobile.OPL.Properties[0].Arguments;
 
                 // Factions
                 if (config.SLFriend && firstProp.Contains("[SL]")) return true;

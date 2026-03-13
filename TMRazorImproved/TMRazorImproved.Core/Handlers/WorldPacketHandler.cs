@@ -471,7 +471,10 @@ namespace TMRazorImproved.Core.Handlers
                     if (reader.Remaining >= 2)
                     {
                         reader.ReadByte(); // unknown
-                        reader.ReadByte(); // locks byte — gestito da SkillsService
+                        byte locks = reader.ReadByte();
+                        m.StrLock = (byte)((locks >> 4) & 0x03);
+                        m.DexLock = (byte)((locks >> 2) & 0x03);
+                        m.IntLock = (byte)(locks & 0x03);
                     }
                 }
                 else if (type >= 3 && reader.Remaining >= 22) // AOS extended stats
@@ -547,6 +550,12 @@ namespace TMRazorImproved.Core.Handlers
                 mobile.IsHidden = (flags & 0x80) != 0;
                 mobile.IsPoisoned = (flags & 0x04) != 0;
                 mobile.IsYellowHits = (flags & 0x08) != 0;
+                
+                bool wasParalyzed = mobile.Paralyzed;
+                mobile.Paralyzed = (flags & 0x01) != 0;
+
+                if (isPlayer && wasParalyzed != mobile.Paralyzed)
+                    _messenger.Send(new PlayerStatusMessage(StatType.Paralyzed, serial, (ushort)(mobile.Paralyzed ? 1 : 0), 1));
             }
 
             // Lista equipaggiamento: termina con serial=0
@@ -627,6 +636,8 @@ namespace TMRazorImproved.Core.Handlers
                 _worldService.AddMobile(mobile);
             }
 
+            bool isPlayer = _worldService.Player?.Serial == serial;
+
             lock (mobile.SyncRoot)
             {
                 mobile.Graphic = (ushort)(body + bodyOffset);
@@ -638,6 +649,11 @@ namespace TMRazorImproved.Core.Handlers
                 mobile.IsHidden = (flags & 0x80) != 0;
                 mobile.IsPoisoned = (flags & 0x04) != 0;
                 mobile.IsYellowHits = (flags & 0x08) != 0;
+                bool wasParalyzed = mobile.Paralyzed;
+                mobile.Paralyzed = (flags & 0x01) != 0;
+
+                if (isPlayer && wasParalyzed != mobile.Paralyzed)
+                    _messenger.Send(new PlayerStatusMessage(StatType.Paralyzed, serial, (ushort)(mobile.Paralyzed ? 1 : 0), 1));
             }
             return true;
         }
@@ -665,6 +681,8 @@ namespace TMRazorImproved.Core.Handlers
                 _worldService.AddMobile(mobile);
             }
 
+            bool isPlayer = _worldService.Player?.Serial == serial;
+
             lock (mobile.SyncRoot)
             {
                 mobile.Graphic = body;
@@ -676,6 +694,12 @@ namespace TMRazorImproved.Core.Handlers
                 mobile.Notoriety = notoriety;
                 mobile.IsHidden = (flags & 0x80) != 0;
                 mobile.IsPoisoned = (flags & 0x04) != 0;
+                
+                bool wasParalyzed = mobile.Paralyzed;
+                mobile.Paralyzed = (flags & 0x01) != 0;
+
+                if (isPlayer && wasParalyzed != mobile.Paralyzed)
+                    _messenger.Send(new PlayerStatusMessage(StatType.Paralyzed, serial, (ushort)(mobile.Paralyzed ? 1 : 0), 1));
             }
 
             _messenger.Send(new MobileMovingMessage(serial, x, y, z, dir));
@@ -1880,15 +1904,23 @@ namespace TMRazorImproved.Core.Handlers
         private void HandleBuffDebuff(byte[] data)
         {
             // 0xDF: cmd(1) serial(4) buffType(2) action(2) ...
-            // action 0x00 = remove, count>0 = add con count entries
             if (data.Length < 9) return;
             var reader = new UOBufferReader(data);
             reader.ReadByte();           // 0xDF
             uint serial = reader.ReadUInt32();
             ushort buffType = reader.ReadUInt16();
             ushort action = reader.ReadUInt16();
+            
+            int duration = -1;
+            if (action != 0 && data.Length >= 15)
+            {
+                reader.Skip(4); // unused
+                reader.Skip(2); // icon again
+                reader.Skip(2); // action again
+                duration = (int)reader.ReadUInt32();
+            }
 
-            _messenger.Send(new BuffDebuffMessage(serial, buffType, action != 0));
+            _messenger.Send(new BuffDebuffMessage(serial, buffType, action != 0, duration));
         }
 
         private void HandleTestAnimation(byte[] data)
@@ -2075,7 +2107,7 @@ namespace TMRazorImproved.Core.Handlers
 
             var entity = _worldService.FindEntity(serial);
             if (entity != null)
-                entity.Properties = opl;
+                entity.OPL = opl;
         }
 
         #endregion
@@ -2316,7 +2348,10 @@ namespace TMRazorImproved.Core.Handlers
             var reader = new UOBufferReader(data);
             reader.ReadByte();           // 0x06
             uint serial = reader.ReadUInt32();
-            // Tracking per script recorder
+            
+            var player = _worldService.Player;
+            if (player != null)
+                lock (player.SyncRoot) { player.LastObject = serial; }
         }
 
         private void HandleLiftRequest(byte[] data)

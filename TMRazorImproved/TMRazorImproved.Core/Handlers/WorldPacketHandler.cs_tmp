@@ -1,0 +1,95 @@
+        private bool HandleMobileIncoming(byte[] data)
+        {
+            // 0x78: cmd(1) len(2) serial(4) body(2) x(2) y(2) z(1s) dir(1) hue(2) flags(1) notoriety(1)
+            if (data.Length < 17) return true;
+
+            // Apply Graph Morphing
+            ushort body = (ushort)((data[7] << 8) | data[8]);
+            ushort hue = (ushort)((data[15] << 8) | data[16]);
+            ushort oldBody = body;
+            MorphGraphic(ref body, ref hue);
+            if (body != oldBody)
+            {
+                data[7] = (byte)(body >> 8); data[8] = (byte)body;
+                data[15] = (byte)(hue >> 8); data[16] = (byte)hue;
+            }
+
+            var reader = new UOBufferReader(data);
+            reader.ReadByte();           // 0x78
+            reader.ReadUInt16();         // length
+            uint serial = reader.ReadUInt32();
+            body = reader.ReadUInt16();
+            ushort x = reader.ReadUInt16();
+            ushort y = reader.ReadUInt16();
+            sbyte z = reader.ReadSByte();
+            byte dir = reader.ReadByte();
+            hue = reader.ReadUInt16();
+            byte flags = reader.ReadByte();
+            byte notoriety = reader.ReadByte();
+
+            var mobile = _worldService.FindMobile(serial);
+            if (mobile == null)
+            {
+                mobile = new Mobile(serial);
+                _worldService.AddMobile(mobile);
+            }
+
+            bool isPlayer = _worldService.Player?.Serial == serial;
+
+            lock (mobile.SyncRoot)
+            {
+                mobile.Graphic = body;
+                mobile.X = x;
+                mobile.Y = y;
+                mobile.Z = z;
+                mobile.Direction = dir;
+                mobile.Hue = hue;
+                mobile.Notoriety = notoriety;
+                mobile.IsHidden = (flags & 0x80) != 0;
+                mobile.IsPoisoned = (flags & 0x04) != 0;
+                mobile.IsYellowHits = (flags & 0x08) != 0;
+                bool wasParalyzed = mobile.Paralyzed;
+                mobile.Paralyzed = (flags & 0x01) != 0;
+
+                if (isPlayer && wasParalyzed != mobile.Paralyzed)
+                    _messenger.Send(new PlayerStatusMessage(StatType.Paralyzed, serial, (ushort)(mobile.Paralyzed ? 1 : 0), 1));
+            }
+
+            // Lista equipaggiamento: termina con serial=0
+            while (reader.Remaining >= 4)
+            {
+                uint itemSerial = reader.ReadUInt32();
+                if (itemSerial == 0) break;
+                if (reader.Remaining < 5) break;
+
+                ushort itemId = reader.ReadUInt16();
+                byte layer = reader.ReadByte();
+                ushort itemHue = 0;
+                if ((itemId & 0x8000) != 0)
+                {
+                    itemId &= 0x7FFF;
+                    if (reader.Remaining >= 2) itemHue = reader.ReadUInt16();
+                }
+
+                var item = _worldService.FindItem(itemSerial);
+                if (item == null)
+                {
+                    item = new Item(itemSerial);
+                    _worldService.AddItem(item);
+                }
+                lock (item.SyncRoot)
+                {
+                    item.Graphic = itemId;
+                    item.Hue = itemHue;
+                    item.Container = serial;
+                    item.Layer = layer;
+                }
+            }
+
+            if (isPlayer)
+            {
+                System.Diagnostics.Trace.WriteLine($"[WorldHandler] 0x78 MobileIncoming (Player) — X={x} Y={y} Z={z}");
+                _worldService.SetPlayer(mobile);
+            }
+            return true;
+        }

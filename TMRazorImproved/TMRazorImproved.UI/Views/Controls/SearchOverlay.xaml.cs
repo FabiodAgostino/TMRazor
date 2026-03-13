@@ -50,14 +50,14 @@ namespace TMRazorImproved.UI.Views.Controls
             if (DataContext is SearchViewModel vm)
             {
                 // Navigate results with up/down arrows from the search box
-                if (e.Key == Key.Down)
+                if (e.Key == Key.Down && vm.SelectedItem != null)
                 {
                     int index = vm.SearchResults.IndexOf(vm.SelectedItem);
                     if (index < vm.SearchResults.Count - 1)
                         vm.SelectedItem = vm.SearchResults[index + 1];
                     e.Handled = true;
                 }
-                else if (e.Key == Key.Up)
+                else if (e.Key == Key.Up && vm.SelectedItem != null)
                 {
                     int index = vm.SearchResults.IndexOf(vm.SelectedItem);
                     if (index > 0)

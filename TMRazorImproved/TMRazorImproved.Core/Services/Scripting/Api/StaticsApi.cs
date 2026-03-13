@@ -70,7 +70,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return result;
         }
 
-        public virtual TileInfo GetStaticsLandInfo(int x, int y, int map)
+        public virtual TileInfo? GetStaticsLandInfo(int x, int y, int map)
         {
             _cancel.ThrowIfCancelled();
             try

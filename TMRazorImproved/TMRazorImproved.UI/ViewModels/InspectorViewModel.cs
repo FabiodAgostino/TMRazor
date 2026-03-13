@@ -225,31 +225,36 @@ namespace TMRazorImproved.UI.ViewModels
             // TODO: Implementare targeting specifico per locazione/terreno nel targetingService
         }
 
-        private void OnTargetReceived(uint serial)
+        private void OnTargetReceived(TMRazorImproved.Shared.Models.TargetInfo info)
         {
             if (!IsWaitingForTarget) return;
 
             RunOnUIThread(() =>
             {
-                var entity = _worldService.FindEntity(serial);
+                var entity = _worldService.FindEntity(info.Serial);
                 if (entity != null)
                 {
                     InspectedEntity = entity;
-                    StatusMessage = string.Format(_languageService.GetString("Inspector.Status.Inspected"), serial);
-                    
-                    if (!RecentSerials.Contains($"0x{serial:X8}"))
+                    StatusMessage = string.Format(_languageService.GetString("Inspector.Status.Inspected"), info.Serial);
+
+                    if (!RecentSerials.Contains($"0x{info.Serial:X8}"))
                     {
-                        RecentSerials.Insert(0, $"0x{serial:X8}");
+                        RecentSerials.Insert(0, $"0x{info.Serial:X8}");
                         if (RecentSerials.Count > 10) RecentSerials.RemoveAt(10);
                     }
                 }
+                else if (info.Serial == 0)
+                {
+                    // Ground target
+                    StatusMessage = string.Format("Location Selected: X={0}, Y={1}, Z={2}", info.X, info.Y, info.Z);
+                }
                 else
                 {
-                    StatusMessage = string.Format(_languageService.GetString("Inspector.Status.NotFound"), serial);
-                    InspectedEntity = null;
+                    StatusMessage = string.Format(_languageService.GetString("Inspector.Status.NotFound"), info.Serial);
                 }
                 IsWaitingForTarget = false;
             });
+        }
         }
     }
 }

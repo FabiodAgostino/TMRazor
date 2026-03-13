@@ -38,6 +38,16 @@ namespace TMRazorImproved.Core.Services
             hotkeyService.RegisterAction("Organizer Toggle", () => { if (IsRunning) _ = StopAsync(); else Start(); });
         }
 
+        public void ChangeList(string listName)
+        {
+            var profile = _configService.CurrentProfile;
+            if (profile != null)
+            {
+                profile.ActiveOrganizerList = listName;
+                _logger.LogInformation("Organizer list changed to: {ListName}", listName);
+            }
+        }
+
         // BUG-P1-04 FIX: il return type era non-nullable ma il metodo poteva restituire null (CS8603)
         private OrganizerConfig? GetActiveConfig()
         {

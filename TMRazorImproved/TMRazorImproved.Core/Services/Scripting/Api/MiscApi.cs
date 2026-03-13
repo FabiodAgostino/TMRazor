@@ -300,9 +300,38 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         // File I/O
         // ------------------------------------------------------------------
 
+        private bool IsValidPath(string path)
+        {
+            try
+            {
+                var fullPath = Path.GetFullPath(path);
+                var rootPath = AppContext.BaseDirectory;
+                
+                // Whitelist di cartelle permesse
+                string[] allowedFolders = { "Scripts", "Data", "Config" };
+                bool folderAllowed = false;
+                foreach (var folder in allowedFolders)
+                {
+                    if (fullPath.StartsWith(Path.Combine(rootPath, folder), StringComparison.OrdinalIgnoreCase))
+                    {
+                        folderAllowed = true;
+                        break;
+                    }
+                }
+                if (!folderAllowed) return false;
+
+                // Whitelist di estensioni permesse
+                string[] allowedExtensions = { ".data", ".xml", ".map", ".csv", ".json", ".txt" };
+                var ext = Path.GetExtension(fullPath).ToLowerInvariant();
+                return allowedExtensions.Contains(ext);
+            }
+            catch { return false; }
+        }
+
         public virtual string ReadFile(string path)
         {
             _cancel.ThrowIfCancelled();
+            if (!IsValidPath(path)) return string.Empty;
             try { return File.Exists(path) ? File.ReadAllText(path) : string.Empty; }
             catch { return string.Empty; }
         }
@@ -310,6 +339,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void WriteFile(string path, string content)
         {
             _cancel.ThrowIfCancelled();
+            if (!IsValidPath(path)) return;
             try { File.WriteAllText(path, content); }
             catch { }
         }
@@ -317,6 +347,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void AppendToFile(string path, string line)
         {
             _cancel.ThrowIfCancelled();
+            if (!IsValidPath(path)) return;
             try { File.AppendAllText(path, line + Environment.NewLine); }
             catch { }
         }
@@ -325,6 +356,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual bool AppendNotDupToFile(string path, string line)
         {
             _cancel.ThrowIfCancelled();
+            if (!IsValidPath(path)) return false;
             try
             {
                 if (File.Exists(path))
@@ -342,6 +374,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual bool RemoveLineInFile(string path, string line)
         {
             _cancel.ThrowIfCancelled();
+            if (!IsValidPath(path)) return false;
             try
             {
                 if (!File.Exists(path)) return true;
@@ -356,6 +389,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual bool DeleteFile(string path)
         {
             _cancel.ThrowIfCancelled();
+            if (!IsValidPath(path)) return false;
             try
             {
                 if (File.Exists(path)) File.Delete(path);
@@ -455,12 +489,12 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             try
             {
                 var hwnd = _interop.GetWindowHandle();
-                if (hwnd != IntPtr.Zero) SetForegroundWindow(hwnd);
-                // Note: System.Windows.Forms not available in this project —
-                // forward via PostMessage WM_CHAR for each character as best-effort stub.
-                const uint WM_CHAR = 0x0102;
-                foreach (char c in keys)
-                    _interop.PostMessage(hwnd, WM_CHAR, (IntPtr)c, IntPtr.Zero);
+                if (hwnd != IntPtr.Zero)
+                {
+                    // Focus the window first to ensure SendKeys goes to the right place
+                    SetForegroundWindow(hwnd);
+                    System.Windows.Forms.SendKeys.SendWait(keys);
+                }
             }
             catch { }
         }
@@ -738,9 +772,33 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return _scripting?.CurrentScriptName ?? string.Empty;
         }
 
-        public virtual void ScriptSuspend(string scriptfile) { _cancel.ThrowIfCancelled(); /* stub */ }
-        public virtual void ScriptResume(string scriptfile)  { _cancel.ThrowIfCancelled(); /* stub */ }
-        public virtual bool ScriptIsSuspended(string scriptfile) { _cancel.ThrowIfCancelled(); return false; }
+        public virtual void ScriptSuspend(string scriptfile)
+        {
+            _cancel.ThrowIfCancelled();
+            if (_scripting != null && string.Equals(_scripting.CurrentScriptName, scriptfile, StringComparison.OrdinalIgnoreCase))
+            {
+                if (_scripting is ScriptingService svc) svc.Suspend();
+            }
+        }
+
+        public virtual void ScriptResume(string scriptfile)
+        {
+            _cancel.ThrowIfCancelled();
+            if (_scripting != null && string.Equals(_scripting.CurrentScriptName, scriptfile, StringComparison.OrdinalIgnoreCase))
+            {
+                if (_scripting is ScriptingService svc) svc.Resume();
+            }
+        }
+
+        public virtual bool ScriptIsSuspended(string scriptfile)
+        {
+            _cancel.ThrowIfCancelled();
+            if (_scripting != null && string.Equals(_scripting.CurrentScriptName, scriptfile, StringComparison.OrdinalIgnoreCase))
+            {
+                return (_scripting as ScriptingService)?.IsSuspended ?? false;
+            }
+            return false;
+        }
 
         public virtual bool ScriptStatus(string scriptfile)
         {
@@ -798,8 +856,20 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         // No Run Stealth stubs
         // ------------------------------------------------------------------
 
-        public virtual void NoRunStealthToggle(bool enable) { _cancel.ThrowIfCancelled(); }
-        public virtual bool NoRunStealthStatus()            { _cancel.ThrowIfCancelled(); return false; }
+        public virtual void NoRunStealthToggle(bool enable)
+        {
+            _cancel.ThrowIfCancelled();
+            if (_config?.CurrentProfile != null)
+            {
+                _config.CurrentProfile.NoRunStealth = enable;
+            }
+        }
+
+        public virtual bool NoRunStealthStatus()
+        {
+            _cancel.ThrowIfCancelled();
+            return _config?.CurrentProfile?.NoRunStealth ?? false;
+        }
 
         // ------------------------------------------------------------------
         // Ignore list
@@ -863,7 +933,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             public string Entry { get; set; } = string.Empty;
         }
 
-        public ConcurrentDictionary<string, object> SharedScriptData
+        public virtual ConcurrentDictionary<string, object> SharedScriptData
         {
             get => _sharedValues;
             set
@@ -979,41 +1049,65 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void ChangeProfile(string profileName)
         {
             _cancel.ThrowIfCancelled();
-            _outputCallback?.Invoke($"ChangeProfile: {profileName}");
+            if (_config != null)
+            {
+                _config.SwitchProfile(profileName);
+                _outputCallback?.Invoke($"Profile changed to: {profileName}");
+            }
+            else
+            {
+                _outputCallback?.Invoke("ChangeProfile: ConfigService not available.");
+            }
         }
 
         public virtual void CloseBackpack()
         {
             _cancel.ThrowIfCancelled();
-        }
-
-        public virtual void ConcurrentDictionary()
-        {
-            _cancel.ThrowIfCancelled();
+            var bp = _world.Player?.Backpack;
+            if (bp != null)
+            {
+                _outputCallback?.Invoke("CloseBackpack: Attempting to close via Gump Response 0.");
+                byte[] closePkt = new byte[23];
+                closePkt[0] = 0xB1;
+                BinaryPrimitives.WriteUInt16BigEndian(closePkt.AsSpan(1), (ushort)closePkt.Length);
+                BinaryPrimitives.WriteUInt32BigEndian(closePkt.AsSpan(3), bp.Serial);
+                BinaryPrimitives.WriteUInt32BigEndian(closePkt.AsSpan(7), 0x0000003C);
+                _packetService.SendToServer(closePkt);
+            }
+            else
+            {
+                _outputCallback?.Invoke("CloseBackpack: Backpack not found.");
+            }
         }
 
         public virtual string CurrentScriptDirectory()
         {
             _cancel.ThrowIfCancelled();
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Scripts");
+            string path = _config?.Global.ScriptsPath ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Scripts");
+            }
+            return path;
         }
 
         public virtual void ExportPythonAPI(string? path = null, bool pretty = true)
         {
             _cancel.ThrowIfCancelled();
-            _outputCallback?.Invoke("ExportPythonAPI requested.");
+            _outputCallback?.Invoke("ExportPythonAPI is not fully implemented in TMRazor Improved.");
         }
 
         public virtual Point GetContPosition()
         {
             _cancel.ThrowIfCancelled();
+            _outputCallback?.Invoke("GetContPosition: Requires DLL injected hook (not implemented).");
             return new Point(0, 0);
         }
 
         public virtual void Inspect()
         {
             _cancel.ThrowIfCancelled();
-            _outputCallback?.Invoke("Inspect requested.");
+            _targeting?.SendPrompt("Inspect");
         }
 
         public virtual object? LastHotKey()
@@ -1025,11 +1119,21 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void NextContPosition(int x, int y)
         {
             _cancel.ThrowIfCancelled();
+            _outputCallback?.Invoke("NextContPosition: Requires DLL injected hook (not implemented).");
         }
 
         public virtual void OpenPaperdoll()
         {
             _cancel.ThrowIfCancelled();
+            var serial = _world.Player?.Serial;
+            if (serial == null || serial.Value == 0) return;
+            
+            byte[] pkt = new byte[9];
+            pkt[0] = 0xBF;
+            pkt[1] = 0x00; pkt[2] = 0x09;
+            pkt[3] = 0x00; pkt[4] = 0x0F;
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(5), serial.Value);
+            _packetService.SendToServer(pkt);
         }
     }
 }

@@ -8,7 +8,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using TMRazorImproved.Core.Services.Scripting.Api;
-using TMRazorImproved.Core.Services.Scripting.Engines;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Enums;
 
@@ -80,6 +79,12 @@ namespace TMRazorImproved.Core.Services.Scripting
         // Aumentare per meno overhead su loop pesanti; diminuire per reattività maggiore.
         private const int TraceInterval = 50;
 
+        private volatile bool _isSuspended;
+        public bool IsSuspended => _isSuspended;
+
+        public void Suspend() => _isSuspended = true;
+        public void Resume() => _isSuspended = false;
+
         // Preamble iniettato prima dello script utente. Responsabile di:
         //   1. Redirigere sys.stdout/stderr → i nostri TextWriter.
         //   2. Sovrascrivere sys.modules['time'] per intercettare time.sleep().
@@ -98,18 +103,20 @@ class _SafeTime_:
 _sys_.modules['time'] = _SafeTime_()
 del _SafeTime_, _time_orig_
 
-def _make_tracer_(_c_, _interval_):
+def _make_tracer_(_c_, _interval_, _svc_):
     _n_ = [0]
     def _t_(frame, event, arg):
         _n_[0] += 1
         if _n_[0] >= _interval_:
             _n_[0] = 0
+            while _svc_.IsSuspended and not _c_.IsCancelled:
+                Misc.Pause(50)
             if _c_.IsCancelled:
                 raise SystemExit('Script stopped by user')
         return _t_
     return _t_
 
-_sys_.settrace(_make_tracer_(__cancel__, __trace_interval__))
+_sys_.settrace(_make_tracer_(__cancel__, __trace_interval__, __script_svc__))
 del _make_tracer_, _sys_
 ";
 
@@ -146,6 +153,13 @@ del _make_tracer_, _sys_
         public event Action<string>? ErrorReceived;
         public event Action<ScriptCompletionInfo>? ScriptCompleted;
 
+        private readonly IAutoLootService _autoLoot;
+        private readonly IScavengerService _scavenger;
+        private readonly IOrganizerService _organizer;
+        private readonly IBandageHealService _bandageHeal;
+        private readonly IDressService _dress;
+        private readonly IRestockService _restock;
+
         public ScriptingService(
             IWorldService world,
             IPacketService packetService,
@@ -155,6 +169,12 @@ del _make_tracer_, _sys_
             ISkillsService skillsService,
             IFriendsService friendsService,
             IConfigService config,
+            IAutoLootService autoLoot,
+            IScavengerService scavenger,
+            IOrganizerService organizer,
+            IBandageHealService bandageHeal,
+            IDressService dress,
+            IRestockService restock,
             IMessenger messenger,
             ILogger<ScriptingService> logger,
             ILoggerFactory loggerFactory)
@@ -167,6 +187,12 @@ del _make_tracer_, _sys_
             _skillsService = skillsService;
             _friendsService = friendsService;
             _config = config;
+            _autoLoot = autoLoot;
+            _scavenger = scavenger;
+            _organizer = organizer;
+            _bandageHeal = bandageHeal;
+            _dress = dress;
+            _restock = restock;
             _messenger = messenger;
             _logger = logger;
             _loggerFactory = loggerFactory;
@@ -371,9 +397,10 @@ del _make_tracer_, _sys_
             scope.SetVariable("__stderr__",        stderr);
             scope.SetVariable("__cancel__",        cancelCtrl);
             scope.SetVariable("__trace_interval__", TraceInterval);
+            scope.SetVariable("__script_svc__",     this);
             scope.SetVariable("Misc",              miscApi);
-            var itemsApi = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
-            var mobilesApi = new MobilesApi(_world, _friendsService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
+            var itemsApi = new ItemsApi(_world, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
+            var mobilesApi = new MobilesApi(_world, _friendsService, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
             var staticsApi = new StaticsApi(cancelCtrl);
             
             scope.SetVariable("Items",   itemsApi);
@@ -381,13 +408,21 @@ del _make_tracer_, _sys_
             scope.SetVariable("Player",  new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, logger: _loggerFactory.CreateLogger<PlayerApi>()));
             scope.SetVariable("Journal", new JournalApi(_journalService, cancelCtrl));
             scope.SetVariable("Gumps",   new GumpsApi(_world, _packetService, cancelCtrl, _messenger));
-            scope.SetVariable("Target",  new TargetApi(_targetingService, cancelCtrl));
+            scope.SetVariable("Target",  new TargetApi(_targetingService, _world, _config, _packetService, cancelCtrl));
             scope.SetVariable("Skills",  new SkillsApi(_skillsService, _packetService, cancelCtrl));
-            scope.SetVariable("Spells",  new SpellsApi(_world, _packetService, cancelCtrl, _targetingService, _loggerFactory.CreateLogger<SpellsApi>()));
+            scope.SetVariable("Spells",  new SpellsApi(_world, _packetService, cancelCtrl, _targetingService, _messenger, _loggerFactory.CreateLogger<SpellsApi>()));
             scope.SetVariable("Statics", staticsApi);
             scope.SetVariable("Friend",  new FriendApi(_friendsService, cancelCtrl));
             scope.SetVariable("Filters", new FiltersApi(_config, cancelCtrl));
             scope.SetVariable("Timer",   new TimerApi(cancelCtrl, miscApi));
+            
+            // Agents
+            scope.SetVariable("AutoLoot",    new AutoLootApi(_autoLoot, cancelCtrl));
+            scope.SetVariable("Dress",       new DressApi(_dress, cancelCtrl));
+            scope.SetVariable("Scavenger",   new ScavengerApi(_scavenger, cancelCtrl));
+            scope.SetVariable("Restock",     new RestockApi(_restock, cancelCtrl));
+            scope.SetVariable("Organizer",   new OrganizerApi(_organizer, cancelCtrl));
+            scope.SetVariable("BandageHeal", new BandageHealApi(_bandageHeal, cancelCtrl));
 
             engine.Execute(TracePreamble, scope);
 
@@ -420,8 +455,8 @@ del _make_tracer_, _sys_
             
             var cancelCtrl = new ScriptCancellationController(cts.Token);
             var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService);
-            var itemsApi   = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
-            var mobilesApi = new MobilesApi(_world, _friendsService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
+            var itemsApi   = new ItemsApi(_world, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
+            var mobilesApi = new MobilesApi(_world, _friendsService, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
             var playerApi  = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, logger: _loggerFactory.CreateLogger<PlayerApi>());
             var journalApi = new JournalApi(_journalService, cancelCtrl);
 
@@ -447,8 +482,8 @@ del _make_tracer_, _sys_
 
             var cancelCtrl = new ScriptCancellationController(cts.Token);
             var misc = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService);
-            var itemsApi = new ItemsApi(_world, _packetService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
-            var mobilesApi = new MobilesApi(_world, _friendsService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
+            var itemsApi = new ItemsApi(_world, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
+            var mobilesApi = new MobilesApi(_world, _friendsService, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
             var staticsApi = new StaticsApi(cancelCtrl);
             var globals = new ScriptGlobals
             {
@@ -458,9 +493,8 @@ del _make_tracer_, _sys_
                 Misc        = misc,
                 Journal     = new JournalApi(_journalService, cancelCtrl),
                 Gumps       = new GumpsApi(_world, _packetService, cancelCtrl, _messenger),
-                Target      = new TargetApi(_targetingService, cancelCtrl),
-                Skills      = new SkillsApi(_skillsService, _packetService, cancelCtrl),
-                Spells      = new SpellsApi(_world, _packetService, cancelCtrl, _targetingService, _loggerFactory.CreateLogger<SpellsApi>()),
+                Target      = new TargetApi(_targetingService, _world, _config, _packetService, cancelCtrl),
+                Skills      = new SkillsApi(_skillsService, _packetService, cancelCtrl),                Spells      = new SpellsApi(_world, _packetService, cancelCtrl, _targetingService, _messenger, _loggerFactory.CreateLogger<SpellsApi>()),
                 Statics     = staticsApi,
                 Friend      = new FriendApi(_friendsService, cancelCtrl),
                 Filters     = new FiltersApi(_config, cancelCtrl),

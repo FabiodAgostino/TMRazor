@@ -103,7 +103,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
         public async Task ShouldHandleNullProfileGracefully()
         {
             // Arrange
-            _configServiceMock.Setup(c => c.CurrentProfile).Returns((UserProfile)null);
+            _configServiceMock.Setup(c => c.CurrentProfile).Returns((UserProfile)null!);
 
             var service = new OrganizerService(
                 _packetServiceMock.Object,

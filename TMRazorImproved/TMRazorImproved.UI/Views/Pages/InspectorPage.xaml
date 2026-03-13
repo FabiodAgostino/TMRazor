@@ -63,7 +63,7 @@
                     <ui:Card Grid.Column="1" Padding="16">
                         <DockPanel>
                             <ui:TextBlock Text="{loc:Loc Inspector.Entity.Properties}" FontSize="18" FontWeight="SemiBold" DockPanel.Dock="Top" Margin="0,0,0,16"/>
-                            <ListView ItemsSource="{Binding InspectedEntity.Properties.Properties}" Background="Transparent" BorderThickness="0">
+                            <ListView ItemsSource="{Binding InspectedEntity.OPL.Properties}" Background="Transparent" BorderThickness="0">
                                 <ListView.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Margin="0,4">

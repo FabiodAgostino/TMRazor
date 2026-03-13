@@ -12,10 +12,12 @@ namespace TMRazorImproved.Shared.Interfaces
         bool HasTargetCursor { get; }
         // Il cursor ID inviato dal server nell'ultimo 0x6C S2C; 0 se nessuno pendente
         uint PendingCursorId { get; }
+        // Il tipo di cursore (0=neutral, 1=harmful, 2=beneficial)
+        byte PendingCursorType { get; }
 
         // Fired ogni volta che il server invia 0x6C S2C (richiesta di target)
         event Action<uint> TargetCursorRequested;
-        event Action<uint> TargetReceived;
+        event Action<TargetInfo> TargetReceived;
         event Action<bool> PromptChanged;
 
         // Azzera HasTargetCursor e PendingCursorId (chiamato automaticamente da SendTarget/CancelTarget)
@@ -43,6 +45,6 @@ namespace TMRazorImproved.Shared.Interfaces
         void RequestTarget();
 
         // Richiede un target al client e attende il risultato in modo asincrono
-        Task<uint> AcquireTargetAsync();
+        Task<TargetInfo> AcquireTargetAsync();
     }
 }

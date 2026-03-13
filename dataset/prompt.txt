@@ -1,0 +1,36 @@
+Leggi il file "APIS.csv" e genera un file di fine-tuning "dataset_razor_API.jsonl" (se non esiste) nel formato:
+{"messages": [{"role": "system", "content": "..."}, {"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]}
+
+REGOLE TASSATIVE:
+
+1. SYSTEM PROMPT FISSO:
+"You are a Razor Enhanced scripting assistant for Ultima Online. You write correct IronPython scripts using only the official Razor Enhanced API. Never invent or guess methods, properties, or classes. If a task cannot be done with the available API, say so explicitly. Respond in the same language as the user."
+
+2. LINGUA E TRADUZIONE:
+Alterna ciclicamente ogni riga in: EN, IT, ES, DE, ZH, RU. 
+La risposta dell'assistente (inclusi i nomi delle etichette e la colonna "Descrizione") DEVE essere tradotta interamente e solo in quella lingua. Nessun mix linguistico.
+
+3. DOMANDE DELL'UTENTE (USER):
+Usa il nome API completo (es. `Mobile.Direction`). Varia le domande in modo naturale (es. "Cosa fa...?", "Spiega...") ma mai qualcosa che possa essere vicino a "Mi fai vedere come..." oppure "Qual'è lo script?", perchè questo è un dataset di spiegazione delle API e non di implementazione.
+
+4. REGOLE DEL CODICE IRONPYTHON (CRITICO!):
+- Se il Tipo è "Proprietà": 
+  NON USARE MAI LE PARENTESI.
+  Codice: `result = Modulo.NomeAPI`
+  Aggiungi il commento tradotto: `# Questa è una proprietà, non un metodo`.
+
+- Se il Tipo è "Metodo": 
+  USA LE PARENTESI.
+  Pulisci i parametri testuali in variabili valide (es. `millisec [Int32]` diventa `millisec`).
+  Codice: `Modulo.NomeAPI(parametri_puliti)` (aggiungi `result =` se il ritorno non è Void).
+
+5. STRUTTURA DELLA RISPOSTA (ASSISTANT):
+"Modulo.API è un/una [Tipo Tradotto] di Razor Enhanced.
+[Descrizione Tradotta]: ...
+[Ritorno Tradotto]: ...
+[Parametri Tradotti]: ...
+[Esempio Tradotto]:
+[Codice]"
+
+Parti dalla riga 550 del APIS.csv e arriva fino alla riga 600
+!!! NON ELIMINARE LE RIGHE DAL dataset_razor_API.jsonl MA VAI SEMPRE IN APPEND!!!

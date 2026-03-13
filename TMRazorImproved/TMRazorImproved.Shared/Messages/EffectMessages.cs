@@ -28,10 +28,10 @@ namespace TMRazorImproved.Shared.Messages
     }
 
     /// <summary>Inviato quando un buff/debuff viene aggiunto o rimosso (0xDF).</summary>
-    public class BuffDebuffMessage : ValueChangedMessage<(uint Serial, ushort BuffType, bool Added)>
+    public class BuffDebuffMessage : ValueChangedMessage<(uint Serial, ushort BuffType, bool Added, int Duration)>
     {
-        public BuffDebuffMessage(uint serial, ushort buffType, bool added)
-            : base((serial, buffType, added)) { }
+        public BuffDebuffMessage(uint serial, ushort buffType, bool added, int duration = -1)
+            : base((serial, buffType, added, duration)) { }
     }
 
     /// <summary>Inviato quando la traccia musicale cambia (0x6D).</summary>

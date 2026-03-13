@@ -1,0 +1,616 @@
+Modulo,Tipo,Nome API,Tipo Ritorno,Parametri,Descrizione e Dettagli
+AutoLoot,Metodo,ChangeList,Void,listName: Nome di una lista esistente.,Cambia la lista attiva dell'AutoLoot.
+AutoLoot,Metodo,GetList,List[AutoLoot.AutoLootItem],"lootListName, wantMinusOnes",Restituisce una lista di oggetti associati a una specifica lista di AutoLoot.
+AutoLoot,Metodo,GetLootBag,UInt32,N/A,Ottiene il seriale del contenitore di destinazione corrente.
+AutoLoot,Metodo,ResetIgnore,Void,N/A,Resetta la lista degli oggetti ignorati dall'agente.
+AutoLoot,Metodo,RunOnce,Void,"lootListName, millisec [Int32], filter [Items.Filter]",Avvia l'AutoLoot con parametri personalizzati e filtro ricerca.2
+AutoLoot,Metodo,SetNoOpenCorpse,Boolean,noOpen: Attiva/disattiva la funzione.,Evita l'apertura grafica del cadavere. Il cambiamento è temporaneo.
+AutoLoot,Metodo,Start,Void,N/A,Avvia l'agente sulla lista attualmente attiva.
+AutoLoot,Metodo,Status,Boolean,N/A,Verifica lo stato (True se in esecuzione).
+AutoLoot,Metodo,Stop,Void,N/A,Ferma l'agente.
+AutoLoot.AutoLootItem,Proprietà,Color,Int32,N/A,Colore dell'oggetto target.
+AutoLoot.AutoLootItem,Proprietà,Graphics,Int32,N/A,ID grafico dell'oggetto da recuperare.
+AutoLoot.AutoLootItem,Proprietà,List,String,N/A,Nome della lista di appartenenza.
+AutoLoot.AutoLootItem,Proprietà,LootBagOverride,Int32,N/A,Contenitore di destinazione specifico per l'oggetto.
+AutoLoot.AutoLootItem,Proprietà,Name,String,N/A,Nome identificativo dell'oggetto.
+AutoLoot.AutoLootItem,Proprietà,Properties,List[Property],N/A,Lista delle proprietà analizzate.
+AutoLoot.AutoLootItem,Proprietà,Selected,Boolean,N/A,Stato di selezione corrente.
+BandageHeal,Metodo,Start,Void,N/A,Avvia l'agente di cura con bende.
+BandageHeal,Metodo,Status,Boolean,N/A,Verifica se l'agente è attivo.
+BandageHeal,Metodo,Stop,Void,N/A,Ferma l'agente di cura.
+BuyAgent,Metodo,ChangeList,Void,listName: Nome della lista.,Cambia la lista attiva di acquisto.2
+BuyAgent,Metodo,Disable,Void,N/A,Disabilita l'agente di acquisto.
+BuyAgent,Metodo,Enable,Void,N/A,Abilita l'agente di acquisto sulla lista corrente.
+BuyAgent,Metodo,Status,Boolean,N/A,Verifica lo stato operativo dell'agente.
+DPSMeter,Metodo,GetDamage,Int32,serial [Int32]: Seriale del Mobile.,Ottiene il totale del danno inflitto a un Mobile specifico.2
+DPSMeter,Metodo,Pause,Void,N/A,Sospende la registrazione dei dati di danno.
+DPSMeter,Metodo,Start,Void,N/A,Avvia il motore di calcolo DPS.
+DPSMeter,Metodo,Status,Boolean,N/A,Verifica lo stato del modulo DPS.
+DPSMeter,Metodo,Stop,Void,N/A,Ferma la misurazione.
+Dress,Metodo,ChangeList,Void,dresslist: Nome della lista di vestiario.,Cambia la lista di equipaggiamento attiva.
+Dress,Metodo,DressFStart,Void,N/A,Avvia il processo di vestizione.
+Dress,Metodo,DressFStop,Void,N/A,Ferma il processo di vestizione.
+Dress,Metodo,DressStatus,Boolean,N/A,Verifica lo stato dell'agente Dress.
+Dress,Metodo,UnDressFStart,Void,N/A,Avvia il processo di rimozione dell'equipaggiamento.
+Dress,Metodo,UnDressFStop,Void,N/A,Ferma il processo di rimozione.
+Dress,Metodo,UnDressStatus,Boolean,N/A,Verifica lo stato dell'agente UnDress.
+Restock,Metodo,ChangeList,Void,listName: Nome della lista.,Cambia la lista di rifornimento attiva.
+Restock,Metodo,FStart,Void,N/A,Avvia l'agente Restock.
+Restock,Metodo,FStop,Void,N/A,Ferma l'agente Restock.
+Restock,Metodo,RunOnce,Void,"restockerName, sourceBag [Int32], destBag [Int32], dragDelay [Int32]",Esegue un ciclo di rifornimento singolo con parametri specificati.
+Restock,Metodo,Status,Boolean,N/A,Verifica lo stato dell'agente Restock.
+Scavenger,Metodo,ChangeList,Void,listName: Nome della lista.,Cambia la lista dello Scavenger.
+Scavenger,Metodo,GetScavengerBag,UInt32,N/A,Ottiene il seriale del contenitore di destinazione.2
+Scavenger,Metodo,ResetIgnore,Void,N/A,Resetta la lista degli oggetti ignorati in memoria.
+Scavenger,Metodo,RunOnce,Void,"scavengerList [List], millisec [Int32], filter [Items.Filter]",Esegue lo Scavenger una singola volta con un filtro custom.
+Scavenger,Metodo,Start,Void,N/A,Avvia l'agente in background.
+Scavenger,Metodo,Status,Boolean,N/A,Verifica lo stato dell'agente.
+Scavenger,Metodo,Stop,Void,N/A,Ferma l'agente.
+SellAgent,Metodo,ChangeList,Void,listName: Nome della lista.,Cambia la lista di vendita attiva.
+SellAgent,Metodo,Disable,Void,N/A,Disabilita la vendita automatica.
+SellAgent,Metodo,Enable,Void,N/A,Abilita la vendita automatica ai vendor NPC.
+SellAgent,Metodo,Status,Boolean,N/A,Verifica lo stato del SellAgent.
+Organizer,Metodo,ChangeList,Void,listName: Nome della lista.,Cambia la configurazione attiva dell'Organizer.
+Organizer,Metodo,FStart,Void,N/A,Avvia il riordino degli oggetti.
+Organizer,Metodo,FStop,Void,N/A,Interrompe il riordino.
+Organizer,Metodo,RunOnce,Void,"organizerName, sourceBag [Int32], destBag [Int32], dragDelay [Int32]",Esegue l'organizzatore una sola volta.
+Organizer,Metodo,Status,Boolean,N/A,Ritorna True se l'Organizer è in azione.
+Items.Filter,Proprietà,CheckIgnoreObject,Boolean,N/A,Esclude gli oggetti presenti nella lista globale ignorati (default: False).
+Items.Filter,Proprietà,Enabled,Boolean,N/A,Attiva o disattiva l'applicazione del filtro (default: True).
+Items.Filter,Proprietà,Graphics,List[Int32],N/A,Limita la ricerca a una lista di Graphic ID (ItemID). Supporta Add() e AddRange().
+Items.Filter,Proprietà,Hues,List[Int32],N/A,Limita la ricerca a una lista di colori specifici.2
+Items.Filter,Proprietà,IsContainer,Int32,N/A,Filtra solo gli oggetti che agiscono da contenitori (-1 per ignorare).
+Items.Filter,Proprietà,IsCorpse,Int32,N/A,Filtra esclusivamente i cadaveri presenti sul suolo.
+Items.Filter,Proprietà,IsDoor,Int32,N/A,Filtra gli oggetti classificati strutturalmente come porte.
+Items.Filter,Proprietà,Layers,List,N/A,Limita la ricerca agli oggetti equipaggiati su specifici layer anatomici (es. RightHand).
+Items.Filter,Proprietà,Movable,Int32,N/A,Filtra gli oggetti in base al flag di mobilità imposto dal server.2
+Items.Filter,Proprietà,Multi,Int32,N/A,Limita la ricerca agli oggetti complessi (Multi) come case o navi.
+Items.Filter,Proprietà,Name,String,N/A,Esegue il matching sul nome testuale dell'oggetto.
+Items.Filter,Proprietà,OnGround,Int32,N/A,"Filtra solo gli oggetti non contenuti in inventari, liberi sulla mappa."
+Items.Filter,Proprietà,RangeMax,Double,N/A,Distanza radiale massima in tile rispetto alla posizione del giocatore.
+Items.Filter,Proprietà,RangeMin,Double,N/A,Distanza radiale minima rispetto al giocatore.2
+Items.Filter,Proprietà,Serials,List[Int32],N/A,Restringe la ricerca a un pool esatto di identificatori seriali.
+Items.Filter,Proprietà,ZRangeMax,Double,N/A,Limite superiore della coordinata Z per il filtraggio tridimensionale.
+Items.Filter,Proprietà,ZRangeMin,Double,N/A,Limite inferiore della coordinata Z.2
+Items,Metodo,ApplyFilter,List[Item],filter [Items.Filter],Risolve il filtro interrogando la memoria e restituisce le istanze conformi.
+Items,Metodo,BackpackCount,Int32,"itemid [Int32], color [Int32]",Calcola la somma delle quantità di uno specifico oggetto nello zaino.
+Items,Metodo,ChangeDyeingTubColor,Void,"dyes [Item], dyeingTub [Item], color [Int32]",Invia il pacchetto per alterare il colore di una vasca di tintura.2
+Items,Metodo,Close,Void,serial [Item/Int32],Chiude l'interfaccia grafica di un contenitore o cadavere aperto.
+Items,Metodo,ContainerCount,Int32,"container [Item/Int32], itemid [Int32], color [Int32], recursive",Conta ricorsivamente gli oggetti all'interno di un contenitore radice.
+Items,Metodo,ContextExist,Int32,"serial [Item/Int32], name",Interroga l'esistenza di un'opzione nel menu contestuale dell'oggetto.
+Items,Metodo,DropFromHand,Void,"item [Item], container [Item]",Rilascia un oggetto sollevato virtualmente nel cursore in un contenitore.
+Items,Metodo,DropItemGroundSelf,Void,"item [Item/Int32], amount [Int32], direction [Int32]",Sposta un oggetto dall'inventario al suolo ai piedi del giocatore.2
+Items,Metodo,FindAllByID,List[Item],"itemids [List/Int32], color [Int32], container [Int32], range [Int32], considerIgnoreList",Esegue una ricerca profonda restituendo tutte le occorrenze di un ID.
+Items,Metodo,FindByID,Item,"itemid [List/Int32], color [Int32], container [Int32], recursive, considerIgnoreList",Restituisce la singola istanza trovata corrispondente ai parametri base.
+Items,Metodo,FindByName,Item,"itemName, color [Int32], container [Int32], range [Int32], considerIgnoreList",Ricerca rapida basata sul parsing della stringa del nome.2
+Items,Metodo,FindBySerial,Item,serial [Int32],Istanzia un oggetto partendo dal suo seriale di rete.
+Items,Metodo,GetImage,Bitmap,"itemID [Int32], hue [Int32]",Estrae e applica la tonalità alla risorsa grafica nativa del client.
+Items,Metodo,GetPropStringByIndex,String,"serial [Item/Int32], index [Int32]",Estrae una riga specifica dal tooltip formattato dell'oggetto.
+Items,Metodo,GetPropStringList,List,serial [Item/Int32],Restituisce l'intero array delle stringhe di proprietà.
+Items,Metodo,GetPropValue,Single,"serial [Item/Int32], name",Parsa il valore float numerico associato a una proprietà testuale.
+Items,Metodo,GetPropValueString,String,"serial [Int32], name",Ricerca e restituisce il valore testuale grezzo di una proprietà.2
+Items,Metodo,GetProperties,List[Property],"itemserial [Int32], delay [Int32]",Forza la richiesta al server dei tooltip aggiornati se non in cache.2
+Items,Metodo,GetWeaponAbility,Tuple,itemId [Int32],Consulta la tabella interna per restituire le mosse speciali dell'arma.
+Items,Metodo,Hide,Void,serial [Item/Int32],Altera il rendering locale rendendo l'oggetto invisibile al client.
+Items,Metodo,IgnoreTypes,Void,itemIdList [PythonList],Previene la processazione visiva e logica di determinati Graphic ID.2
+Items,Metodo,Lift,Void,"item [Item], amount [Int32]",Crea l'evento di trascinamento logico associando l'oggetto al cursore.
+Items,Metodo,Message,Void,"item [Item/Int32], hue [Int32], message","Sovrappone testo fluttuante all'oggetto, visibile solo localmente."
+Items,Metodo,Move,Void,"source [Item/Int32], destination [Item/Mobile/Int32], amount [Int32], x [Int32], y [Int32]",Genera il pacchetto di spostamento completo verso inventari o mob.
+Items,Metodo,MoveOnGround,Void,"source [Item/Int32], amount [Int32], x [Int32], y [Int32], z [Int32]",Sposta l'oggetto in specifiche coordinate spaziali XYZ tridimensionali.2
+Items,Metodo,OpenAt,Void,"serial [Item/Int32], x [Int32], y [Int32]",Forza l'apertura grafica in coordinate assolute di schermo.
+Items,Metodo,OpenContainerAt,Void,"bag [Item], x [Int32], y [Int32]",Apre l'inventario in coordinate specifiche per favorire macro grafiche.
+Items,Metodo,Select,Item,"items [List[Item]], selector",Filtra ulteriormente una lista preesistente tramite selettore testuale.
+Items,Metodo,SetColor,Void,"serial [Int32], color [Int32]",Modifica la tonalità dell'oggetto nella memoria del client.
+Items,Metodo,SingleClick,Void,item [Item/Int32],Invia l'evento click richiedendo al server di trasmettere il nome aggiornato.2
+Items,Metodo,UseItem,Void,"itemSerial [Item/Int32], targetSerial [Int32], wait",Usa l'oggetto ed esegue automaticamente l'auto-target verso un seriale.
+Items,Metodo,UseItemByID,Boolean,"itemid [Int32], color [Int32]",Risolve il primo oggetto corrispondente all'ID e ne simula l'utilizzo.
+Items,Metodo,WaitForContents,Boolean,"bag [Item/Int32], delay [Int32]",Innesca l'apertura e blocca il thread attendendo il caricamento degli oggetti figli.
+Items,Metodo,WaitForProps,Void,"itemserial [Item/Int32], delay [Int32]",Attende il completamento della sincronizzazione cliloc delle proprietà.2
+Item,Proprietà,Amount,Int32,N/A,Quantità numerica impilata nello stack dell'oggetto.
+Item,Proprietà,Color,UInt16,N/A,Valore cromatico esatto.
+Item,Proprietà,Container,Int32,N/A,Seriale del contenitore padre diretto dell'istanza.
+Item,Proprietà,ContainerOpened,Boolean,N/A,Stato di inizializzazione dell'inventario interno.2
+Item,Proprietà,Contains,List[Item],N/A,Riferimenti agli oggetti figli istanziati gerarchicamente.
+Item,Proprietà,CorpseNumberItems,Int32,N/A,Numero di oggetti totali se la struttura è un cadavere (-1 se non aggiornato).
+Item,Proprietà,Deleted,Boolean,N/A,Stato di rimozione dell'oggetto dalla memoria lato server.
+Item,Proprietà,Direction,String,N/A,Orientamento vettoriale dell'oggetto.
+Item,Proprietà,Durability,Int32,N/A,Punti durabilità residui estratti dalle proprietà.
+Item,Proprietà,Graphics,UInt16,N/A,Identificativo del rendering (equivalente a ItemID).2
+Item,Proprietà,GridNum,Byte,N/A,Locazione posizionale specifica se all'interno di una griglia di inventario.
+Item,Proprietà,Hue,UInt16,N/A,Alias per l'attributo cromatico.
+Item,Proprietà,Image,Bitmap,N/A,Struttura Bitmap generata tramite rendering off-screen.
+Item,Proprietà,IsBagOfSending,Boolean,N/A,Riconoscimento speciale dell'oggetto legato a meccaniche di trasporto banca.
+Item,Proprietà,IsContainer,Boolean,N/A,Rileva se la tipologia dell'oggetto supporta l'inserimento di figli.
+Item,Proprietà,IsCorpse,Boolean,N/A,Rileva la natura organica o strutturale di un cadavere esplorabile.
+Item,Proprietà,IsDoor,Boolean,N/A,Determina l'appartenenza alle logiche di apertura e collisione delle porte.
+Item,Proprietà,IsInBank,Boolean,N/A,Naviga la gerarchia per stabilire se il root container è la banca del giocatore.
+Item,Proprietà,IsLootable,Boolean,N/A,Distingue tra oggetti recuperabili e decorazioni anatomiche dei cadaveri.
+Item,Proprietà,IsPotion,Boolean,N/A,Classifica l'oggetto per le routine di automazione della cura e dei buff.
+Item,Proprietà,IsResource,Boolean,N/A,"Raggruppa materiali grezzi da artigianato (legno, minerali, pelli).2"
+Item,Proprietà,IsSearchable,Boolean,N/A,Segnala la possibilità di ispezionare il contenuto senza aprirlo fisicamente.
+Item,Proprietà,IsTwoHanded,Boolean,N/A,Parametro critico per le routine di disarmo e cast di incantesimi.
+Item,Proprietà,IsVirtueShield,Boolean,N/A,Classifica un artefatto specifico per le routine di equipaggiamento.
+Item,Proprietà,ItemID,Int32,N/A,Valore univoco per la definizione della tipologia dell'oggetto.
+Item,Proprietà,Layer,String,N/A,"Definizione anatomica di equipaggiamento (es. testa, braccia)."
+Item,Proprietà,Light,Byte,N/A,Parametro di illuminazione locale applicato al motore grafico.2
+Item,Proprietà,MaxDurability,Int32,N/A,Valore massimo teorico dei punti struttura per la gestione delle riparazioni.
+Item,Proprietà,Movable,Boolean,N/A,Riflette il flag del server che previene lo spostamento (oggetti fissi).
+Item,Proprietà,Name,String,N/A,"Stringa cache del nome, dipendente dai pacchetti cliloc."
+Item,Proprietà,OnGround,Boolean,N/A,"Indica l'assenza di parent container, confermando la posizione sulla mappa."
+Item,Proprietà,Position,Point3D,N/A,Struttura tridimensionale geometrica dell'istanza.
+Item,Proprietà,Properties,List[Property],N/A,Vettore contenente tutte le righe dei tooltip parificate in stringhe e interi.
+Item,Proprietà,PropsUpdated,Boolean,N/A,Assicura che la richiesta di proprietà asincrona sia andata a buon fine.
+Item,Proprietà,RootContainer,Int32,N/A,Esegue il traversing dell'albero gerarchico fino a trovare il proprietario finale.
+Item,Proprietà,Serial,Int32,N/A,Chiave di rete univoca globale per transazioni con il server.2
+Item,Proprietà,Updated,Boolean,N/A,Segnala il completamento dell'inizializzazione primaria dell'oggetto.
+Item,Proprietà,Visible,Boolean,N/A,"Stato di visibilità locale, influenzabile tramite script."
+Item,Proprietà,Weight,Int32,N/A,"Contribuzione gravitazionale dell'oggetto, necessaria per controlli di capienza."
+Item,Metodo,DistanceTo,Int32,mob [Item/Mobile],Funzione pitagorica per la misurazione della distanza in tile bidimensionali.
+Item,Metodo,GetWorldPosition,Point3D,N/A,Risolve le coordinate globali estraendole dai contenitori padre se necessario.
+Item,Metodo,IsChildOf,Boolean,"container [Mobile/Item], maxDepth [Int32]",Determina l'inclusione logica controllando i rami dell'albero gerarchico.2
+Mobiles.Filter,Proprietà,Blessed,Int32,N/A,Rileva lo stato di invulnerabilità conferito dal server.
+Mobiles.Filter,Proprietà,Bodies,List[Int32],N/A,Limita ai Graphic ID specifici del corpo (es. demoni o umani).
+Mobiles.Filter,Proprietà,CheckIgnoreObject,Boolean,N/A,Elimina i seriali inseriti in blacklist.2
+Mobiles.Filter,Proprietà,CheckLineOfSight,Boolean,N/A,Interroga l'engine geometrico per confermare assenza di ostacoli visivi.
+Mobiles.Filter,Proprietà,Enabled,Boolean,N/A,Toggle per l'applicazione del filtro sulle routine globali.
+Mobiles.Filter,Proprietà,Female,Int32,N/A,Parametro anatomico specifico del body.
+Mobiles.Filter,Proprietà,Friend,Int32,N/A,Include esclusivamente entità presenti nella trust-list locale.
+Mobiles.Filter,Proprietà,Graphics,List[Int32],N/A,Alias funzionale per i Bodies ID.2
+Mobiles.Filter,Proprietà,Hues,List[Int32],N/A,Utile per identificare campioni generati cromaticamente diversi dalla base.
+Mobiles.Filter,Proprietà,IgnorePets,Boolean,N/A,Toglie le evocazioni proprie o altrui dal pool di target ostili.
+Mobiles.Filter,Proprietà,IsGhost,Int32,N/A,Identifica i body ID corrispondenti agli stati di morte per resuscitare alleati.
+Mobiles.Filter,Proprietà,IsHuman,Int32,N/A,Limita alle classi di rendering umanoidi.
+Mobiles.Filter,Proprietà,Name,String,N/A,Matching testuale per la ricerca rapida di NPC nominati.
+Mobiles.Filter,Proprietà,Notorieties,List,N/A,Sistema di classificazione essenziale (1-7) delle regole di ingaggio.2
+Mobiles.Filter,Proprietà,Paralized,Int32,N/A,Individua entità che subiscono effetti restrittivi sul movimento.
+Mobiles.Filter,Proprietà,Poisoned,Int32,N/A,Rileva lo stato di tossicità analizzando l'header cromatico della salute.
+Mobiles.Filter,Proprietà,RangeMax,Double,N/A,Raggio massimo geometrico in cui considerare valide le entità.
+Mobiles.Filter,Proprietà,RangeMin,Double,N/A,"Offset minimo di distanza, utile per ignorare nemici adiacenti (melee range).2"
+Mobiles.Filter,Proprietà,Serials,List[Int32],N/A,Hardcoding di identificatori di rete specifici.
+Mobiles.Filter,Proprietà,Warmode,Int32,N/A,Discrimina entità in postura pacifica da quelle in stato di allerta o combattimento.
+Mobiles.Filter,Proprietà,ZLevelMax,Double,N/A,Taglio superiore delle coordinate verticali per la spazializzazione tridimensionale.
+Mobiles.Filter,Proprietà,ZLevelMin,Double,N/A,Taglio inferiore delle coordinate Z.2
+Mobiles,Metodo,ApplyFilter,List[Mobile],filter [Mobiles.Filter],Genera il set risolto di entità in un istante temporale preciso.
+Mobiles,Metodo,ContextExist,Int32,"mob [Mobile/Int32], name, showContext",Richiede ed esamina asincronamente i nodi del menu contestuale.
+Mobiles,Metodo,FindBySerial,Mobile,serial [Int32],Interroga direttamente l'hash table locale per recuperare l'istanza univoca.2
+Mobiles,Metodo,FindMobile,Mobile,"graphic, notoriety, rangemax, selector, highlight",Metodo rapido e non allocativo per la generazione rapida di target.
+Mobiles,Metodo,GetPropStringByIndex,String,"serial [Mobile/Int32], index [Int32]",Naviga l'array di stringhe inviato tramite cliloc tooltip per l'entità.
+Mobiles,Metodo,GetPropStringList,List,serial [Mobile/Int32],Restituisce il dump totale dei metadati descrittivi del target.
+Mobiles,Metodo,GetPropValue,Single,"serial [Mobile/Int32], name",Traduce le label testuali in valori float per valutazioni logiche.
+Mobiles,Metodo,GetTargetingFilter,Mobiles.Filter,target_name,Richiama dalla GUI un oggetto filtro complesso precostituito dall'utente.2
+Mobiles,Metodo,GetTrackingInfo,Mobiles.TrackingInfo,N/A,Estrae i dati inviati dalla skill Tracking decodificando i pacchetti radar di direzione.
+Mobiles,Metodo,Message,Void,"mobile, hue, message, wait",Genera un messaggio testuale fluttuante ancorato all'offset grafico dell'entità.
+Mobiles,Metodo,Select,Mobile,"mobiles [List[Mobile]], selector",Processa un subset limitato applicando un filtro nominativo aggiuntivo.
+Mobiles,Metodo,SingleClick,Void,mobile [Mobile/Int32],Forza l'aggiornamento dello stato base instradando il pacchetto di ispezione primario.2
+Mobiles,Metodo,UseMobile,Void,mobile [Mobile/Int32],"Causa l'interazione diretta (apertura vendor, attacco base su freeshard, montaggio destriero)."
+Mobiles,Metodo,WaitForProps,Boolean,"m [Mobile/Int32], delay [Int32]",Congela l'esecuzione in attesa dell'arrivo del pacchetto properties per il seriale indicato.
+Mobiles,Metodo,WaitForStats,Boolean,"m [Mobile/Int32], delay [Int32]",Sospende il thread fintanto che l'aggiornamento strutturale (salute/mana) non viene confermato.2
+Mobile,Proprietà,Backpack,Item,N/A,Collegamento relazionale all'oggetto contenitore associato all'entità.
+Mobile,Proprietà,CanRename,Boolean,N/A,Determina se il protocollo concede il privilegio di modifica del nome (es. familiar o pet).
+Mobile,Proprietà,Color,UInt16,N/A,Valore della pigmentazione base del body.
+Mobile,Proprietà,Contains,List[Item],N/A,"Risolve tutti i nodi figlio, rappresentando l'equipaggiamento indossato (Paperdoll)."
+Mobile,Proprietà,Deleted,Boolean,N/A,Verifica se il server ha comunicato l'annullamento dell'esistenza in memoria.2
+Mobile,Proprietà,Direction,String,N/A,Codifica la direttrice del movimento spaziale in 8 angolazioni canoniche.
+Mobile,Proprietà,Fame,Int32,N/A,Stima euristica dedotta dal titolo nobiliare comunicato in broadcast.
+Mobile,Proprietà,Female,Boolean,N/A,"Segnala la variabile sessuale del body, utile per compatibilità di equipaggiamento."
+Mobile,Proprietà,Flying,Boolean,N/A,Parametro di mobilità avanzata legato al bypass di ostacoli geologici.
+Mobile,Proprietà,Graphics,UInt16,N/A,ID di rendering del modello poligonale o 2D (MobileID).
+Mobile,Proprietà,Hits,Int32,N/A,Parametro vitale corrente. Per entità non alleate spesso è espresso come percentuale.
+Mobile,Proprietà,HitsMax,Int32,N/A,Calibratore per convertire la proporzione della salute in valori assoluti se conosciuto.2
+Mobile,Proprietà,Hue,UInt16,N/A,Proprietà omologa al Color.
+Mobile,Proprietà,InParty,Boolean,N/A,Riconoscimento immediato per evitare fuoco amico su membri alleati condivisi.
+Mobile,Proprietà,IsGhost,Boolean,N/A,Convalida l'appartenenza allo stato di morte tramite ispezione dell'ID grafico.
+Mobile,Proprietà,IsHuman,Boolean,N/A,"Valutazione booleana su bodyID compatibili con la vestizione umana (183, 400, ecc.)."
+Mobile,Proprietà,ItemID,Int32,N/A,Parametro tecnico per retro-compatibilità d'ispezione.
+Mobile,Proprietà,Karma,Int32,N/A,"Variabile etica stimata dal nome (-5 malvagio, +5 virtuoso)."
+Mobile,Proprietà,KarmaTitle,String,N/A,Conserva il prefisso/suffisso originale ricevuto senza elaborazioni.2
+Mobile,Proprietà,Mana,Int32,N/A,Carica magica corrente (risoluzione dipende dai privilegi di rete).
+Mobile,Proprietà,ManaMax,Int32,N/A,Soglia limite del mana associato all'entità.
+Mobile,Proprietà,Map,Int32,N/A,ID identificativo del dominio territoriale (facet) in cui avviene il tracciamento.
+Mobile,Proprietà,MobileID,Int32,N/A,ID base del template di creazione del mostro o giocatore.
+Mobile,Proprietà,Mount,Item,N/A,Riferimento incrociato per isolare il seriale dell'oggetto destriero interattivo.2
+Mobile,Proprietà,Name,String,N/A,"Valore base del nome, scisso da guild title e lord prefix."
+Mobile,Proprietà,Notoriety,Int32,N/A,Indice cardine (1-7) per definire l'ostilità logica riconosciuta dal client di base.
+Mobile,Proprietà,Paralized,Boolean,N/A,Segnala la presenza di freeze dettato dal server (stordimenti o spell).
+Mobile,Proprietà,Poisoned,Boolean,N/A,Flag derivato dallo stato dell'interfaccia vitale (barra verde/arancione).
+Mobile,Proprietà,Position,Point3D,N/A,Oggetto complesso per la rappresentazione geometrica posizionale corrente.2
+Mobile,Proprietà,Properties,List[Property],N/A,Analisi testuale completa strutturata per righe e valori derivati.
+Mobile,Proprietà,PropsUpdated,Boolean,N/A,Verifica l'allineamento della cache con i pacchetti più recenti.
+Mobile,Proprietà,Quiver,Item,N/A,Individua il nodo inventario dedicato ai proiettili equipaggiato sull'entità.
+Mobile,Proprietà,Serial,Int32,N/A,Chiave di volta per qualsiasi iterazione sicura tra script e memoria.2
+Mobile,Proprietà,Stam,Int32,N/A,Resistenza allo sforzo e frequenza di attacco attuale.
+Mobile,Proprietà,StamMax,Int32,N/A,Pool massimo di stamina.
+Mobile,Proprietà,Visible,Boolean,N/A,"Conferma l'esistenza nello spettro visibile, contrastando stealth o invisibility."
+Mobile,Proprietà,WarMode,Boolean,N/A,"Riflette la posa da combattimento, che modifica collisioni e interazioni di push.2"
+Mobile,Proprietà,YellowHits,Boolean,N/A,Rileva alterazioni della barra HP indicative di debuff che prevengono le cure (Mortal Strike).
+Mobile,Metodo,DistanceTo,Int32,other_mobile [Mobile],Esegue il calcolo Euclideo ridotto tra il vettore corrente e l'entità bersaglio.
+Mobile,Metodo,Equals,Boolean,obj [Object/UOEntity],Compara i riferimenti di base a livello C# per identificare duplicati.2
+Mobile,Metodo,GetItemOnLayer,Item,layer,Restituisce il puntatore all'oggetto equipaggiato in uno slot definito.
+Mobile,Metodo,UpdateKarma,Boolean,N/A,Forza il ricalcolo e aggiornamento dei titoli etici bloccando l'esecuzione asincrona per attendere il responso.2
+Mobiles.TrackingInfo,Proprietà,lastUpdate,DateTime,N/A,Marca temporale nativa dell'ultima ricezione del radar spaziale.
+Mobiles.TrackingInfo,Proprietà,serial,UInt32,N/A,Identificativo del bersaglio rilevato fuori dallo schermo.
+Mobiles.TrackingInfo,Proprietà,x,UInt16,N/A,Coordinata X cruda stimata dalla skill.
+Mobiles.TrackingInfo,Proprietà,y,UInt16,N/A,Coordinata Y cruda.2
+Player,Proprietà,AR,Int32,N/A,Misurazione della classificazione armatura fisica cumulativa.2
+Player,Proprietà,Backpack,Item,N/A,Nodo radicale per le operazioni di loot e inventario personale.
+Player,Proprietà,Bank,Item,N/A,Riferimento sicuro all'istanza della cassa forte gestita dal server.
+Player,Proprietà,Body,Int32,N/A,"Forma attuale, riflettendo incantesimi di polimorfismo o forme necromantiche."
+Player,Proprietà,Buffs,List,N/A,"Vettore testuale in tempo reale di tutte le aure, malus e alterazioni logiche.2"
+Player,Proprietà,BuffsInfo,List,N/A,Dettaglio tecnico strutturato per ciascun buff inclusa la durata rimanente scalata in C#.
+Player,Proprietà,ColdResistance,Int32,N/A,Ammontare mitigativo grezzo contro il danno da freddo.
+Player,Proprietà,Connected,Boolean,N/A,Stato di integrità del flusso socket tra client e game server.2
+Player,Proprietà,Corpses,HashSet[Item],N/A,Lista delle posizioni dei precedenti decessi del giocatore per rapido recupero.
+Player,Proprietà,DamageChanceIncrease,Int32,N/A,Incremento percentuale DCI calcolato sull'equipaggiamento indossato.
+Player,Proprietà,DefenseChanceIncrease,Int32,N/A,Modificatore difensivo HCI totale.
+Player,Proprietà,Dex,Int32,N/A,Valore destrezza nominale.
+Player,Proprietà,DexterityIncrease,Int32,N/A,Somma totale dei bonus destrezza conferiti da anelli e artefatti.
+Player,Proprietà,Direction,String,N/A,"Testo codificante la direzione frontale dell'avatar (North, South, ecc.)."
+Player,Proprietà,EnergyResistance,Int32,N/A,Tolleranza assoluta al danno energetico o magnetico.
+Player,Proprietà,EnhancePotions,Int32,N/A,Modificatore percentuale per il fattore di moltiplicazione delle cure chimiche.
+Player,Proprietà,Fame,Int32,N/A,Reputazione sociale dedotta da meccaniche di kill NPC.2
+Player,Proprietà,FasterCastRecovery,Int32,N/A,"Tempi morti azzerati tra un cast e l'altro, metriche aggregate."
+Player,Proprietà,FasterCasting,Int32,N/A,Velocizzazione del ciclo d'animazione magico primario.
+Player,Proprietà,Female,Boolean,N/A,Definizione anatomica intrinseca del template iniziale.
+Player,Proprietà,FireResistance,Int32,N/A,Mitigazione elementale al danno da fuoco.2
+Player,Proprietà,Followers,Int32,N/A,Slots biologici correntemente occupati dai pet evocati o addomesticati.
+Player,Proprietà,FollowersMax,Int32,N/A,Limite assoluto (generalmente 5) di bestie gestibili simultaneamente.
+Player,Proprietà,Gold,Int32,N/A,Computo ricorsivo di tutte le monete contenute nel nodo Backpack.
+Player,Proprietà,HasPrimarySpecial,Boolean,N/A,Riflette se la mossa primaria dell'arma (es. Armor Ignore) è armata e pronta all'uso.
+Player,Proprietà,HasSecondarySpecial,Boolean,N/A,Rileva il caricamento asincrono della mossa secondaria (es. Whirlwind).2
+Player,Proprietà,HasSpecial,Boolean,N/A,Controllo booleano aggregato sulle abilità di combattimento.
+Player,Proprietà,HitChanceIncrease,Int32,N/A,Probabilità percentuale aggiunta al colpo base.
+Player,Proprietà,HitPointsIncrease,Int32,N/A,Espansione vitale fittizia conferita da incantamenti o buff (es. Bless).
+Player,Proprietà,HitPointsRegeneration,Int32,N/A,Rateo di guarigione passiva applicato ogni tick dal motore di UO.
+Player,Proprietà,Hits,Int32,N/A,L'effettiva e inviolabile quantità di punti ferita restanti.2
+Player,Proprietà,HitsMax,Int32,N/A,Il soffitto massimo vitale del personaggio calibrato da STR e buff.
+Player,Proprietà,InParty,Boolean,N/A,Indice di partecipazione alla struttura comunicativa e distributiva del gruppo.
+Player,Proprietà,Int,Int32,N/A,Valore d'intelligenza base che determina la pool del mana.
+Player,Proprietà,IntelligenceIncrease,Int32,N/A,Somma logica dei bonus stat derivanti dagli slot inventario.
+Player,Proprietà,IsGhost,Boolean,N/A,"Segnala l'ingresso nella modalità eterea, precludendo le interazioni fisiche.2"
+Player,Proprietà,Karma,Int32,N/A,Allineamento morale quantificato per interazioni dinamiche di script.
+Player,Proprietà,KarmaTitle,String,N/A,L'etichetta visiva legata all'ammontare etico.2
+Player,Proprietà,LowerManaCost,Int32,N/A,Modificatore percentuale scalato al consumo di energia magica.
+Player,Proprietà,LowerReagentCost,Int32,N/A,Parametro vitale per macro che elide l'uso logistico dei reagenti.
+Player,Proprietà,Luck,Int32,N/A,Variabile randomica influenzante l'algoritmo di drop per i cadaveri generati.
+Player,Proprietà,Mana,Int32,N/A,Valore crudo di energia a disposizione per l'esecuzione di skill attive.
+Player,Proprietà,ManaIncrease,Int32,N/A,Espansione additiva al massimo teorico determinata dagli equip.
+Player,Proprietà,ManaMax,Int32,N/A,Somma tra il valore derivato da INT e i cap d'equipaggiamento.2
+Player,Proprietà,ManaRegeneration,Int32,N/A,"MR totale, essenziale per calcolare i timeout tra loop magici massivi."
+Player,Proprietà,Map,Int32,N/A,Indice della dimensione/mappa geografica per differenziare logiche coordinate.
+Player,Proprietà,MaxWeight,Int32,N/A,Limite gravimetrico prima dell'applicazione del debuff di stanchezza o blocco.
+Player,Proprietà,MaximumHitPointsIncrease,Int32,N/A,Modificatore percentuale del tetto massimo della vita.
+Player,Proprietà,MaximumStaminaIncrease,Int32,N/A,Modificatore equivalente al tetto della stamina.2
+Player,Proprietà,MobileID,Int32,N/A,Forma renderizzata primordiale ignorando i cambi cosmetici momentanei.
+Player,Proprietà,Mount,Item,N/A,Puntatore vitale per determinare l'oggetto logico rappresentato graficamente in sella.
+Player,Proprietà,Name,String,N/A,Appellativo del personaggio usato nelle macro di recall e testuali.
+Player,Proprietà,Notoriety,Byte,N/A,L'indice criminale che detta le meccaniche di attacco subite o inferte.2
+Player,Proprietà,Paralized,Boolean,N/A,Verifica l'impossibilità motoria temporanea legata ad un freeze di rete.
+Player,Proprietà,Pets,List[Mobile],N/A,Aggrega le entità soggette a renaming o follow comandato vicine.
+Player,Proprietà,PoisonResistance,Int32,N/A,Tasso di assorbimento tossico elementale puro.2
+Player,Proprietà,Poisoned,Boolean,N/A,Evidenziazione del malus letale ricorsivo attivo sulle arterie vitale dell'avatar.
+Player,Proprietà,Position,Point3D,N/A,Il vettore di spazializzazione nel reticolato geometrico.
+Player,Proprietà,PrimarySpecial,UInt32,N/A,Indice dell'abilità primaria.2
+Player,Proprietà,Quiver,Item,N/A,Slot dedicato alla riduzione peso e danno aggiunto per munizioni.
+Player,Proprietà,ReflectPhysicalDamage,Int32,N/A,Parametro che decurta e riflette danno basico all'attaccante.
+Player,Proprietà,SecondarySpecial,UInt32,N/A,Indice dell'abilità secondaria.
+Player,Proprietà,Serial,Int32,N/A,L'identità di rete assoluta scambiata per validare azioni in self-target.
+Player,Proprietà,SpellDamageIncrease,Int32,N/A,"SDI puro, parametro offensivo magico determinante."
+Player,Proprietà,Stam,Int32,N/A,Resistenza fisica che governa la latenza nel tempo d'attacco.2
+Player,Proprietà,StamMax,Int32,N/A,Contenitore massimo per la rigenerazione di Stam.
+Player,Proprietà,StaminaIncrease,Int32,N/A,Espansione quantitativa derivata dal vestiario magico.
+Player,Proprietà,StaminaRegeneration,Int32,N/A,Tasso di compensazione passivo dello stress fisico da corsa e swing.
+Player,Proprietà,StatCap,Int32,N/A,Limite fisiologico (spesso 225-255) oltre il quale le statistiche grezze non aumentano.
+Player,Proprietà,StaticMount,Int32,N/A,ID salvato nel filtro grafico del programma se presente.
+Player,Proprietà,Str,Int32,N/A,Forza fisica cruda determinante la base di Hitpoints e Peso.
+Player,Proprietà,StrengthIncrease,Int32,N/A,Sommatoria delle statistiche aggiuntive per la forza.
+Player,Proprietà,SwingSpeedIncrease,Int32,N/A,Modulazione accelerata della frequenza dell'animazione d'arma (SSI).2
+Player,Proprietà,Visible,Boolean,N/A,Valutazione booleana dello stato nascosto al piano server globale.
+Player,Proprietà,WarMode,Boolean,N/A,Flag che abilita le collision tracking aggressive e auto-defend.2
+Player,Proprietà,Weight,Int32,N/A,Computo attuale logistico della massa trasportata.
+Player,Proprietà,YellowHits,Boolean,N/A,Analisi del segnale di blocco curativo tramite modifica della palette interfaccia.2
+Player,Metodo,Area,String,N/A,Estrae il toponimo geografico locale comparando coordinate in regions.json.2
+Player,Metodo,Attack,Void,serial [Mobile/Int32],Forza l'avvio della routine melee indirizzando il pacchetto combattimento al seriale.
+Player,Metodo,AttackLast,Void,N/A,Replica istantaneamente l'intento offensivo sull'ultimo avversario cacheato.
+Player,Metodo,AttackType,Boolean,"graphic, rangemax, selector, color, notoriety",Rilevamento complesso e auto-ingaggio immediato saltando la configurazione filtri.
+Player,Metodo,BuffTime,Int32,buffname,Computa ed esprime i millisecondi residui prima dello scadere del buff indicato.2
+Player,Metodo,BuffsExist,Boolean,"buffname, okayToGuess",Iterazione ultra-veloce sulla hashset dei buff attivi per l'uso in statements condizionali.2
+Player,Metodo,ChatAlliance,Void,msg,Emette testualmente verso la rete confinata dell'alleanza di gilde.
+Player,Metodo,ChatChannel,Void,msg,Scrive nei canali chat globali o custom instanziati dal client.
+Player,Metodo,ChatEmote,Void,"color, msg",Produce l'effetto di interpretazione ruolo in terza persona con colore scelto.
+Player,Metodo,ChatGuild,Void,msg,Isolamento testuale alla gerarchia di gilda ristretta.2
+Player,Metodo,ChatParty,Void,"msg, recepient_serial [Int32]",Sussurra messaggi diretti a un membro remoto eludendo i listener di area.2
+Player,Metodo,ChatSay,Void,"color, msg",Propagazione radiale in chiaro manipolando visivamente l'hex del colore carattere.
+Player,Metodo,ChatWhisper,Void,"color, msg",Simula la fonetica ristretta confinando il raggio di invio testuale a 1-2 tiles.
+Player,Metodo,ChatYell,Void,"color, msg",Estensione del raggio radiale di trasmissione per allerte cittadine o di gruppo.
+Player,Metodo,CheckLayer,Boolean,layer,Identifica collisioni d'uso prima di eseguire cambi abito fallimentari.2
+Player,Metodo,ClearCorpseList,Void,N/A,Svuota le entry dalla matrice del navigatore salvataggio decessi.
+Player,Metodo,DistanceTo,Int32,target [UOEntity/Int32],Astrazione per il misuramento pitagorico senza l'accesso diretto ai vettori spaziali.
+Player,Metodo,EmoteAction,Void,action,"Forza lo scatenarsi di animazioni fisiche dell'avatar (bow, salute).2"
+Player,Metodo,EquipItem,Void,serial [Item/Int32],Invia il pacchetto d'ancoraggio forzando lo spot anatomico pertinente.2
+Player,Metodo,EquipLastWeapon,Void,N/A,Esegue il macro toggle logico per l'arma più recentemente detenuta nel nodo RightHand.
+Player,Metodo,EquipUO3D,Void,serials [List/PythonList],Aggrega istruzioni UO3D incapsulandole in cluster massivi minimizzando le conferme di rete.2
+Player,Metodo,Fly,Void,status,Genera il segnale di levitazione permettendo cammino sopra ostacoli di terra predefiniti.
+Player,Metodo,GetBuffInfo,BuffInfo,"buffName, okayToGuess",Richiede la disamina totale strutturata della durata e intensità di un'alterazione.
+Player,Metodo,GetItemOnLayer,Item,layer,Estrae e reifica l'entità protetta per successiva manipolazione d'inventario.
+Player,Metodo,GetPropStringByIndex,String,index [Int32],Permette di leggere valori base (spesso intrisi in righe stringhe dal client) estraendoli posizionalmente.
+Player,Metodo,GetPropStringList,List,N/A,Rende accessibile la mole di dati tooltip associati passivamente.2
+Player,Metodo,GetPropValue,Int32,name,Automatizza la decodifica delle diciture di abilità trasformandole in int32 sicuri.2
+Player,Metodo,GetRealSkillValue,Double,skillname,Isolamento chirurgico della competenza vera scartando artifici magici.
+Player,Metodo,GetSkillCap,Double,skillname,Restituisce il soffitto teorico d'apprendimento per valutare se allenare la competenza ha utilità.
+Player,Metodo,GetSkillStatus,Int32,skillname,Rileva le barriere di crescita per prevenire perdite d'esperienza accidentali.2
+Player,Metodo,GetSkillValue,Double,skillname,Richiama la competenza adulterata da potenziamenti correnti per test d'efficacia.
+Player,Metodo,GetStatStatus,Int32,statname,"Accede alle preferenze macro del player per l'incremento di STR, DEX, INT.2"
+Player,Metodo,GuildButton,Void,N/A,Forza il pacchetto UI bypassando il caricamento dell'interfaccia cartacea Paperdoll.2
+Player,Metodo,HeadMessage,Void,"color [Int32], msg","Emette un prompt invisibile agli altri giocatori sopra l'avatar, ideale per debug.2"
+Player,Metodo,InRange,Boolean,"entity [UOEntity], range [Int32]",Processo interno ad alta efficienza per la validazione geometrica delle condizioni di attacco.
+Player,Metodo,InRangeItem,Boolean,"item [Item/Int32], range [Int32]",Estensione spaziale per la verifica preventiva del drop distance.
+Player,Metodo,InRangeMobile,Boolean,"mobile [Mobile/Int32], range [Int32]",Analogo check per determinare la fattibilità di cure/ingaggio melee.2
+Player,Metodo,InvokeVirtue,Void,virtue,Attivazione delle abilità legate ai punti etici e onorifici di ultima espansione.
+Player,Metodo,KickMember,Void,serial [Int32],Espulsione comandata di nodi dal gruppo logico se in possesso dei diritti di leader.
+Player,Metodo,LeaveParty,Void,force,Genera il comando asincrono per l'abbandono volontario senza passare da Gump.2
+Player,Metodo,MapSay,Void,msg,Interagisce testualmente in particolari broadcast di mappa.
+Player,Metodo,OpenPaperDoll,Void,N/A,"Segnala l'intenzione visiva di mostrare il modello 2D avatar, provocando latenza d'aggiornamento."
+Player,Metodo,PartyAccept,Boolean,"from_serial [Int32], force",Risponde automaticamente ai popup UI intercettando l'invito asincronamente.2
+Player,Metodo,PartyCanLoot,Void,CanLoot,Altera programmaticamente il flag di protezione furti tra compagni di gruppo.
+Player,Metodo,PartyInvite,Void,N/A,Triggera l'attesa di input umano (mirino) per inserimento dinamico logico.2
+Player,Metodo,PathFindTo,Void,"x, y [Int32], z [Int32]",Delega al middleware del client (se supportato) il calcolo euristico del tracciato.
+Player,Metodo,QuestButton,Void,N/A,Accede ai log asincroni della storyline aggirando la grafica paperdoll.
+Player,Metodo,Run,Boolean,direction,Traduce il comando vettoriale in passaggi forzati calcolando dinamicamente le coordinate offsetate.2
+Player,Metodo,SetSkillStatus,Void,"skillname, status [Int32]",Manipola l'UI per prevenire degradi o lockare la crescita di particolari abilità.
+Player,Metodo,SetStatStatus,Void,"statname, status [Int32]",Gestisce logicamente la distribuzione totale limitata dei punti base STR/DEX/INT.
+Player,Metodo,SetStaticMount,Void,serial [Int32],Forza l'inserimento o la correzione dell'identità nel filtro cavalcature di Razor.
+Player,Metodo,SetWarMode,Void,warflag,Imposta reattivamente il framework per permettere l'aggressività del bersaglio.
+Player,Metodo,SpellIsEnabled,Boolean,spellname,Controlla validazioni di debuff per l'accertamento di spell continui (es. focus).2
+Player,Metodo,SumAttribute,Single,attributename,"Operazione costosa: iterazione completa su nodi figli inventario per calcolo bonus globale (LRC, LMC).2"
+Player,Metodo,ToggleAlwaysRun,Void,N/A,Commuta l'impostazione logica di corsa bypassando input fisici di tastiera OSI.
+Player,Metodo,TrackingArrow,Void,"x [UInt16], y [UInt16], display, target [UInt32]",Renderizza una freccia client-side sovrapposta alla schermata simulando rilevamenti ranger.2
+Player,Metodo,UnEquipItemByLayer,Void,"layer, wait",Disassemblaggio garantito attendendo latenza per evitare item bloccati nel limbo.
+Player,Metodo,UnEquipUO3D,Void,_layers [List/PythonList],Modulazione ottimizzata del disarmo per il client asincrono 3D.2
+Player,Metodo,UpdateKarma,Boolean,N/A,Forza una query latente di rete per ricalibrare fama nominale.2
+Player,Metodo,UseSkill,Void,"skillname, target, wait",Metodo core per azionare l'abilità unendola immediatamente all'auto-target predefinito.2
+Player,Metodo,UseSkillOnly,Void,"skillname, wait",Attiva passivamente la meditazione o tracking privando il sistema di un bersaglio forzato.
+Player,Metodo,Walk,Boolean,direction,Genera spostamenti base interpolati e fluidi ignorando la frenesia.2
+Player,Metodo,WeaponClearSA,Void,N/A,Rimuove lo stato pending sulle macro d'arma evitando attacchi inaspettati.
+Player,Metodo,WeaponDisarmSA,Void,N/A,Imposta lo switch per strappare le armi al nemico.2
+Player,Metodo,WeaponPrimarySA,Void,N/A,Assicura l'uso del primo modificatore speciale legato all'arma impugnata (es. Paralyzing Blow).
+Player,Metodo,WeaponSecondarySA,Void,N/A,Modula la seconda mossa disponibile al rilascio del colpo (es. Crushing Blow).
+Player,Metodo,WeaponStunSA,Void,N/A,Attiva stordimento asincrono disarmato nelle interazioni PvP classiche.
+Player,Metodo,Zone,String,N/A,"Legge il tracciato geometrico per restituire classificazioni base come ""Towns"" o ""Dungeons"".2"
+CUO,Metodo,CloseGump,Void,serial [UInt32],Forza la rimozione dell'overlay grafico intercettando il rendering ClassicUO.2
+CUO,Metodo,CloseMobileHealthBar,Void,mobileserial [UInt32/Int32],Elimina le barre HP tirate fuori durante il combattimento riducendo il clutter.2
+CUO,Metodo,CloseMyStatusBar,Void,N/A,Ripulisce lo spazio rimuovendo la rappresentazione visiva dei parametri dell'utente.
+CUO,Metodo,CloseTMap,Boolean,N/A,Simula un'azione hardcoded di click per decostruire l'interfaccia mappe del tesoro.
+CUO,Metodo,FollowMobile,Void,mobileserial [UInt32],Automatizza la routine di follow del client agganciandosi stabilmente al target mobile.
+CUO,Metodo,FollowOff,Void,N/A,Svincola la cinematica dalla precedente entità agganciata.
+CUO,Metodo,Following,Tuple,N/A,Interroga lo status logico di ancoraggio restituendo booleano e id target.2
+CUO,Metodo,FreeView,Void,free,"Sblocca il limite rendering centrato sul personaggio, consentendo ispezioni aeree della mappa."
+CUO,Metodo,GetSetting,String,settingName,Legge la gerarchia JSON interna del client ClassicUO dinamicamente.
+CUO,Metodo,GoToMarker,Void,"x [Int32], y [Int32]",Sposta radicalmente l'area visualizzata se il modulo radar del client è instanziato.
+CUO,Metodo,LoadMarkers,Void,N/A,Ricalcola e istanzia elementi spaziali esterni sulla mappa globale.
+CUO,Metodo,MoveGump,Void,"serial [UInt32], x [Int32], y [Int32]",Previene l'offuscamento tattico rilocalizzando forzatamente le finestre grafiche.2
+CUO,Metodo,OpenContainerAt,Void,"bag [UInt32/Item], x [Int32], y [Int32]",Disegna asincronamente inventari complessi in zone predefinite del monitor.
+CUO,Metodo,OpenMobileHealthBar,Void,"mobileserial [UInt32/Int32], x, y, custom",Costruisce indicatori visivi stabili per monitoraggio boss fight senza drag umano.2
+CUO,Metodo,OpenMyStatusBar,Void,"x [Int32], y [Int32]",Pone lo stato minimale in corner per minimizzare i movimenti oculari.
+CUO,Metodo,PlayMacro,Void,macroName,Invoca subroutine legacy compilate all'interno di UOSteam/ClassicUO.2
+CUO,Metodo,ProfilePropertySet,Void,"propertyName, enable","Riscrive l'hardcode delle impostazioni video, input o audio al volo."
+CUO,Metodo,SetGumpOpenLocation,Void,"gumpserial [UInt32], x [Int32], y [Int32]",Precalcola l'orizzonte di spawn delle finestre Gump in ingresso prevenendo overlap logici.
+Gumps,Metodo,AddAlphaRegion,Void,"gd, x, y, width, height",Istanzia layer traslucidi per custom Gumps.2
+Gumps,Metodo,AddBackground,Void,"gd, x, y, width, height, gumpId",Compila la texture base fondale analizzando i layout array nativi.2
+Gumps,Metodo,AddButton,Void,"gd, x, y, normalID, pressedID, buttonID, type, param",Traccia hotspot logici per il ritorno asincrono ai server.2
+Gumps,Metodo,AddCheck,Void,"gd, x, y, inactiveID, activeID, initialState, switchID",Modella i parametri booleani necessari per la stesura di UI complesse.
+Gumps,Metodo,AddGroup,Void,"gd, group [Int32]",Insiemistica per radio buttons mutamente esclusivi.2
+Gumps,Metodo,AddHtml,Void,"gd, x, y, width, height, text, background, scrollbar",Renderizza markup testuale grezzo sfalsato da sfondi dinamici.2
+Gumps,Metodo,AddHtmlLocalized,Void,"gd, x, y, width, height, number, args, color, background, scrollbar",Risolve l'hash cliloc lato client per generare testi localizzati corretti.
+Gumps,Metodo,AddImage,Void,"gd, x, y, gumpId, hue",Posiziona icone ed elementi bidimensionali scalari.
+Gumps,Metodo,AddImageTiled,Void,"gd, x, y, width, height, gumpId",Genera background a pattern infinito per aree grafiche dilatate.2
+Gumps,Metodo,AddImageTiledButton,Void,"gd, x, y, normalID, pressedID, buttonID, type, param, itemID, hue, width, height, localizedTooltip",Composizione UX avanzata mista per inventari vendor o bank gumps.
+Gumps,Metodo,AddItem,Void,"gd, x, y, itemID, hue",Forza il rendering di asset tridimensionali in un canvas piatto.2
+Gumps,Metodo,AddLabel,Void,"gd, x, y, hue, text",Inietta semplici linee di testo senza necessità di contenitori HTML.
+Gumps,Metodo,AddLabelCropped,Void,"gd, x, y, width, height, hue, text",Assicura che overflow non rompano le geometrie della UI calcolata.
+Gumps,Metodo,AddPage,Void,"gd, page [Int32]",Gestisce l'identificativo numerico per il tab control asincrono.
+Gumps,Metodo,AddRadio,Void,"gd, x, y, inactiveID, activeID, initialState, switchID",Impone strutture condizionali obbligatorie nei response.
+Gumps,Metodo,AddSpriteImage,Void,"gd, x, y, gumpId, spriteX, spriteY, spriteW, spriteH",Affetta texture di grosse dimensioni renderizzandone frazioni.
+Gumps,Metodo,AddTextEntry,Void,"gd, x, y, width, height, hue, entryID, initialText",Campi logici in attesa di keystrokes per configurazioni testuali.
+Gumps,Metodo,AddTooltip,Void,"gd, cliloc, text",Arricchisce gli hover con metadati recuperati dal dizionario cliloc locale.
+Gumps,Metodo,AllGumpIDs,List[UInt32],N/A,Ritorna l'elenco grezzo dei puntatori memoria per i Gump attuali.2
+Gumps,Metodo,CloseGump,Void,gumpid [UInt32],Notifica l'engine UI della chiusura esplicita liberando RAM.
+Gumps,Metodo,CreateGump,Gumps.GumpData,"movable, closable, disposable, resizeable",Costruttore di base per simulare l'esistenza logica di una UI.2
+Gumps,Metodo,CurrentGump,UInt32,N/A,Accede cronologicamente all'ultimo handle istanziato.2
+Gumps,Metodo,GetGumpData,Gumps.GumpData,gumpid [UInt32],Espone l'array di byte formattato che costituisce la struttura logica e dati della UI.
+Gumps,Metodo,GetGumpRawLayout,String,gumpid [UInt32],Dump testuale dell'esadecimale impaginato per ispezioni di reverse engineering.2
+Gumps,Metodo,GetGumpText,List,gumpid [UInt32],"Traduzione iterativa di tutte le stringhe, interpolando i cliloc al loro significato effettivo.2"
+Gumps,Metodo,GetLine,String,"gumpId [UInt32], line_num [Int32]",Isolamento diretto della sequenza dati (bypassando costanti di markup).
+Gumps,Metodo,GetLineList,List,"gumpId [UInt32], dataOnly",Genera il resoconto testuale per pattern matching asincrono.2
+Gumps,Metodo,GetTextByID,String,"gd, id [Int32]",Risolve singole referenze interfacciandosi con la mappa cliloc della singola UI.
+Gumps,Metodo,HasGump,Boolean,gumpId [UInt32],Check rapido anti-blocco logico prima di innescare cicli di attesa.2
+Gumps,Metodo,IsValid,Boolean,gumpId [Int32],"Verifica d'integrità strutturale contro i file mul correnti, assicurando che l'asset esista."
+Gumps,Metodo,LastGumpGetLine,String,line_num [Int32],Acquisizione semplificata dall'ultima istanza senza richiedere fetch dell'ID.2
+Gumps,Metodo,LastGumpGetLineList,List,N/A,Generazione string array dall'ultima finestra generata per rapida validazione.
+Gumps,Metodo,LastGumpRawLayout,String,N/A,"Simile a GetGumpRawLayout, velocizza il check dell'ultima finestra."
+Gumps,Metodo,LastGumpTextExist,Boolean,text,Valutazione booleana dell'esistenza di substring all'interno dell'ultimo gump.
+Gumps,Metodo,LastGumpTextExistByLine,Boolean,"line_num [Int32], text",Accuratezza massima circoscrivendo la ricerca testuale a una specifica label UI.
+Gumps,Metodo,LastGumpTile,List[Int32],N/A,Estrapola i referenziali di texture inclusi nella finestra (utili per vendor/BOD).
+Gumps,Metodo,ResetGump,Void,N/A,Pulizia cruda dei puntatori e variabili interne della classe.
+Gumps,Metodo,SendAction,Void,"gumpid [UInt32], buttonid [Int32]",Simula la transazione completa logica confermando premute asincrone al server.2
+Gumps,Metodo,SendAdvancedAction,Void,"gumpid, buttonid, inSwitches, textlist_id, textlist_str",Crea il payload customizzato iniettando manipolazioni arbitrarie per eludere restrizioni visive.2
+Gumps,Metodo,SendGump,Void,"gumpid, serial, x, y, gumpDefinition, gumpStrings",Ricrea ex-novo il pacchetto inoltrandolo intero se in possesso della sua struttura.2
+Gumps,Metodo,WaitForGump,Boolean,"gumpid [UInt32], delay [Int32]",Evita overhead bloccando l'interprete finché il listener di rete non identifica l'header del gump corretto.
+Gumps.GumpData,Proprietà,Varie,Misto,N/A,"Struttura contenente liste di stringhe, ID bottoni, array seriali e booleani di risposta della finestra logica.2"
+Journal,Metodo,Clear,Void,toBeRemoved,Dealloca stringhe vetuste dal buffer circolare per ridurre oneri di comparazione testo.2
+Journal,Metodo,FilterText,Void,text,Modella un filtro passivo che previene l'aggiunta al log per stringhe esatte eludendo trigger accidentali.
+Journal,Metodo,GetJournalEntry,List[JournalEntry],afterTimestap,"Costrutto basato su istante Unix per generare subset ultra-compatti del log, ottimizzando la ricerca continua.2"
+Journal,Metodo,GetLineText,String,"text, addname",Isola e manipola la prima ricorrenza trovata includendo opzionalmente la referenza di chi ha parlato.
+Journal,Metodo,GetSpeechName,List,N/A,"Genera la lista di entità captate dai pacchetti audio testuali, fungendo da radar nominale passivo.2"
+Journal,Metodo,GetTextByColor,List,"color [Int32], addname","Limita logicamente l'analisi a eventi severi (es. rosso per morte, viola per magie) decodificando l'estetica.2"
+Journal,Metodo,GetTextByName,List,"name, addname",Segrega le dichiarazioni in base all'identificativo esplicito.
+Journal,Metodo,GetTextBySerial,List,"serial [Int32], addname",Garanzia assoluta di isolamento per entità aggirando ambiguità di NPC omonimi (es. Banker).
+Journal,Metodo,GetTextByType,List,"type, addname","Separa strutturalmente i log in base alla codifica pacchetto: system, emote, party, spell, alliance.2"
+Journal,Metodo,RemoveFilterText,Void,text,Ripristina l'ascolto per chiavi negate.
+Journal,Metodo,Search,Boolean,text,Implementa un banale contains su tutto il buffer attivo in memoria.
+Journal,Metodo,SearchByColor,Boolean,"text, color [Int32]",Riduce esponenzialmente le false flag (es. se player simula il testo di sistema) forzando la veridicità cromatica.2
+Journal,Metodo,SearchByName,Boolean,"text, name",Restringe ai falsi di identità controllando esplicitamente la fonte.
+Journal,Metodo,SearchByType,Boolean,"text, type",Assicura che un cast text (spell) non venga confuso con testo normale.
+Journal,Metodo,WaitByName,Boolean,"name, delay [Int32]",Congela e risveglia il thread solo a ricezione confermata dall'entità nominata.2
+Journal,Metodo,WaitJournal,Boolean,"text, delay [Int32]",Implementazione cardine per le macro: sospensione reattiva su array di stimoli linguistici.2
+Journal.JournalEntry,Proprietà,"Color, Name, Serial, Text, Timestamp, Type",Misto,N/A,"Dettagli incapsulati per la singola iterazione di linea testuale, che include il riferimento nativo a UnixTime per comparazioni delta.2"
+Misc,Metodo,AllSharedValue,List,N/A,Accesso diretto alle chiavi depositate nello spooler inter-thread.2
+Misc,Metodo,AppendNotDupToFile,Boolean,"fileName, lineOfData",IO file con check d'integrità anti-spam per esportazioni controllate di log sicuri.
+Misc,Metodo,AppendToFile,Boolean,"fileName, lineOfData",Metodo IO basilare confinato geograficamente nelle limitazioni delle directory permesse (ValidLocations).2
+Misc,Metodo,Beep,Void,N/A,Interfaccia d'avviso basica acustica di sistema.
+Misc,Metodo,CancelPrompt,Void,N/A,Forza la chiusura asincrona del popup d'inserimento stringhe comandato dal client.
+Misc,Metodo,CaptureNow,String,N/A,Estrae il framebuffer e codifica una risorsa snapshot locale documentativa.
+Misc,Metodo,ChangeProfile,Void,profileName,Altera l'intero ecosistema di setup Razor al volo riavviando agenti in configurazioni diverse.2
+Misc,Metodo,CheckIgnoreObject,Boolean,serial [UOEntity/Int32],Naviga la blacklist per evitare overhead di calcolo su entità marcate.2
+Misc,Metodo,CheckSharedValue,Boolean,name,Determina asincronamente se altre routine parallele hanno pubblicato valori globali.
+Misc,Metodo,ClearDragQueue,Void,N/A,"Svuota pacchetti pendenti di spostamento mouse, prevenendo bug di sync inventario."
+Misc,Metodo,ClearIgnore,Void,N/A,Reinizializza il pool globale delle blacklist in un colpo solo.
+Misc,Metodo,CloseBackpack,Void,N/A,Oscura la finestra radice riducendo frame rendering su OSI client.2
+Misc,Metodo,CloseMenu,Void,N/A,Pulisce le interfacce legacy (Old Menu) come blacksmithing classico.
+Misc,Metodo,ConfigDirectory,String,N/A,Restituisce stringa esatta locale utile per IO relative reference.
+Misc,Metodo,ContextReply,Void,"serial, respone_num",Manipola l'array di contesto inviando risposta simulata per triggerare azioni su NPC o items.2
+Misc,Metodo,DataDirectory,String,N/A,Accesso al puntatore dati di Razor interno.
+Misc,Metodo,DeleteFile,Boolean,fileName,Manipolazione esplicita con vincoli di path traversals (anti-malware logico).2
+Misc,Metodo,Disconnect,Void,N/A,Iniettazione esplicita del pacchetto kill TCP causante logout coatto anti-rischio.
+Misc,Metodo,Distance,Int32,"X1, Y1, X2, Y2",Offre il modulo euclideo matematico svincolato dalle istanze di Memory.
+Misc,Metodo,DistanceSqrt,Double,"point_a, point_b",Variante pitagorica complessa su oggetti tridimensionali nativi.
+Misc,Metodo,ExportPythonAPI,Void,"path, pretty",Genera autonomamente il JSON schema della documentazione che leggete per reflection.2
+Misc,Metodo,FilterSeason,Void,"enable, seasonFlag [UInt32]",Forza client side (Spring/Desolation) modificando il blocco grafico per evidenziare tile.
+Misc,Metodo,FocusUOWindow,Void,N/A,Chiama l'interfaccia Win32 API per ripristinare z-order massimo in caso di background task alert.2
+Misc,Metodo,GetContPosition,Point,N/A,Restituisce coordinate screen-space OSI per allineamenti visivi.
+Misc,Metodo,GetMapInfo,Misc.MapInfo,serial [UInt32],"Fornisce la struct contenente Facet, Origini e Pin per mappe esplorative."
+Misc,Metodo,GetMenuTitle,String,N/A,Recupera il testo dell'header nativo Old Menu bypassando le stringhe di contenuto.
+Misc,Metodo,GetWindowSize,Rectangle,N/A,"Estrae la risoluzione client dinamica, utile per mouse dragging matematici centrali.2"
+Misc,Metodo,HasMenu,Boolean,N/A,Indice anti-blocco per vecchi listati di trade logico.
+Misc,Metodo,HasPrompt,Boolean,N/A,"Controlla i timeout string-input, tipici dei re-name di rune di trasporto."
+Misc,Metodo,HasQueryString,Boolean,N/A,Equivalente logico per l'analisi di formattazione interrogata passivamente.2
+Misc,Metodo,IgnoreObject,Void,serial [UOEntity/Int32],Isolamento chirurgico dell'entità per depuramento computazionale di altre query filtro.2
+Misc,Metodo,Inspect,Void,N/A,Visualizzazione asincrona della UI ispettiva nativa di Razor su crosshair targettato.
+Misc,Metodo,IsItem,Boolean,serial [UInt32],Enumera e disseziona il seriale determinando la derivazione esadecimale oggetto (bit masking).
+Misc,Metodo,IsMobile,Boolean,serial [UInt32],Disseziona per validazione entità vivente evitando eccezioni pointer cast.2
+Misc,Metodo,LastHotKey,HotKeyEvent,N/A,Permette subroutine che reagiscono asincronamente a trigger sequenziali umani.
+Misc,Metodo,LeftMouseClick,Void,"xpos [Int32], ypos [Int32], clientCoords",Hard-simulation fisica inviando hook all'OS (Win32) utile se il pacchetto è blindato (captcha server free).2
+Misc,Metodo,MenuContain,Boolean,text,Lettura diretta del buffer Old Menu aggirando le logiche di Gump complesse.2
+Misc,Metodo,MenuResponse,Void,text,Identifica l'indice per stringa e trasmette istantaneamente l'esito al server.
+Misc,Metodo,MouseLocation,Point,N/A,Sniffa le posizioni in coordinate schermo per allineamenti UI matematici.2
+Misc,Metodo,MouseMove,Void,"posX [Int32], posY [Int32]",Traslazione simulata passiva Win32 (evita rilevazioni bot rudimentali).
+Misc,Metodo,NextContPosition,Void,"x [Int32], y [Int32]",Forza logica dell'assegnazione OSI client per inventari in cascata (looting).2
+Misc,Metodo,NoOperation,Void,N/A,Implementa operazione dummy per preservazione cicli while minimali senza uso CPU (Nop logico).2
+Misc,Metodo,NoRunStealthStatus,Boolean,N/A,Estrae parametro toggle anti-rilevamento per moduli di infiltrazione ladri.
+Misc,Metodo,NoRunStealthToggle,Void,enable,Dinamicamente forza il cammino lento disattivando logiche pathfinder di corsa errate.2
+Misc,Metodo,OpenPaperdoll,Void,N/A,Costringe caricamento inventario equip forzato (solo OSI).2
+Misc,Metodo,Pause,Void,millisec [Int32],Astrazione di Thread.Sleep che non invalida il listener background degli agenti principali.2
+Misc,Metodo,PetRename,Void,"serial [Mobile/Int32], name",Sfrutta l'override di protocollo per mutare etichetta associata al familiar sottomesso.2
+Misc,Metodo,PlaySound,Void,"sound [Int32], x, y, z",Falso invio audio: produce rumore locale per alert fisici su script AFK.2
+Misc,Metodo,QueryStringResponse,Void,"okcancel, response",Formula e chiude i menu modali di conferme incantesimi o donazioni server side.
+Misc,Metodo,RazorDirectory,String,N/A,Navigazione assoluta delle risorse. Disaccoppia dipendenze su plugin injection come in ClassicUO.
+Misc,Metodo,ReadSharedValue,Object,name,"Insieme a SetSharedValue, forma il core per pipeline inter-process communication di IronPython.2"
+Misc,Metodo,RemoveLineInFile,Boolean,"fileName, lineOfData",Modifica distruttiva sicura per logfile attivi.2
+Misc,Metodo,RemoveSharedValue,Void,name,Deallocazione chirurgica prevenendo memory leaks sulle hashset condivise.2
+Misc,Metodo,ResetPrompt,Void,N/A,Previene loop condizionali di menu impallati lato server.
+Misc,Metodo,ResponsePrompt,Void,text,Scavalca finestre di input testuale inviando l'ok passivo.
+Misc,Metodo,Resync,Void,N/A,Essenziale dopo spostamenti via portali: costringe rigenerazione matriciale delle entità vicine svuotando cache corrotte.2
+Misc,Metodo,RightMouseClick,Void,"xpos [Int32], ypos [Int32], clientCoords",Operazione affine per annullamenti UI o ispezioni fisiche Win32.
+Misc,Metodo,ScriptCurrent,String,fullpath,"Restituisce la sorgente chiamante, basilare per librerie relative."
+Misc,Metodo,ScriptIsSuspended,Boolean,scriptfile,Controllo diagnostico thread pool.2
+Misc,Metodo,ScriptResume,Void,scriptfile,Decongela l'esecutore logico IronPython risvegliando il task.
+Misc,Metodo,ScriptRun,Void,scriptfile,"Implementa chaining di script, chiamando master e servant per code complesse.2"
+Misc,Metodo,ScriptStatus,Boolean,scriptfile,Verifica generica di esistenza task in grid.
+Misc,Metodo,ScriptStop,Void,scriptfile,Interruzione letale e pulita del thread specificato.
+Misc,Metodo,ScriptStopAll,Void,skipCurrent,Kill-switch d'emergenza asincrono per l'intera virtual machine script.2
+Misc,Metodo,ScriptSuspend,Void,scriptfile,Congelamento dello state frame del thread.
+Misc,Metodo,SendMessage,Void,"msg [Object], color [Int32], wait",Iniettore di logica debug locale mascherato esteticamente nel client UI. Supporta derivazioni multiple.2
+Misc,Metodo,SendToClient,Void,keys,"Ponte di bypass per keystrokes (Ctrl, Alt) essenziale nei bypass su ClassicUO per comandi nativi.2"
+Misc,Metodo,SetSharedValue,Void,"name, value [Object]",Sovrascrive o alloca lo spool di interscambio per architetture multi-macro.
+Misc,Metodo,ShardName,String,N/A,Rileva il contesto geografico del server utile per conditional logic multipli shard.2
+Misc,Metodo,UnIgnoreObject,Void,serial [UOEntity/Int32],Ripristina visibilità e iterabilità logica annullando isolamenti di IgnoreObject.
+Misc,Metodo,UseContextMenu,Boolean,"serial [Int32], choice, delay [Int32]",Simula integralmente le procedure click UI su entità e risposte testuali in tempo nullo.2
+Misc,Metodo,WaitForContext,List[Misc.Context],"serial [Item/Mobile/Int32], delay [Int32], showContext","Attendendo che il server restituisca gli array di opzioni (es. ""Acquista"", ""Vendi"") genera il contesto.2"
+Misc,Metodo,WaitForMenu,Boolean,delay [Int32],Listener asincrono su pacchetti legacy UI per artigianato retrò.
+Misc,Metodo,WaitForPrompt,Boolean,delay [Int32],Freeze logico che previene l'assenza di payload nel response prompt.
+Misc,Metodo,WaitForQueryString,Boolean,delay [Int32],Identico uso limitato al menu testuale a tendina dei vendor free-shard.2
+PacketLogger,Metodo,AddBlacklist,Void,packetID [Int32],Estrapola in base pre-parsing ed elide in runtime i nodi id per filtrare noise.2
+PacketLogger,Metodo,AddTemplate,Void,packetTemplate,Inserisce definizioni JSON che forzano lo spatial parsing del logger su logiche private OSI.
+PacketLogger,Metodo,AddWhitelist,Void,packetID [Int32],Approccio Zero-Trust che mostra solo stringhe diagnosticate per ID.
+PacketLogger,Metodo,DiscardAll,Void,discardAll,Pone l'intercettatore in isolamento restrittivo (solo whitelist mostrata).2
+PacketLogger,Metodo,DiscardShowHeader,Void,showHeader,Fornisce visibilità metadati scartando l'hex dump interno alleggerendo risorse CPU.
+PacketLogger,Metodo,ListenPacketPath,Array,"packetPath, active","Determina asincronamente se deviare i byte ClientToServer, ServerToClient, o RazorToServer.2"
+PacketLogger,Metodo,RemoveTemplate,Void,packetID [Int32],Rimuove lo spatial decoding per ripristinare il dump base.2
+PacketLogger,Metodo,Reset,Void,N/A,Riporta le variabili interne asincrone di monitor allo stato di fabbrica (non offuscato).
+PacketLogger,Metodo,SendToClient,Void,packetData [List],Scrive nativamente in ingresso. Ad esempio genera mostri visivi fittizi o UI estreme lato client.
+PacketLogger,Metodo,SendToServer,Void,packetData [List],Altera l'input buffer ignorando il client interamente per trasmettere payload raw TCP.2
+PacketLogger,Metodo,SetOutputPath,String,outputpath,Deriva la destinazione asincrona del dump di file continuo.2
+PacketLogger,Metodo,Start,String,"outputpath, appendLogs",Crea lock di sistema per I/O e inizia la transcodifica byte in log ASCII.2
+PacketLogger,Metodo,Stop,String,N/A,Sblocca IO lock salvando e disattivando l'aggancio socket.
+PacketLogger.FieldTemplate,Proprietà,"fields, length, name, subpacket, type",Misto,N/A,"Astrazioni che definiscono i frammenti di estrazione complessi. Esempi di FieldType supportati per il decoding automatico JSON: BOOL, DUMP, FIELDS, HEX, INT, MODELID, PACKETID, SERIAL, SKIP, SUBPACKET, TEXT, UINT, UTF8.2"
+Sound,Metodo,AddFilter,Void,"name, sounds [List[Int32]]",Maschera gli invii audio fastidiosi per facilitare il testing intensivo (es. cani o macchinari).
+Sound,Metodo,Log,Void,activateLogging,Abilita il tracking per derivazione euristica di trigger (es. stealth detection).
+Sound,Metodo,OnFilter,Void,"p, args [PacketHandlerEventArgs]",Gestione asincrona a basso livello.2
+Sound,Metodo,RemoveFilter,Void,name,Ristabilisce il normale invio al client API audio locale.
+Sound,Metodo,WaitForSound,Boolean,"sounds [List[Int32]], timeout [Int32]",Listener passivo privo di calcolo poligonale basato sui request 0x54 per trigger macro ad alte performance.
+PathFinding,Metodo,GetPath,List,"dst_x [Int32], dst_y [Int32], ignoremob",Deriva la sequenza vettoriale più breve iterando nodi del grafo ostacoli.2
+PathFinding,Metodo,Go,Boolean,r,Controlla la disponibilità topologica per un oggetto Route complesso asincrono.
+PathFinding,Metodo,PathFindTo,Void,"x, y [Int32], z [Int32]",Forza l'avvio del calcolatore path interno inietando step sequenziali.2
+PathFinding,Metodo,RunPath,Boolean,"path], timeout, debugMessage, useResync",Genera gli input camminata elaborando iterativamente l'array Tile.2
+PathFinding,Metodo,Tile,Tile,"x [Int32], y [Int32]",Alloca staticamente una geometria Tile.
+PathFinding.Route,Proprietà,"DebugMessage, IgnoreMobile, MaxRetry, Run, StopIfStuck, Timeout, UseResync, X, Y",Misto,N/A,"Dettagli di tuning del solutore: limiti massimi, forzatura ignoramento mostri attivi, sync in caso di fallback."
+Statics,Metodo,CheckDeedHouse,Boolean,"x [Int32], y [Int32]",Verifica collisioni invisibili generate da strutture Multi (housing) essenziale per recall o costruzioni.2
+Statics,Metodo,GetItemData,ItemData,StaticID [Int32],Ritorna il payload binario.2
+Statics,Metodo,GetLandFlag,Boolean,"staticID [Int32], flagname","Identifica metadati flag: Impassable, Wet ecc.2"
+Statics,Metodo,GetLandID,Int32,"x [Int32], y [Int32], map [Int32]",Isola il puntatore poligonale al suolo base crudo in mappa (0-5 facet).2
+Statics,Metodo,GetLandName,String,StaticID [Int32],"Decodifica la classe testuale string (es. erba, fango)."
+Statics,Metodo,GetLandZ,Int32,"x [Int32], y [Int32], map [Int32]",Ritorna la griglia altimetrica Z nuda senza ostacoli tridimensionali aggiunti.
+Statics,Metodo,GetStaticsLandInfo,Statics.TileInfo,"x [Int32], y [Int32], map [Int32]",Assieme di entità fusa fornente l'oggetto d'analisi statico principale.2
+Statics,Metodo,GetStaticsTileInfo,List,"x, y, map","Array composito per la lettura verticale di tutti i piani sovrapposti (tetto, pavimento) nella coordinata X,Y."
+Statics,Metodo,GetTileFlag,Boolean,"StaticID [Int32], flagname","Valutazione booleana equivalente su strutture elevate o costruite (Surface, Bridge)."
+Statics,Metodo,GetTileHeight,Int32,StaticID [Int32],Modificatore additivo al Z level calcolando l'ingombro del modello.
+Statics,Metodo,GetTileName,String,StaticID [Int32],Metadato del nome del particolare blocco in-game (es. Wall of Stone).
+Spells,Metodo,Cast,Void,"SpellName, target [UInt32], wait, waitAfter [Int32]",Proxy globale asincrono che invia ID pacchetto in parallelo al cursore atteso verso il target logico designato.2
+Spells,Metodo,CastBushido,Void,"SpellName, wait, waitAfter","Incorpora le esecuzioni fisiche mascherate da spell (Confidence, Lightning Strike).2"
+Spells,Metodo,CastChivalry,Void,"SpellName, target, wait, waitAfter","Associa abilità Paladino per targetting selettivo (Enemy Of One, Remove Curse)."
+Spells,Metodo,CastCleric,Void,"SpellName, target, wait, waitAfter","Classe per server emulatori estesi con magie Cleriche (Bark Skin, Deadly Spores, Circle Of Thorns).2"
+Spells,Metodo,CastDruid,Void,"SpellName, target, wait, waitAfter","Equivalente proxy per magia Druidica estesa su shard custom (Angelic Faith, Banish Evil)."
+Spells,Metodo,CastLastSpell,Void,"target [UInt32], wait",Ottimizzazione estrema che utilizza buffer logici del client bypassando selezioni testuali incantesimi.
+Spells,Metodo,CastLastSpellLastTarget,Void,N/A,Massima performance inviando comando e memoria ultima in un burst TCP singolo.
+Spells,Metodo,CastMagery,Void,"SpellName, target, wait, waitAfter",Accesso esplicito catalogato alla magia nativa originale da Circle 1 a 8.2
+Spells,Metodo,CastMastery,Void,"SpellName, target, wait, waitAfter","Gestione tempi di cast prolungati ed interazioni speciali (Inspire, Ethereal Blast) per le abilità attive di sistema Mastery."
+Spells,Metodo,CastMysticism,Void,"SpellName, target, wait, waitAfter","Proxy per magie elementali complesse a base Mysticism (Rising Colossus, Spell Plague)."
+Spells,Metodo,CastNecro,Void,"SpellName, target, wait, waitAfter",Gestisce forme alternative che cambiano Graphic ID del Player ostacolando targetting base (Wraith Form).2
+Spells,Metodo,CastNinjitsu,Void,"SpellName, target, wait, waitAfter","Spell basati sull'illusione anatomica o mobilità (Animal Form, Mirror Image)."
+Spells,Metodo,CastSpellweaving,Void,"SpellName, target, wait, waitAfter","Gestione di timing curativi (Gift of Renewal, Word of Death) su alleati o nemici in punto di morte.2"
+Spells,Metodo,ExportSpellsToJson,Void,N/A,Permette la personalizzazione dei delay incantesimi e ID scrivendo profili CustomSpells modificabili offline.2
+Spells,Metodo,Interrupt,Void,N/A,Genera forzatamente disarmo lampo per innescare errore logico annullando il ritardo di esecuzione dello spell in volo.
+Target,Metodo,AttackTargetFromList,Void,target_name,Delega al filtro UI interno Razor il compito di individuare ostilità conformi a profili grafici.
+Target,Metodo,Cancel,Void,N/A,Simula pacchetto Escape per rimozione lock client UI.2
+Target,Metodo,ClearLast,Void,N/A,Esegue purging per non cross-focalizzare per sbaglio guarigioni su cadaveri precedenti.
+Target,Metodo,ClearLastAttack,Void,N/A,Pulisce focus per prevenire swing passivi fatali.
+Target,Metodo,ClearLastandQueue,Void,N/A,Resetta integralmente logica di accumulo.
+Target,Metodo,ClearQueue,Void,N/A,Elimina sequenze multiple caricate in spool.
+Target,Metodo,GetLast,Int32,N/A,Richiama in formato uint il puntatore di memoria bersaglio precedente.2
+Target,Metodo,GetLastAttack,Int32,N/A,Identico per entità ostile focale.
+Target,Metodo,GetTargetFromList,Mobile,target_name,Itera logiche di calcolo del modulo UI e restituisce oggetto referenziato Mobile.2
+Target,Metodo,HasTarget,Boolean,targetFlag,"Identifica se cursore attivo (se specificato flag controlla Beneficial, Harmful, Neutral)."
+Target,Metodo,Last,Void,N/A,Proxy esecutivo.
+Target,Metodo,LastQueued,Void,N/A,Pone in attesa passiva evitando overhead e iniettando target solo ad apparizione cursore.2
+Target,Metodo,LastUsedObject,Int32,N/A,Restituisce parametro utile a riutilizzare bende o daggers di taglio macro (UOA compatible).
+Target,Metodo,PerformTargetFromList,Void,target_name,Equivalente UI filter.
+Target,Metodo,PromptGroundTarget,Point3D,"message, color [Int32]","Arresta l'automazione in attesa che utente confermi input XYZ, ritornando Point geometrico (es. evocazioni ostacoli).2"
+Target,Metodo,PromptTarget,Int32,"message, color [Int32]",Attende iterazione mouse su seriale identificabile ritornandone uint32 per logica.2
+Target,Metodo,Self,Void,N/A,Iniettare puntatore identitario per self-casting rapido.
+Target,Metodo,SelfQueued,Void,N/A,Accodamento invisibile pre-cast.
+Target,Metodo,SetLast,Void,"serial [Int32], wait",Sovrascrive il reference salvato programmaticamente bypassando selezioni fisiche.
+Target,Metodo,SetLastTargetFromList,Void,target_name,Utilizza profilazione GUI.
+Target,Metodo,TargetExecute,Void,"x [Int32], y [Int32], z [Int32], StaticID [Int32]","Forza esecuzione bruta su entità precise non limitate, incluse intere posizioni coordinate.2"
+Target,Metodo,TargetExecuteRelative,Void,"mobile [Mobile], offset [Int32]",Calcola derivata vettoriale (distanza posizionale frontale) utile per campi di fuoco posizionati tatticamente.
+Target,Metodo,TargetResource,Void,"item_serial [Int32], resource_number","Funzione d'automazione craft o gathering, itera l'item per estrarre legno/roccia.2"
+Target,Metodo,TargetType,Boolean,"graphic, color, range, selector, notoriety",Trova match logico in tile ridotti senza overhead di iterazioni Mobile lunghe.
+Target,Metodo,WaitForTarget,Boolean,"delay [Int32], noshow","Mette in sleep attesa per massimizzare timing frame, se noshow oscura UI cursore per fluidità visiva.2"
+Target,Metodo,WaitForTargetOrFizzle,Boolean,"delay [Int32], noshow","Modulazione ottimizzata del blocco: risveglia script anche su arrivo fallimento incantesimo, evitando stalli fatali di latenza."
+Trade,Metodo,Accept,Boolean,"TradeID [Int32], accept","Genera pacchetto check, assicurando il toggle indipendentemente dalle azioni utente UI.2"
+Trade,Metodo,Cancel,Boolean,TradeID [Int32],Evita esploit rigettando finestre di compravendita interrotte asincronamente.
+Trade,Metodo,Offer,Boolean,"TradeID, gold [Int32], platinum [Int32], quiet",Altera l'offerta bypassando limiti mouse inserendo moneta da backend per compravendite rapide e massicce.
+Trade,Metodo,TradeList,List,N/A,Fornisce pool vettoriale che espone lo stato isolato di ciascun accordo in corso nel client.
+Trade.TradeData,Proprietà,"AcceptMe, AcceptTrader, ContainerMe, ContainerTrader, GoldMax, GoldMe, GoldTrader, LastUpdate, NameTrader, PlatinumMax, PlatinumMe, PlatinumTrader, SerialTrader, TradeID",Misto,N/A,Dettagli incapsulati per sicurezza: garantiscono lo storico in memoria permettendo l'analisi logica per bloccare furti di Platinum nascosto visivamente all'ultimo secondo di tick.2
+Vendor,Metodo,Buy,Boolean,"vendorSerial [Int32], itemName, amount [Int32], maxPrice [Int32]","Operatore base asincrono d'acquisizione. Effettua l'iterazione sulle code Vendor Gump, comparando itemName, disponibilità matematica di amount e forzando il maxPrice per arginare iper-inflazioni sui player vendor."
+Vendor,Metodo,BuyList,List,vendorSerial [Int32],Sonda lo snapshot dell'ultima transazione per validazione inventario e logging di cassa continuo.2
+Vendor,Proprietà,"LastBuyList, LastResellList",List[Item],N/A,Accumulatore vettoriale che funge da ricevuta di contabilità per script di mercato.2
+Vendor.BuyItem,Proprietà,"Amount, ItemID, Name, Price, Serial",Misto,N/A,Identificativi isolati della ricevuta utile a dissezionare item per item i saldi decurtati in transazioni aggregate.

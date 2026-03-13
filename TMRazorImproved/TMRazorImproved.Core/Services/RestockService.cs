@@ -36,6 +36,16 @@ namespace TMRazorImproved.Core.Services
             hotkeyService.RegisterAction("Restock: Stop", () => _ = StopAsync());
         }
 
+        public void ChangeList(string listName)
+        {
+            var profile = _configService.CurrentProfile;
+            if (profile != null)
+            {
+                profile.ActiveRestockList = listName;
+                _logger.LogInformation("Restock list changed to: {ListName}", listName);
+            }
+        }
+
         private RestockConfig? GetActiveConfig()
         {
             var profile = _configService.CurrentProfile;

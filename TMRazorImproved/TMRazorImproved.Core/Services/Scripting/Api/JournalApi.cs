@@ -120,19 +120,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _journal.OnNewEntry += handler;
             try
             {
-                using var cts = new CancellationTokenSource();
-                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, _cancel.Token);
-                cts.CancelAfter(timeoutMs);
-                
                 var task = tcs.Task;
-                // WaitSync in .NET 6+ o Task.WhenAny per compatibilità
-                if (Task.WhenAny(task, Task.Delay(timeoutMs, linkedCts.Token)).GetAwaiter().GetResult() == task)
-                    return task.Result;
-                
-                return false;
-            }
-            catch (OperationCanceledException)
-            {
+                var deadline = Environment.TickCount64 + timeoutMs;
+                while (Environment.TickCount64 < deadline)
+                {
+                    _cancel.ThrowIfCancelled();
+                    if (task.IsCompleted) return task.Result;
+                    Thread.Sleep(50);
+                }
                 return false;
             }
             finally

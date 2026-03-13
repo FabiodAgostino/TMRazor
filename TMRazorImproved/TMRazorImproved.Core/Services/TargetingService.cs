@@ -29,6 +29,7 @@ namespace TMRazorImproved.Core.Services
         private volatile bool _hasPrompt;
         private volatile bool _hasTargetCursor;
         private volatile uint _pendingCursorId;
+        private volatile byte _pendingCursorType;
         // FIX P1-02: tracking serial/promptId dal pacchetto 0x9A S2C
         private volatile uint _pendingPromptSerial;
         private volatile uint _pendingPromptId;
@@ -42,11 +43,12 @@ namespace TMRazorImproved.Core.Services
         public bool HasPrompt => _hasPrompt;  // volatile read
         public bool HasTargetCursor => _hasTargetCursor;
         public uint PendingCursorId => _pendingCursorId;
+        public byte PendingCursorType => _pendingCursorType;
         public uint PendingPromptSerial => _pendingPromptSerial;
         public uint PendingPromptId => _pendingPromptId;
 
         public event Action<uint>? TargetCursorRequested;
-        public event Action<uint>? TargetReceived;
+        public event Action<TargetInfo>? TargetReceived;
         public event Action<bool>? PromptChanged;
 
         public TargetingService(
@@ -86,8 +88,9 @@ namespace TMRazorImproved.Core.Services
 
             uint cursorId = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(2));
             _pendingCursorId = cursorId;
+            _pendingCursorType = data[6];
             _hasTargetCursor = true;
-            _logger.LogDebug("Target Cursor Received from Server: cursorId=0x{CursorId:X}", cursorId);
+            _logger.LogDebug("Target Cursor Received from Server: cursorId=0x{CursorId:X}, type={CursorType}", cursorId, _pendingCursorType);
             TargetCursorRequested?.Invoke(cursorId);
         }
 
@@ -105,17 +108,27 @@ namespace TMRazorImproved.Core.Services
         private void HandleTargetResponse(byte[] data)
         {
             // Pacchetto 0x6C C2S: il client risponde al server con il target selezionato
-            // [0] 0x6C  [1] type  [2-5] cursorId  [6] action  [7-10] serial
-            if (data.Length < 11) return;
+            // [0] 0x6C  [1] type  [2-5] cursorId  [6] action  [7-10] serial  [11-12] x  [13-14] y  [15] z  [16-17] graphic
+            if (data.Length < 19) return;
 
             uint serial = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(7));
             byte action = data[6];
 
-            if (action == 0 && serial != 0)
+            if (action == 0)
             {
-                _lastTarget = serial;
-                _logger.LogDebug("Target Response Received: 0x{Serial:X}", serial);
-                TargetReceived?.Invoke(serial);
+                if (serial != 0) _lastTarget = serial;
+                
+                var info = new TargetInfo
+                {
+                    Serial = serial,
+                    X = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(11)),
+                    Y = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(13)),
+                    Z = (sbyte)data[15],
+                    Graphic = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(16))
+                };
+
+                _logger.LogDebug("Target Response Received: Serial=0x{Serial:X} X={X} Y={Y} Z={Z} Graphic={Graphic}", serial, info.X, info.Y, info.Z, info.Graphic);
+                TargetReceived?.Invoke(info);
             }
         }
 
@@ -123,6 +136,7 @@ namespace TMRazorImproved.Core.Services
         {
             _hasTargetCursor = false;
             _pendingCursorId = 0;
+            _pendingCursorType = 0;
         }
 
         public void RequestTarget()
@@ -227,13 +241,13 @@ namespace TMRazorImproved.Core.Services
             _packetService.SendToServer(packet);
         }
 
-        public async Task<uint> AcquireTargetAsync()
+        public async Task<TargetInfo> AcquireTargetAsync()
         {
-            var tcs = new TaskCompletionSource<uint>();
+            var tcs = new TaskCompletionSource<TargetInfo>();
 
-            void OnTarget(uint serial)
+            void OnTarget(TargetInfo info)
             {
-                tcs.TrySetResult(serial);
+                tcs.TrySetResult(info);
             }
 
             TargetReceived += OnTarget;
@@ -246,7 +260,7 @@ namespace TMRazorImproved.Core.Services
                 var completedTask = await Task.WhenAny(tcs.Task, delayTask);
 
                 if (completedTask == delayTask)
-                    return 0;
+                    return default;
 
                 return await tcs.Task;
             }

@@ -42,6 +42,34 @@ namespace TMRazorImproved.Core.Services
             hotkeyService.RegisterAction("Undress Current", () => Undress("Default"));
         }
 
+        public void ChangeList(string listName)
+        {
+            var profile = _configService.CurrentProfile;
+            if (profile != null)
+            {
+                profile.ActiveDressList = listName;
+                _logger.LogInformation("Dress list changed to: {ListName}", listName);
+            }
+        }
+
+        public void DressUp()
+        {
+            var profile = _configService.CurrentProfile;
+            if (profile != null)
+            {
+                Dress(profile.ActiveDressList);
+            }
+        }
+
+        public void Undress()
+        {
+            var profile = _configService.CurrentProfile;
+            if (profile != null)
+            {
+                Undress(profile.ActiveDressList);
+            }
+        }
+
         public void Dress(string listName)
         {
             var list = _configService.CurrentProfile.DressLists.FirstOrDefault(l => l.Name == listName);

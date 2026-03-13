@@ -1,15 +1,55 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using CommunityToolkit.Mvvm.Messaging;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
 
 namespace TMRazorImproved.Core.Services
 {
-    public class WorldService : IWorldService
+    public class WorldService : IWorldService, 
+        CommunityToolkit.Mvvm.Messaging.IRecipient<TMRazorImproved.Shared.Messages.BuffDebuffMessage>
     {
         private readonly ConcurrentDictionary<uint, Mobile> _mobiles = new();
         private readonly ConcurrentDictionary<uint, Item> _items = new();
+        private readonly CommunityToolkit.Mvvm.Messaging.IMessenger _messenger;
+
+        public WorldService(CommunityToolkit.Mvvm.Messaging.IMessenger messenger)
+        {
+            _messenger = messenger;
+            _messenger.RegisterAll(this);
+        }
+
+        private static readonly Dictionary<ushort, string> _buffNames = new()
+        {
+            [1001] = "Dismount", [1002] = "Disarm", [1005] = "Night Sight", [1006] = "Death Strike",
+            [1007] = "Evil Omen", [1008] = "Gump Mana", [1009] = "Regeneration", [1010] = "Divine Fury",
+            [1011] = "Enemy Of One", [1012] = "Hiding", [1013] = "Meditation", [1014] = "Blood Oath Caster",
+            [1015] = "Blood Oath", [1016] = "Corpse Skin", [1017] = "Mind rot", [1018] = "Pain Spike",
+            [1019] = "Strangle", [1020] = "Gift of Renewal", [1021] = "Attune Weapon", [1022] = "Thunderstorm",
+            [1023] = "Essence of Wind", [1024] = "Ethereal Voyage", [1025] = "Gift Of Life", [1026] = "Arcane Empowerment",
+            [1027] = "Mortal Strike", [1028] = "Reactive Armor", [1029] = "Protection", [1030] = "Arch Protection",
+            [1031] = "Magic Reflection", [1032] = "Incognito", [1033] = "Disguised", [1034] = "Animal Form",
+            [1035] = "Polymorph", [1036] = "Invisibility", [1037] = "Paralyze", [1038] = "Poison",
+            [1039] = "Bleed", [1040] = "Clumsy", [1041] = "Feeblemind", [1042] = "Weaken",
+            [1043] = "Curse", [1044] = "Mass Curse", [1045] = "Agility", [1046] = "Cunning",
+            [1047] = "Strength", [1048] = "Bless"
+        };
+
+        public void Receive(TMRazorImproved.Shared.Messages.BuffDebuffMessage message)
+        {
+            var (serial, type, added, duration) = message.Value;
+            var mobile = FindMobile(serial);
+            if (mobile == null) return;
+
+            string name = _buffNames.TryGetValue(type, out var n) ? n : $"Buff_{type}";
+
+            lock (mobile.ActiveBuffs)
+            {
+                if (added) mobile.ActiveBuffs[name] = duration;
+                else mobile.ActiveBuffs.Remove(name);
+            }
+        }
 
         // FIX BUG-C04: campo volatile garantisce visibilità cross-thread senza lock.
         private volatile Mobile? _player;

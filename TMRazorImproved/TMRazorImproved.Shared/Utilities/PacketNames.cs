@@ -93,7 +93,7 @@ namespace TMRazorImproved.Shared.Utilities
         public static string GetName(PacketPath path, byte id)
         {
             var dict = path == PacketPath.ServerToClient ? _s2cNames : _c2sNames;
-            if (dict.TryGetValue(id, out string name))
+            if (dict.TryGetValue(id, out var name))
                 return name;
             
             return "Unknown";

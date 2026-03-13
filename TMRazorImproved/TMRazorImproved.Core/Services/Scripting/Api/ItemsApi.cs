@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.Messaging;
@@ -11,98 +12,102 @@ using TMRazorImproved.Shared.Messages;
 
 namespace TMRazorImproved.Core.Services.Scripting.Api
 {
-    /// <summary>
-    /// API esposta agli script Python come variabile <c>Items</c>.
-    /// Compatibile con la firma usata dagli script RazorEnhanced.
-    ///
-    /// Tutte le proprietà e i metodi sono <c>public virtual</c> per garantire
-    /// che il binder IronPython possa accedervi correttamente su .NET 8/10.
-    /// (I membri non-virtual sealed possono causare AttributeError nel binder DLR.)
-    /// </summary>
     public class ItemsApi
     {
         private readonly IWorldService _world;
         private readonly IPacketService _packet;
+        private readonly ITargetingService _targeting;
         private readonly ScriptCancellationController _cancel;
         private readonly ILogger<ItemsApi>? _logger;
-        // FIX P1-01: messenger iniettato invece di WeakReferenceMessenger.Default
-        // per correttezza nei test unitari e per rispettare la DI chain.
         private readonly IMessenger _messenger;
 
-        public ItemsApi(IWorldService world, IPacketService packet, ScriptCancellationController cancel,
+        private static readonly List<int> _ignoreList = new();
+
+        public ItemsApi(IWorldService world, IPacketService packet, ITargetingService targeting, ScriptCancellationController cancel,
             ILogger<ItemsApi>? logger = null, IMessenger? messenger = null)
         {
             _world = world;
             _packet = packet;
+            _targeting = targeting;
             _cancel = cancel;
             _logger = logger;
             _messenger = messenger ?? WeakReferenceMessenger.Default;
         }
 
-        // ------------------------------------------------------------------
-        // Ricerca per identificatore
-        // ------------------------------------------------------------------
+        private ScriptItem? Wrap(Item? item) => item == null ? null : new ScriptItem(item, _world, _packet, _targeting);
+        private List<ScriptItem> Wrap(IEnumerable<Item> items) => items.Select(i => new ScriptItem(i, _world, _packet, _targeting)).ToList();
 
-        /// <summary>Cerca un item per serial numerico. Ritorna None se non trovato.</summary>
-        public virtual Item? FindBySerial(uint serial)
+        public virtual ScriptItem? FindBySerial(uint serial)
         {
             _cancel.ThrowIfCancelled();
-            return _world.FindItem(serial);
+            return Wrap(_world.FindItem(serial));
         }
 
-        /// <summary>Cerca il primo item con un determinato graphic ID nella lista globale.</summary>
-        public virtual Item? FindByID(int graphic)
+        public virtual ScriptItem? FindByID(int graphic)
         {
             _cancel.ThrowIfCancelled();
-            return _world.Items.FirstOrDefault(i => i.Graphic == graphic);
+            if (_ignoreList.Contains(graphic)) return null;
+            return Wrap(_world.Items.FirstOrDefault(i => i.Graphic == graphic));
         }
 
-        /// <summary>Ritorna tutti gli item con un determinato graphic ID.</summary>
-        public virtual IEnumerable<Item> FindAllByID(int graphic)
+        public virtual List<ScriptItem> FindAllByID(int graphic)
         {
             _cancel.ThrowIfCancelled();
-            return _world.Items.Where(i => i.Graphic == graphic).ToList();
+            if (_ignoreList.Contains(graphic)) return new List<ScriptItem>();
+            return Wrap(_world.Items.Where(i => i.Graphic == graphic));
         }
 
-        /// <summary>Ritorna tutti gli item nel backpack del giocatore.</summary>
-        public virtual IEnumerable<Item> GetBackpackItems()
+        public virtual List<ScriptItem> GetBackpackItems()
         {
             _cancel.ThrowIfCancelled();
             var bp = _world.Player?.Backpack;
-            if (bp == null) return Enumerable.Empty<Item>();
-            return _world.Items.Where(i => i.ContainerSerial == bp.Serial).ToList();
+            if (bp == null) return new List<ScriptItem>();
+            return Wrap(_world.Items.Where(i => i.ContainerSerial == bp.Serial));
         }
 
-        public virtual Item? FindByID(int graphic, int hue = -1, uint container = 0, bool recurse = true)
+        public virtual ScriptItem? FindByID(int graphic, int hue = -1, uint container = 0, int range = -1)
         {
             _cancel.ThrowIfCancelled();
-            IEnumerable<Item> searchSpace = container == 0 ? _world.Items : GetItemsInContainer(container, recurse);
-            return searchSpace.FirstOrDefault(i => i.Graphic == graphic && (hue == -1 || i.Hue == hue));
+            if (_ignoreList.Contains(graphic)) return null;
+            var player = _world.Player;
+            IEnumerable<Item> searchSpace = container == 0 ? _world.Items : GetItemsInContainer(container, true);
+            return Wrap(searchSpace.FirstOrDefault(i => 
+                i.Graphic == graphic && 
+                (hue == -1 || i.Hue == hue) && 
+                (range == -1 || (player != null && i.DistanceTo(player) <= range))
+            ));
         }
 
-        public virtual List<Item> FindAllByID(int graphic, int hue = -1, uint container = 0, bool recurse = true)
+        public virtual ScriptItem? FindByID(int graphic, int hue, uint container, bool recurse)
         {
             _cancel.ThrowIfCancelled();
+            if (_ignoreList.Contains(graphic)) return null;
             IEnumerable<Item> searchSpace = container == 0 ? _world.Items : GetItemsInContainer(container, recurse);
-            return searchSpace.Where(i => i.Graphic == graphic && (hue == -1 || i.Hue == hue)).ToList();
+            return Wrap(searchSpace.FirstOrDefault(i => i.Graphic == graphic && (hue == -1 || i.Hue == hue)));
         }
 
-        /// <summary>Cerca il primo item con uno dei graphic ID specificati.</summary>
-        public virtual Item? FindByID(System.Collections.IEnumerable graphics, int hue = -1, uint container = 0, bool recurse = true)
+        public virtual List<ScriptItem> FindAllByID(int graphic, int hue = -1, uint container = 0, bool recurse = true)
+        {
+            _cancel.ThrowIfCancelled();
+            if (_ignoreList.Contains(graphic)) return new List<ScriptItem>();
+            IEnumerable<Item> searchSpace = container == 0 ? _world.Items : GetItemsInContainer(container, recurse);
+            return Wrap(searchSpace.Where(i => i.Graphic == graphic && (hue == -1 || i.Hue == hue)));
+        }
+
+        public virtual ScriptItem? FindByID(System.Collections.IEnumerable graphics, int hue = -1, uint container = 0, bool recurse = true)
         {
             _cancel.ThrowIfCancelled();
             var ids = ConvertToList(graphics);
             IEnumerable<Item> searchSpace = container == 0 ? _world.Items : GetItemsInContainer(container, recurse);
-            return searchSpace.FirstOrDefault(i => ids.Contains(i.Graphic) && (hue == -1 || i.Hue == hue));
+            return Wrap(searchSpace.FirstOrDefault(i => ids.Contains(i.Graphic) && !_ignoreList.Contains(i.Graphic) && (hue == -1 || i.Hue == hue)));
         }
 
-        /// <summary>Ritorna tutti gli item con uno dei graphic ID specificati.</summary>
-        public virtual List<Item> FindAllByID(System.Collections.IEnumerable graphics, int hue = -1, uint container = 0, bool recurse = true)
+        public virtual List<ScriptItem> FindAllByID(System.Collections.IEnumerable graphics, int hue = -1, uint container = 0, bool recurse = true)
         {
             _cancel.ThrowIfCancelled();
             var ids = ConvertToList(graphics);
             IEnumerable<Item> searchSpace = container == 0 ? _world.Items : GetItemsInContainer(container, recurse);
-            return searchSpace.Where(i => ids.Contains(i.Graphic) && (hue == -1 || i.Hue == hue)).ToList();
+            return Wrap(searchSpace.Where(i => ids.Contains(i.Graphic) && !_ignoreList.Contains(i.Graphic) && (hue == -1 || i.Hue == hue)));
         }
 
         private List<int> ConvertToList(System.Collections.IEnumerable input)
@@ -116,98 +121,57 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return list;
         }
 
-        /// <summary>Attende che il server invii il contenuto del contenitore (pacchetto 0x3C).</summary>
         public virtual bool WaitForContents(uint serial, int timeout = 5000)
         {
             _cancel.ThrowIfCancelled();
             var deadline = Environment.TickCount64 + timeout;
-            
-            // In RazorEnhanced, WaitForContents aspetta che arrivi il pacchetto 0x3C.
-            // Possiamo usare il Messenger per ricevere la notifica del ContainerContentMessage.
-            // FIX P1-01: usa il messenger iniettato anziché WeakReferenceMessenger.Default
             bool received = false;
-            _messenger.Register<ItemsApi, ContainerContentMessage>(this, (r, m) =>
-            {
-                if (m.Value.ContainerSerial == serial) received = true;
-            });
-
-            try
-            {
-                while (Environment.TickCount64 < deadline)
-                {
+            _messenger.Register<ItemsApi, ContainerContentMessage>(this, (r, m) => { if (m.Value.ContainerSerial == serial) received = true; });
+            try {
+                while (Environment.TickCount64 < deadline) {
                     _cancel.ThrowIfCancelled();
                     if (received) return true;
                     System.Threading.Thread.Sleep(50);
                 }
                 return false;
-            }
-            finally
-            {
-                _messenger.Unregister<ContainerContentMessage>(this);
-            }
+            } finally { _messenger.Unregister<ContainerContentMessage>(this); }
         }
 
         private IEnumerable<Item> GetItemsInContainer(uint containerSerial, bool recurse)
         {
             var children = _world.Items.Where(i => i.ContainerSerial == containerSerial).ToList();
-            foreach (var child in children)
-            {
+            foreach (var child in children) {
                 yield return child;
-                if (recurse)
-                {
+                if (recurse) {
                     foreach (var grandchild in GetItemsInContainer(child.Serial, true))
                         yield return grandchild;
                 }
             }
         }
 
-        public virtual void Select(uint serial)
-        {
-            _cancel.ThrowIfCancelled();
-            // Spesso usato per forzare il target o l'ispezione
-        }
+        public virtual void Select(uint serial) { _cancel.ThrowIfCancelled(); }
 
-        // FIX BUG-P2-05: implementate tramite UOPropertyList (OPL) già presente sull'entità
         public virtual string GetPropString(uint serial, string name)
         {
             _cancel.ThrowIfCancelled();
-            var entity = _world.FindItem(serial) as TMRazorImproved.Shared.Models.UOEntity
-                      ?? _world.FindMobile(serial) as TMRazorImproved.Shared.Models.UOEntity;
-            if (entity?.Properties == null) return string.Empty;
-
-            // Cerca la property che contiene il nome cercato negli Arguments (case-insensitive)
-            var entry = entity.Properties.Properties.FirstOrDefault(p =>
-                p.Arguments.Contains(name, StringComparison.OrdinalIgnoreCase));
+            var entity = _world.FindItem(serial) as TMRazorImproved.Shared.Models.UOEntity ?? _world.FindMobile(serial) as TMRazorImproved.Shared.Models.UOEntity;
+            if (entity?.OPL == null) return string.Empty;
+            var entry = entity.OPL.Properties.FirstOrDefault(p => p.Arguments.Contains(name, StringComparison.OrdinalIgnoreCase));
             return entry?.Arguments ?? string.Empty;
         }
 
         public virtual void WaitForProps(object itemOrSerial, int timeout = 1000)
         {
             _cancel.ThrowIfCancelled();
-            
-            uint serial = 0;
-            if (itemOrSerial is uint u) serial = u;
-            else if (itemOrSerial is int i) serial = (uint)i;
-            else if (itemOrSerial is Item itm) serial = itm.Serial;
-            
+            uint serial = itemOrSerial switch { uint u => u, int i => (uint)i, Item itm => itm.Serial, _ => 0 };
             if (serial == 0) return;
-
-            var entity = _world.FindItem(serial) as TMRazorImproved.Shared.Models.UOEntity
-                      ?? _world.FindMobile(serial) as TMRazorImproved.Shared.Models.UOEntity;
-
-            if (entity == null) return;
-            if (entity.Properties != null && entity.Properties.Hash != 0) return;
-
-            // Richiedi le properties al server
+            var entity = _world.FindItem(serial) as TMRazorImproved.Shared.Models.UOEntity ?? _world.FindMobile(serial) as TMRazorImproved.Shared.Models.UOEntity;
+            if (entity == null || (entity.OPL != null && entity.OPL.Hash != 0)) return;
             _packet.SendToServer(Utilities.PacketBuilder.QueryProperties(serial));
-
             var deadline = Environment.TickCount64 + timeout;
-            while (Environment.TickCount64 < deadline)
-            {
+            while (Environment.TickCount64 < deadline) {
                 _cancel.ThrowIfCancelled();
-                if (entity.Properties != null && entity.Properties.Hash != 0)
-                    return;
-
+                if (entity.OPL != null && entity.OPL.Hash != 0) return;
                 System.Threading.Thread.Sleep(10);
             }
         }
@@ -217,243 +181,181 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             string text = GetPropString(serial, name);
             if (string.IsNullOrEmpty(text)) return 0;
-            
-            // Regex migliorata per gestire "45 / 50" (estrae 45), "+15%" (estrae 15), "10" (estrae 10)
-            // Cerca il primo gruppo di cifre, potenzialmente preceduto da + o seguito da /
             var match = Regex.Match(text, @"([-+]?\d+)(?:\s*/\s*\d+)?");
-            if (match.Success)
-            {
-                if (int.TryParse(match.Groups[1].Value, out int val))
-                    return val;
-            }
-            return 0;
+            return match.Success && int.TryParse(match.Groups[1].Value, out int val) ? val : 0;
         }
 
-        /// <summary>Controlla se un item esiste nel mondo corrente.</summary>
-        public virtual bool Exists(uint serial)
-        {
-            _cancel.ThrowIfCancelled();
-            return _world.FindItem(serial) != null;
-        }
+        public virtual bool Exists(uint serial) { _cancel.ThrowIfCancelled(); return _world.FindItem(serial) != null; }
+        public virtual string GetName(uint serial) { _cancel.ThrowIfCancelled(); return _world.FindItem(serial)?.OPL?.GetNameOrEmpty() ?? string.Empty; }
+        public virtual int GetAmount(uint serial) { _cancel.ThrowIfCancelled(); return _world.FindItem(serial)?.Amount ?? 0; }
 
-        // ------------------------------------------------------------------
-        // Proprietà di un item
-        // ------------------------------------------------------------------
-
-        /// <summary>Ritorna il nome (dalla OPL) di un item, oppure stringa vuota.</summary>
-        public virtual string GetName(uint serial)
-        {
-            _cancel.ThrowIfCancelled();
-            var item = _world.FindItem(serial);
-            return item?.Properties?.GetNameOrEmpty() ?? string.Empty;
-        }
-
-        /// <summary>Ritorna la quantità (Amount) di un item.</summary>
-        public virtual int GetAmount(uint serial)
-        {
-            _cancel.ThrowIfCancelled();
-            return _world.FindItem(serial)?.Amount ?? 0;
-        }
-
-        // ------------------------------------------------------------------
-        // Azioni
-        // ------------------------------------------------------------------
-
-        /// <summary>Ritorna tutti gli item entro il range dal giocatore (solo item a terra).</summary>
-        public virtual IEnumerable<Item> FindAllInRange(int range)
+        public virtual List<ScriptItem> FindAllInRange(int range)
         {
             _cancel.ThrowIfCancelled();
             var player = _world.Player;
-            if (player == null) return Enumerable.Empty<Item>();
-
-            return _world.Items
-                .Where(i => i.ContainerSerial == 0 && i.DistanceTo(player) <= range)
-                .ToList();
+            if (player == null) return new List<ScriptItem>();
+            return Wrap(_world.Items.Where(i => i.ContainerSerial == 0 && i.DistanceTo(player) <= range));
         }
 
-        public virtual IEnumerable<Item> FilterByGraphic(int graphic)
-        {
-            _cancel.ThrowIfCancelled();
-            return _world.Items.Where(i => i.Graphic == (ushort)graphic).ToList();
-        }
+        public virtual List<ScriptItem> FilterByGraphic(int graphic) { _cancel.ThrowIfCancelled(); return Wrap(_world.Items.Where(i => i.Graphic == (ushort)graphic)); }
+        public virtual List<ScriptItem> FilterByHue(int hue) { _cancel.ThrowIfCancelled(); return Wrap(_world.Items.Where(i => i.Hue == (ushort)hue)); }
 
-        public virtual IEnumerable<Item> FilterByHue(int hue)
-        {
-            _cancel.ThrowIfCancelled();
-            return _world.Items.Where(i => i.Hue == (ushort)hue).ToList();
-        }
-
-        /// <summary>Cerca il primo item con il graphic specificato nel backpack e lo usa.</summary>
         public virtual void UseType(int graphic, int hue = -1)
         {
             _cancel.ThrowIfCancelled();
             var bp = _world.Player?.Backpack;
             if (bp == null) return;
-
-            var item = _world.Items.FirstOrDefault(i => 
-                i.ContainerSerial == bp.Serial && 
-                i.Graphic == (ushort)graphic && 
-                (hue == -1 || i.Hue == (ushort)hue));
-
-            if (item != null)
-                UseItem(item.Serial);
+            var item = _world.Items.FirstOrDefault(i => i.ContainerSerial == bp.Serial && i.Graphic == (ushort)graphic && (hue == -1 || i.Hue == (ushort)hue));
+            if (item != null) UseItem(item.Serial);
         }
 
-        public virtual void UseItem(uint serial)
-        {
-            _cancel.ThrowIfCancelled();
-            _logger?.LogDebug("UseItem: serial=0x{Serial:X}", serial);
-            _packet.SendToServer(PacketBuilder.DoubleClick(serial));
-        }
+        public virtual void UseItem(uint serial) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.DoubleClick(serial)); }
+        public virtual void Click(uint serial) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.SingleClick(serial)); }
+        public virtual void Move(uint serial, uint targetContainer, int amount = 1) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount)); _packet.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer)); }
 
-        public virtual void Click(uint serial)
-        {
-            _cancel.ThrowIfCancelled();
-            _packet.SendToServer(PacketBuilder.SingleClick(serial));
-        }
+        public virtual bool ContainerExists(uint serial) { _cancel.ThrowIfCancelled(); return _world.FindItem(serial) != null || _world.Items.Any(i => i.ContainerSerial == serial); }
+        public virtual List<ScriptItem> GetItems(uint containerSerial) { _cancel.ThrowIfCancelled(); return Wrap(_world.Items.Where(i => i.ContainerSerial == containerSerial)); }
+        public virtual bool IsInContainer(uint serial, uint containerSerial) { _cancel.ThrowIfCancelled(); return _world.FindItem(serial)?.ContainerSerial == containerSerial; }
+        public virtual uint GetContainer(uint serial) { _cancel.ThrowIfCancelled(); return _world.FindItem(serial)?.ContainerSerial ?? 0; }
 
-        public virtual void Move(uint serial, uint targetContainer, int amount = 1)
-        {
-            _cancel.ThrowIfCancelled();
-            _logger?.LogDebug("Move: serial=0x{Serial:X} amount={Amount} → container=0x{Container:X}", serial, amount, targetContainer);
-            _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount));
-            _packet.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer));
-        }
-
-        // ------------------------------------------------------------------
-        // Container utilities
-        // ------------------------------------------------------------------
-
-        /// <summary>
-        /// True se il contenitore con il serial dato è noto al client
-        /// (almeno un item con ContainerSerial uguale, oppure il serial è nel world).
-        /// </summary>
-        public virtual bool ContainerExists(uint serial)
-        {
-            _cancel.ThrowIfCancelled();
-            return _world.FindItem(serial) != null
-                || _world.Items.Any(i => i.ContainerSerial == serial);
-        }
-
-        /// <summary>Ritorna tutti gli item nel contenitore specificato (non ricorsivo).</summary>
-        public virtual List<Item> GetItems(uint containerSerial)
-        {
-            _cancel.ThrowIfCancelled();
-            return _world.Items.Where(i => i.ContainerSerial == containerSerial).ToList();
-        }
-
-        /// <summary>
-        /// True se l'item è direttamente nel contenitore specificato
-        /// (non ricorsivo — solo il livello top del contenitore).
-        /// </summary>
-        public virtual bool IsInContainer(uint serial, uint containerSerial)
-        {
-            _cancel.ThrowIfCancelled();
-            var item = _world.FindItem(serial);
-            return item != null && item.ContainerSerial == containerSerial;
-        }
-
-        /// <summary>Ritorna il serial del contenitore che contiene l'item, 0 se a terra.</summary>
-        public virtual uint GetContainer(uint serial)
-        {
-            _cancel.ThrowIfCancelled();
-            return _world.FindItem(serial)?.ContainerSerial ?? 0;
-        }
-
-        /// <summary>
-        /// Cerca il primo item equipaggiato nel layer specificato sul player.
-        /// </summary>
-        public virtual Item? FindByLayer(byte layer)
+        public virtual ScriptItem? FindByLayer(byte layer)
         {
             _cancel.ThrowIfCancelled();
             var player = _world.Player;
             if (player == null) return null;
-            return _world.Items.FirstOrDefault(i => i.Container == player.Serial && i.Layer == layer);
+            return Wrap(_world.Items.FirstOrDefault(i => i.Container == player.Serial && i.Layer == layer));
         }
 
-        /// <summary>Cerca il primo item equipaggiato nel layer specificato (per nome).</summary>
-        public virtual Item? FindByLayer(string layerName)
-        {
-            _cancel.ThrowIfCancelled();
-            if (!Enum.TryParse<TMRazorImproved.Shared.Enums.Layer>(layerName, true, out var layer))
-                return null;
-            return FindByLayer((byte)layer);
-        }
+        public virtual ScriptItem? FindByLayer(string layerName) => Enum.TryParse<TMRazorImproved.Shared.Enums.Layer>(layerName, true, out var layer) ? FindByLayer((byte)layer) : null;
+        public virtual bool IsOnGround(uint serial) { _cancel.ThrowIfCancelled(); return _world.FindItem(serial)?.ContainerSerial == 0; }
+        public virtual int GetGraphic(uint serial) => _world.FindItem(serial)?.Graphic ?? 0;
+        public virtual int GetHue(uint serial) => _world.FindItem(serial)?.Hue ?? 0;
+        public virtual int GetLayer(uint serial) => _world.FindItem(serial)?.Layer ?? 0;
 
-        /// <summary>True se l'item si trova a terra (nessun contenitore).</summary>
-        public virtual bool IsOnGround(uint serial)
-        {
-            _cancel.ThrowIfCancelled();
-            var item = _world.FindItem(serial);
-            return item != null && item.ContainerSerial == 0;
-        }
-
-        /// <summary>Ritorna il Graphic dell'item.</summary>
-        public virtual int GetGraphic(uint serial)
-        {
-            _cancel.ThrowIfCancelled();
-            return _world.FindItem(serial)?.Graphic ?? 0;
-        }
-
-        /// <summary>Ritorna il Hue dell'item.</summary>
-        public virtual int GetHue(uint serial)
-        {
-            _cancel.ThrowIfCancelled();
-            return _world.FindItem(serial)?.Hue ?? 0;
-        }
-
-        /// <summary>Ritorna il Layer dell'item (0 se non equipaggiato).</summary>
-        public virtual int GetLayer(uint serial)
-        {
-            _cancel.ThrowIfCancelled();
-            return _world.FindItem(serial)?.Layer ?? 0;
-        }
-
-        /// <summary>
-        /// Attende che un item con il graphic specificato appaia nel contenitore dato
-        /// (o nel mondo se container=0) entro il timeout.
-        /// </summary>
         public virtual bool WaitForID(int graphic, int hue = -1, uint container = 0, int timeout = 5000)
         {
             _cancel.ThrowIfCancelled();
             var deadline = Environment.TickCount64 + timeout;
-            while (Environment.TickCount64 < deadline)
-            {
+            while (Environment.TickCount64 < deadline) {
                 _cancel.ThrowIfCancelled();
-                var item = FindByID(graphic, hue, container);
-                if (item != null) return true;
+                if (FindByID(graphic, hue, container) != null) return true;
                 System.Threading.Thread.Sleep(50);
             }
             return false;
         }
 
-        /// <summary>
-        /// Filtra per contenitore (ritorna items direttamente dentro containerSerial).
-        /// </summary>
-        public virtual IEnumerable<Item> FilterByContainer(uint containerSerial)
+        public virtual List<ScriptItem> FilterByContainer(uint containerSerial) { _cancel.ThrowIfCancelled(); return Wrap(_world.Items.Where(i => i.ContainerSerial == containerSerial)); }
+        public virtual void Lift(uint serial, int amount = 1) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount)); }
+        public virtual void Drop(uint serial, uint targetContainer, int amount = 1) => Move(serial, targetContainer, amount);
+        public virtual int ContainerCount(uint containerSerial) { _cancel.ThrowIfCancelled(); return _world.Items.Count(i => i.ContainerSerial == containerSerial); }
+
+        public virtual List<ScriptItem> ApplyFilter(int graphic = -1, int hue = -1, uint container = 0, int range = -1)
         {
             _cancel.ThrowIfCancelled();
-            return _world.Items.Where(i => i.ContainerSerial == containerSerial).ToList();
+            var player = _world.Player;
+            return Wrap(_world.Items.Where(i => (graphic == -1 || i.Graphic == (ushort)graphic) && (hue == -1 || i.Hue == (ushort)hue) && (container == 0 || i.ContainerSerial == container) && (range == -1 || (player != null && i.DistanceTo(player) <= range))));
         }
 
-        /// <summary>Solleva un item verso il cursore (0x07 grab, poi 0x08 drop).</summary>
-        public virtual void Lift(uint serial, int amount = 1)
+        public virtual List<ScriptItem> ApplyFilter(ItemsFilter filter)
         {
             _cancel.ThrowIfCancelled();
-            _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount));
+            if (filter == null || !filter.Enabled) return new List<ScriptItem>();
+
+            var player = _world.Player;
+            return Wrap(_world.Items.Where(i =>
+            {
+                if (filter.Graphics.Count > 0 && !filter.Graphics.Contains(i.Graphic)) return false;
+                if (filter.Hues.Count > 0 && !filter.Hues.Contains(i.Hue)) return false;
+                if (filter.Container != 0 && i.ContainerSerial != filter.Container) return false;
+                if (filter.Parent != 0 && i.RootContainer != filter.Parent) return false;
+
+                if (filter.Range != -1 && player != null && i.DistanceTo(player) > filter.Range) return false;
+                if (filter.RangeMin != -1 && player != null && i.DistanceTo(player) < filter.RangeMin) return false;
+                if (filter.RangeMax != -1 && player != null && i.DistanceTo(player) > filter.RangeMax) return false;
+
+                if (filter.OnGround == 1 && i.ContainerSerial != 0) return false;
+                if (filter.OnGround == -1 && i.ContainerSerial == 0) return false;
+
+                if (filter.Movable == 1 && !i.Movable) return false;
+                if (filter.Movable == -1 && i.Movable) return false;
+
+                if (filter.IsContainer == 1 && !i.IsContainer) return false;
+                if (filter.IsContainer == -1 && i.IsContainer) return false;
+
+                if (filter.IsCorpse == 1 && !i.IsCorpse) return false;
+                if (filter.IsCorpse == -1 && i.IsCorpse) return false;
+
+                if (filter.ExcludeSerial != -1 && i.Serial == (uint)filter.ExcludeSerial) return false;
+
+                if (!string.IsNullOrEmpty(filter.Name) && (i.Name == null || !i.Name.Contains(filter.Name, StringComparison.OrdinalIgnoreCase))) return false;
+
+                return true;
+            }));
         }
 
-        /// <summary>Alias di <see cref="Move"/> per compatibilità con RazorEnhanced.</summary>
-        public virtual void Drop(uint serial, uint targetContainer, int amount = 1)
-            => Move(serial, targetContainer, amount);
-
-        /// <summary>
-        /// Ritorna il numero di item nel contenitore (non ricorsivo).
-        /// </summary>
-        public virtual int ContainerCount(uint containerSerial)
+        public virtual int BackpackCount(int graphic, int hue = -1)
         {
             _cancel.ThrowIfCancelled();
-            return _world.Items.Count(i => i.ContainerSerial == containerSerial);
+            var bp = _world.Player?.Backpack;
+            if (bp == null) return 0;
+            return _world.Items.Where(i => i.ContainerSerial == bp.Serial && i.Graphic == (ushort)graphic && (hue == -1 || i.Hue == (ushort)hue)).Sum(i => (int)i.Amount);
+        }
+
+        public virtual void ChangeDyeingTubColor(uint serial, int color) { _cancel.ThrowIfCancelled(); byte[] pkt = new byte[7]; pkt[0] = 0x3B; System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(1), serial); System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(5), (ushort)color); _packet.SendToServer(pkt); }
+        public virtual void Close(uint serial) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.CloseContainer(serial)); }
+
+        public virtual int ContextExist(uint serial, string name)
+        {
+            _cancel.ThrowIfCancelled();
+            ContextMenuStore.Clear();
+            byte[] pkt = new byte[9]; pkt[0] = 0xBF; System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), 9); System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(3), 0x0E); System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(5), serial); _packet.SendToServer(pkt);
+            var entries = ContextMenuStore.WaitForSerial(serial, 5000);
+            var match = entries.FirstOrDefault(e => e.Entry.Equals(name, StringComparison.OrdinalIgnoreCase));
+            return match != null ? match.Response : -1;
+        }
+
+        public virtual int DistanceTo(uint serial1, uint serial2) { _cancel.ThrowIfCancelled(); var e1 = _world.FindEntity(serial1); var e2 = _world.FindEntity(serial2); return (e1 == null || e2 == null) ? 999 : e1.DistanceTo(e2); }
+        public virtual void DropFromHand(uint serial) { _cancel.ThrowIfCancelled(); var bp = _world.Player?.Backpack; if (bp != null) Drop(serial, bp.Serial); }
+        public virtual void DropItemGroundSelf(uint serial, int amount = 1) { _cancel.ThrowIfCancelled(); var p = _world.Player; if (p != null) { _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount)); _packet.SendToServer(PacketBuilder.DropToWorld(serial, (ushort)p.X, (ushort)p.Y, (short)p.Z)); } }
+        public virtual ScriptItem? FindByName(string name, bool recurse = true) { _cancel.ThrowIfCancelled(); return Wrap(_world.Items.FirstOrDefault(i => (i.Name != null && i.Name.Contains(name, StringComparison.OrdinalIgnoreCase)) || (i.OPL != null && i.OPL.GetNameOrEmpty().Contains(name, StringComparison.OrdinalIgnoreCase)))); }
+        public virtual List<string> GetProperties(uint serial) => GetPropStringList(serial);
+        public virtual List<string> GetPropStringList(uint serial) { _cancel.ThrowIfCancelled(); var e = _world.FindEntity(serial); return e?.OPL?.Properties.Select(p => p.Arguments).ToList() ?? new List<string>(); }
+        public virtual string GetPropStringByIndex(uint serial, int index) { _cancel.ThrowIfCancelled(); var e = _world.FindEntity(serial); var props = e?.OPL?.Properties; return (props != null && index >= 0 && index < props.Count) ? props[index].Arguments : string.Empty; }
+        public virtual string GetPropValueString(uint serial, string name) => GetPropString(serial, name);
+        public virtual Point3D GetWorldPosition(uint serial) { _cancel.ThrowIfCancelled(); var item = _world.FindItem(serial); return item == null ? new Point3D(0, 0, 0) : new Point3D(item.X, item.Y, item.Z); }
+        public virtual void Hide(uint serial) { _cancel.ThrowIfCancelled(); _packet.SendToClient(PacketBuilder.RemoveObject(serial)); }
+        public virtual void IgnoreTypes(List<int> graphics) { _cancel.ThrowIfCancelled(); if (graphics == null) return; foreach (var g in graphics) if (!_ignoreList.Contains(g)) _ignoreList.Add(g); }
+        public virtual bool IsChildOf(uint childSerial, uint parentSerial) { _cancel.ThrowIfCancelled(); var child = _world.FindItem(childSerial); if (child == null) return false; if (child.ContainerSerial == parentSerial) return true; if (child.ContainerSerial == 0) return false; return IsChildOf(child.ContainerSerial, parentSerial); }
+        public virtual void Message(uint serial, int hue, string message) { /* Implementazione 0xAE */ }
+        public virtual void MoveOnGround(uint serial, int x, int y, int z) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.LiftItem(serial, 1)); _packet.SendToServer(PacketBuilder.DropToWorld(serial, (ushort)x, (ushort)y, (short)z)); }
+        public virtual void OpenAt(uint serial, int x, int y) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.DoubleClick(serial)); }
+        public virtual void OpenContainerAt(uint serial, int x, int y) => OpenAt(serial, x, y);
+        public virtual void SetColor(uint serial, int color) { _cancel.ThrowIfCancelled(); var item = _world.FindItem(serial); if (item != null) item.Hue = (ushort)color; }
+        public virtual void SingleClick(uint serial) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.SingleClick(serial)); }
+        public override string ToString() => "ItemsApi";
+        public virtual void UseItemByID(int graphic, int hue = -1) => UseType(graphic, hue);
+        public virtual void Color(uint serial, int color) => SetColor(serial, color);
+
+        public virtual ItemsFilter Filter() => new ItemsFilter();
+
+        public class ItemsFilter
+        {
+            public bool Enabled { get; set; } = true;
+            public List<int> Graphics { get; set; } = new();
+            public List<int> Bodies { get => Graphics; set => Graphics = value; }
+            public List<int> Hues { get; set; } = new();
+            public uint Container { get; set; } = 0;
+            public int Range { get; set; } = -1;
+            public int RangeMin { get; set; } = -1;
+            public int RangeMax { get; set; } = -1;
+            public string Name { get; set; } = string.Empty;
+            public int OnGround { get; set; } = 0;
+            public int Movable { get; set; } = 0;
+            public int IsContainer { get; set; } = 0;
+            public int IsCorpse { get; set; } = 0;
+            public int IsDrop { get; set; } = 0;
+            public uint Parent { get; set; } = 0;
+            public int ExcludeSerial { get; set; } = -1;
         }
     }
 }

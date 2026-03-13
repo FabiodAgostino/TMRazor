@@ -10,7 +10,7 @@ namespace TMRazorImproved.UI.Views.Converters
 {
     public class NullToVisibilityConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             bool isNull = value == null;
             if (parameter is string p && p.Equals("Invert", StringComparison.OrdinalIgnoreCase))
@@ -19,7 +19,7 @@ namespace TMRazorImproved.UI.Views.Converters
             return isNull ? Visibility.Collapsed : Visibility.Visible;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
@@ -27,12 +27,12 @@ namespace TMRazorImproved.UI.Views.Converters
 
     public class NotNullToVisibilityConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             return value != null ? Visibility.Collapsed : Visibility.Visible;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
@@ -40,7 +40,7 @@ namespace TMRazorImproved.UI.Views.Converters
 
     public class HotkeyDisplayConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is not HotkeyDefinition hk || hk.KeyCode == 0) return "None";
 
@@ -55,7 +55,7 @@ namespace TMRazorImproved.UI.Views.Converters
             return string.Join(" + ", parts);
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
@@ -63,14 +63,14 @@ namespace TMRazorImproved.UI.Views.Converters
 
     public class CaptureAppearanceConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is bool isCapturing && isCapturing)
                 return ControlAppearance.Primary;
             return ControlAppearance.Secondary;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
@@ -78,13 +78,13 @@ namespace TMRazorImproved.UI.Views.Converters
 
     public class InvertBooleanConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is bool b) return !b;
             return value;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is bool b) return !b;
             return value;
@@ -95,7 +95,7 @@ namespace TMRazorImproved.UI.Views.Converters
 
     public class IntToVisibilityConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is int intValue)
             {
@@ -108,7 +108,7 @@ namespace TMRazorImproved.UI.Views.Converters
             return Visibility.Collapsed;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
             => throw new NotImplementedException();
     }
 
@@ -116,7 +116,7 @@ namespace TMRazorImproved.UI.Views.Converters
     {
         private static TMRazorImproved.UI.Services.IUltimaImageCache? _cache;
 
-        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is not int spellId) return null;
 
@@ -140,7 +140,7 @@ namespace TMRazorImproved.UI.Views.Converters
             return _cache?.GetGump(gumpId);
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
@@ -148,19 +148,19 @@ namespace TMRazorImproved.UI.Views.Converters
 
     public class CountToVisibilityConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is int count) return count > 0 ? Visibility.Visible : Visibility.Collapsed;
             return Visibility.Collapsed;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
             => throw new NotImplementedException();
     }
 
     public class IntToBoolConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is int intValue && parameter is string paramValue && int.TryParse(paramValue, out int targetValue))
             {
@@ -169,7 +169,7 @@ namespace TMRazorImproved.UI.Views.Converters
             return false;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is bool boolValue && boolValue && parameter is string paramValue && int.TryParse(paramValue, out int targetValue))
             {
@@ -181,7 +181,7 @@ namespace TMRazorImproved.UI.Views.Converters
 
     public class BooleanToTextConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is bool b && parameter is string p)
             {
@@ -190,12 +190,12 @@ namespace TMRazorImproved.UI.Views.Converters
             }
             return value?.ToString() ?? "";
         }
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 
     public class BooleanToIconConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is bool b && parameter is string p)
             {
@@ -204,12 +204,12 @@ namespace TMRazorImproved.UI.Views.Converters
             }
             return null;
         }
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 
     public class BooleanToAppearanceConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is bool b && parameter is string p)
             {
@@ -223,6 +223,6 @@ namespace TMRazorImproved.UI.Views.Converters
             }
             return ControlAppearance.Primary;
         }
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 }

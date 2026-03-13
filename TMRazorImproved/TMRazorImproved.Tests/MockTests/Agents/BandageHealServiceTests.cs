@@ -124,7 +124,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
         public async Task ShouldNotThrow_WhenCurrentProfileIsNull()
         {
             // Arrange: profilo null → nessuna NullReferenceException
-            _configServiceMock.Setup(c => c.CurrentProfile).Returns((UserProfile?)null);
+            _configServiceMock.Setup(c => c.CurrentProfile).Returns((UserProfile)null!);
 
             var service = new BandageHealService(
                 _packetServiceMock.Object,

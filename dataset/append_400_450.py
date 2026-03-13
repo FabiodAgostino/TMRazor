@@ -1,0 +1,112 @@
+import json
+
+system_prompt = "You are a Razor Enhanced scripting assistant for Ultima Online. You write correct IronPython scripts using only the official Razor Enhanced API. Never invent or guess methods, properties, or classes. If a task cannot be done with the available API, say so explicitly. Respond in the same language as the user."
+
+data = [
+    # 401 DE
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Was bewirkt Gumps.AddGroup in Razor Enhanced?"}, {"role": "assistant", "content": "Gumps.AddGroup ist eine Methode von Razor Enhanced.\nBeschreibung: Mengenlehre für sich gegenseitig ausschließende Optionsfelder.\nRückgabe: Void\nParameter: gd, group\nBeispiel:\n```python\nGumps.AddGroup(gd, group)\n```"}]},
+    # 402 ZH
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "请解释 Gumps.AddHtml 的功能。"}, {"role": "assistant", "content": "Gumps.AddHtml 是 Razor Enhanced 的一个方法 (Method)。\n描述： 渲染被动态背景偏移的原始文本标记。\n返回： Void\n参数： gd, x, y, width, height, text, background, scrollbar\n示例:\n```python\nGumps.AddHtml(gd, x, y, width, height, text, background, scrollbar)\n```"}]},
+    # 403 RU
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Что делает функция Gumps.AddHtmlLocalized?"}, {"role": "assistant", "content": "Gumps.AddHtmlLocalized — это Метод в Razor Enhanced.\nОписание: Разрешает хэш cliloc на стороне клиента для создания правильных локализованных текстов.\nВозврат: Void\nПараметры: gd, x, y, width, height, number, args, color, background, scrollbar\nПример:\n```python\nGumps.AddHtmlLocalized(gd, x, y, width, height, number, args, color, background, scrollbar)\n```"}]},
+    # 404 EN
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "What is the purpose of Gumps.AddImage?"}, {"role": "assistant", "content": "Gumps.AddImage is a Method of Razor Enhanced.\nDescription: Places icons and scalable two-dimensional elements.\nReturn: Void\nParameters: gd, x, y, gumpId, hue\nExample:\n```python\nGumps.AddImage(gd, x, y, gumpId, hue)\n```"}]},
+    # 405 IT
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "A cosa serve Gumps.AddImageTiled?"}, {"role": "assistant", "content": "Gumps.AddImageTiled è un Metodo di Razor Enhanced.\nDescrizione: Genera background a pattern infinito per aree grafiche dilatate.\nRitorno: Void\nParametri: gd, x, y, width, height, gumpId\nEsempio:\n```python\nGumps.AddImageTiled(gd, x, y, width, height, gumpId)\n```"}]},
+    # 406 ES
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "¿Cómo funciona Gumps.AddImageTiledButton?"}, {"role": "assistant", "content": "Gumps.AddImageTiledButton es un Método de Razor Enhanced.\nDescripción: Composición UX avanzada mixta para inventarios de vendedores o bancos gumps.\nRetorno: Void\nParámetros: gd, x, y, normalID, pressedID, buttonID, type, param, itemID, hue, width, height, localizedTooltip\nEjemplo:\n```python\nGumps.AddImageTiledButton(gd, x, y, normalID, pressedID, buttonID, type, param, itemID, hue, width, height, localizedTooltip)\n```"}]},
+    # 407 DE
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Wofür wird Gumps.AddItem verwendet?"}, {"role": "assistant", "content": "Gumps.AddItem ist eine Methode von Razor Enhanced.\nBeschreibung: Erzwingt das Rendern von dreidimensionalen Assets auf einer flachen Leinwand.\nRückgabe: Void\nParameter: gd, x, y, itemID, hue\nBeispiel:\n```python\nGumps.AddItem(gd, x, y, itemID, hue)\n```"}]},
+    # 408 ZH
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Gumps.AddLabel 在 Razor Enhanced 中有什么用？"}, {"role": "assistant", "content": "Gumps.AddLabel 是 Razor Enhanced 的一个方法 (Method)。\n描述： 注入简单的文本行，无需 HTML 容器。\n返回： Void\n参数： gd, x, y, hue, text\n示例:\n```python\nGumps.AddLabel(gd, x, y, hue, text)\n```"}]},
+    # 409 RU
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Объясни, как работает Gumps.AddLabelCropped."}, {"role": "assistant", "content": "Gumps.AddLabelCropped — это Метод в Razor Enhanced.\nОписание: Гарантирует, что переполнение не нарушит геометрию вычисленного пользовательского интерфейса.\nВозврат: Void\nПараметры: gd, x, y, width, height, hue, text\nПример:\n```python\nGumps.AddLabelCropped(gd, x, y, width, height, hue, text)\n```"}]},
+    # 410 EN
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Can you explain Gumps.AddPage?"}, {"role": "assistant", "content": "Gumps.AddPage is a Method of Razor Enhanced.\nDescription: Manages the numeric identifier for the asynchronous tab control.\nReturn: Void\nParameters: gd, page\nExample:\n```python\nGumps.AddPage(gd, page)\n```"}]},
+    # 411 IT
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Cosa fa l'API Gumps.AddRadio?"}, {"role": "assistant", "content": "Gumps.AddRadio è un Metodo di Razor Enhanced.\nDescrizione: Impone strutture condizionali obbligatorie nei response.\nRitorno: Void\nParametri: gd, x, y, inactiveID, activeID, initialState, switchID\nEsempio:\n```python\nGumps.AddRadio(gd, x, y, inactiveID, activeID, initialState, switchID)\n```"}]},
+    # 412 ES
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "¿Qué hace Gumps.AddSpriteImage en los scripts?"}, {"role": "assistant", "content": "Gumps.AddSpriteImage es un Método de Razor Enhanced.\nDescripción: Corta texturas grandes renderizando fracciones de ellas.\nRetorno: Void\nParámetros: gd, x, y, gumpId, spriteX, spriteY, spriteW, spriteH\nEjemplo:\n```python\nGumps.AddSpriteImage(gd, x, y, gumpId, spriteX, spriteY, spriteW, spriteH)\n```"}]},
+    # 413 DE
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Erkläre mir die Funktion Gumps.AddTextEntry."}, {"role": "assistant", "content": "Gumps.AddTextEntry ist eine Methode von Razor Enhanced.\nBeschreibung: Logische Felder, die auf Tastenanschläge für Textkonfigurationen warten.\nRückgabe: Void\nParameter: gd, x, y, width, height, hue, entryID, initialText\nBeispiel:\n```python\nGumps.AddTextEntry(gd, x, y, width, height, hue, entryID, initialText)\n```"}]},
+    # 414 ZH
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "解释一下 Gumps.AddTooltip。"}, {"role": "assistant", "content": "Gumps.AddTooltip 是 Razor Enhanced 的一个方法 (Method)。\n描述： 使用从本地 cliloc 字典检索的元数据丰富悬停效果。\n返回： Void\n参数： gd, cliloc, text\n示例:\n```python\nGumps.AddTooltip(gd, cliloc, text)\n```"}]},
+    # 415 RU
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Для чего используется Gumps.AllGumpIDs?"}, {"role": "assistant", "content": "Gumps.AllGumpIDs — это Метод в Razor Enhanced.\nОписание: Возвращает необработанный список указателей памяти для текущих Gump.\nВозврат: List[UInt32]\nПараметры: N/A\nПример:\n```python\nresult = Gumps.AllGumpIDs()\n```"}]},
+    # 416 EN
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "What does Gumps.CloseGump do?"}, {"role": "assistant", "content": "Gumps.CloseGump is a Method of Razor Enhanced.\nDescription: Notifies the UI engine of explicit closure, freeing RAM.\nReturn: Void\nParameters: gumpid\nExample:\n```python\nGumps.CloseGump(gumpid)\n```"}]},
+    # 417 IT
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Mi spieghi Gumps.CreateGump?"}, {"role": "assistant", "content": "Gumps.CreateGump è un Metodo di Razor Enhanced.\nDescrizione: Costruttore di base per simulare l'esistenza logica di una UI.\nRitorno: Gumps.GumpData\nParametri: movable, closable, disposable, resizeable\nEsempio:\n```python\nresult = Gumps.CreateGump(movable, closable, disposable, resizeable)\n```"}]},
+    # 418 ES
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "¿Para qué sirve Gumps.CurrentGump?"}, {"role": "assistant", "content": "Gumps.CurrentGump es un Método de Razor Enhanced.\nDescripción: Accede cronológicamente al último handle instanciado.\nRetorno: UInt32\nParámetros: N/A\nEjemplo:\n```python\nresult = Gumps.CurrentGump()\n```"}]},
+    # 419 DE
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Was ist der Zweck von Gumps.GetGumpData?"}, {"role": "assistant", "content": "Gumps.GetGumpData ist eine Methode von Razor Enhanced.\nBeschreibung: Zeigt das formatierte Byte-Array an, das die logische und die Datenstruktur der Benutzeroberfläche bildet.\nRückgabe: Gumps.GumpData\nParameter: gumpid\nBeispiel:\n```python\nresult = Gumps.GetGumpData(gumpid)\n```"}]},
+    # 420 ZH
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Gumps.GetGumpRawLayout 的作用是什么？"}, {"role": "assistant", "content": "Gumps.GetGumpRawLayout 是 Razor Enhanced 的一个方法 (Method)。\n描述： 用于逆向工程检查的分页十六进制文本转储。\n返回： String\n参数： gumpid\n示例:\n```python\nresult = Gumps.GetGumpRawLayout(gumpid)\n```"}]},
+    # 421 RU
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Что выполняет Gumps.GetGumpText?"}, {"role": "assistant", "content": "Gumps.GetGumpText — это Метод в Razor Enhanced.\nОписание: Итеративный перевод всех строк, интерполируя cliloc в их фактическое значение.\nВозврат: List\nПараметры: gumpid\nПример:\n```python\nresult = Gumps.GetGumpText(gumpid)\n```"}]},
+    # 422 EN
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "How does Gumps.GetLine work?"}, {"role": "assistant", "content": "Gumps.GetLine is a Method of Razor Enhanced.\nDescription: Direct isolation of the data sequence (bypassing markup constants).\nReturn: String\nParameters: gumpId, line_num\nExample:\n```python\nresult = Gumps.GetLine(gumpId, line_num)\n```"}]},
+    # 423 IT
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Puoi spiegarmi a cosa serve Gumps.GetLineList?"}, {"role": "assistant", "content": "Gumps.GetLineList è un Metodo di Razor Enhanced.\nDescrizione: Genera il resoconto testuale per pattern matching asincrono.\nRitorno: List\nParametri: gumpId, dataOnly\nEsempio:\n```python\nresult = Gumps.GetLineList(gumpId, dataOnly)\n```"}]},
+    # 424 ES
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "¿Puedes describir la función Gumps.GetTextByID?"}, {"role": "assistant", "content": "Gumps.GetTextByID es un Método de Razor Enhanced.\nDescripción: Resuelve referencias individuales interactuando con el mapa cliloc de la interfaz de usuario individual.\nRetorno: String\nParámetros: gd, id\nEjemplo:\n```python\nresult = Gumps.GetTextByID(gd, id)\n```"}]},
+    # 425 DE
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Was macht Gumps.HasGump?"}, {"role": "assistant", "content": "Gumps.HasGump ist eine Methode von Razor Enhanced.\nBeschreibung: Schnelle Anti-Blockier-Prüfung vor dem Auslösen von Wartezyklen.\nRückgabe: Boolean\nParameter: gumpId\nBeispiel:\n```python\nresult = Gumps.HasGump(gumpId)\n```"}]},
+    # 426 ZH
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "解释 Razor Enhanced 中 Gumps.IsValid 的作用。"}, {"role": "assistant", "content": "Gumps.IsValid 是 Razor Enhanced 的一个方法 (Method)。\n描述： 针对当前 mul 文件的结构完整性验证，确保资产存在。\n返回： Boolean\n参数： gumpId\n示例:\n```python\nresult = Gumps.IsValid(gumpId)\n```"}]},
+    # 427 RU
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Что делает функция Gumps.LastGumpGetLine?"}, {"role": "assistant", "content": "Gumps.LastGumpGetLine — это Метод в Razor Enhanced.\nОписание: Упрощенное получение из последнего экземпляра без необходимости извлечения идентификатора.\nВозврат: String\nПараметры: line_num\nПример:\n```python\nresult = Gumps.LastGumpGetLine(line_num)\n```"}]},
+    # 428 EN
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "What is Gumps.LastGumpGetLineList used for?"}, {"role": "assistant", "content": "Gumps.LastGumpGetLineList is a Method of Razor Enhanced.\nDescription: String array generation from the last generated window for quick validation.\nReturn: List\nParameters: N/A\nExample:\n```python\nresult = Gumps.LastGumpGetLineList()\n```"}]},
+    # 429 IT
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Che funzione ha Gumps.LastGumpRawLayout?"}, {"role": "assistant", "content": "Gumps.LastGumpRawLayout è un Metodo di Razor Enhanced.\nDescrizione: Simile a GetGumpRawLayout, velocizza il check dell'ultima finestra.\nRitorno: String\nParametri: N/A\nEsempio:\n```python\nresult = Gumps.LastGumpRawLayout()\n```"}]},
+    # 430 ES
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "¿Qué hace Gumps.LastGumpTextExist?"}, {"role": "assistant", "content": "Gumps.LastGumpTextExist es un Método de Razor Enhanced.\nDescripción: Evaluación booleana de la existencia de subcadenas dentro del último gump.\nRetorno: Boolean\nParámetros: text\nEjemplo:\n```python\nresult = Gumps.LastGumpTextExist(text)\n```"}]},
+    # 431 DE
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Erkläre mir, was Gumps.LastGumpTextExistByLine bewirkt."}, {"role": "assistant", "content": "Gumps.LastGumpTextExistByLine ist eine Methode von Razor Enhanced.\nBeschreibung: Maximale Genauigkeit durch Einschränkung der Textsuche auf ein bestimmtes UI-Label.\nRückgabe: Boolean\nParameter: line_num, text\nBeispiel:\n```python\nresult = Gumps.LastGumpTextExistByLine(line_num, text)\n```"}]},
+    # 432 ZH
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Gumps.LastGumpTile 是做什么的？"}, {"role": "assistant", "content": "Gumps.LastGumpTile 是 Razor Enhanced 的一个方法 (Method)。\n描述： 推断窗口中包含的纹理参考（对供应商/BOD有用）。\n返回： List[Int32]\n参数： N/A\n示例:\n```python\nresult = Gumps.LastGumpTile()\n```"}]},
+    # 433 RU
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Для чего нужна функция Gumps.ResetGump?"}, {"role": "assistant", "content": "Gumps.ResetGump — это Метод в Razor Enhanced.\nОписание: Грубая очистка указателей и внутренних переменных класса.\nВозврат: Void\nПараметры: N/A\nПример:\n```python\nGumps.ResetGump()\n```"}]},
+    # 434 EN
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Can you explain Gumps.SendAction?"}, {"role": "assistant", "content": "Gumps.SendAction is a Method of Razor Enhanced.\nDescription: Simulates the complete logical transaction confirming asynchronous presses to the server.\nReturn: Void\nParameters: gumpid, buttonid\nExample:\n```python\nGumps.SendAction(gumpid, buttonid)\n```"}]},
+    # 435 IT
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Cosa fa l'API Gumps.SendAdvancedAction?"}, {"role": "assistant", "content": "Gumps.SendAdvancedAction è un Metodo di Razor Enhanced.\nDescrizione: Crea il payload customizzato iniettando manipolazioni arbitrarie per eludere restrizioni visive.\nRitorno: Void\nParametri: gumpid, buttonid, inSwitches, textlist_id, textlist_str\nEsempio:\n```python\nGumps.SendAdvancedAction(gumpid, buttonid, inSwitches, textlist_id, textlist_str)\n```"}]},
+    # 436 ES
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "¿Cómo se usa Gumps.SendGump en Razor?"}, {"role": "assistant", "content": "Gumps.SendGump es un Método de Razor Enhanced.\nDescripción: Recrea el paquete desde cero y lo reenvía completo si posee su estructura.\nRetorno: Void\nParámetros: gumpid, serial, x, y, gumpDefinition, gumpStrings\nEjemplo:\n```python\nGumps.SendGump(gumpid, serial, x, y, gumpDefinition, gumpStrings)\n```"}]},
+    # 437 DE
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Wofür wird Gumps.WaitForGump verwendet?"}, {"role": "assistant", "content": "Gumps.WaitForGump ist eine Methode von Razor Enhanced.\nBeschreibung: Vermeidet Overhead durch Blockieren des Interpreters, bis der Netzwerk-Listener den richtigen Gump-Header identifiziert.\nRückgabe: Boolean\nParameter: gumpid, delay\nBeispiel:\n```python\nresult = Gumps.WaitForGump(gumpid, delay)\n```"}]},
+    # 438 ZH
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Razor Enhanced 里的 Gumps.GumpData.Varie 有什么用？"}, {"role": "assistant", "content": "Gumps.GumpData.Varie 是 Razor Enhanced 的一个属性 (Property)。\n描述： 包含字符串列表、按钮 ID、串行数组和逻辑窗口响应布尔值的结构。\n返回： Misto\n参数： N/A\n示例:\n```python\n# 这是一个属性，不是一个方法\nresult = Gumps.GumpData.Varie\n```"}]},
+    # 439 RU
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Что выполняет Journal.Clear?"}, {"role": "assistant", "content": "Journal.Clear — это Метод в Razor Enhanced.\nОписание: Освобождает старые строки из кольцевого буфера для уменьшения затрат на сравнение текста.\nВозврат: Void\nПараметры: toBeRemoved\nПример:\n```python\nJournal.Clear(toBeRemoved)\n```"}]},
+    # 440 EN
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "What is the purpose of Journal.FilterText?"}, {"role": "assistant", "content": "Journal.FilterText is a Method of Razor Enhanced.\nDescription: Models a passive filter that prevents logging for exact strings, evading accidental triggers.\nReturn: Void\nParameters: text\nExample:\n```python\nJournal.FilterText(text)\n```"}]},
+    # 441 IT
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "A cosa serve Journal.GetJournalEntry?"}, {"role": "assistant", "content": "Journal.GetJournalEntry è un Metodo di Razor Enhanced.\nDescrizione: Costrutto basato su istante Unix per generare subset ultra-compatti del log, ottimizzando la ricerca continua.\nRitorno: List[JournalEntry]\nParametri: afterTimestap\nEsempio:\n```python\nresult = Journal.GetJournalEntry(afterTimestap)\n```"}]},
+    # 442 ES
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "¿Qué función cumple Journal.GetLineText?"}, {"role": "assistant", "content": "Journal.GetLineText es un Método de Razor Enhanced.\nDescripción: Aísla y manipula la primera aparición encontrada, incluyendo opcionalmente la referencia del orador.\nRetorno: String\nParámetros: text, addname\nEjemplo:\n```python\nresult = Journal.GetLineText(text, addname)\n```"}]},
+    # 443 DE
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Was bewirkt Journal.GetSpeechName?"}, {"role": "assistant", "content": "Journal.GetSpeechName ist eine Methode von Razor Enhanced.\nBeschreibung: Generiert die Liste der von Text-Audiopaketen erfassten Entitäten und fungiert als passives nominales Radar.\nRückgabe: List\nParameter: N/A\nBeispiel:\n```python\nresult = Journal.GetSpeechName()\n```"}]},
+    # 444 ZH
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "请说明 Journal.GetTextByColor 的作用。"}, {"role": "assistant", "content": "Journal.GetTextByColor 是 Razor Enhanced 的一个方法 (Method)。\n描述： 通过解码美学，逻辑上将分析限制在严重事件（例如红色代表死亡，紫色代表魔法）。\n返回： List\n参数： color, addname\n示例:\n```python\nresult = Journal.GetTextByColor(color, addname)\n```"}]},
+    # 445 RU
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Объясни назначение функции Journal.GetTextByName."}, {"role": "assistant", "content": "Journal.GetTextByName — это Метод в Razor Enhanced.\nОписание: Разделяет объявления на основе явного идентификатора.\nВозврат: List\nПараметры: name, addname\nПример:\n```python\nresult = Journal.GetTextByName(name, addname)\n```"}]},
+    # 446 EN
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Could you explain what Journal.GetTextBySerial does?"}, {"role": "assistant", "content": "Journal.GetTextBySerial is a Method of Razor Enhanced.\nDescription: Absolute guarantee of isolation for entities, bypassing ambiguity of homonymous NPCs (e.g., Banker).\nReturn: List\nParameters: serial, addname\nExample:\n```python\nresult = Journal.GetTextBySerial(serial, addname)\n```"}]},
+    # 447 IT
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Cosa fa esattamente Journal.GetTextByType?"}, {"role": "assistant", "content": "Journal.GetTextByType è un Metodo di Razor Enhanced.\nDescrizione: Separa strutturalmente i log in base alla codifica pacchetto: system, emote, party, spell, alliance.\nRitorno: List\nParametri: type, addname\nEsempio:\n```python\nresult = Journal.GetTextByType(type, addname)\n```"}]},
+    # 448 ES
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "¿Cómo funciona Journal.RemoveFilterText?"}, {"role": "assistant", "content": "Journal.RemoveFilterText es un Método de Razor Enhanced.\nDescripción: Restaura la escucha de claves denegadas.\nRetorno: Void\nParámetros: text\nEjemplo:\n```python\nJournal.RemoveFilterText(text)\n```"}]},
+    # 449 DE
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Wofür wird Journal.Search verwendet?"}, {"role": "assistant", "content": "Journal.Search ist eine Methode von Razor Enhanced.\nBeschreibung: Implementiert ein triviales contains für den gesamten aktiven Puffer im Speicher.\nRückgabe: Boolean\nParameter: text\nBeispiel:\n```python\nresult = Journal.Search(text)\n```"}]},
+    # 450 ZH
+    {"messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": "Journal.SearchByColor 的功能是什么？"}, {"role": "assistant", "content": "Journal.SearchByColor 是 Razor Enhanced 的一个方法 (Method)。\n描述： 通过强制颜色真实性，成倍减少错误标志（例如，如果玩家模拟系统文本）。\n返回： Boolean\n参数： text, color\n示例:\n```python\nresult = Journal.SearchByColor(text, color)\n```"}]}
+]
+
+with open("dataset_razor_API.jsonl", "a", encoding="utf-8") as f:
+    for item in data:
+        f.write(json.dumps(item, ensure_ascii=False) + "\n")
+
+print("Appended 50 lines successfully.")

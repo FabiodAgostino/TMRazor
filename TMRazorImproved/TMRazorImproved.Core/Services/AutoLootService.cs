@@ -49,6 +49,16 @@ namespace TMRazorImproved.Core.Services
             hotkeyService.RegisterAction("AutoLoot Toggle", () => { if (IsRunning) _ = StopAsync(); else Start(); });
         }
 
+        public void ChangeList(string listName)
+        {
+            var profile = _configService.CurrentProfile;
+            if (profile != null)
+            {
+                profile.ActiveAutoLootList = listName;
+                _logger.LogInformation("AutoLoot list changed to: {ListName}", listName);
+            }
+        }
+
         // BUG-P1-04 FIX: return type non-nullable con possibile return null → CS8603
         private AutoLootConfig? GetActiveConfig()
         {

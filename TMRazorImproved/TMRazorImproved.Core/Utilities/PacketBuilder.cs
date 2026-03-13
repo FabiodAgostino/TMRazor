@@ -12,6 +12,22 @@ namespace TMRazorImproved.Core.Utilities
     public static class PacketBuilder
     {
         // -------------------------------------------------------------------------
+        // Extended Commands (0xBF)
+        // -------------------------------------------------------------------------
+
+        /// <summary>TargetByResource 0xBF sub 0x30: usato per minare/tagliare alberi su resource map.</summary>
+        public static byte[] TargetByResource(uint serial, int resourceType)
+        {
+            byte[] pkt = new byte[11];
+            pkt[0] = 0xBF;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), 11); // Length
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(3), 0x30); // SubCommand TargetByResource
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(5), serial);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(9), (ushort)resourceType);
+            return pkt;
+        }
+
+        // -------------------------------------------------------------------------
         // Item Movement (Lift + Drop)
         // -------------------------------------------------------------------------
 
@@ -44,6 +60,46 @@ namespace TMRazorImproved.Core.Utilities
             return pkt;
         }
 
+        /// <summary>
+        /// Drop Request 0x08: deposita un item nel mondo (a terra).
+        /// </summary>
+        public static byte[] DropToWorld(uint serial, ushort x, ushort y, short z)
+        {
+            byte[] pkt = new byte[15];
+            pkt[0] = 0x08;
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(1), serial);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(5), x);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(7), y);
+            pkt[9] = (byte)z;
+            pkt[10] = 0; // grid
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(11), 0); // Container = 0 (World)
+            return pkt;
+        }
+
+        /// <summary>
+        /// Remove Object 0x1D S->C: istruisce il client a rimuovere un oggetto dalla vista.
+        /// </summary>
+        public static byte[] RemoveObject(uint serial)
+        {
+            byte[] pkt = new byte[5];
+            pkt[0] = 0x1D;
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(1), serial);
+            return pkt;
+        }
+
+        /// <summary>
+        /// Close Gump / Container 0xBF sub 0x01: chiude un contenitore o gump generico.
+        /// </summary>
+        public static byte[] CloseContainer(uint serial)
+        {
+            byte[] pkt = new byte[9];
+            pkt[0] = 0xBF;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), 9);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(3), 0x01);
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(5), serial);
+            return pkt;
+        }
+
         // -------------------------------------------------------------------------
         // Equipment
         // -------------------------------------------------------------------------
@@ -56,6 +112,18 @@ namespace TMRazorImproved.Core.Utilities
             BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(1), itemSerial);
             pkt[5] = layer;
             BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(6), mobileSerial);
+            return pkt;
+        }
+
+        /// <summary>
+        /// Request Profile 0xB8: richiede il profilo di un mobile (usato anche per forzare aggiornamento Fame/Karma).
+        /// </summary>
+        public static byte[] RequestProfile(uint serial)
+        {
+            byte[] pkt = new byte[6];
+            pkt[0] = 0xB8;
+            pkt[1] = 0x00; // Mode: 0 = request
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(2), serial);
             return pkt;
         }
 
@@ -192,6 +260,26 @@ namespace TMRazorImproved.Core.Utilities
             Array.Copy(langBytes, 0, pkt, 8, 4);
             Array.Copy(msgBytes, 0, pkt, 12, msgBytes.Length);
             // Null terminator (2 bytes): already 0 from new byte[pktLen]
+            return pkt;
+        }
+
+        public static byte[] OverheadUnicodeSpeech(string text, uint serial, ushort body, byte type = 0x00, ushort hue = 0x0034, ushort font = 0x0003, string lang = "ENU", string name = "System")
+        {
+            byte[] msgBytes = Encoding.BigEndianUnicode.GetBytes(text + "\0");
+            int pktLen = 1 + 2 + 4 + 2 + 1 + 2 + 2 + 4 + 30 + msgBytes.Length;
+            byte[] pkt = new byte[pktLen];
+            pkt[0] = 0xAE;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), (ushort)pktLen);
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(3), serial);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(7), body);
+            pkt[9] = type;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(10), hue);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(12), font);
+            byte[] langBytes = Encoding.ASCII.GetBytes(lang.PadRight(4, '\0').Substring(0, 4));
+            Array.Copy(langBytes, 0, pkt, 14, 4);
+            byte[] nameBytes = Encoding.ASCII.GetBytes(name.PadRight(30, '\0').Substring(0, 30));
+            Array.Copy(nameBytes, 0, pkt, 18, 30);
+            Array.Copy(msgBytes, 0, pkt, 48, msgBytes.Length);
             return pkt;
         }
 

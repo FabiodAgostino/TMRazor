@@ -54,6 +54,13 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
 
         public virtual bool HasGump() => _world.CurrentGump != null;
 
+        public virtual bool HasGump(uint gumpId)
+        {
+            _cancel.ThrowIfCancelled();
+            if (_world.CurrentGump?.GumpId == gumpId) return true;
+            return _world.OpenGumps.Values.Any(g => g.GumpId == gumpId);
+        }
+
         public virtual uint CurrentGump() => _world.CurrentGump?.GumpId ?? 0;
 
         public virtual uint CurrentID() => CurrentGump();
@@ -63,35 +70,35 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             var gump = _world.CurrentGump;
             if (gump == null) return;
+            ReplyGump(gump.Serial, gump.GumpId, buttonId, switches, null);
+        }
 
-            int switchesCount = switches?.Length ?? 0;
-            byte[] packet = new byte[23 + (switchesCount * 4)];
-            packet[0] = 0xB1;
-            BinaryPrimitives.WriteUInt16BigEndian(packet.AsSpan(1), (ushort)packet.Length);
-            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(3), gump.Serial);
-            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(7), gump.GumpId);
-            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(11), (uint)buttonId);
-            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(15), (uint)switchesCount);
-            
-            int offset = 19;
-            if (switches != null)
+        public virtual void SendAction(uint gumpid, int buttonid, List<int>? sw = null, List<int>? t_id = null, List<string>? t_str = null)
+        {
+            _cancel.ThrowIfCancelled();
+            var gump = GetGumpById(gumpid) ?? _world.CurrentGump;
+            if (gump == null) return;
+
+            (int, string)[]? entries = null;
+            if (t_str != null && t_str.Count > 0)
             {
-                foreach (int sw in switches)
+                entries = new (int, string)[t_str.Count];
+                for (int i = 0; i < t_str.Count; i++)
                 {
-                    BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(offset), (uint)sw);
-                    offset += 4;
+                    int id = (t_id != null && t_id.Count > i) ? t_id[i] : i;
+                    entries[i] = (id, t_str[i]);
                 }
             }
 
-            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(offset), 0); // Text entries count
-
-            _packet.SendToServer(packet);
-            _world.RemoveGump(gump.GumpId);
+            _packet.SendToServer(
+                TMRazorImproved.Core.Utilities.PacketBuilder.RespondGump(
+                    gump.Serial, gump.GumpId, buttonid, sw?.ToArray(), entries));
+            _world.RemoveGump(gump.Serial);
         }
 
         public virtual void Close() => SendAction(0);
 
-        public virtual GumpData GetGumpData(uint gumpId)
+        public virtual GumpData? GetGumpData(uint gumpId)
         {
             _cancel.ThrowIfCancelled();
             var g = _world.CurrentGump;
@@ -109,31 +116,82 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
 
         public virtual bool WaitForGump(uint gumpId, int timeoutMs = 5000)
         {
-            if (_world.CurrentGump?.GumpId == gumpId) return true;
+            if (gumpId == 0)
+            {
+                if (_world.CurrentGump != null) return true;
+            }
+            else
+            {
+                if (_world.CurrentGump?.GumpId == gumpId) return true;
+                if (_world.OpenGumps.Values.Any(g => g.GumpId == gumpId)) return true;
+            }
 
             var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             
             var recipient = new object();
             _messenger.Register<GumpMessage>(recipient, (r, msg) =>
             {
-                if (msg.Value.GumpId == gumpId)
+                if (gumpId == 0 || msg.Value.GumpId == gumpId)
                     tcs.TrySetResult(true);
             });
 
             try
             {
-                using var cts = new CancellationTokenSource();
-                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, _cancel.Token);
-                cts.CancelAfter(timeoutMs);
-
                 var task = tcs.Task;
-                if (Task.WhenAny(task, Task.Delay(timeoutMs, linkedCts.Token)).GetAwaiter().GetResult() == task)
-                    return task.Result;
-
+                var deadline = Environment.TickCount64 + timeoutMs;
+                while (Environment.TickCount64 < deadline)
+                {
+                    _cancel.ThrowIfCancelled();
+                    if (task.IsCompleted) return task.Result;
+                    Thread.Sleep(50);
+                }
                 return false;
             }
-            catch (OperationCanceledException)
+            finally
             {
+                _messenger.UnregisterAll(recipient);
+            }
+        }
+
+        public virtual bool WaitForGump(System.Collections.IEnumerable gumpIds, int timeoutMs = 5000)
+        {
+            var ids = new List<uint>();
+            foreach (var id in gumpIds)
+            {
+                if (id is uint u) ids.Add(u);
+                else if (id is int i) ids.Add((uint)i);
+                else if (id is long l) ids.Add((uint)l);
+            }
+            return WaitForGump(ids, timeoutMs);
+        }
+
+        public virtual bool WaitForGump(List<uint> gumpIds, int timeoutMs = 5000)
+        {
+            foreach (var gumpId in gumpIds)
+            {
+                if (_world.CurrentGump?.GumpId == gumpId) return true;
+                if (_world.OpenGumps.Values.Any(g => g.GumpId == gumpId)) return true;
+            }
+
+            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            
+            var recipient = new object();
+            _messenger.Register<GumpMessage>(recipient, (r, msg) =>
+            {
+                if (gumpIds.Contains(msg.Value.GumpId))
+                    tcs.TrySetResult(true);
+            });
+
+            try
+            {
+                var task = tcs.Task;
+                var deadline = Environment.TickCount64 + timeoutMs;
+                while (Environment.TickCount64 < deadline)
+                {
+                    _cancel.ThrowIfCancelled();
+                    if (task.IsCompleted) return task.Result;
+                    Thread.Sleep(50);
+                }
                 return false;
             }
             finally
@@ -149,6 +207,15 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         }
 
         public virtual string GetGumpText(int index) => GetStringLine(index);
+
+        public virtual List<string> GetGumpText(uint gumpid)
+        {
+            _cancel.ThrowIfCancelled();
+            var g = GetGumpById(gumpid);
+            if (g != null)
+                return new List<string>(g.Strings);
+            return new List<string>();
+        }
 
         public virtual uint LastGumpId() => CurrentGump();
 
@@ -419,7 +486,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
 
         public virtual List<uint> AllGumpIDs()
         {
-            return GetOpenGumpSerials();
+            _cancel.ThrowIfCancelled();
+            return _world.OpenGumps.Values.Select(g => g.GumpId).Distinct().ToList();
         }
 
         public virtual void CloseGump(uint gumpid)
@@ -489,6 +557,11 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 }
             }
             return pkt;
+        }
+
+        public virtual void SendGump(GumpData gd)
+        {
+            SendGump(gd, gd.x, gd.y);
         }
 
         public virtual void SendGump(GumpData gd, uint x, uint y)
@@ -566,7 +639,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return pieces;
         }
 
-        public virtual string GetTextByID(GumpData gd, int id)
+        public virtual string? GetTextByID(GumpData gd, int id)
         {
             for (int i = 0; i < gd.textID.Count; i++)
             {

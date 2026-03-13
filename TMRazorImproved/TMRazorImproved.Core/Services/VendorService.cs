@@ -36,7 +36,7 @@ namespace TMRazorImproved.Core.Services
             _messenger.Register<VendorSellMessage>(this);
         }
 
-        private VendorConfig GetActiveConfig()
+        private VendorConfig? GetActiveConfig()
         {
             var profile = _configService.CurrentProfile;
             if (profile == null) return null;

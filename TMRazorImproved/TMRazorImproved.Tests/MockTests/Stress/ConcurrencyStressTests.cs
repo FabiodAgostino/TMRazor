@@ -25,7 +25,7 @@ namespace TMRazorImproved.Tests.MockTests.Stress
         public async Task WorldService_MassiveConcurrency_ShouldNotCrash()
         {
             // Arrange
-            var world = new WorldService();
+            var world = new WorldService(_messengerMock.Object);
             int numThreads = 10;
             int numEntities = 500;
             int numIterations = 1000;
@@ -124,7 +124,7 @@ namespace TMRazorImproved.Tests.MockTests.Stress
         public async Task MassFightSimulation_ComplexIntegration()
         {
             // Simula un intero sistema sotto stress: World, Packet e Config
-            var world = new WorldService();
+            var world = new WorldService(_messengerMock.Object);
             var service = new PacketService(_messengerMock.Object, _interopMock.Object, _packetLoggerMock.Object);
             
             var cts = new CancellationTokenSource();

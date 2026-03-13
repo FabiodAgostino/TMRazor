@@ -82,6 +82,7 @@ namespace TMRazorImproved.Shared.Models.Config
         public bool HighlightTarget { get; set; } = true;
         public bool IncomingNames { get; set; } = true;
         public bool ShowIncomingDamage { get; set; } = true;
+        public bool NoRunStealth { get; set; }
         
         // Agent Settings (Multi-list support)
         public List<AutoLootConfig> AutoLootLists { get; set; } = new() { new AutoLootConfig { Name = "Default" } };

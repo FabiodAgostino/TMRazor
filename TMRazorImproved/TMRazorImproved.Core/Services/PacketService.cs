@@ -297,7 +297,7 @@ namespace TMRazorImproved.Core.Services
 
             // Step 1: hold mutex only long enough to snapshot+drain the shared buffer.
             // This minimises blocking the game's network thread (WritePacket WaitOne).
-            byte[] snapshot = null;
+            byte[]? snapshot = null;
             int snapshotLen = 0;
             bool acquired = false;
             try
