@@ -121,6 +121,7 @@ TMRazorImproved.Tests (xUnit, Moq)
 | P1-06 | Config | `Config/doors.json` mancante — le porte potrebbero non essere riconosciute dal pathfinding | PlayerApi / PathFinding |
 | P1-07 | `PlayerApi` | `PathFindTo(x,y,z)` è uno stub vuoto — non invia nessun pacchetto al client | `Scripting/Api/PlayerApi.cs` riga 494 |
 | P1-08 | `UOSteamInterpreter` | Implementazione parziale — i comandi IF/FOR/WHILE sono presenti ma non completamente testati; alcuni comandi UOS potrebbero non funzionare | `Scripting/Engines/UOSteamInterpreter.cs` |
+| P1-09 | `VideoCaptureService` | Stub completo — `StartAsync()` ritorna sempre `false` con log "Not yet implemented with SharpAvi" | `Services/VideoCaptureService.cs` riga 17 |
 
 ### P2 — Qualità del codice (da fare nella prossima release)
 
@@ -1142,6 +1143,105 @@ Uno script con `Player.PathFindTo(1000, 1000, 0)` fa muovere il personaggio vers
 
 ---
 
+### TASK-E08 🔵 — Implementare VideoCaptureService con SharpAvi
+
+**Problema:**
+`VideoCaptureService.cs` è uno stub completo. `StartAsync()` ritorna sempre `false` con il log `"Video recording requested (Not yet implemented with SharpAvi)"`. La funzione di registrazione video non funziona.
+
+**File coinvolti:**
+- `TMRazorImproved.Core/Services/VideoCaptureService.cs`
+- `TMRazorImproved.Core/TMRazorImproved.Core.csproj` (aggiungere NuGet SharpAvi)
+
+**Passi:**
+
+1. Aggiungi il pacchetto NuGet `SharpAvi` al progetto Core:
+   ```bash
+   dotnet add TMRazorImproved.Core package SharpAvi
+   ```
+
+2. Implementa `VideoCaptureService` usando `SharpAvi`:
+   ```csharp
+   // Schema di base — adatta al progetto
+   using SharpAvi;
+   using SharpAvi.Output;
+
+   public class VideoCaptureService : IVideoCaptureService
+   {
+       private AviWriter? _writer;
+       private IAviVideoStream? _stream;
+       private CancellationTokenSource? _cts;
+       public bool IsRecording { get; private set; }
+
+       public async Task<bool> StartAsync(int fps = 15)
+       {
+           if (IsRecording) return false;
+           var path = Path.Combine(AppContext.BaseDirectory, "Videos",
+               $"capture_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.avi");
+           Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+           _writer = new AviWriter(path) { FramesPerSecond = fps, EmitIndex1 = true };
+           _stream = _writer.AddVideoStream();
+           // dimensioni finestra UO — adatta come in ScreenCaptureService
+           _cts = new CancellationTokenSource();
+           IsRecording = true;
+           _ = CaptureLoopAsync(fps, _cts.Token);
+           return true;
+       }
+
+       private async Task CaptureLoopAsync(int fps, CancellationToken token)
+       {
+           int delayMs = 1000 / fps;
+           while (!token.IsCancellationRequested)
+           {
+               // Cattura frame — riusa la logica di ScreenCaptureService
+               await Task.Delay(delayMs, token).ContinueWith(_ => { });
+           }
+       }
+
+       public Task StopAsync()
+       {
+           _cts?.Cancel();
+           _writer?.Close();
+           IsRecording = false;
+           return Task.CompletedTask;
+       }
+   }
+   ```
+
+3. Collega il pulsante "Registra Video" nella UI (se presente) al servizio
+
+**Criterio di accettazione:**
+Il pulsante Record Video crea un file `.avi` nella cartella `Videos/` con la registrazione della finestra UO.
+
+---
+
+### TASK-E09 🔵 — Tool di migrazione macro legacy (.macro → nuovo formato)
+
+**Problema:**
+Gli utenti che migrano da TMRazor legacy hanno macro salvate nel vecchio formato. Non esiste un tool di conversione automatica. Le macro devono essere riscritte manualmente.
+
+**File originale di riferimento:**
+- `Razor/RazorEnhanced/Macros/` — formato legacy macro
+- `TMRazorImproved.Core/Services/MacrosService.cs` — nuovo formato
+
+**Passi:**
+
+1. Studia il formato delle macro nel legacy (vedi `Razor/RazorEnhanced/Macros/Actions/`)
+2. Studia il formato delle macro in `TMRazorImproved` (file `.macro` in output `Macros/`)
+3. Crea un tool di migrazione (può essere una utility console o una funzione nella UI):
+   ```
+   File → Importa Macro Legacy...
+   ```
+4. Il tool deve:
+   - Leggere il file `.macro` nel vecchio formato
+   - Convertire ogni azione nel nuovo formato testuale
+   - Salvare nella cartella `Macros/` del nuovo sistema
+5. Aggiungi un pulsante "Importa Macro Legacy" nella `MacrosPage.xaml`
+
+**Criterio di accettazione:**
+Una macro creata con il vecchio TMRazor viene importata e funziona nel nuovo sistema senza modifiche manuali.
+
+---
+
 ### TASK-H04 🟠 — Audit e completamento UOSteamInterpreter
 
 **Problema:**
@@ -1196,6 +1296,8 @@ Gli script `.uos` esistenti del server The Miracle vengono eseguiti correttament
 | TASK-E04 | Macro Recorder UI | 4h |
 | TASK-E05 | Vendor Buy/Sell backend | 4h |
 | TASK-E06 | Object Inspector | 3h |
+| TASK-E08 | VideoCaptureService con SharpAvi | 6h |
+| TASK-E09 | Tool migrazione macro legacy | 5h |
 
 ### Sprint 4 — Qualità e Rifinitura
 | Task | Descrizione | Stima |
