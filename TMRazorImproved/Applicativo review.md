@@ -105,6 +105,7 @@ TMRazorImproved.Tests (xUnit, Moq)
 | ID | Servizio | Problema | File |
 |----|----------|----------|------|
 | P0-01 | `ScreenCaptureService` | Usa `System.Drawing` / `System.Drawing.Imaging` — non supportato nativamente in .NET 10 | `Services/ScreenCaptureService.cs` righe 2-3 |
+| P0-01b | `MiscApi` | Usa `System.Drawing.Point` nelle firme P/Invoke per `GetCursorPos`/`ClientToScreen` (righe 118-119, 134, 138, 157, 161) | `Scripting/Api/MiscApi.cs` |
 | P0-02 | `PlayerApi` | `SpecialMoves` non migrati — `HasSpecial`, `PrimarySpecialId`, `SecondarySpecialId` ritornano sempre `false`/`0` | `Scripting/Api/PlayerApi.cs` righe 142-146 |
 | P0-03 | Config | `Config/regions.json` mancante — `Player.Area()` e `Player.Zone()` ritornano sempre `"Unknown"` | `Scripting/Api/PlayerApi.cs` riga 239 |
 
@@ -118,6 +119,8 @@ TMRazorImproved.Tests (xUnit, Moq)
 | P1-04 | `Misc.ScriptStop` | Può fermare solo lo script attualmente in esecuzione per nome. Non può fermare script diversi da quello corrente | `Scripting/Api/MiscApi.cs` riga 753 |
 | P1-05 | `FriendsService` | Rilevamento dei membri di party incompleto — TODO nel codice | `Services/FriendsService.cs` riga 39 |
 | P1-06 | Config | `Config/doors.json` mancante — le porte potrebbero non essere riconosciute dal pathfinding | PlayerApi / PathFinding |
+| P1-07 | `PlayerApi` | `PathFindTo(x,y,z)` è uno stub vuoto — non invia nessun pacchetto al client | `Scripting/Api/PlayerApi.cs` riga 494 |
+| P1-08 | `UOSteamInterpreter` | Implementazione parziale — i comandi IF/FOR/WHILE sono presenti ma non completamente testati; alcuni comandi UOS potrebbero non funzionare | `Scripting/Engines/UOSteamInterpreter.cs` |
 
 ### P2 — Qualità del codice (da fare nella prossima release)
 
@@ -240,10 +243,28 @@ TMRazorImproved.Tests (xUnit, Moq)
    [DllImport("user32.dll")] private static extern int ReleaseDC(IntPtr hWnd, IntPtr hdc);
    ```
 
-6. **Verifica:** Compila il progetto (`dotnet build`). Non devono esserci warning su `System.Drawing`.
+6. **Rimuovi System.Drawing anche da MiscApi.cs** — righe 118-119, 134, 138, 157, 161 usano `System.Drawing.Point` nelle firme P/Invoke. Aggiungi una struct locale in fondo alla classe e sostituisci tutte le occorrenze:
+   ```csharp
+   // Prima (SBAGLIATO):
+   [DllImport("user32.dll")] private static extern bool GetCursorPos(ref System.Drawing.Point lp);
+   [DllImport("user32.dll")] private static extern bool ClientToScreen(IntPtr hWnd, ref System.Drawing.Point lp);
+   ...
+   var old = new System.Drawing.Point();
+
+   // Dopo (CORRETTO — struct locale, nessuna dipendenza da System.Drawing):
+   [StructLayout(LayoutKind.Sequential)]
+   private struct POINT { public int X; public int Y; }
+
+   [DllImport("user32.dll")] private static extern bool GetCursorPos(ref POINT lp);
+   [DllImport("user32.dll")] private static extern bool ClientToScreen(IntPtr hWnd, ref POINT lp);
+   ...
+   var old = new POINT();
+   ```
+
+7. **Verifica:** Compila il progetto (`dotnet build`). Non devono esserci warning su `System.Drawing`.
 
 **Criterio di accettazione:**
-Premere il tasto Screenshot in-game produce un file `.jpg` nella cartella `Screenshots/` senza errori a runtime.
+Premere il tasto Screenshot in-game produce un file `.jpg` nella cartella `Screenshots/` senza errori a runtime. `Misc.LeftMouseClick()` e `Misc.RightMouseClick()` funzionano correttamente.
 
 ---
 
@@ -1095,6 +1116,53 @@ Potrebbero esserci API create ma non esposte in `ScriptGlobals`. I script Python
 
 ---
 
+### TASK-H03 🟠 — Implementare PlayerApi.PathFindTo(x, y, z)
+
+**Problema:**
+`PlayerApi.PathFindTo(int x, int y, int z)` è uno stub vuoto (riga 494). Gli script Python che usano `Player.PathFindTo(x,y,z)` non fanno muovere il personaggio.
+
+**File:** `TMRazorImproved.Core/Services/Scripting/Api/PlayerApi.cs` riga 494
+
+**Passi:**
+
+1. Verifica se `IPathFindingService` espone un metodo `MoveTo(int x, int y, int z)` o simile
+2. Se sì, delega la chiamata:
+   ```csharp
+   public virtual void PathFindTo(int x, int y, int z)
+   {
+       _cancel.ThrowIfCancelled();
+       _pathfinding?.MoveTo(x, y, z);
+   }
+   ```
+3. Se `IPathFindingService` non ha ancora questo metodo, aggiungilo e implementa la logica di pathfinding che già esiste nel servizio.
+4. Alternativa: invia il pacchetto `0x06` (DoubleClick su tile di destinazione) o `0x26` (Move Request) a seconda del protocollo ClassicUO.
+
+**Criterio di accettazione:**
+Uno script con `Player.PathFindTo(1000, 1000, 0)` fa muovere il personaggio verso quella coordinata.
+
+---
+
+### TASK-H04 🟠 — Audit e completamento UOSteamInterpreter
+
+**Problema:**
+`UOSteamInterpreter.cs` è parzialmente implementato. I comandi IF/FOR/WHILE sono visibili ma potrebbero non essere completamente testati con tutti i casi edge del formato UOS.
+
+**File:** `TMRazorImproved.Core/Services/Scripting/Engines/UOSteamInterpreter.cs`
+
+**Passi:**
+
+1. Leggi completamente `UOSteamInterpreter.cs`
+2. Elenca tutti i comandi UOS presenti nel file (es. `if`, `while`, `for`, `say`, `cast`, ecc.)
+3. Confronta con la lista completa dei comandi UOS nell'originale: `Razor/RazorEnhanced/UOSteamEngine.cs` (280KB)
+4. Per ogni comando mancante, apri un sub-task e implementalo nel nuovo interprete
+5. Crea test in `TMRazorImproved.Tests/MockTests/Scripting/` per i comandi più usati
+6. Testa con script UOS reali dalla cartella `Scripts/` se presenti
+
+**Criterio di accettazione:**
+Gli script `.uos` esistenti del server The Miracle vengono eseguiti correttamente dal nuovo interprete.
+
+---
+
 ## Riepilogo Priorità di Esecuzione
 
 ### Sprint 1 — Critico (da fare subito)
@@ -1116,6 +1184,8 @@ Potrebbero esserci API create ma non esposte in `ScriptGlobals`. I script Python
 | TASK-D02 | Audit config files | 2h |
 | TASK-G01 | Test integrazione scripting | 4h |
 | TASK-G02 | Test stress thread safety | 3h |
+| TASK-H03 | Implementare PlayerApi.PathFindTo | 2h |
+| TASK-H04 | Audit e completamento UOSteamInterpreter | 8h |
 
 ### Sprint 3 — Features
 | Task | Descrizione | Stima |
