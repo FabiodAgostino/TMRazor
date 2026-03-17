@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -13,18 +14,16 @@ namespace TMRazorImproved.Core.Services
     {
         private readonly IWorldService _world;
         private readonly IPacketService _packet;
-        private readonly IConfigService _config;
         private readonly ILogger<AutoRemountService> _logger;
 
         public AutoRemountService(
             IWorldService world,
             IPacketService packet,
             IConfigService config,
-            ILogger<AutoRemountService> logger)
+            ILogger<AutoRemountService> logger) : base(config)
         {
             _world = world;
             _packet = packet;
-            _config = config;
             _logger = logger;
         }
 
@@ -35,7 +34,7 @@ namespace TMRazorImproved.Core.Services
                 await Task.Delay(500, cancel);
 
                 if (_world.Player == null) continue;
-                if (!_config.CurrentProfile.AutoRemount || _config.CurrentProfile.RemountSerial == 0) continue;
+                if (!_configService.CurrentProfile.AutoRemount || _configService.CurrentProfile.RemountSerial == 0) continue;
 
                 var player = _world.Player;
                 
@@ -49,7 +48,7 @@ namespace TMRazorImproved.Core.Services
                     continue;
 
                 // Try item mount (Ethereal)
-                var etheralMount = _world.FindItem(_config.CurrentProfile.RemountSerial);
+                var etheralMount = _world.FindItem(_configService.CurrentProfile.RemountSerial);
                 if (etheralMount != null)
                 {
                     _logger.LogInformation($"AutoRemount: using ethereal mount {etheralMount.Serial}");
@@ -59,7 +58,7 @@ namespace TMRazorImproved.Core.Services
                 }
 
                 // Try mobile mount (Pet)
-                var mount = _world.FindMobile(_config.CurrentProfile.RemountSerial);
+                var mount = _world.FindMobile(_configService.CurrentProfile.RemountSerial);
                 if (mount != null && mount.DistanceTo(player) <= 2)
                 {
                     _logger.LogInformation($"AutoRemount: using pet mount {mount.Serial}");

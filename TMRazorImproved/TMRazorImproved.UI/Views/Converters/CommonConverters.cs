@@ -122,17 +122,19 @@ namespace TMRazorImproved.UI.Views.Converters
 
             int gumpId = 0;
             if (spellId >= 1 && spellId <= 64) // Magery
-                gumpId = 0x8CA + (spellId - 1);
+                gumpId = 0x8C0 + (spellId - 1);
             else if (spellId >= 101 && spellId <= 117) // Necro
                 gumpId = 0x5000 + (spellId - 101);
             else if (spellId >= 201 && spellId <= 210) // Chivalry
                 gumpId = 0x5100 + (spellId - 201);
             else if (spellId >= 401 && spellId <= 406) // Bushido
-                gumpId = 0x5400 + (spellId - 401);
+                gumpId = 0x5420 + (spellId - 401);
             else if (spellId >= 501 && spellId <= 508) // Ninjitsu
-                gumpId = 0x5300 + (spellId - 501);
+                gumpId = 0x5320 + (spellId - 501);
             else if (spellId >= 601 && spellId <= 616) // Spellweaving
-                gumpId = 0x59D0 + (spellId - 601);
+                gumpId = 0x59D8 + (spellId - 601);
+            else if (spellId >= 701 && spellId <= 716) // Mysticism
+                gumpId = 0x5DC0 + (spellId - 701);
 
             if (gumpId == 0) return null;
 

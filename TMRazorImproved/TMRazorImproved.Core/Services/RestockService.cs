@@ -14,7 +14,6 @@ namespace TMRazorImproved.Core.Services
     public class RestockService : AgentServiceBase, IRestockService
     {
         private readonly IPacketService _packetService;
-        private readonly IConfigService _configService;
         private readonly IWorldService _worldService;
         private readonly ILogger<RestockService> _logger;
 
@@ -25,10 +24,9 @@ namespace TMRazorImproved.Core.Services
             IConfigService configService,
             IWorldService worldService,
             IHotkeyService hotkeyService,
-            ILogger<RestockService> logger)
+            ILogger<RestockService> logger) : base(configService)
         {
             _packetService = packetService;
-            _configService = configService;
             _worldService = worldService;
             _logger = logger;
 
@@ -48,10 +46,7 @@ namespace TMRazorImproved.Core.Services
 
         private RestockConfig? GetActiveConfig()
         {
-            var profile = _configService.CurrentProfile;
-            if (profile == null) return null;
-            return profile.RestockLists.FirstOrDefault(l => l.Name == profile.ActiveRestockList) 
-                   ?? profile.RestockLists.FirstOrDefault();
+            return GetActiveConfig(p => p.RestockLists, p => p.ActiveRestockList);
         }
 
         protected override async Task AgentLoopAsync(CancellationToken token)

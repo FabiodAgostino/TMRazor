@@ -16,9 +16,19 @@ namespace TMRazorImproved.UI.ViewModels
         private readonly IWorldService _worldService;
         private readonly ILanguageService _languageService;
         private readonly IPacketService _packetService;
+        private readonly IMapService _mapService;
+
+        public MapViewModel Map { get; }
 
         [ObservableProperty]
         private UOEntity? _inspectedEntity;
+
+        partial void OnInspectedEntityChanged(UOEntity? value)
+        {
+            OnPropertyChanged(nameof(InspectedLayer));
+            OnPropertyChanged(nameof(InspectedContainer));
+            OnPropertyChanged(nameof(InspectedAmount));
+        }
 
         [ObservableProperty]
         private string _statusMessage;
@@ -50,12 +60,19 @@ namespace TMRazorImproved.UI.ViewModels
 
         public ObservableCollection<UOGump> OpenGumps { get; } = new();
 
-        public InspectorViewModel(ITargetingService targetingService, IWorldService worldService, ILanguageService languageService, IPacketService packetService)
+        public string InspectedLayer => (InspectedEntity is Item item) ? item.Layer.ToString() : "N/A";
+        public string InspectedContainer => (InspectedEntity is Item item2) ? $"0x{item2.Container:X8}" : "N/A";
+        public string InspectedAmount => (InspectedEntity is Item item3) ? item3.Amount.ToString() : "N/A";
+
+        public InspectorViewModel(ITargetingService targetingService, IWorldService worldService, ILanguageService languageService, IPacketService packetService, IMapService mapService)
         {
             _targetingService = targetingService;
             _worldService = worldService;
             _languageService = languageService;
             _packetService = packetService;
+            _mapService = mapService;
+
+            Map = new MapViewModel(_worldService, _mapService);
 
             _statusMessage = _languageService.GetString("Inspector.Status.ClickInspect");
             _gumpInfo = _languageService.GetString("Inspector.Gump.NoGumpInspected");
@@ -81,6 +98,14 @@ namespace TMRazorImproved.UI.ViewModels
                 MapId = _worldService.Player.MapId;
                 MapInfo = $"Map: {MapId} | X: {PlayerX}, Y: {PlayerY}";
             }
+        }
+
+        [RelayCommand]
+        private void CopySerial()
+        {
+            if (InspectedEntity == null) return;
+            Clipboard.SetText($"0x{InspectedEntity.Serial:X8}");
+            StatusMessage = _languageService.GetString("Inspector.Status.SerialCopied");
         }
 
         [RelayCommand]
@@ -254,7 +279,6 @@ namespace TMRazorImproved.UI.ViewModels
                 }
                 IsWaitingForTarget = false;
             });
-        }
         }
     }
 }

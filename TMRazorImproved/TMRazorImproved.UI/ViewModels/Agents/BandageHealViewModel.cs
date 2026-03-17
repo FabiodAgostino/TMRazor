@@ -147,7 +147,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private async Task SetBandageAsync()
         {
             StatusText = _lang.GetString("Agents.General.SelectItem");
-            var serial = await _targeting.AcquireTargetAsync();
+            var targetInfo = await _targeting.AcquireTargetAsync(); var serial = targetInfo.Serial;
             if (serial != 0)
             {
                 BandageSerial = serial;

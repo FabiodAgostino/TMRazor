@@ -79,18 +79,25 @@ namespace TMRazorImproved.Core.Services
             {
                 list.AddRange(_staticItems);
             }
+
+            // Snapshot the providers to execute them outside the lock (P2-04)
+            List<Func<IEnumerable<SearchItem>>> providers;
             lock (_dynamicProviders)
             {
-                foreach (var provider in _dynamicProviders.Values)
+                providers = _dynamicProviders.Values.ToList();
+            }
+
+            foreach (var provider in providers)
+            {
+                try
                 {
-                    try
-                    {
-                        list.AddRange(provider());
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error executing search dynamic provider");
-                    }
+                    var items = provider();
+                    if (items != null)
+                        list.AddRange(items);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error executing search dynamic provider");
                 }
             }
             return list;

@@ -30,8 +30,8 @@
                 <ui:NavigationViewItem Content="{loc:Loc Nav.Journal}"   TargetPageType="{x:Type pages:JournalPage}" Icon="ReadingList24" />
                 <ui:NavigationViewItem Content="{loc:Loc Nav.General}"   TargetPageType="{x:Type pages:GeneralPage}" Icon="Settings24" />
                 <ui:NavigationViewItem Content="{loc:Loc Nav.Options}"   TargetPageType="{x:Type pages:OptionsPage}" Icon="Options24" />
-                <ui:NavigationViewItem Content="{loc:Loc Nav.Skills}"    TargetPageType="{x:Type pages:SkillsPage}" Icon="Flash24" />
-                <ui:NavigationViewItem Content="{loc:Loc Nav.Hotkeys}"   TargetPageType="{x:Type pages:HotkeysPage}" Icon="Keyboard24" />
+                <ui:NavigationViewItem Content="Display &amp; Counters" TargetPageType="{x:Type pages:DisplayPage}" Icon="DeveloperBoard24" />
+                <ui:NavigationViewItem Content="{loc:Loc Nav.Skills}"    TargetPageType="{x:Type pages:SkillsPage}" Icon="Flash24" />                <ui:NavigationViewItem Content="{loc:Loc Nav.Hotkeys}"   TargetPageType="{x:Type pages:HotkeysPage}" Icon="Keyboard24" />
                 <ui:NavigationViewItem Content="{loc:Loc Nav.Network}"   TargetPageType="{x:Type pages:PacketLoggerPage}" Icon="Broadcasting24">
                     <ui:NavigationViewItem.MenuItems>
                         <ui:NavigationViewItem Content="{loc:Loc Nav.SecureTrade}" TargetPageType="{x:Type pages:SecureTradePage}" Icon="ArrowSwap24" />

@@ -48,6 +48,9 @@ namespace TMRazorImproved.Shared.Interfaces
         /// <summary>Richiede l'interruzione cooperativa dello script in corso.</summary>
         Task StopAsync();
 
+        /// <summary>Richiede l'interruzione di qualsiasi script con il nome specificato.</summary>
+        void StopScript(string name);
+
         /// <summary>Ritorna la lista dei nomi degli script caricati (es. nomi dei file).</summary>
         IEnumerable<string> GetLoadedScripts();
 

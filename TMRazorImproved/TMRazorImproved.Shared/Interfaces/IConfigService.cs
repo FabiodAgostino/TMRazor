@@ -7,12 +7,14 @@ namespace TMRazorImproved.Shared.Interfaces
     {
         GlobalSettings Global { get; }
         UserProfile CurrentProfile { get; }
+        string CurrentShardId { get; }
         
-        IEnumerable<string> GetAvailableProfiles();
+        IEnumerable<string> GetAvailableProfiles(string? shardId = null);
         
         void Load();
         void Save();
         
+        void SetCurrentShard(string shardId);
         void SwitchProfile(string profileName);
         void CreateProfile(string profileName);
         void CloneProfile(string sourceProfileName, string newProfileName);

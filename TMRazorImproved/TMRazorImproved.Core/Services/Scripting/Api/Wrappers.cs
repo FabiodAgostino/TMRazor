@@ -140,7 +140,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public int MobileID => Graphic;
         public int ItemID => Graphic;
         public int Body => Graphic;
-        public bool InParty => _world.PartyMembers.Contains(_inner.Serial);
+        public bool InParty => _world.IsPartyMember(_inner.Serial);
         public new virtual List<string> Properties => _inner.OPL?.Properties.Select(p => p.Arguments).ToList() ?? new List<string>();
 
         public override ushort Hits { get => _inner.Hits; set => _inner.Hits = value; }

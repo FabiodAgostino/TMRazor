@@ -51,8 +51,9 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<TargetHPWindow>();
                 services.AddSingleton<OverheadMessageOverlay>();
                 services.AddTransient<TMRazorImproved.UI.Views.Windows.SpellGridWindow>();
+                services.AddTransient<TMRazorImproved.UI.Views.Windows.MapWindow>();
 
-                // Core Services
+                // Services Core (Backend)
                 services.AddSingleton<IClientInteropService, ClientInteropService>();
                 services.AddSingleton<ISearchService, SearchService>();
                 services.AddSingleton<IPacketService, PacketService>();
@@ -113,6 +114,7 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<DPSMeterViewModel>();
                 services.AddSingleton<TargetHPViewModel>();
                 services.AddTransient<OptionsViewModel>();
+                services.AddTransient<DisplayViewModel>();
                 services.AddTransient<SoundViewModel>();
                 services.AddTransient<CountersViewModel>();
                 services.AddTransient<HotkeysViewModel>();
@@ -120,6 +122,7 @@ namespace TMRazorImproved.UI
                 services.AddTransient<GumpListViewModel>();
                 services.AddTransient<SkillsViewModel>();
                 services.AddSingleton<SpellGridViewModel>();
+                services.AddSingleton<MapViewModel>();
                 services.AddTransient<TMRazorImproved.UI.ViewModels.Agents.AutoLootViewModel>();
                 services.AddTransient<TMRazorImproved.UI.ViewModels.Agents.ScavengerViewModel>();
                 services.AddTransient<TMRazorImproved.UI.ViewModels.Agents.BandageHealViewModel>();
@@ -144,6 +147,7 @@ namespace TMRazorImproved.UI
                 services.AddTransient<FiltersPage>();
                 services.AddTransient<SoundPage>();
                 services.AddTransient<CountersPage>();
+                services.AddTransient<DisplayPage>();
                 services.AddTransient<OptionsPage>();
                 services.AddTransient<HotkeysPage>();
                 services.AddTransient<InspectorPage>();
@@ -198,16 +202,18 @@ namespace TMRazorImproved.UI
                 _host.Services.GetRequiredService<ITitleBarService>().Start();
                 _host.Services.GetRequiredService<IHotkeyService>().Start();
                 
-                // Forza l'inizializzazione degli agenti per registrare le hotkey
-                _host.Services.GetRequiredService<IAutoLootService>();
-                _host.Services.GetRequiredService<IScavengerService>();
+                // Avvia gli agenti per attivare i loro loop di background
+                _host.Services.GetRequiredService<IAutoLootService>().Start();
+                _host.Services.GetRequiredService<IScavengerService>().Start();
+                _host.Services.GetRequiredService<IBandageHealService>().Start();
+                _host.Services.GetRequiredService<IDressService>().Start();
+                _host.Services.GetRequiredService<IAutoCarverService>().Start();
+                _host.Services.GetRequiredService<IBoneCutterService>().Start();
+                _host.Services.GetRequiredService<IAutoRemountService>().Start();
+                
+                // Inizializza altri servizi che devono essere attivi
                 _host.Services.GetRequiredService<IOrganizerService>();
-                _host.Services.GetRequiredService<IBandageHealService>();
-                _host.Services.GetRequiredService<IDressService>();
                 _host.Services.GetRequiredService<IVendorService>();
-                _host.Services.GetRequiredService<IAutoCarverService>();
-                _host.Services.GetRequiredService<IBoneCutterService>();
-                _host.Services.GetRequiredService<IAutoRemountService>();
                 _host.Services.GetRequiredService<ITargetingService>();
 
                 // Attiva i ViewModel che si iscrivono a messaggi (il DI li crea lazy)

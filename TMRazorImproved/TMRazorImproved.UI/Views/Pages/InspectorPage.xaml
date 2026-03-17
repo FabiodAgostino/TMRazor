@@ -33,13 +33,28 @@
                         <ui:Card Padding="16" Margin="0,0,0,12">
                             <StackPanel>
                                 <ui:TextBlock Text="{loc:Loc Inspector.Entity.BasicInfo}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
-                                <ui:Button Content="{loc:Loc Inspector.Entity.InspectButton}" Icon="Eye24" Command="{Binding StartInspectCommand}" Appearance="Primary" HorizontalAlignment="Stretch" Margin="0,0,0,16" ToolTip="{loc:Loc Inspector.Entity.InspectButton.ToolTip}"/>
+                                <ui:Button Content="{loc:Loc Inspector.Entity.InspectButton}" Icon="{ui:SymbolIcon Eye24}" Command="{Binding StartInspectCommand}" Appearance="Primary" HorizontalAlignment="Stretch" Margin="0,0,0,16" ToolTip="{loc:Loc Inspector.Entity.InspectButton.ToolTip}"/>
                                 
-                                <ui:TextBlock Text="{loc:Loc Inspector.Entity.Serial}" Appearance="Secondary" Margin="0,0,0,4"/>
-                                <ui:TextBlock Text="{Binding InspectedEntity.Serial, StringFormat=0x{0:X8}}" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <ui:TextBlock Text="{loc:Loc Inspector.Entity.Serial}" Appearance="Secondary" Margin="0,0,0,4"/>
+                                        <ui:TextBlock Text="{Binding InspectedEntity.Serial, StringFormat=0x{0:X8}}" FontSize="18" FontWeight="Bold" />
+                                    </StackPanel>
+                                    <ui:Button Grid.Column="1" Icon="{ui:SymbolIcon Copy24}" Command="{Binding CopySerialCommand}" VerticalAlignment="Bottom" ToolTip="{loc:Loc Inspector.Entity.CopySerial.ToolTip}"/>
+                                </Grid>
+
+                                <ui:TextBlock Text="{loc:Loc Inspector.Entity.Name}" Appearance="Secondary" Margin="0,0,0,4"/>
+                                <ui:TextBlock Text="{Binding InspectedEntity.Name}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
 
                                 <ui:TextBlock Text="{loc:Loc Inspector.Entity.Graphic}" Appearance="Secondary" Margin="0,0,0,4"/>
                                 <ui:TextBlock Text="{Binding InspectedEntity.Graphic, StringFormat=0x{0:X4}}" FontSize="16" Margin="0,0,0,12"/>
+
+                                <ui:TextBlock Text="{loc:Loc Inspector.Entity.Hue}" Appearance="Secondary" Margin="0,0,0,4"/>
+                                <ui:TextBlock Text="{Binding InspectedEntity.Hue, StringFormat=0x{0:X4}}" FontSize="16" Margin="0,0,0,12"/>
 
                                 <ui:TextBlock Text="{loc:Loc Inspector.Entity.Position}" Appearance="Secondary" Margin="0,0,0,4"/>
                                 <ui:TextBlock Margin="0,0,0,12">
@@ -49,6 +64,24 @@
                                     <Run Text=", "/>
                                     <Run Text="{Binding InspectedEntity.Z}" FontWeight="SemiBold"/>
                                 </ui:TextBlock>
+
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <ui:TextBlock Text="{loc:Loc Inspector.Entity.Layer}" Appearance="Secondary" Margin="0,0,0,4"/>
+                                        <ui:TextBlock Text="{Binding InspectedLayer}" FontSize="14" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <ui:TextBlock Text="{loc:Loc Inspector.Entity.Amount}" Appearance="Secondary" Margin="0,0,0,4"/>
+                                        <ui:TextBlock Text="{Binding InspectedAmount}" FontSize="14" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <ui:TextBlock Text="{loc:Loc Inspector.Entity.Container}" Appearance="Secondary" Margin="0,0,0,4"/>
+                                <ui:TextBlock Text="{Binding InspectedContainer}" FontSize="14" Margin="0,0,0,12"/>
                             </StackPanel>
                         </ui:Card>
 
@@ -214,9 +247,7 @@
 
                     <ui:Card Grid.Row="1" Padding="0">
                         <controls:MapControl x:Name="WorldMap" 
-                                           MapId="{Binding MapId}" 
-                                           PlayerX="{Binding PlayerX}" 
-                                           PlayerY="{Binding PlayerY}"
+                                           DataContext="{Binding Map}"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center" />
                     </ui:Card>

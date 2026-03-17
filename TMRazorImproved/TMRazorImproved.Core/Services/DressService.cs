@@ -16,7 +16,6 @@ namespace TMRazorImproved.Core.Services
     public class DressService : AgentServiceBase, IDressService
     {
         private readonly IPacketService _packetService;
-        private readonly IConfigService _configService;
         private readonly IWorldService _worldService;
         private readonly ILogger<DressService> _logger;
         
@@ -29,10 +28,9 @@ namespace TMRazorImproved.Core.Services
             IConfigService configService,
             IWorldService worldService,
             IHotkeyService hotkeyService,
-            ILogger<DressService> logger)
+            ILogger<DressService> logger) : base(configService)
         {
             _packetService = packetService;
-            _configService = configService;
             _worldService = worldService;
             _logger = logger;
 
@@ -52,21 +50,26 @@ namespace TMRazorImproved.Core.Services
             }
         }
 
+        private DressList? GetActiveConfig()
+        {
+            return GetActiveConfig(p => p.DressLists, p => p.ActiveDressList);
+        }
+
         public void DressUp()
         {
-            var profile = _configService.CurrentProfile;
-            if (profile != null)
+            var config = GetActiveConfig();
+            if (config != null)
             {
-                Dress(profile.ActiveDressList);
+                Dress(config.Name);
             }
         }
 
         public void Undress()
         {
-            var profile = _configService.CurrentProfile;
-            if (profile != null)
+            var config = GetActiveConfig();
+            if (config != null)
             {
-                Undress(profile.ActiveDressList);
+                Undress(config.Name);
             }
         }
 

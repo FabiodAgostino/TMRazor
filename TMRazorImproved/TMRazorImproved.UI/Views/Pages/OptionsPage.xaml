@@ -172,6 +172,18 @@
                                              IsChecked="{Binding AutoScreenshotOnDeath, Mode=TwoWay}" 
                                              Margin="0,0,0,8"
                                              ToolTip="{loc:Loc Options.AutoScreenshotOnDeath.ToolTip}"/>
+
+                            <Grid Margin="0,8,0,0" ToolTip="{loc:Loc Options.PathFindingMaxRange.ToolTip}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBlock Text="{loc:Loc Options.PathFindingMaxRange}" VerticalAlignment="Center" />
+                                <ui:NumberBox Grid.Column="1" 
+                                              Value="{Binding PathFindingMaxRange, Mode=TwoWay}" 
+                                              Minimum="10" Maximum="1000" 
+                                              Width="100" />
+                            </Grid>
                         </StackPanel>
                     </UniformGrid>
                 </StackPanel>

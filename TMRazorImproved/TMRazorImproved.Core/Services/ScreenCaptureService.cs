@@ -1,9 +1,9 @@
 using System;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Windows.Interop;
+using System.Windows.Media.Imaging;
 using Microsoft.Extensions.Logging;
 using TMRazorImproved.Shared.Interfaces;
 
@@ -49,16 +49,45 @@ namespace TMRazorImproved.Core.Services
 
                 try
                 {
-                    using (Bitmap bmp = CaptureWindow(hWnd))
-                    {
-                        string playerName = _worldService.Player?.Name ?? "Unknown";
-                        string fileName = $"{playerName}_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.jpg";
-                        string fullPath = Path.Combine(_capturePath, fileName);
+                    string playerName = _worldService.Player?.Name ?? "Unknown";
+                    string fileName = $"{playerName}_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.jpg";
+                    string fullPath = Path.Combine(_capturePath, fileName);
 
-                        bmp.Save(fullPath, ImageFormat.Jpeg);
-                        _logger.LogInformation("Screenshot saved to {Path}", fullPath);
-                        return fullPath;
+                    // Usa PrintWindow via P/Invoke per catturare la finestra UO
+                    // poi converte in BitmapSource WPF tramite interop
+                    RECT rect = default;
+                    GetWindowRect(hWnd, ref rect);
+                    int width  = Math.Max(rect.right - rect.left, 800);
+                    int height = Math.Max(rect.bottom - rect.top, 600);
+
+                    // Crea un DIB compatibile via GDI (nessun System.Drawing)
+                    IntPtr hdc    = GetDC(IntPtr.Zero);
+                    IntPtr hdcMem = CreateCompatibleDC(hdc);
+                    IntPtr hBmp   = CreateCompatibleBitmap(hdc, width, height);
+                    IntPtr hOld   = SelectObject(hdcMem, hBmp);
+
+                    PrintWindow(hWnd, hdcMem, 0x00000002);
+
+                    SelectObject(hdcMem, hOld);
+                    DeleteDC(hdcMem);
+                    ReleaseDC(IntPtr.Zero, hdc);
+
+                    // Converti HBITMAP in BitmapSource WPF
+                    BitmapSource bmpSrc = Imaging.CreateBitmapSourceFromHBitmap(
+                        hBmp, IntPtr.Zero, System.Windows.Int32Rect.Empty,
+                        BitmapSizeOptions.FromEmptyOptions());
+                    DeleteObject(hBmp);
+
+                    // Salva come JPEG usando WPF encoder
+                    var encoder = new JpegBitmapEncoder { QualityLevel = 90 };
+                    encoder.Frames.Add(BitmapFrame.Create(bmpSrc));
+                    using (var stream = new FileStream(fullPath, FileMode.Create))
+                    {
+                        encoder.Save(stream);
                     }
+
+                    _logger.LogInformation("Screenshot saved to {Path}", fullPath);
+                    return fullPath;
                 }
                 catch (Exception ex)
                 {
@@ -68,35 +97,7 @@ namespace TMRazorImproved.Core.Services
             });
         }
 
-        private Bitmap CaptureWindow(IntPtr hWnd)
-        {
-            RECT rect = new RECT();
-            GetWindowRect(hWnd, ref rect);
-
-            int width = rect.right - rect.left;
-            int height = rect.bottom - rect.top;
-
-            // In case of minimized window or weird sizes
-            if (width <= 0) width = 800;
-            if (height <= 0) height = 600;
-
-            Bitmap bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-            using (Graphics gfx = Graphics.FromImage(bmp))
-            {
-                IntPtr hdcDest = gfx.GetHdc();
-
-                // PW_RENDERFULLCONTENT (0x00000002) is important for capturing hardware accelerated windows like UO
-                bool success = PrintWindow(hWnd, hdcDest, 0x00000002);
-
-                gfx.ReleaseHdc(hdcDest);
-            }
-
-            return bmp;
-        }
-
         #region P/Invoke
-        private const int SRCCOPY = 0x00CC0020;
-
         [StructLayout(LayoutKind.Sequential)]
         private struct RECT
         {
@@ -111,6 +112,14 @@ namespace TMRazorImproved.Core.Services
 
         [DllImport("user32.dll")]
         private static extern bool PrintWindow(IntPtr hWnd, IntPtr hdcBlt, uint nFlags);
+
+        [DllImport("gdi32.dll")] private static extern IntPtr CreateCompatibleDC(IntPtr hdc);
+        [DllImport("gdi32.dll")] private static extern IntPtr CreateCompatibleBitmap(IntPtr hdc, int nWidth, int nHeight);
+        [DllImport("gdi32.dll")] private static extern IntPtr SelectObject(IntPtr hdc, IntPtr hObject);
+        [DllImport("gdi32.dll")] private static extern bool DeleteDC(IntPtr hdc);
+        [DllImport("gdi32.dll")] private static extern bool DeleteObject(IntPtr hObject);
+        [DllImport("user32.dll")] private static extern IntPtr GetDC(IntPtr hWnd);
+        [DllImport("user32.dll")] private static extern int ReleaseDC(IntPtr hWnd, IntPtr hdc);
         #endregion
     }
 }

@@ -34,6 +34,9 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty] private bool _blockPartyInvite;
         [ObservableProperty] private bool _autoScreenshotOnDeath;
 
+        // Pathfinding
+        [ObservableProperty] private int _pathFindingMaxRange;
+
         // Game Visuals (Integrated from DisplayViewModel)
         [ObservableProperty] private bool _showNames;
         [ObservableProperty] private bool _showHealth;
@@ -75,6 +78,7 @@ namespace TMRazorImproved.UI.ViewModels
             BlockTradeRequest = profile.BlockTradeRequest;
             BlockPartyInvite = profile.BlockPartyInvite;
             AutoScreenshotOnDeath = profile.AutoScreenshotOnDeath;
+            PathFindingMaxRange = profile.PathFindingMaxRange;
 
             // Game Visuals
             ShowNames = profile.ShowNames;
@@ -100,6 +104,7 @@ namespace TMRazorImproved.UI.ViewModels
         partial void OnBlockTradeRequestChanged(bool value) => SaveToConfig();
         partial void OnBlockPartyInviteChanged(bool value) => SaveToConfig();
         partial void OnAutoScreenshotOnDeathChanged(bool value) => SaveToConfig();
+        partial void OnPathFindingMaxRangeChanged(int value) => SaveToConfig();
 
         partial void OnShowNamesChanged(bool value) => SaveToConfig();
         partial void OnShowHealthChanged(bool value) => SaveToConfig();
@@ -112,21 +117,21 @@ namespace TMRazorImproved.UI.ViewModels
         private async Task SetCarverBladeAsync()
         {
             var target = await _targetingService.AcquireTargetAsync();
-            if (target > 0) AutoCarverBlade = target;
+            if (target.Serial > 0) AutoCarverBlade = target.Serial;
         }
 
         [RelayCommand]
         private async Task SetBoneCutterBladeAsync()
         {
             var target = await _targetingService.AcquireTargetAsync();
-            if (target > 0) BoneCutterBlade = target;
+            if (target.Serial > 0) BoneCutterBlade = target.Serial;
         }
 
         [RelayCommand]
         private async Task SetMountAsync()
         {
             var target = await _targetingService.AcquireTargetAsync();
-            if (target > 0) RemountSerial = target;
+            if (target.Serial > 0) RemountSerial = target.Serial;
         }
 
         // Visual Overlay Commands (Integrated from DisplayViewModel)
@@ -185,6 +190,7 @@ namespace TMRazorImproved.UI.ViewModels
             profile.BlockTradeRequest = BlockTradeRequest;
             profile.BlockPartyInvite = BlockPartyInvite;
             profile.AutoScreenshotOnDeath = AutoScreenshotOnDeath;
+            profile.PathFindingMaxRange = PathFindingMaxRange;
 
             profile.ShowNames = ShowNames;
             profile.ShowHealth = ShowHealth;

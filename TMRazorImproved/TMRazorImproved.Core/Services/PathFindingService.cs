@@ -21,15 +21,18 @@ namespace TMRazorImproved.Core.Services
 
         private readonly IWorldService _worldService;
         private readonly IMapDataProvider _mapProvider;
+        private readonly IConfigService _configService;
         private readonly ILogger<PathFindingService> _logger;
 
         public PathFindingService(
             IWorldService worldService,
             IMapDataProvider mapProvider,
+            IConfigService configService,
             ILogger<PathFindingService> logger)
         {
             _worldService = worldService;
             _mapProvider = mapProvider;
+            _configService = configService;
             _logger = logger;
         }
 
@@ -44,7 +47,8 @@ namespace TMRazorImproved.Core.Services
             int distanceX = Math.Abs(startX - destX);
             int distanceY = Math.Abs(startY - destY);
             int scanMaxRange = Math.Max(distanceX, distanceY) + 2;
-            if (scanMaxRange > 100) scanMaxRange = 100;
+            int maxLimit = _configService.CurrentProfile?.PathFindingMaxRange ?? 200;
+            if (scanMaxRange > maxLimit) scanMaxRange = maxLimit;
 
             var start = (X: startX, Y: startY);
             var goal  = (X: destX,  Y: destY);

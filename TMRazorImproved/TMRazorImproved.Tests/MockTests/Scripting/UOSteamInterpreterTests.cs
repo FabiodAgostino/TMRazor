@@ -4,6 +4,7 @@ using TMRazorImproved.Core.Services.Scripting.Api;
 using TMRazorImproved.Core.Services.Scripting.Engines;
 using TMRazorImproved.Shared.Interfaces;
 using Xunit;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace TMRazorImproved.Tests.MockTests.Scripting
 {
@@ -26,19 +27,33 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         private UOSteamInterpreter CreateInterpreter(PlayerApi playerApi)
         {
             var misc    = new MiscApi(_worldMock.Object, _packetMock.Object, _interopMock.Object, _cancel);
-            var items   = new ItemsApi(_worldMock.Object, _packetMock.Object, _cancel);
-            var mobiles = new MobilesApi(_worldMock.Object, _friendsMock.Object,_packetMock.Object, _targetingMock.Object, _cancel);
+            var items   = new ItemsApi(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _cancel);
+            var mobiles = new MobilesApi(_worldMock.Object, _friendsMock.Object, _packetMock.Object, _targetingMock.Object, _cancel);
             var journalMock = new Mock<IJournalService>();
             var journal = new JournalApi(journalMock.Object, _cancel);
+            var configMock = new Mock<IConfigService>();
+            var messengerMock = new Mock<IMessenger>();
+            var targetApi = new TargetApi(_targetingMock.Object, _worldMock.Object, configMock.Object, _packetMock.Object, _cancel);
+            var skillsApi = new SkillsApi(_skillsMock.Object, _packetMock.Object, _cancel);
+            var gumpsApi = new GumpsApi(_worldMock.Object, _packetMock.Object, _cancel, messengerMock.Object);
 
-            return new UOSteamInterpreter(misc, playerApi, items, mobiles, journal, _cancel, s => _outputLog.Add(s));
+            var autoLootApi = new AutoLootApi(new Mock<IAutoLootService>().Object, _cancel);
+            var dressApi = new DressApi(new Mock<IDressService>().Object, _cancel);
+            var scavengerApi = new ScavengerApi(new Mock<IScavengerService>().Object, _cancel);
+            var restockApi = new RestockApi(new Mock<IRestockService>().Object, _cancel);
+            var organizerApi = new OrganizerApi(new Mock<IOrganizerService>().Object, _cancel);
+            var bandageHealApi = new BandageHealApi(new Mock<IBandageHealService>().Object, _cancel);
+
+            return new UOSteamInterpreter(misc, playerApi, items, mobiles, journal, targetApi, skillsApi, gumpsApi,
+                autoLootApi, dressApi, scavengerApi, restockApi, organizerApi, bandageHealApi,
+                _cancel, s => _outputLog.Add(s));
         }
 
         [Fact]
         public void Execute_SimpleMsg_ShouldCallPlayerChatSay()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null!, null!);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null!, null!, null!);
             var interpreter = CreateInterpreter(playerMock.Object);
             string code = "msg 'hello world'";
 
@@ -53,7 +68,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         public void Execute_IfCondition_ShouldWork()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null!, null!);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null!, null!, null!);
             playerMock.Setup(p => p.Hits).Returns(50);
             var interpreter = CreateInterpreter(playerMock.Object);
             
@@ -76,7 +91,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         public void Execute_WhileLoop_ShouldExecuteMultipleTimes()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null!, null!);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null!, null!, null!);
             
             // Simula hits che scendono ogni volta che viene letto
             int callCount = 0;
@@ -100,7 +115,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         public void Execute_SetAlias_ShouldPersist()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null!, null!);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null!, null!, null!);
             var interpreter = CreateInterpreter(playerMock.Object);
             
             string code = @"

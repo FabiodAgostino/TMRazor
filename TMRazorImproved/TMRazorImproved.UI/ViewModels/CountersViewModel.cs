@@ -46,7 +46,7 @@ namespace TMRazorImproved.UI.ViewModels
         [RelayCommand]
         private async Task SetCounterGraphic(CounterDefinition counter)
         {
-            uint serial = await _targeting.AcquireTargetAsync();
+            var targetInfo = await _targeting.AcquireTargetAsync(); uint serial = targetInfo.Serial;
             if (serial != 0)
             {
                 var item = App.GetService<IWorldService>()?.FindItem(serial);

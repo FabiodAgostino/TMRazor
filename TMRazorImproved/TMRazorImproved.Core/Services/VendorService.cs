@@ -14,7 +14,6 @@ namespace TMRazorImproved.Core.Services
     public class VendorService : AgentServiceBase, IVendorService, IRecipient<VendorBuyMessage>, IRecipient<VendorSellMessage>
     {
         private readonly IPacketService _packetService;
-        private readonly IConfigService _configService;
         private readonly IWorldService _worldService;
         private readonly ILogger<VendorService> _logger;
         private readonly IMessenger _messenger;
@@ -24,10 +23,9 @@ namespace TMRazorImproved.Core.Services
             IConfigService configService,
             IWorldService worldService,
             IMessenger messenger,
-            ILogger<VendorService> logger)
+            ILogger<VendorService> logger) : base(configService)
         {
             _packetService = packetService;
-            _configService = configService;
             _worldService = worldService;
             _messenger = messenger;
             _logger = logger;
@@ -38,10 +36,7 @@ namespace TMRazorImproved.Core.Services
 
         private VendorConfig? GetActiveConfig()
         {
-            var profile = _configService.CurrentProfile;
-            if (profile == null) return null;
-            return profile.VendorLists.FirstOrDefault(l => l.Name == profile.ActiveVendorList) 
-                   ?? profile.VendorLists.FirstOrDefault();
+            return GetActiveConfig(p => p.VendorLists, p => p.ActiveVendorList);
         }
 
         public void Receive(VendorBuyMessage message)
@@ -91,7 +86,7 @@ namespace TMRazorImproved.Core.Services
 
             if (toBuy.Count > 0)
             {
-                SendBuyResponse(message.Value.VendorSerial, toBuy);
+                ExecuteBuy(message.Value.VendorSerial, toBuy);
             }
         }
 
@@ -115,20 +110,20 @@ namespace TMRazorImproved.Core.Services
 
             if (toSell.Count > 0)
             {
-                SendSellResponse(message.Value.VendorSerial, toSell);
+                ExecuteSell(message.Value.VendorSerial, toSell);
             }
         }
 
-        private void SendBuyResponse(uint vendorSerial, List<(uint Serial, ushort Amount)> toBuy)
+        public void ExecuteBuy(uint vendorSerial, List<(uint Serial, ushort Amount)> items)
         {
-            int len = 8 + (toBuy.Count * 7);
+            int len = 8 + (items.Count * 7);
             byte[] data = new byte[len];
             data[0] = 0x3B;
             BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(1), (ushort)len);
             BinaryPrimitives.WriteUInt32BigEndian(data.AsSpan(3), vendorSerial);
             data[7] = 0x02; // flag (0x02 indicates list)
             int offset = 8;
-            foreach (var item in toBuy)
+            foreach (var item in items)
             {
                 data[offset] = 0x1A; // layer usually 0x1A for buy list
                 BinaryPrimitives.WriteUInt32BigEndian(data.AsSpan(offset + 1), item.Serial);
@@ -136,24 +131,28 @@ namespace TMRazorImproved.Core.Services
                 offset += 7;
             }
             _packetService.SendToServer(data);
+            
+            _logger.LogInformation("Sent Buy Response for vendor 0x{Vendor:X}, {Count} items.", vendorSerial, items.Count);
         }
 
-        private void SendSellResponse(uint vendorSerial, List<(uint Serial, ushort Amount)> toSell)
+        public void ExecuteSell(uint vendorSerial, List<(uint Serial, ushort Amount)> items)
         {
-            int len = 9 + (toSell.Count * 6);
+            int len = 9 + (items.Count * 6);
             byte[] data = new byte[len];
             data[0] = 0x9F;
             BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(1), (ushort)len);
             BinaryPrimitives.WriteUInt32BigEndian(data.AsSpan(3), vendorSerial);
-            BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(7), (ushort)toSell.Count);
+            BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(7), (ushort)items.Count);
             int offset = 9;
-            foreach (var item in toSell)
+            foreach (var item in items)
             {
                 BinaryPrimitives.WriteUInt32BigEndian(data.AsSpan(offset), item.Serial);
                 BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(offset + 4), item.Amount);
                 offset += 6;
             }
             _packetService.SendToServer(data);
+
+            _logger.LogInformation("Sent Sell Response for vendor 0x{Vendor:X}, {Count} items.", vendorSerial, items.Count);
         }
 
         protected override async System.Threading.Tasks.Task AgentLoopAsync(System.Threading.CancellationToken token)

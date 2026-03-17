@@ -18,7 +18,6 @@ namespace TMRazorImproved.Core.Services
     public class AutoLootService : AgentServiceBase, IAutoLootService, IRecipient<ContainerContentMessage>, IRecipient<ContainerItemAddedMessage>
     {
         private readonly IPacketService _packetService;
-        private readonly IConfigService _configService;
         private readonly IWorldService _worldService;
         private readonly ILogger<AutoLootService> _logger;
         private readonly IMessenger _messenger;
@@ -33,10 +32,9 @@ namespace TMRazorImproved.Core.Services
             IWorldService worldService,
             IMessenger messenger,
             IHotkeyService hotkeyService,
-            ILogger<AutoLootService> logger)
+            ILogger<AutoLootService> logger) : base(configService)
         {
             _packetService = packetService;
-            _configService = configService;
             _worldService = worldService;
             _messenger = messenger;
             _logger = logger;
@@ -62,10 +60,7 @@ namespace TMRazorImproved.Core.Services
         // BUG-P1-04 FIX: return type non-nullable con possibile return null → CS8603
         private AutoLootConfig? GetActiveConfig()
         {
-            var profile = _configService.CurrentProfile;
-            if (profile == null) return null;
-            return profile.AutoLootLists.FirstOrDefault(l => l.Name == profile.ActiveAutoLootList)
-                   ?? profile.AutoLootLists.FirstOrDefault();
+            return GetActiveConfig(p => p.AutoLootLists, p => p.ActiveAutoLootList);
         }
 
         public void Receive(ContainerContentMessage message)
@@ -158,8 +153,9 @@ namespace TMRazorImproved.Core.Services
 
                     if (targetContainer != 0)
                     {
-                        _logger.LogDebug("Looting item 0x{Serial:X}", serial);
-                        MoveItem(serial, targetContainer);
+                        ushort amount = item?.Amount ?? 1;
+                        _logger.LogDebug("Looting item 0x{Serial:X} (Amount: {Amount})", serial, amount);
+                        MoveItem(serial, amount, targetContainer);
                         
                         await Task.Delay(Math.Max(100, config.Delay), token); 
                     }
@@ -171,9 +167,9 @@ namespace TMRazorImproved.Core.Services
             }
         }
 
-        private void MoveItem(uint serial, uint targetContainer)
+        private void MoveItem(uint serial, ushort amount, uint targetContainer)
         {
-            _packetService.SendToServer(PacketBuilder.LiftItem(serial));
+            _packetService.SendToServer(PacketBuilder.LiftItem(serial, amount));
             _packetService.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer));
         }
 

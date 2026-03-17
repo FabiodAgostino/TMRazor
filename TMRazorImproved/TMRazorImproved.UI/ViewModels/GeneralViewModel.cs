@@ -4,6 +4,8 @@ using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Enums;
 using TMRazorImproved.UI.Utilities;
 using Microsoft.Extensions.Logging;
+using CommunityToolkit.Mvvm.Messaging;
+using TMRazorImproved.Shared.Messages;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,7 +15,7 @@ using Wpf.Ui;
 
 namespace TMRazorImproved.UI.ViewModels
 {
-    public partial class GeneralViewModel : ViewModelBase
+    public partial class GeneralViewModel : ViewModelBase, IRecipient<ShardChangedMessage>
     {
         [ObservableProperty]
         private string _selectedProfile;
@@ -28,6 +30,7 @@ namespace TMRazorImproved.UI.ViewModels
         private readonly ISnackbarService _snackbarService;
         private readonly IUOModService _uoModService;
         private readonly ILogger<GeneralViewModel> _logger;
+        private readonly IMessenger _messenger;
 
         [ObservableProperty]
         private string _clientPath;
@@ -103,6 +106,7 @@ namespace TMRazorImproved.UI.ViewModels
             IContentDialogService dialogService,
             ISnackbarService snackbarService,
             IUOModService uoModService,
+            IMessenger messenger,
             ILogger<GeneralViewModel> logger)
         {
             _configService = configService;
@@ -113,6 +117,7 @@ namespace TMRazorImproved.UI.ViewModels
             _dialogService = dialogService;
             _snackbarService = snackbarService;
             _uoModService = uoModService;
+            _messenger = messenger;
             _logger = logger;
 
             // Carica i dati iniziali dal file di configurazione globale
@@ -139,6 +144,17 @@ namespace TMRazorImproved.UI.ViewModels
             _processCheckTimer.Tick += (s, e) => CheckProcessStatus();
             _processCheckTimer.Start();
             CheckProcessStatus();
+
+            _messenger.Register<ShardChangedMessage>(this);
+        }
+
+        public void Receive(ShardChangedMessage message)
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                StatusMessage = $"Shard detected: {message.Value}";
+                LoadAvailableProfiles();
+            });
         }
 
         private void CheckProcessStatus()
@@ -155,11 +171,15 @@ namespace TMRazorImproved.UI.ViewModels
         {
             var current = SelectedProfile;
             AvailableProfiles.Clear();
-            foreach (var profile in _configService.GetAvailableProfiles())
+            foreach (var profile in _configService.GetAvailableProfiles(_configService.CurrentShardId))
             {
                 AvailableProfiles.Add(profile);
             }
-            SelectedProfile = current;
+            
+            if (AvailableProfiles.Contains(current))
+                SelectedProfile = current;
+            else
+                SelectedProfile = AvailableProfiles.FirstOrDefault() ?? "Default";
         }
 
         partial void OnSelectedProfileChanged(string value)

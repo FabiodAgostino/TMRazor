@@ -9,6 +9,8 @@ namespace TMRazorImproved.UI.Views.Windows
         {
             DataContext = viewModel;
             InitializeComponent();
+
+            Closed += (s, e) => viewModel.Dispose();
         }
     }
 }

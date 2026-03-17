@@ -127,7 +127,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private async Task SetUndressBagAsync()
         {
             StatusText = _lang.GetString("Agents.General.SelectContainer");
-            var serial = await _targeting.AcquireTargetAsync();
+            var targetInfo = await _targeting.AcquireTargetAsync(); var serial = targetInfo.Serial;
             if (serial != 0)
             {
                 UndressBagSerial = serial;
@@ -165,7 +165,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             if (slot == null || SelectedList == null) return;
 
             StatusText = _lang.GetString("Agents.General.SelectItem");
-            var serial = await _targeting.AcquireTargetAsync();
+            var targetInfo = await _targeting.AcquireTargetAsync(); var serial = targetInfo.Serial;
             if (serial != 0)
             {
                 SelectedList.LayerItems[(byte)slot.Layer] = serial;

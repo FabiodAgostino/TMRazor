@@ -98,6 +98,17 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
 
         public virtual void Close() => SendAction(0);
 
+        public virtual void Close(uint gumpId)
+        {
+            _cancel.ThrowIfCancelled();
+            var gump = GetGumpById(gumpId);
+            if (gump != null)
+            {
+                _packet.SendToServer(TMRazorImproved.Core.Utilities.PacketBuilder.RespondGump(gump.Serial, gump.GumpId, 0, null, null));
+                _world.RemoveGump(gump.Serial);
+            }
+        }
+
         public virtual GumpData? GetGumpData(uint gumpId)
         {
             _cancel.ThrowIfCancelled();

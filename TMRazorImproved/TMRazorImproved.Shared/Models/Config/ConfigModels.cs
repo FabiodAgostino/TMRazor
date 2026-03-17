@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMRazorImproved.Shared.Interfaces;
 
 namespace TMRazorImproved.Shared.Models.Config
 {
@@ -31,6 +32,7 @@ namespace TMRazorImproved.Shared.Models.Config
     public class UserProfile
     {
         public string Name { get; set; } = "Default";
+        public string ShardId { get; set; } = "Unknown";
         
         // General Options
         public bool FiltersEnabled { get; set; } = true;
@@ -113,12 +115,29 @@ namespace TMRazorImproved.Shared.Models.Config
         public string ActiveFriendsList { get; set; } = "Default";
 
         public SpellGridConfig SpellGrid { get; set; } = new();
+        public TargetHPConfig TargetHP { get; set; } = new();
         
+        // TitleBar Settings
+        public bool TitleBarEnabled { get; set; } = true;
+        public string TitleBarTemplate { get; set; } = "UO - {char} [HP: {hp}/{hpmax}] [MP: {mp}/{mpmax}] [SP: {sp}/{spmax}]";
+
         // Hotkeys
         public List<HotkeyDefinition> Hotkeys { get; set; } = new();
+
+        // Pathfinding
+        public int PathFindingMaxRange { get; set; } = 200;
     }
 
-    public class FriendsConfig
+    public class TargetHPConfig
+    {
+        public bool Enabled { get; set; } = true;
+        public double X { get; set; } = double.NaN;
+        public double Y { get; set; } = double.NaN;
+        public bool TopMost { get; set; } = true;
+        public double Opacity { get; set; } = 0.8;
+    }
+
+    public class FriendsConfig : INamedConfig
     {
         public string Name { get; set; } = "New List";
         public bool AutoAcceptParty { get; set; }
@@ -163,7 +182,7 @@ namespace TMRazorImproved.Shared.Models.Config
         public int NewHue { get; set; } = -1; // -1 = no change
     }
 
-    public class TargetFilter
+    public class TargetFilter : INamedConfig
     {
         public string Name { get; set; } = "New Filter";
         public List<int> BodyIDs { get; set; } = new();
@@ -181,7 +200,7 @@ namespace TMRazorImproved.Shared.Models.Config
         public int Range { get; set; } = 12;
     }
 
-    public class AgentConfigBase
+    public class AgentConfigBase : INamedConfig
     {
         public string Name { get; set; } = "New List";
         public bool Enabled { get; set; }
@@ -290,7 +309,7 @@ namespace TMRazorImproved.Shared.Models.Config
         Random
     }
 
-    public class DressList
+    public class DressList : INamedConfig
     {
         public string Name { get; set; } = "New List";
         public int DragDelay { get; set; } = 600;

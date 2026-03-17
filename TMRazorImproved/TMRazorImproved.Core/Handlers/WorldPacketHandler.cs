@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -259,6 +260,13 @@ namespace TMRazorImproved.Core.Handlers
         private void HandleRelayServer(byte[] data)
         {
             // 0x8C: ip(4) port(2) key(4) — il server reindirizza, azzeriamo il mondo
+            if (data.Length >= 7)
+            {
+                string ip = $"{data[1]}.{data[2]}.{data[3]}.{data[4]}";
+                ushort port = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(5));
+                _configService.SetCurrentShard($"{ip}:{port}");
+            }
+
             System.Diagnostics.Trace.WriteLine("[WorldHandler] 0x8C RelayServer — world cleared");
             _worldService.Clear();
         }
@@ -452,6 +460,24 @@ namespace TMRazorImproved.Core.Handlers
 
         private void HandleExtendedStats(UOBufferReader reader)
         {
+            // Sub 0x19
+            if (reader.Remaining == 4) // 9 byte total: Special Ability Info per The Miracle
+            {
+                var player = _worldService.Player;
+                if (player != null)
+                {
+                    lock (player.SyncRoot)
+                    {
+                        player.PrimaryAbilityId = reader.ReadByte();
+                        player.SecondaryAbilityId = reader.ReadByte();
+                        byte activeFlags = reader.ReadByte();
+                        player.PrimaryAbilityActive = (activeFlags & 0x01) != 0;
+                        player.SecondaryAbilityActive = (activeFlags & 0x02) != 0;
+                    }
+                }
+                return;
+            }
+
             // Sub 0x19 — type(1) serial(4) + dati dipendenti dal tipo
             if (reader.Remaining < 5) return;
             byte type = reader.ReadByte();
@@ -1682,13 +1708,28 @@ namespace TMRazorImproved.Core.Handlers
 
         private void HandleBuyWindow(byte[] data)
         {
-            // 0x74: cmd(1) len(2) vendorSerial(4) count(1) [items...]
+            // 0x74: cmd(1) len(2) vendorContainerSerial(4) count(1) [items...]
             if (data.Length < 8) return;
             var reader = new UOBufferReader(data);
             reader.ReadByte();           // 0x74
             reader.ReadUInt16();         // length
-            uint vendorSerial = reader.ReadUInt32();
+            uint vendorContainerSerial = reader.ReadUInt32();
             byte count = reader.ReadByte();
+
+            // L'originale TMRazor usa LastOpenedContainer per il vendor buy.
+            // Aggiorniamo comunque il WorldService.
+            _worldService.SetLastOpenedContainer(vendorContainerSerial);
+
+            var vendorItems = _worldService.GetItemsInContainer(vendorContainerSerial).ToList();
+            if (vendorItems.Count > 0)
+            {
+                // Logica di ordinamento legacy per il matching dei prezzi
+                var container = _worldService.FindItem(vendorContainerSerial);
+                if (container != null && container.Graphic == 0x2af8)
+                    vendorItems = vendorItems.OrderBy(i => i.X).ToList();
+                else
+                    vendorItems.Reverse(); // L'ordine in cui arrivano nel 0x3C è l'opposto di 0x74
+            }
 
             var items = new List<(uint Price, string Name)>();
             for (int i = 0; i < count && reader.Remaining >= 5; i++)
@@ -1696,9 +1737,21 @@ namespace TMRazorImproved.Core.Handlers
                 uint price = reader.ReadUInt32();
                 byte nameLen = reader.ReadByte();
                 string name = reader.Remaining >= nameLen ? reader.ReadString(nameLen) : "";
+                
+                // Associa prezzo e nome all'item se possibile
+                if (i < vendorItems.Count)
+                {
+                    var item = vendorItems[i];
+                    lock (item.SyncRoot)
+                    {
+                        item.Price = (int)price;
+                        item.Name = name;
+                    }
+                }
+
                 items.Add((price, name));
             }
-            _messenger.Send(new VendorBuyMessage(vendorSerial, items.AsReadOnly()));
+            _messenger.Send(new VendorBuyMessage(vendorContainerSerial, items.AsReadOnly()));
         }
 
         private void HandleSellWindow(byte[] data)

@@ -66,7 +66,8 @@ namespace TMRazorImproved.Core.Services
 
         public IEnumerable<Mobile> Mobiles => _mobiles.Values;
         public IEnumerable<Item> Items => _items.Values;
-        public HashSet<uint> PartyMembers { get; } = new();
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, byte> _partyMembers = new();
+        public IReadOnlyCollection<uint> PartyMembers => _partyMembers.Keys.ToList().AsReadOnly();
 
         public Mobile? FindMobile(uint serial) => _mobiles.GetValueOrDefault(serial);
         
@@ -94,29 +95,13 @@ namespace TMRazorImproved.Core.Services
             _items.AddOrUpdate(item.Serial, item, (_, existing) => item);
         }
 
-        public void AddPartyMember(uint serial)
-        {
-            lock (PartyMembers)
-            {
-                PartyMembers.Add(serial);
-            }
-        }
+        public void AddPartyMember(uint serial) => _partyMembers.TryAdd(serial, 0);
 
-        public void RemovePartyMember(uint serial)
-        {
-            lock (PartyMembers)
-            {
-                PartyMembers.Remove(serial);
-            }
-        }
+        public void RemovePartyMember(uint serial) => _partyMembers.TryRemove(serial, out _);
 
-        public void ClearParty()
-        {
-            lock (PartyMembers)
-            {
-                PartyMembers.Clear();
-            }
-        }
+        public void ClearParty() => _partyMembers.Clear();
+
+        public bool IsPartyMember(uint serial) => _partyMembers.ContainsKey(serial);
 
         public void RemoveMobile(uint serial) => _mobiles.TryRemove(serial, out _);
 

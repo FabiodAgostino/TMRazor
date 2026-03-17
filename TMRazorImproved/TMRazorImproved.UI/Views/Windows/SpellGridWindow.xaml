@@ -30,9 +30,16 @@
                                    Padding="4" Margin="2"
                                    Width="40" Height="40"
                                    ToolTip="{Binding Name}">
+                            <ui:Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Configura Slot" 
+                                              Command="{Binding DataContext.ConfigureCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" 
+                                              CommandParameter="{Binding}" />
+                                </ContextMenu>
+                            </ui:Button.ContextMenu>
                             <Grid>
                                 <!-- Icona (Placeholder per ora) -->
-                                <ui:SymbolIcon Symbol="Flash24" />
+                                <Image Source="{Binding SpellId, Converter={StaticResource SpellIconConverter}}" Stretch="Uniform" />
                                 
                                 <!-- Cooldown Overlay -->
                                 <ui:ProgressRing Progress="{Binding CooldownProgress}" 

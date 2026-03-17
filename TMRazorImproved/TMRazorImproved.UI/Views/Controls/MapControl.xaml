@@ -6,9 +6,28 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid x:Name="MapGrid" Background="#111">
-        <Image x:Name="MapImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" />
-        <Canvas x:Name="OverlayCanvas">
-            <Ellipse x:Name="PlayerMarker" Width="10" Height="10" Fill="Red" Stroke="White" StrokeThickness="1" />
-        </Canvas>
+        <Image x:Name="MapImage" 
+               Source="{Binding RadarBitmap}" 
+               RenderOptions.BitmapScalingMode="NearestNeighbor"
+               Stretch="Uniform" 
+               HorizontalAlignment="Center" VerticalAlignment="Center" />
+        <ItemsControl ItemsSource="{Binding Markers}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas Background="Transparent" Width="256" Height="256" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="Canvas.Left" Value="{Binding X}" />
+                    <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                </Style>
+            </ItemsControl.ItemContainerStyle>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Ellipse Width="4" Height="4" Margin="-2" Fill="{Binding Color}" Stroke="Black" StrokeThickness="0.5" ToolTip="{Binding Name}" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
 </UserControl>

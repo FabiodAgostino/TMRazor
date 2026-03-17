@@ -18,7 +18,6 @@ namespace TMRazorImproved.Core.Services
     public class ScavengerService : AgentServiceBase, IScavengerService, IRecipient<WorldItemMessage>
     {
         private readonly IPacketService _packetService;
-        private readonly IConfigService _configService;
         private readonly IWorldService _worldService;
         private readonly ILogger<ScavengerService> _logger;
         private readonly IMessenger _messenger;
@@ -33,10 +32,9 @@ namespace TMRazorImproved.Core.Services
             IWorldService worldService,
             IMessenger messenger,
             IHotkeyService hotkeyService,
-            ILogger<ScavengerService> logger)
+            ILogger<ScavengerService> logger) : base(configService)
         {
             _packetService = packetService;
-            _configService = configService;
             _worldService = worldService;
             _messenger = messenger;
             _logger = logger;
@@ -61,10 +59,7 @@ namespace TMRazorImproved.Core.Services
         // BUG-P1-04 FIX: return type non-nullable con possibile return null → CS8603
         private ScavengerConfig? GetActiveConfig()
         {
-            var profile = _configService.CurrentProfile;
-            if (profile == null) return null;
-            return profile.ScavengerLists.FirstOrDefault(l => l.Name == profile.ActiveScavengerList)
-                   ?? profile.ScavengerLists.FirstOrDefault();
+            return GetActiveConfig(p => p.ScavengerLists, p => p.ActiveScavengerList);
         }
 
         public void Receive(WorldItemMessage message)
@@ -114,8 +109,10 @@ namespace TMRazorImproved.Core.Services
 
                     if (targetContainer != 0)
                     {
-                        _logger.LogDebug("Scavenging item 0x{Serial:X}", serial);
-                        MoveItem(serial, targetContainer);
+                        var item = _worldService.FindItem(serial);
+                        ushort amount = item?.Amount ?? 1;
+                        _logger.LogDebug("Scavenging item 0x{Serial:X} (Amount: {Amount})", serial, amount);
+                        MoveItem(serial, amount, targetContainer);
                         await Task.Delay(Math.Max(100, config.Delay), token); 
                     }
                 }
@@ -126,9 +123,9 @@ namespace TMRazorImproved.Core.Services
             }
         }
 
-        private void MoveItem(uint serial, uint targetContainer)
+        private void MoveItem(uint serial, ushort amount, uint targetContainer)
         {
-            _packetService.SendToServer(PacketBuilder.LiftItem(serial));
+            _packetService.SendToServer(PacketBuilder.LiftItem(serial, amount));
             _packetService.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer));
         }
 

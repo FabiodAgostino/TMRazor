@@ -102,6 +102,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _targeting.SendTarget(serial);
         }
 
+        public virtual void Target(uint serial) => TargetExecute(serial);
+
         public virtual void TargetExecute(int x, int y, int z, int graphic)
         {
             _cancel.ThrowIfCancelled();
@@ -359,7 +361,20 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             _targeting.LastTarget = serial;
             
-            // Visual highlight
+            // official UO highlight packet (0x73)
+            if (serial != 0)
+            {
+                var highlightPkt = new byte[] { 
+                    0x73, 
+                    (byte)(serial >> 24), 
+                    (byte)(serial >> 16), 
+                    (byte)(serial >> 8), 
+                    (byte)serial 
+                };
+                _packet.SendToClient(highlightPkt);
+            }
+
+            // Visual highlight (legacy style)
             var mob = _world.FindMobile(serial);
             if (mob != null)
             {

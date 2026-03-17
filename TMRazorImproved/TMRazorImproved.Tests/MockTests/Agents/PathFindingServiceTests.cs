@@ -3,6 +3,7 @@ using Xunit;
 using TMRazorImproved.Core.Services;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
+using TMRazorImproved.Shared.Models.Config;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 using Ultima;
@@ -25,6 +26,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
     {
         private readonly Mock<IWorldService> _worldMock = new();
         private readonly Mock<IMapDataProvider> _mapMock = new();
+        private readonly Mock<IConfigService> _configMock = new();
         private readonly Mock<ILogger<PathFindingService>> _loggerMock = new();
         private readonly Mobile _player = new Mobile(0x01) { X = 0, Y = 0, Z = 0 };
 
@@ -33,6 +35,9 @@ namespace TMRazorImproved.Tests.MockTests.Agents
             _worldMock.Setup(w => w.Player).Returns(_player);
             _worldMock.Setup(w => w.Items).Returns(Enumerable.Empty<Item>());
             _worldMock.Setup(w => w.Mobiles).Returns(Enumerable.Empty<Mobile>());
+
+            // Default config
+            _configMock.Setup(c => c.CurrentProfile).Returns(new UserProfile());
 
             // Default map setup: available, flat passable land (Id=1, Z=0)
             _mapMock.Setup(m => m.IsMapAvailable(It.IsAny<int>())).Returns(true);
@@ -49,7 +54,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
         }
 
         private PathFindingService CreateService()
-            => new PathFindingService(_worldMock.Object, _mapMock.Object, _loggerMock.Object);
+            => new PathFindingService(_worldMock.Object, _mapMock.Object, _configMock.Object, _loggerMock.Object);
 
         // ---------------------------------------------------------------
         // T24-01: mappa non disponibile → null

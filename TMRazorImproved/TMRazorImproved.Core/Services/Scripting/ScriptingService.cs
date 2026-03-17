@@ -138,6 +138,7 @@ del _make_tracer_, _sys_
         private volatile bool _isRunning;
         private string? _currentScriptName;
         private CancellationTokenSource? _activeCts;
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, CancellationTokenSource> _activeScripts = new(StringComparer.OrdinalIgnoreCase);
 
         // Thread che sta eseguendo lo script — usato da StopAsync per Thread.Interrupt().
         // volatile per visibilità cross-thread senza lock.
@@ -280,6 +281,7 @@ del _make_tracer_, _sys_
             _activeCts = cts;
             _currentScriptName = scriptName;
             _isRunning = true;
+            _activeScripts[scriptName] = cts;
             var start = DateTime.UtcNow;
 
             try
@@ -331,6 +333,7 @@ del _make_tracer_, _sys_
                 _isRunning = false;
                 _currentScriptName = null;
                 _activeCts = null;
+                _activeScripts.TryRemove(scriptName, out _);
                 cts.Dispose();
                 
                 try { _executionLock.Release(); }
@@ -375,6 +378,24 @@ del _make_tracer_, _sys_
             }
         }
 
+        public void StopScript(string name)
+        {
+            if (_activeScripts.TryGetValue(name, out var cts))
+            {
+                _logger.LogInformation("Stopping script by name: {ScriptName}", name);
+                try
+                {
+                    cts.Cancel();
+                }
+                catch (ObjectDisposedException) { }
+                
+                if (string.Equals(_currentScriptName, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    _scriptThread?.Interrupt();
+                }
+            }
+        }
+
         // ------------------------------------------------------------------
         // Esecuzione Python (IronPython)
         // ------------------------------------------------------------------
@@ -407,7 +428,7 @@ del _make_tracer_, _sys_
             scope.SetVariable("Mobiles", mobilesApi);
             scope.SetVariable("Player",  new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, logger: _loggerFactory.CreateLogger<PlayerApi>()));
             scope.SetVariable("Journal", new JournalApi(_journalService, cancelCtrl));
-            scope.SetVariable("Gumps",   new GumpsApi(_world, _packetService, cancelCtrl, _messenger));
+            scope.SetVariable("Gump",   new GumpsApi(_world, _packetService, cancelCtrl, _messenger));
             scope.SetVariable("Target",  new TargetApi(_targetingService, _world, _config, _packetService, cancelCtrl));
             scope.SetVariable("Skills",  new SkillsApi(_skillsService, _packetService, cancelCtrl));
             scope.SetVariable("Spells",  new SpellsApi(_world, _packetService, cancelCtrl, _targetingService, _messenger, _loggerFactory.CreateLogger<SpellsApi>()));
@@ -415,6 +436,7 @@ del _make_tracer_, _sys_
             scope.SetVariable("Friend",  new FriendApi(_friendsService, cancelCtrl));
             scope.SetVariable("Filters", new FiltersApi(_config, cancelCtrl));
             scope.SetVariable("Timer",   new TimerApi(cancelCtrl, miscApi));
+            scope.SetVariable("SpecialMoves", new SpecialMovesApi(_world, _packetService, cancelCtrl));
             
             // Agents
             scope.SetVariable("AutoLoot",    new AutoLootApi(_autoLoot, cancelCtrl));
@@ -452,13 +474,22 @@ del _make_tracer_, _sys_
         private void ExecuteUOSteamInternal(string code, string scriptName, CancellationTokenSource cts)
         {
             _scriptThread = Thread.CurrentThread;
-            
+
             var cancelCtrl = new ScriptCancellationController(cts.Token);
             var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService);
             var itemsApi   = new ItemsApi(_world, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
             var mobilesApi = new MobilesApi(_world, _friendsService, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
-            var playerApi  = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, logger: _loggerFactory.CreateLogger<PlayerApi>());
+            var playerApi  = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, logger: _loggerFactory.CreateLogger<PlayerApi>(), config: _config);
             var journalApi = new JournalApi(_journalService, cancelCtrl);
+            var targetApi  = new TargetApi(_targetingService, _world, _config, _packetService, cancelCtrl);
+            var skillsApi  = new SkillsApi(_skillsService, _packetService, cancelCtrl);
+            var gumpsApi   = new GumpsApi(_world, _packetService, cancelCtrl, _messenger);
+            var autoLootApi = new AutoLootApi(_autoLoot, cancelCtrl);
+            var dressApi = new DressApi(_dress, cancelCtrl);
+            var scavengerApi = new ScavengerApi(_scavenger, cancelCtrl);
+            var restockApi = new RestockApi(_restock, cancelCtrl);
+            var organizerApi = new OrganizerApi(_organizer, cancelCtrl);
+            var bandageHealApi = new BandageHealApi(_bandageHeal, cancelCtrl);
 
             var interpreter = new UOSteamInterpreter(
                 miscApi,
@@ -466,11 +497,19 @@ del _make_tracer_, _sys_
                 itemsApi,
                 mobilesApi,
                 journalApi,
+                targetApi,
+                skillsApi,
+                gumpsApi,
+                autoLootApi,
+                dressApi,
+                scavengerApi,
+                restockApi,
+                organizerApi,
+                bandageHealApi,
                 cancelCtrl,
                 line => OutputReceived?.Invoke(line));
             interpreter.Execute(code);
         }
-
         // ------------------------------------------------------------------
         // Esecuzione C# (Roslyn) — delegata a CSharpScriptEngine
         // ------------------------------------------------------------------
@@ -492,13 +531,20 @@ del _make_tracer_, _sys_
                 Mobiles     = mobilesApi,
                 Misc        = misc,
                 Journal     = new JournalApi(_journalService, cancelCtrl),
-                Gumps       = new GumpsApi(_world, _packetService, cancelCtrl, _messenger),
+                Gump        = new GumpsApi(_world, _packetService, cancelCtrl, _messenger),
                 Target      = new TargetApi(_targetingService, _world, _config, _packetService, cancelCtrl),
                 Skills      = new SkillsApi(_skillsService, _packetService, cancelCtrl),                Spells      = new SpellsApi(_world, _packetService, cancelCtrl, _targetingService, _messenger, _loggerFactory.CreateLogger<SpellsApi>()),
                 Statics     = staticsApi,
                 Friend      = new FriendApi(_friendsService, cancelCtrl),
                 Filters     = new FiltersApi(_config, cancelCtrl),
                 Timer       = new TimerApi(cancelCtrl, misc),
+                SpecialMoves = new SpecialMovesApi(_world, _packetService, cancelCtrl),
+                AutoLoot    = new AutoLootApi(_autoLoot, cancelCtrl),
+                Dress       = new DressApi(_dress, cancelCtrl),
+                Scavenger   = new ScavengerApi(_scavenger, cancelCtrl),
+                Restock     = new RestockApi(_restock, cancelCtrl),
+                Organizer   = new OrganizerApi(_organizer, cancelCtrl),
+                BandageHeal = new BandageHealApi(_bandageHeal, cancelCtrl),
                 // Espone il token direttamente agli script per cancellazione cooperativa:
                 // ScriptToken.ThrowIfCancellationRequested() in qualsiasi loop dello script.
                 ScriptToken = cts.Token

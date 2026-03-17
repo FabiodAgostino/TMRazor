@@ -94,7 +94,7 @@ namespace TMRazorImproved.UI.ViewModels
         [RelayCommand]
         private async Task AddFriendTarget()
         {
-            uint serial = await _targetingService.AcquireTargetAsync();
+            var targetInfo = await _targetingService.AcquireTargetAsync(); uint serial = targetInfo.Serial;
             if (serial != 0 && serial != 0xFFFFFFFF)
             {
                 _friendsService.AddFriend(serial, $"Friend_{serial:X}");

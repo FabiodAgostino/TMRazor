@@ -14,8 +14,8 @@ namespace TMRazorImproved.Shared.Interfaces
 
         void LoadMacros();
         void Play(string name);
-        void Stop();
-        void Record(string name);
+        void StopRecording();
+        void StartRecording(string? name = null);
         void Save(string name, List<MacroStep> steps);
         void Delete(string name);
         void Rename(string oldName, string newName);

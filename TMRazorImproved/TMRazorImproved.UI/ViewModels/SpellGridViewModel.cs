@@ -7,6 +7,8 @@ using System.Windows.Threading;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
 using TMRazorImproved.Core.Utilities;
+using System.Threading.Tasks;
+using Wpf.Ui;
 
 namespace TMRazorImproved.UI.ViewModels
 {
@@ -14,6 +16,7 @@ namespace TMRazorImproved.UI.ViewModels
     {
         private readonly IPacketService _packet;
         private readonly IConfigService _config;
+        private readonly IContentDialogService _dialogService;
         private readonly DispatcherTimer _cooldownTimer;
 
         [ObservableProperty]
@@ -22,12 +25,19 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty]
         private int _columns = 8;
 
+        [ObservableProperty]
+        private double _windowX = double.NaN;
+
+        [ObservableProperty]
+        private double _windowY = double.NaN;
+
         public ObservableCollection<SpellIcon> ActiveSpells { get; } = new();
 
-        public SpellGridViewModel(IPacketService packet, IConfigService config)
+        public SpellGridViewModel(IPacketService packet, IConfigService config, IContentDialogService dialogService)
         {
             _packet = packet;
             _config = config;
+            _dialogService = dialogService;
 
             _cooldownTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
             _cooldownTimer.Tick += CooldownTimer_Tick;
@@ -43,6 +53,8 @@ namespace TMRazorImproved.UI.ViewModels
             {
                 Rows = profile.SpellGrid.Rows;
                 Columns = profile.SpellGrid.Columns;
+                WindowX = profile.SpellGrid.X;
+                WindowY = profile.SpellGrid.Y;
                 
                 ActiveSpells.Clear();
                 foreach (var spell in profile.SpellGrid.Spells)
@@ -86,7 +98,44 @@ namespace TMRazorImproved.UI.ViewModels
         }
 
         [RelayCommand]
-        private void Save()
+        private async Task Configure(SpellIcon? spell)
+        {
+            if (spell == null) return;
+
+            var input = new Wpf.Ui.Controls.NumberBox
+            {
+                Minimum = 1,
+                Maximum = 700,
+                Value = spell.SpellId,
+                PlaceholderText = "Spell ID (es. 1 per Clumsy)"
+            };
+
+            var dialog = new Wpf.Ui.Controls.ContentDialog(_dialogService.GetDialogHost())
+            {
+                Title = "Configura Slot",
+                Content = input,
+                PrimaryButtonText = "Salva",
+                CloseButtonText = "Annulla"
+            };
+
+            var result = await dialog.ShowAsync();
+
+            if (result == Wpf.Ui.Controls.ContentDialogResult.Primary && input.Value != null)
+            {
+                spell.SpellId = (int)input.Value;
+                spell.Name = $"Spell {spell.SpellId}";
+                // Triggera l'aggiornamento UI ricreando o forzando la notifica (ObservableObject)
+                var index = ActiveSpells.IndexOf(spell);
+                if (index >= 0)
+                {
+                    ActiveSpells[index] = spell;
+                }
+                Save();
+            }
+        }
+
+        [RelayCommand]
+        public void Save()
         {
             var profile = _config.CurrentProfile;
             if (profile != null)
@@ -94,6 +143,8 @@ namespace TMRazorImproved.UI.ViewModels
                 profile.SpellGrid ??= new Shared.Models.Config.SpellGridConfig();
                 profile.SpellGrid.Rows = Rows;
                 profile.SpellGrid.Columns = Columns;
+                profile.SpellGrid.X = WindowX;
+                profile.SpellGrid.Y = WindowY;
                 profile.SpellGrid.Spells = ActiveSpells.ToList();
                 _config.Save();
             }
@@ -109,7 +160,6 @@ namespace TMRazorImproved.UI.ViewModels
                     spell.RemainingCooldown = 0;
                     spell.IsOnCooldown = false;
                 }
-                // CooldownProgress è notificato da SpellIcon.OnRemainingCooldownChanged
             }
         }
 
@@ -120,3 +170,4 @@ namespace TMRazorImproved.UI.ViewModels
         }
     }
 }
+

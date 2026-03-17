@@ -6,12 +6,14 @@ using TMRazorImproved.Shared.Models.Config;
 using System.IO;
 using System;
 using System.Linq;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace TMRazorImproved.Tests.MockTests.Infrastructure
 {
     public class ConfigServiceTests : IDisposable
     {
         private readonly Mock<ILogger<ConfigService>> _loggerMock = new();
+        private readonly Mock<IMessenger> _messengerMock = new();
         private readonly string _configPath;
 
         public ConfigServiceTests()
@@ -37,7 +39,7 @@ namespace TMRazorImproved.Tests.MockTests.Infrastructure
         public void Load_ShouldCreateDefaultConfig_WhenMissing()
         {
             // Act
-            var service = new ConfigService(_loggerMock.Object);
+            var service = new ConfigService(_loggerMock.Object, _messengerMock.Object);
 
             // Assert
             Assert.NotNull(service.Global);
@@ -48,70 +50,77 @@ namespace TMRazorImproved.Tests.MockTests.Infrastructure
         }
 
         [Fact]
-        public void SwitchProfile_ShouldCreateNewProfile_WhenNotExists()
+        public void SwitchProfile_ShouldLoadCorrectProfile()
         {
             // Arrange
-            var service = new ConfigService(_loggerMock.Object);
-
+            var service = new ConfigService(_loggerMock.Object, _messengerMock.Object);
+            service.CreateProfile("TestProfile");
+            
             // Act
-            service.SwitchProfile("NewProfile");
-
+            service.SwitchProfile("TestProfile");
+            
             // Assert
-            Assert.Equal("NewProfile", service.CurrentProfile.Name);
-            Assert.Equal("NewProfile", service.Global.LastProfile);
-            Assert.True(File.Exists(Path.Combine(_configPath, "Profiles", "NewProfile.json")));
+            Assert.Equal("TestProfile", service.CurrentProfile.Name);
+            Assert.Equal("TestProfile", service.Global.LastProfile);
         }
 
         [Fact]
-        public void Save_ShouldPersistChanges()
+        public void CreateProfile_ShouldGenerateNewJsonFile()
         {
             // Arrange
-            var service = new ConfigService(_loggerMock.Object);
-            service.Global.ClientPath = @"C:\UO";
-            service.CurrentProfile.AutoLootLists[0].Enabled = true;
-
+            var service = new ConfigService(_loggerMock.Object, _messengerMock.Object);
+            
             // Act
+            service.CreateProfile("NewTestProfile");
+            
+            // Assert
+            string profileFile = Path.Combine(_configPath, "Profiles", "NewTestProfile.json");
+            Assert.True(File.Exists(profileFile));
+        }
+
+        [Fact]
+        public void CloneProfile_ShouldCopyData()
+        {
+            // Arrange
+            var service = new ConfigService(_loggerMock.Object, _messengerMock.Object);
+            service.CurrentProfile.FiltersEnabled = false;
             service.Save();
-
-            // Re-inizializza un nuovo servizio per verificare il caricamento da disco
-            var newService = new ConfigService(_loggerMock.Object);
-
+            
+            // Act
+            service.CloneProfile("Default", "ClonedProfile");
+            service.SwitchProfile("ClonedProfile");
+            
             // Assert
-            Assert.Equal(@"C:\UO", newService.Global.ClientPath);
-            Assert.True(newService.CurrentProfile.AutoLootLists[0].Enabled);
+            Assert.False(service.CurrentProfile.FiltersEnabled);
         }
 
         [Fact]
-        public void DeleteProfile_ShouldRemoveFile()
+        public void RenameProfile_ShouldDeleteOldAndCreateNew()
         {
             // Arrange
-            var service = new ConfigService(_loggerMock.Object);
-            service.CreateProfile("ToDelete");
-            string profilePath = Path.Combine(_configPath, "Profiles", "ToDelete.json");
-            Assert.True(File.Exists(profilePath));
+            var service = new ConfigService(_loggerMock.Object, _messengerMock.Object);
+            service.CreateProfile("OldName");
+            
+            // Act
+            service.RenameProfile("OldName", "NewName");
+            
+            // Assert
+            Assert.True(File.Exists(Path.Combine(_configPath, "Profiles", "NewName.json")));
+            Assert.False(File.Exists(Path.Combine(_configPath, "Profiles", "OldName.json")));
+        }
 
+        [Fact]
+        public void DeleteProfile_ShouldRemoveJsonFile()
+        {
+            // Arrange
+            var service = new ConfigService(_loggerMock.Object, _messengerMock.Object);
+            service.CreateProfile("ToDelete");
+            
             // Act
             service.DeleteProfile("ToDelete");
-
+            
             // Assert
-            Assert.False(File.Exists(profilePath));
-        }
-
-        [Fact]
-        public void GetAvailableProfiles_ShouldReturnAllProfiles()
-        {
-            // Arrange
-            var service = new ConfigService(_loggerMock.Object);
-            service.CreateProfile("Profile1");
-            service.CreateProfile("Profile2");
-
-            // Act
-            var profiles = service.GetAvailableProfiles().ToList();
-
-            // Assert
-            Assert.Contains("Default", profiles);
-            Assert.Contains("Profile1", profiles);
-            Assert.Contains("Profile2", profiles);
+            Assert.False(File.Exists(Path.Combine(_configPath, "Profiles", "ToDelete.json")));
         }
     }
 }

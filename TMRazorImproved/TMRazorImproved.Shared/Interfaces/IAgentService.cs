@@ -40,6 +40,8 @@ namespace TMRazorImproved.Shared.Interfaces
 
     public interface IVendorService : IAgentService
     {
+        void ExecuteBuy(uint vendorSerial, System.Collections.Generic.List<(uint Serial, ushort Amount)> items);
+        void ExecuteSell(uint vendorSerial, System.Collections.Generic.List<(uint Serial, ushort Amount)> items);
     }
 
     public interface IRestockService : IAgentService

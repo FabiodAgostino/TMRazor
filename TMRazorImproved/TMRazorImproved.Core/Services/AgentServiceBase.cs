@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TMRazorImproved.Shared.Interfaces;
+using TMRazorImproved.Shared.Models.Config;
 
 namespace TMRazorImproved.Core.Services
 {
@@ -12,10 +15,31 @@ namespace TMRazorImproved.Core.Services
     /// </summary>
     public abstract class AgentServiceBase : IAgentService, IDisposable
     {
+        protected readonly IConfigService _configService;
         private CancellationTokenSource? _cts;
         private Task? _agentTask;
 
+        protected AgentServiceBase(IConfigService configService)
+        {
+            _configService = configService;
+        }
+
         public bool IsRunning => _agentTask != null && !_agentTask.IsCompleted;
+
+        /// <summary>
+        /// Ottiene la configurazione attiva per una specifica categoria (AutoLoot, Dress, ecc.)
+        /// </summary>
+        protected TConfig? GetActiveConfig<TConfig>(
+            Func<UserProfile, IList<TConfig>> getList,
+            Func<UserProfile, string?> getActiveName)
+            where TConfig : class, INamedConfig
+        {
+            var profile = _configService.CurrentProfile;
+            if (profile == null) return null;
+            var list = getList(profile);
+            var active = getActiveName(profile);
+            return list.FirstOrDefault(c => c.Name == active) ?? list.FirstOrDefault();
+        }
 
         /// <summary>
         /// Avvia l'agente asincrono in background.

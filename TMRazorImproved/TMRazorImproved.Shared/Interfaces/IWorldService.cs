@@ -18,7 +18,7 @@ namespace TMRazorImproved.Shared.Interfaces
 
         IEnumerable<Mobile> Mobiles { get; }
         IEnumerable<Item> Items { get; }
-        HashSet<uint> PartyMembers { get; }
+        IReadOnlyCollection<uint> PartyMembers { get; }
 
         Mobile? FindMobile(uint serial);
         Item? FindItem(uint serial);
@@ -31,6 +31,7 @@ namespace TMRazorImproved.Shared.Interfaces
         void AddPartyMember(uint serial);
         void RemovePartyMember(uint serial);
         void ClearParty();
+        bool IsPartyMember(uint serial);
 
         void RemoveMobile(uint serial);
         void RemoveItem(uint serial);

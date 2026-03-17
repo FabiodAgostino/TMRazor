@@ -10,5 +10,8 @@ namespace TMRazorImproved.Shared.Interfaces
         
         /// <summary>Ritorna un blocco 8x8 di pixel (formato Rgb555 ushort).</summary>
         ushort[] GetMapBlock(int mapId, int blockX, int blockY, bool statics);
+
+        /// <summary>Ritorna un'immagine dell'area specificata (formato Rgb555 byte[]).</summary>
+        byte[]? GetMapImage(int mapId, int tileX, int tileY, int widthTiles, int heightTiles, bool statics);
     }
 }

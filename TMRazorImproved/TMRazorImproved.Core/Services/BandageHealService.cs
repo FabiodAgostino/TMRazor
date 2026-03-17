@@ -12,7 +12,6 @@ namespace TMRazorImproved.Core.Services
     public class BandageHealService : AgentServiceBase, IBandageHealService
     {
         private readonly IPacketService _packetService;
-        private readonly IConfigService _configService;
         private readonly IWorldService _worldService;
         private readonly ITargetingService _targetingService;
         private readonly IFriendsService _friendsService;
@@ -25,10 +24,9 @@ namespace TMRazorImproved.Core.Services
             ITargetingService targetingService,
             IFriendsService friendsService,
             IHotkeyService hotkeyService,
-            ILogger<BandageHealService> logger)
+            ILogger<BandageHealService> logger) : base(configService)
         {
             _packetService = packetService;
-            _configService = configService;
             _worldService = worldService;
             _targetingService = targetingService;
             _friendsService = friendsService;

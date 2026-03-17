@@ -53,10 +53,7 @@
         <!-- Map Container -->
         <ui:Card Grid.Row="2" Margin="12" Padding="0" ClipToBounds="True">
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                <controls:MapControl MapId="{Binding MapId}" 
-                                   PlayerX="{Binding PlayerX}" 
-                                   PlayerY="{Binding PlayerY}"
-                                   HorizontalAlignment="Center"
+                <controls:MapControl HorizontalAlignment="Center"
                                    VerticalAlignment="Center">
                     <controls:MapControl.LayoutTransform>
                         <ScaleTransform ScaleX="{Binding Zoom}" ScaleY="{Binding Zoom}" />

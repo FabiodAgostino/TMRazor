@@ -30,7 +30,10 @@ namespace TMRazorImproved.Core.Services
         public TimeSpan CombatTime => IsActive ? DateTime.Now - _startTime : _totalTime;
         public bool IsActive { get; private set; }
 
-        public IReadOnlyDictionary<uint, long> TargetDamage => new ReadOnlyDictionary<uint, long>(_targetDamage);
+        public IReadOnlyDictionary<uint, long> TargetDamage
+        {
+            get { lock (_targetDamage) return new Dictionary<uint, long>(_targetDamage); }
+        }
 
         private TimeSpan _totalTime = TimeSpan.Zero;
 

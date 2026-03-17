@@ -86,5 +86,27 @@ namespace TMRazorImproved.Core.Services
                 return new ushort[64];
             }
         }
+
+        public byte[]? GetMapImage(int mapId, int tileX, int tileY, int widthTiles, int heightTiles, bool statics)
+        {
+            if (!_maps.TryGetValue(mapId, out var map)) return null;
+
+            try
+            {
+                // Convertiamo tile in blocchi (1 blocco = 8x8 tile)
+                int blockX = tileX / 8;
+                int blockY = tileY / 8;
+                int blockW = (int)Math.Ceiling(widthTiles / 8.0);
+                int blockH = (int)Math.Ceiling(heightTiles / 8.0);
+
+                var bmp = map.GetImage(blockX, blockY, blockW, blockH, statics);
+                return bmp?.PixelData;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get map image at {X},{Y} on map {Id}", tileX, tileY, mapId);
+                return null;
+            }
+        }
     }
 }

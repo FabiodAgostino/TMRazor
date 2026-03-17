@@ -4,8 +4,10 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
+using CommunityToolkit.Mvvm.Messaging;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models.Config;
+using TMRazorImproved.Shared.Messages;
 
 namespace TMRazorImproved.Core.Services
 {
@@ -16,22 +18,44 @@ namespace TMRazorImproved.Core.Services
         private const string ProfilesFolder = "Profiles";
 
         private readonly ILogger<ConfigService> _logger;
+        private readonly IMessenger _messenger;
 
         private static readonly JsonSerializerOptions _jsonOptions = new()
         {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
         };
 
         public GlobalSettings Global { get; private set; } = new();
         public UserProfile CurrentProfile { get; private set; } = new();
+        public string CurrentShardId { get; private set; } = "Unknown";
 
-        public ConfigService(ILogger<ConfigService> logger)
+        public ConfigService(ILogger<ConfigService> logger, IMessenger messenger)
         {
             _logger = logger;
+            _messenger = messenger;
             EnsureDirectories();
             Load();
+        }
+
+        public void SetCurrentShard(string shardId)
+        {
+            if (string.IsNullOrWhiteSpace(shardId)) shardId = "Unknown";
+            if (CurrentShardId == shardId) return;
+
+            _logger.LogInformation("Current Shard detected: {Shard}", shardId);
+            CurrentShardId = shardId;
+
+            // Se il profilo corrente era "Unknown", lo associamo al nuovo shard
+            if (CurrentProfile.ShardId == "Unknown")
+            {
+                CurrentProfile.ShardId = CurrentShardId;
+                SaveProfile(CurrentProfile);
+            }
+
+            _messenger.Send(new ShardChangedMessage(CurrentShardId));
         }
 
         private void EnsureDirectories()
@@ -94,12 +118,19 @@ namespace TMRazorImproved.Core.Services
             if (File.Exists(profilePath))
             {
                 CurrentProfile = SafeDeserialize<UserProfile>(profilePath)
-                                 ?? new UserProfile { Name = profileName };
+                                 ?? new UserProfile { Name = profileName, ShardId = CurrentShardId };
+                
+                // Se il profilo caricato non ha shard o è Unknown, lo associamo a quello attuale
+                if (CurrentProfile.ShardId == "Unknown")
+                {
+                    CurrentProfile.ShardId = CurrentShardId;
+                    SaveProfile(CurrentProfile);
+                }
             }
             else
             {
                 _logger.LogInformation("Profile file not found, creating new profile: {Profile}", profileName);
-                CurrentProfile = new UserProfile { Name = profileName };
+                CurrentProfile = new UserProfile { Name = profileName, ShardId = CurrentShardId };
                 SaveProfile(CurrentProfile);
             }
 
@@ -171,14 +202,26 @@ namespace TMRazorImproved.Core.Services
             if (Global.LastProfile == profileName) SwitchProfile("Default");
         }
 
-        public IEnumerable<string> GetAvailableProfiles()
+        public IEnumerable<string> GetAvailableProfiles(string? shardId = null)
         {
             string profilesPath = Path.Combine(AppContext.BaseDirectory, ConfigFolder, ProfilesFolder);
             if (!Directory.Exists(profilesPath)) yield break;
 
             foreach (var file in Directory.GetFiles(profilesPath, "*.json"))
             {
-                yield return Path.GetFileNameWithoutExtension(file);
+                string name = Path.GetFileNameWithoutExtension(file);
+                if (shardId == null)
+                {
+                    yield return name;
+                }
+                else
+                {
+                    var profile = SafeDeserialize<UserProfile>(file);
+                    if (profile != null && (profile.ShardId == shardId || profile.ShardId == "Unknown" || name == "Default"))
+                    {
+                        yield return name;
+                    }
+                }
             }
         }
 

@@ -27,7 +27,18 @@
             <!-- Macros List -->
             <ui:Card Grid.Column="0" Margin="0,0,16,0" Padding="0">
                 <DockPanel>
-                    <ui:TextBlock Text="{loc:Loc Macros.Available}" FontSize="18" FontWeight="SemiBold" Margin="16" DockPanel.Dock="Top"/>
+                    <Grid DockPanel.Dock="Top" Margin="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBlock Text="{loc:Loc Macros.Available}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <ui:Button Grid.Column="1" 
+                                   Icon="{ui:SymbolIcon Open24}" 
+                                   Command="{Binding ImportLegacyMacroCommand}" 
+                                   Appearance="Transparent"
+                                   ToolTip="Importa macro dal vecchio TMRazor"/>
+                    </Grid>
                     
                     <StackPanel DockPanel.Dock="Bottom" Margin="16">
                         <Grid Margin="0,0,0,8">
@@ -41,7 +52,7 @@
                                         Margin="0,0,8,0"/>
                             <ui:Button Grid.Column="1" 
                                        Icon="{ui:SymbolIcon Record24}" 
-                                       Command="{Binding RecordCommand}" 
+                                       Command="{Binding StartRecordingCommand}" 
                                        Appearance="Danger"
                                        ToolTip="{loc:Loc Macros.Record.ToolTip}"/>
                         </Grid>
@@ -98,10 +109,27 @@
                                 
                                 <ui:Button Content="{loc:Loc Macros.Stop}" 
                                            Icon="{ui:SymbolIcon Stop24}" 
-                                           Command="{Binding StopCommand}" 
+                                           Command="{Binding StopRecordingCommand}" 
                                            Appearance="Secondary"
                                            Margin="0,0,8,0"
                                            Width="100"/>
+
+                                <ui:Button Content="{loc:Loc Macros.Record}" 
+                                           Icon="{ui:SymbolIcon Record24}" 
+                                           Command="{Binding StartRecordingCommand}" 
+                                           Margin="0,0,8,0"
+                                           Width="100">
+                                    <ui:Button.Style>
+                                        <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                                            <Setter Property="Appearance" Value="Secondary" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                                    <Setter Property="Appearance" Value="Danger" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ui:Button.Style>
+                                </ui:Button>
 
                                 <ui:Button Content="{loc:Loc Macros.SaveChanges}" 
                                            Icon="{ui:SymbolIcon Save24}" 

@@ -76,7 +76,7 @@ namespace TMRazorImproved.UI.ViewModels
         [RelayCommand]
         private async Task SetCarverBlade()
         {
-            uint serial = await _targeting.AcquireTargetAsync();
+            var targetInfo = await _targeting.AcquireTargetAsync(); uint serial = targetInfo.Serial;
             if (serial != 0)
             {
                 Profile.AutoCarverBlade = serial;
@@ -88,7 +88,7 @@ namespace TMRazorImproved.UI.ViewModels
         [RelayCommand]
         private async Task SetBoneBlade()
         {
-            uint serial = await _targeting.AcquireTargetAsync();
+            var targetInfo = await _targeting.AcquireTargetAsync(); uint serial = targetInfo.Serial;
             if (serial != 0)
             {
                 Profile.BoneCutterBlade = serial;
@@ -100,7 +100,7 @@ namespace TMRazorImproved.UI.ViewModels
         [RelayCommand]
         private async Task SetRemountSerial()
         {
-            uint serial = await _targeting.AcquireTargetAsync();
+            var targetInfo = await _targeting.AcquireTargetAsync(); uint serial = targetInfo.Serial;
             if (serial != 0)
             {
                 Profile.RemountSerial = serial;

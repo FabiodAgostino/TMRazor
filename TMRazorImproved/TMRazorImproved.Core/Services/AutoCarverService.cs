@@ -14,7 +14,6 @@ namespace TMRazorImproved.Core.Services
         private readonly IWorldService _world;
         private readonly ITargetingService _targeting;
         private readonly IPacketService _packet;
-        private readonly IConfigService _config;
         private readonly ILogger<AutoCarverService> _logger;
         private readonly System.Collections.Generic.HashSet<uint> _carvedCorpses = new();
 
@@ -23,12 +22,11 @@ namespace TMRazorImproved.Core.Services
             ITargetingService targeting,
             IPacketService packet,
             IConfigService config,
-            ILogger<AutoCarverService> logger)
+            ILogger<AutoCarverService> logger) : base(config)
         {
             _world = world;
             _targeting = targeting;
             _packet = packet;
-            _config = config;
             _logger = logger;
         }
 
@@ -39,10 +37,10 @@ namespace TMRazorImproved.Core.Services
                 await Task.Delay(500, cancel);
 
                 if (_world.Player == null) continue;
-                if (!_config.CurrentProfile.AutoCarver || _config.CurrentProfile.AutoCarverBlade == 0) continue;
+                if (!_configService.CurrentProfile.AutoCarver || _configService.CurrentProfile.AutoCarverBlade == 0) continue;
 
                 var player = _world.Player;
-                var blade = _world.FindItem(_config.CurrentProfile.AutoCarverBlade);
+                var blade = _world.FindItem(_configService.CurrentProfile.AutoCarverBlade);
                 
                 if (blade == null || blade.Container != player.Serial && (blade.Container != 0 && _world.FindItem(blade.Container)?.Container != player.Serial))
                 {

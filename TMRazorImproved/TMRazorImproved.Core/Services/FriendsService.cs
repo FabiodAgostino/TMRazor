@@ -34,10 +34,9 @@ namespace TMRazorImproved.Core.Services
                 return true;
 
             // 2. Check party if enabled
-            if (config.IncludeParty)
+            if (config.IncludeParty && _worldService.IsPartyMember(serial))
             {
-                // TODO: Need IPartyService or check world for party members
-                // For now placeholder logic: if we have a way to know if serial is in party
+                return true;
             }
 
             var mobile = _worldService.FindMobile(serial);

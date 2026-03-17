@@ -155,7 +155,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private async Task SetBuyBagAsync()
         {
             StatusText = _lang.GetString("Agents.General.SelectContainer");
-            var serial = await _targeting.AcquireTargetAsync();
+            var targetInfo = await _targeting.AcquireTargetAsync(); var serial = targetInfo.Serial;
             if (serial != 0)
             {
                 BuyBagSerial = serial;
@@ -172,7 +172,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private async Task SetSellBagAsync()
         {
             StatusText = _lang.GetString("Agents.General.SelectContainer");
-            var serial = await _targeting.AcquireTargetAsync();
+            var targetInfo = await _targeting.AcquireTargetAsync(); var serial = targetInfo.Serial;
             if (serial != 0)
             {
                 SellBagSerial = serial;

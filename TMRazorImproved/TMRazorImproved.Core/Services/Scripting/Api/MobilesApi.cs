@@ -246,7 +246,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual bool IsParty(uint serial)
         {
             _cancel.ThrowIfCancelled();
-            return _world.PartyMembers.Contains(serial);
+            return _world.IsPartyMember(serial);
         }
 
         /// <summary>Ritorna la mana del mobile, 0 se non noto.</summary>

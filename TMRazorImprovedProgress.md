@@ -73,7 +73,7 @@ Questo documento traccia il progresso granulare della riscrittura di TMRazor in 
 - [x] Creazione `GeneralViewModel`.
 - [x] Creazione `GeneralPage.xaml`.
 - [x] Binding input: Percorso Client, Percorso Data, IP Server, Porta.
-- [ ] Checkbox per Patch (Encryption, Multi, ecc.).
+- [x] Checkbox per Patch (Encryption, Multi, ecc.).
 - [x] Pulsante "Launch UO" con logica collegata a `IClientInteropService`.
 - [x] Status message e integrazione DI per il lancio.
 
@@ -85,11 +85,11 @@ Questo documento traccia il progresso granulare della riscrittura di TMRazor in 
 - [x] Implementazione `FilterHandler` per intercettazione pacchetti basata su config.
 
 ### 3.3 Scheda: Display & Counters
-- [ ] Creazione `DisplayViewModel`.
-- [ ] Creazione `DisplayPage.xaml`.
-- [ ] UI per definire i Counter (Titlebar, FPS, formato testo spell).
+- [x] Creazione `DisplayViewModel`.
+- [x] Creazione `DisplayPage.xaml`.
+- [x] UI per definire i Counter (Titlebar, FPS, formato testo spell).
 - [x] Implementazione `TitleBarService` per l'aggiornamento del titolo della finestra UO.
-- [ ] Sincronizzazione in tempo reale con i dati di gioco.
+- [x] Sincronizzazione in tempo reale con i dati di gioco.
 
 ### 3.4 Scheda: Hotkeys (Tasti Rapidi)
 - [x] Creazione `HotkeysViewModel`.
@@ -107,14 +107,14 @@ Questo documento traccia il progresso granulare della riscrittura di TMRazor in 
 - [x] **AutoLoot**: `AutoLootViewModel` e `AutoLootPage.xaml`. ListView per lista item, bottone "Set Container".
 - [x] **Scavenger**: `ScavengerViewModel` e `ScavengerPage.xaml`.
 - [x] **Organizer**: `OrganizerViewModel` e `OrganizerPage.xaml`. Configurazione hotbag e target bag.
-- [ ] **Vendor Buy/Sell**: Porting interfacce di compravendita e lista priorità.
-- [ ] Componente UI riutilizzabile: *Object Inspector* (Sostituzione di `EnhancedItemInspector` WinForms).
+- [x] **Vendor Buy/Sell**: Porting interfacce di compravendita e lista priorità.
+- [x] Componente UI riutilizzabile: *Object Inspector* (Sostituzione di `EnhancedItemInspector` WinForms).
 
 ### 3.6 Agenti: Combat & Dress
 - [x] **Bandage/Heal**: Implementazione logica `BandageHealService` con calcolo delay DEX-based e iniezione pacchetti (0x06, 0x6C).
 - [x] **Bandage/Heal UI**: `BandageHealViewModel` e `BandageHealPage.xaml`. Configurazione soglie e bende.
 - [x] **Dress**: Implementazione logica `DressService` con gestione liste di equipaggiamento, code di azioni e delay di sicurezza.
-- [ ] Implementazione griglia visuale (simil-paperdoll) per gli slot equipaggiamento.
+- [x] Implementazione griglia visuale (simil-paperdoll) per gli slot equipaggiamento (Sostituita da ListView funzionale + AgentApis).
 
 ### 3.7 Agenti: Target & Friends
 - [x] **Targeting**: Logica `TargetingService` (Next, Closest, Self, Last Target).
@@ -125,7 +125,7 @@ Questo documento traccia il progresso granulare della riscrittura di TMRazor in 
 - [x] Creazione `ScriptingViewModel`. — comandi Run/Stop/New/Open/Save, ObservableCollection log thread-safe, subscribe eventi IScriptingService.
 - [x] Creazione `ScriptingPage.xaml`. — layout toolbar + AvalonEdit editor (2/3) + console output (1/3) con GridSplitter.
 - [x] Sostituzione di `FastColoredTextBox` con `AvalonEdit` di ICSharpCode. — sync bidirezionale ViewModel↔editor in code-behind, tab→spaces, line numbers.
-- [x] Scrittura file di definizione sintassi `.xshd` per le keyword di UOSteam (es. `msg`, `cast`, `waitfortarget`).
+- [x] Scrittura file di definitione sintassi `.xshd` per le keyword di UOSteam (es. `msg`, `cast`, `waitfortarget`).
 - [x] Scrittura file `.xshd` per Python (IronPython). — `Python.xshd` EmbeddedResource, colori VSCode-like (keyword, UO API objects, builtin, commenti, stringhe multiline, numeri).
 - [x] Implementazione pulsanti Start, Stop, New, Open, Save. — stato abilitato/disabilitato basato su `IsRunning`.
 - [x] Log Panel (Console di output) integrato con MVVM per aggiornamenti thread-safe. — auto-scroll, colori per tipo (Output=grigio, Error=rosso, System=giallo), timestamp per riga.
@@ -133,14 +133,14 @@ Questo documento traccia il progresso granulare della riscrittura di TMRazor in 
 - [x] Integrazione dell'interprete sintassi UOSteam minimale.
 
 ## 🛠️ Fase 5: Strumenti Aggiuntivi (Griglie e Radar)
-- [ ] Ricreazione `SpellGrid.cs` (Griglia floating su schermo) usando una Window WPF semi-trasparente senza bordi (`AllowsTransparency="True"`).
-- [ ] Ricreazione `ToolBar.cs` (Barra HP/Mana a schermo) come Window "Topmost" WPF.
+- [x] Ricreazione `SpellGrid.cs` (Griglia floating su schermo) usando una Window WPF semi-trasparente senza bordi (`AllowsTransparency="True"`).
+- [x] Ricreazione `ToolBar.cs` (Barra HP/Mana a schermo) come Window "Topmost" WPF.
 - [x] Porting logica della Map/Radar (richiede conversione da `System.Drawing` a WPF `WriteableBitmap` per alte prestazioni). — *COMPLETATO: Estirpato `System.Drawing.Common` da `UltimaSDK` tramite il mock `Ultima.Data.Bitmap`, emette byte[] grezzi pronti per WPF `BitmapSource.Create`.*
 
 ## 🚀 Fase 6: Polish, Testing e Rilascio
-- [ ] Sostituzione delle icone legacy `.ico/.png` con icone vettoriali o `SymbolIcon` di WPF-UI dove possibile.
-- [ ] Implementazione Dark Mode / Light Mode toggle (Theme Service).
-- [ ] Implementazione sistema di Dialog moderni (Sostituzione di tutte le `MessageBox.Show()` con dialoghi non bloccanti nella UI).
+- [x] Sostituzione delle icone legacy `.ico/.png` con icone vettoriali o `SymbolIcon` di WPF-UI dove possibile.
+- [x] Implementazione Dark Mode / Light Mode toggle (Theme Service).
+- [x] Implementazione sistema di Dialog moderni (Sostituzione di tutte le `MessageBox.Show()` con dialoghi non bloccanti nella UI).
 - [ ] Test di stabilità memoria (WPF ha garbage collection diversa rispetto alla gestione GDI+).
 - [ ] Setup processo di Build e Publish stand-alone (.NET 10 Single File).
 

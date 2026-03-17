@@ -2,6 +2,7 @@ using Xunit;
 using TMRazorImproved.Core.Services.Scripting;
 using TMRazorImproved.Shared.Enums;
 using TMRazorImproved.Shared.Interfaces;
+using TMRazorImproved.Shared.Models;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -26,6 +27,12 @@ namespace TMRazorImproved.Tests.Integration
                 new Mock<ISkillsService>().Object,
                 new Mock<IFriendsService>().Object,
                 new Mock<IConfigService>().Object,
+                new Mock<IAutoLootService>().Object,
+                new Mock<IScavengerService>().Object,
+                new Mock<IOrganizerService>().Object,
+                new Mock<IBandageHealService>().Object,
+                new Mock<IDressService>().Object,
+                new Mock<IRestockService>().Object,
                 WeakReferenceMessenger.Default,
                 logger,
                 new NullLoggerFactory()
@@ -52,21 +59,66 @@ namespace TMRazorImproved.Tests.Integration
         }
 
         [Fact]
-        public async Task ExecutePython_Arithmetic_CalculationWorks()
+        public async Task ExecutePython_ScriptingApi_WorksCorrectly()
         {
-            var scriptingService = CreateRealScriptingService();
-            string output = "";
-            scriptingService.OutputReceived += (s) => output += s;
+            // ARRANGE
+            var worldMock = new Mock<IWorldService>();
+            var player = new Mobile(0x123) { Name = "TestPlayer", Hits = 100, HitsMax = 110 };
+            worldMock.Setup(w => w.Player).Returns(player);
+            
+            var scriptingService = CreateRealScriptingService(worldMock.Object);
+            
+            var outputs = new List<string>();
+            scriptingService.OutputReceived += (s) => outputs.Add(s);
 
-            await scriptingService.RunAsync("print(10 + 20 * 2)", ScriptLanguage.Python);
+            string pythonCode = 
+                "print(f'NAME: {Player.Name}')\n" +
+                "print(f'HITS: {Player.Hits}')\n" +
+                "Misc.SendMessage('Hello from Python')\n" +
+                "print(f'TARGET_EXISTS: {Target.HasTarget()}')\n" +
+                "print(f'ITEMS_COUNT: {len(Items.ApplyFilter(Items.Filter()))}')";
 
-            Assert.Contains("50", output);
+            // ACT
+            await scriptingService.RunAsync(pythonCode, ScriptLanguage.Python, "api_test");
+
+            // ASSERT
+            Assert.Contains("NAME: TestPlayer", outputs);
+            Assert.Contains("HITS: 100", outputs);
+            Assert.Contains("TARGET_EXISTS: False", outputs);
+            Assert.Contains("ITEMS_COUNT: 0", outputs);
         }
 
-        private ScriptingService CreateRealScriptingService()
+        [Fact]
+        public async Task ExecutePython_MobilesApi_FindsMobiles()
         {
+            // ARRANGE
+            var worldMock = new Mock<IWorldService>();
+            var enemy = new Mobile(0x456) { Name = "EnemyNPC", Hits = 50 };
+            worldMock.Setup(w => w.Mobiles).Returns(new List<Mobile> { enemy });
+            
+            var scriptingService = CreateRealScriptingService(worldMock.Object);
+            var outputs = new List<string>();
+            scriptingService.OutputReceived += (s) => outputs.Add(s);
+
+            string pythonCode = 
+                "enemies = Mobiles.ApplyFilter(Mobiles.Filter())\n" +
+                "print(f'FOUND: {len(enemies)}')\n" +
+                "if len(enemies) > 0:\n" +
+                "    print(f'FIRST: {enemies[0].Name}')";
+
+            // ACT
+            await scriptingService.RunAsync(pythonCode, ScriptLanguage.Python, "mobiles_test");
+
+            // ASSERT
+            Assert.Contains("FOUND: 1", outputs);
+            Assert.Contains("FIRST: EnemyNPC", outputs);
+        }
+
+        private ScriptingService CreateRealScriptingService(IWorldService? world = null)
+        {
+            var logger = NullLogger<ScriptingService>.Instance;
             return new ScriptingService(
-                new Mock<IWorldService>().Object,
+                world ?? new Mock<IWorldService>().Object,
                 new Mock<IPacketService>().Object,
                 new Mock<IClientInteropService>().Object,
                 new Mock<ITargetingService>().Object,
@@ -74,8 +126,14 @@ namespace TMRazorImproved.Tests.Integration
                 new Mock<ISkillsService>().Object,
                 new Mock<IFriendsService>().Object,
                 new Mock<IConfigService>().Object,
+                new Mock<IAutoLootService>().Object,
+                new Mock<IScavengerService>().Object,
+                new Mock<IOrganizerService>().Object,
+                new Mock<IBandageHealService>().Object,
+                new Mock<IDressService>().Object,
+                new Mock<IRestockService>().Object,
                 WeakReferenceMessenger.Default,
-                NullLogger<ScriptingService>.Instance,
+                logger,
                 new NullLoggerFactory()
             );
         }

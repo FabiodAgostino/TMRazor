@@ -74,13 +74,25 @@
                                        ToolTip="{loc:Loc Dashboard.Screenshot.ToolTip}"/>
                             
                             <ui:Button Grid.Column="1" 
-                                       Content="{loc:Loc Dashboard.RecordVideo}" 
-                                       Icon="Video24" 
                                        Command="{Binding ToggleRecordingCommand}"
-                                       Appearance="Secondary"
                                        Margin="4,0,0,0"
                                        HorizontalAlignment="Stretch"
-                                       ToolTip="{loc:Loc Dashboard.RecordVideo.ToolTip}"/>
+                                       ToolTip="{loc:Loc Dashboard.RecordVideo.ToolTip}">
+                                <ui:Button.Style>
+                                    <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                                        <Setter Property="Content" Value="{loc:Loc Dashboard.RecordVideo}"/>
+                                        <Setter Property="Icon" Value="{ui:SymbolIcon Video24}"/>
+                                        <Setter Property="Appearance" Value="Secondary"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                                <Setter Property="Content" Value="STOP"/>
+                                                <Setter Property="Icon" Value="{ui:SymbolIcon Stop24}"/>
+                                                <Setter Property="Appearance" Value="Danger"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ui:Button.Style>
+                            </ui:Button>
                         </Grid>
 
                         <ui:TextBlock Text="{loc:Loc Dashboard.RecentCaptures}" FontSize="14" FontWeight="Medium" Margin="0,0,0,8"/>

@@ -9,6 +9,7 @@ namespace TMRazorImproved.Core.Services
 {
     public class TitleBarService : ITitleBarService, IDisposable
     {
+        private readonly IConfigService _config;
         private readonly IClientInteropService _interop;
         private readonly IWorldService _worldService;
         private readonly ILogger<TitleBarService> _logger;
@@ -16,16 +17,27 @@ namespace TMRazorImproved.Core.Services
         private CancellationTokenSource? _cts;
         private Task? _updateTask;
 
-        public bool IsEnabled { get; set; } = true;
-        public string Template { get; set; } = "UO - {char} [HP: {hp}/{hpmax}] [MP: {mp}/{mpmax}] [SP: {sp}/{spmax}]";
+        public bool IsEnabled 
+        { 
+            get => _config.CurrentProfile.TitleBarEnabled; 
+            set { _config.CurrentProfile.TitleBarEnabled = value; _config.Save(); } 
+        }
+
+        public string Template 
+        { 
+            get => _config.CurrentProfile.TitleBarTemplate; 
+            set { _config.CurrentProfile.TitleBarTemplate = value; _config.Save(); } 
+        }
 
         public event Action<string>? TitleChanged;
 
         public TitleBarService(
+            IConfigService config,
             IClientInteropService interop,
             IWorldService worldService,
             ILogger<TitleBarService> logger)
         {
+            _config = config;
             _interop = interop;
             _worldService = worldService;
             _logger = logger;

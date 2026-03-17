@@ -23,8 +23,8 @@ namespace TMRazorImproved.Core.Services
         private readonly IPacketService _packetService;
         private readonly ILogger<SkillsService> _logger;
 
-        public IReadOnlyList<SkillInfo> Skills { get { lock (_skillsLock) return _skills.AsReadOnly(); } }
-        public IReadOnlyList<SkillGainRecord> GainHistory { get { lock (_skillsLock) return _gainHistory.AsReadOnly(); } }
+        public IReadOnlyList<SkillInfo> Skills { get { lock (_skillsLock) return new List<SkillInfo>(_skills); } }
+        public IReadOnlyList<SkillGainRecord> GainHistory { get { lock (_skillsLock) return new List<SkillGainRecord>(_gainHistory); } }
 
         public double TotalReal { get { lock (_skillsLock) return _skills.Sum(s => s.Value); } }
         public double TotalBase { get { lock (_skillsLock) return _skills.Sum(s => s.BaseValue); } }

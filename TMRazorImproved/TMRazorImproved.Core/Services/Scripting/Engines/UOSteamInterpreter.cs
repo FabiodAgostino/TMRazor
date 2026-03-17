@@ -13,6 +13,15 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
         private readonly ItemsApi _items;
         private readonly MobilesApi _mobiles;
         private readonly JournalApi _journal;
+        private readonly TargetApi _targetApi;
+        private readonly SkillsApi _skillsApi;
+        private readonly GumpsApi _gumpsApi;
+        private readonly AutoLootApi _autoLootApi;
+        private readonly DressApi _dressApi;
+        private readonly ScavengerApi _scavengerApi;
+        private readonly RestockApi _restockApi;
+        private readonly OrganizerApi _organizerApi;
+        private readonly BandageHealApi _bandageHealApi;
         private readonly ScriptCancellationController _cancel;
         private readonly Action<string> _output;
 
@@ -22,6 +31,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
         private readonly Dictionary<string, string> _variables = new();
         private readonly Stack<int> _loopStack = new();
         private readonly Stack<(int lineIndex, int counter, int limit, string varName)> _forStack = new();
+        private readonly Stack<bool> _ifSucceededStack = new(); // Traccia se un ramo if/elseif è già stato eseguito
         private static readonly Random _rng = new();
         private int _currentLineIndex;
         private string[] _lines = Array.Empty<string>();
@@ -32,6 +42,15 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             ItemsApi items, 
             MobilesApi mobiles,
             JournalApi journal,
+            TargetApi targetApi,
+            SkillsApi skillsApi,
+            GumpsApi gumpsApi,
+            AutoLootApi autoLootApi,
+            DressApi dressApi,
+            ScavengerApi scavengerApi,
+            RestockApi restockApi,
+            OrganizerApi organizerApi,
+            BandageHealApi bandageHealApi,
             ScriptCancellationController cancel,
             Action<string> output)
         {
@@ -40,12 +59,22 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             _items = items;
             _mobiles = mobiles;
             _journal = journal;
+            _targetApi = targetApi;
+            _skillsApi = skillsApi;
+            _gumpsApi = gumpsApi;
+            _autoLootApi = autoLootApi;
+            _dressApi = dressApi;
+            _scavengerApi = scavengerApi;
+            _restockApi = restockApi;
+            _organizerApi = organizerApi;
+            _bandageHealApi = bandageHealApi;
             _cancel = cancel;
             _output = output;
 
             _aliases["self"] = 0;
             _aliases["backpack"] = 0;
             _aliases["lasttarget"] = 0;
+            _aliases["found"] = 0;
         }
 
         public void Execute(string code)
@@ -53,6 +82,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             _lines = code.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             _currentLineIndex = 0;
             _loopStack.Clear();
+            _forStack.Clear();
+            _ifSucceededStack.Clear();
 
             while (_currentLineIndex < _lines.Length)
             {
@@ -100,12 +131,13 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                         HandleIf(args);
                         break;
                     case "elseif":
-                        SkipToBlockEnd("if", "endif");
+                        HandleElseIf(args);
                         break;
                     case "else":
-                        SkipToBlockEnd("if", "endif");
+                        HandleElse();
                         break;
                     case "endif":
+                        if (_ifSucceededStack.Count > 0) _ifSucceededStack.Pop();
                         break;
                     case "while":
                         HandleWhile(args);
@@ -166,15 +198,27 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                     case "settimer":
                         if (args.Length >= 2) _timers[args[0].ToLower()] = Environment.TickCount64 - ParseInt(args[1]);
                         break;
+                    case "removetimer":
+                        if (args.Length > 0) _timers.Remove(args[0].ToLower());
+                        break;
                     case "clearjournal":
                     case "clearsysmsg":
                         _journal.Clear();
+                        break;
+                    case "waitforjournal":
+                        if (args.Length > 0)
+                        {
+                            int timeout = args.Length > 1 ? ParseInt(args[1]) : 5000;
+                            _journal.WaitJournal(args[0], timeout);
+                        }
                         break;
                     case "setability":
                         if (args.Length > 0) _player.SetAbility(args[0]);
                         break;
                     case "interrupt":
-                        // Invia MoveRequest per cancellare il cast corrente
+                        _player.Resync();
+                        break;
+                    case "resync":
                         _player.Resync();
                         break;
                     case "setoption":
@@ -188,6 +232,9 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                             uint serial = args.Length > 2 ? ParseSerial(args[2]) : _player.Serial;
                             if (serial == _player.Serial) _player.HeadMsg(msg, color);
                         }
+                        break;
+                    case "sysmsg":
+                        if (args.Length > 0) _output?.Invoke(args[0]);
                         break;
                     case "msg":
                     case "say":
@@ -212,18 +259,32 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                     case "waitfortarget":
                         _misc.WaitForTarget(args.Length > 0 ? ParseInt(args[0]) : 5000);
                         break;
+                    case "waitforgump":
+                        if (args.Length > 0) _misc.WaitGump(ParseSerial(args[0]), args.Length > 1 ? ParseInt(args[1]) : 5000);
+                        break;
+                    case "waitforcontents":
+                    case "waitforcontainer":
+                        if (args.Length > 0) _items.WaitForContents(ParseSerial(args[0]), args.Length > 1 ? ParseInt(args[1]) : 5000);
+                        break;
+                    case "replygump":
+                    case "gumpresponse":
+                        if (args.Length >= 2) _gumpsApi.SendAction(ParseSerial(args[0]), ParseInt(args[1]));
+                        break;
+                    case "closegump":
+                        if (args.Length > 0) _gumpsApi.Close(ParseSerial(args[0]));
+                        break;
                     case "random":
-                        // random varname max  →  setvar varname (random 0..max)
                         if (args.Length >= 2)
                             _variables[args[0].ToLower()] = _rng.Next(0, ParseInt(args[1]) + 1).ToString();
                         else if (args.Length == 1)
                             _variables["_random"] = _rng.Next(0, ParseInt(args[0]) + 1).ToString();
                         break;
                     case "target":
-                        if (args.Length > 0) _misc.WaitForTarget(500);
-                        break;
-                    case "targettype":
-                        if (args.Length > 0) _misc.WaitForTarget(500);
+                        if (args.Length > 0)
+                        {
+                            _misc.WaitForTarget(500);
+                            _targetApi.Target(ParseSerial(args[0]));
+                        }
                         break;
                     case "attack":
                         if (args.Length > 0) _player.Attack(ParseSerial(args[0]));
@@ -232,8 +293,6 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                         if (args.Length > 0) _player.SetWarMode(args[0].Equals("on", StringComparison.OrdinalIgnoreCase));
                         break;
                     case "useskill":
-                        if (args.Length > 0) _player.UseSkill(args[0]);
-                        break;
                     case "skill":
                         if (args.Length > 0) _player.UseSkill(args[0]);
                         break;
@@ -255,13 +314,52 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                     case "drop":
                         if (args.Length >= 2) _items.Drop(ParseSerial(args[0]), ParseSerial(args[1]), args.Length > 2 ? ParseInt(args[2]) : 1);
                         break;
+                    case "walk":
+                        if (args.Length > 0) _player.Walk(args[0]);
+                        break;
+                    case "turn":
+                        if (args.Length > 0) _player.Turn(args[0]);
+                        break;
+                    case "autoloot":
+                        if (args.Length > 0 && args[0] == "off") _autoLootApi.Stop(); else _autoLootApi.Start();
+                        break;
+                    case "dress":
+                        if (args.Length > 0) _dressApi.ChangeList(args[0]);
+                        _dressApi.DressUp();
+                        break;
+                    case "undress":
+                        if (args.Length > 0) _dressApi.ChangeList(args[0]);
+                        _dressApi.Undress();
+                        break;
+                    case "organizer":
+                        if (args.Length > 0) _organizerApi.ChangeList(args[0]);
+                        _organizerApi.Start();
+                        break;
+                    case "restock":
+                        if (args.Length > 0) _restockApi.ChangeList(args[0]);
+                        _restockApi.Start();
+                        break;
+                    case "scavenger":
+                        if (args.Length > 0 && args[0] == "off") _scavengerApi.Stop(); else _scavengerApi.Start();
+                        break;
+                    case "bandageheal":
+                        if (args.Length > 0 && args[0] == "off") _bandageHealApi.Stop(); else _bandageHealApi.Start();
+                        break;
+                    case "getlabel":
+                        if (args.Length >= 2)
+                        {
+                            var item = _items.FindBySerial(ParseSerial(args[0]));
+                            if (item != null) _variables[args[1].ToLower()] = string.Join(" ", item.Properties);
+                        }
+                        break;
                     case "replay":
-                        _currentLineIndex = -1; // Riavvia lo script
+                        _currentLineIndex = -1;
                         _loopStack.Clear();
                         _forStack.Clear();
+                        _ifSucceededStack.Clear();
                         break;
                     case "stop":
-                        _currentLineIndex = _lines.Length; // Termina
+                        _currentLineIndex = _lines.Length;
                         break;
                     default:
                         EvaluateExpression(line);
@@ -276,25 +374,75 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
 
         private void HandleIf(string[] args)
         {
-            if (!EvaluateExpression(string.Join(" ", args)))
+            bool success = EvaluateExpression(string.Join(" ", args));
+            _ifSucceededStack.Push(success);
+            if (!success)
             {
-                // Cerca elseif, else o endif allo stesso livello
-                int depth = 0;
-                while (_currentLineIndex < _lines.Length - 1)
+                SkipToNextConditionalBranch();
+            }
+        }
+
+        private void HandleElseIf(string[] args)
+        {
+            if (_ifSucceededStack.Count == 0) return; // Errore: elseif senza if
+
+            if (_ifSucceededStack.Peek())
+            {
+                // Un ramo precedente ha già avuto successo, salta tutto fino a endif
+                SkipToBlockEnd("if", "endif");
+            }
+            else
+            {
+                // Prova questo ramo
+                bool success = EvaluateExpression(string.Join(" ", args));
+                if (success)
                 {
-                    _currentLineIndex++;
-                    string line = _lines[_currentLineIndex].Trim().ToLower();
-                    if (line.StartsWith("if ") || line == "if") depth++;
-                    else if (line == "endif")
+                    _ifSucceededStack.Pop();
+                    _ifSucceededStack.Push(true);
+                }
+                else
+                {
+                    SkipToNextConditionalBranch();
+                }
+            }
+        }
+
+        private void HandleElse()
+        {
+            if (_ifSucceededStack.Count == 0) return;
+
+            if (_ifSucceededStack.Peek())
+            {
+                SkipToBlockEnd("if", "endif");
+            }
+            else
+            {
+                _ifSucceededStack.Pop();
+                _ifSucceededStack.Push(true);
+            }
+        }
+
+        private void SkipToNextConditionalBranch()
+        {
+            int depth = 0;
+            while (_currentLineIndex < _lines.Length - 1)
+            {
+                _currentLineIndex++;
+                string line = _lines[_currentLineIndex].Trim().ToLower();
+                if (line.StartsWith("if ") || line == "if") depth++;
+                else if (line == "endif")
+                {
+                    if (depth == 0)
                     {
-                        if (depth == 0) break;
-                        depth--;
-                    }
-                    else if (depth == 0 && (line.StartsWith("elseif ") || line == "else"))
-                    {
-                        _currentLineIndex--; // Torna indietro per processare elseif/else nel loop principale
+                        _currentLineIndex--; // Torna indietro per far processare endif nel loop principale
                         break;
                     }
+                    depth--;
+                }
+                else if (depth == 0 && (line.StartsWith("elseif ") || line == "else"))
+                {
+                    _currentLineIndex--; // Torna indietro per far processare elseif/else nel loop principale
+                    break;
                 }
             }
         }
@@ -332,7 +480,13 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             expr = expr.ToLower().Trim();
             if (string.IsNullOrEmpty(expr)) return false;
 
-            // Supporto OR / AND (semplificato: valuta da sinistra a destra)
+            // Supporto NOT (!)
+            if (expr.StartsWith("not ") || expr.StartsWith("! "))
+            {
+                return !EvaluateExpression(expr.Substring(expr.StartsWith("!") ? 1 : 4).Trim());
+            }
+
+            // Supporto OR / AND (valutazione semplice da sinistra a destra)
             if (expr.Contains(" or "))
             {
                 var parts = expr.Split(new[] { " or " }, StringSplitOptions.RemoveEmptyEntries);
@@ -360,18 +514,26 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             if (expr.StartsWith("gumpexists "))
             {
                 uint gumpId = ParseSerial(expr.Substring(11).Trim());
-                return _misc.WaitGump(gumpId, 0);
+                return _misc.WaitGump(gumpId, 50);
             }
+            if (expr.StartsWith("ingump ")) return _misc.WaitForGumpAny(50);
             if (expr.StartsWith("timer ") || expr.StartsWith("timername "))
             {
-                // timer timerName >= value → true se il timer esiste e ha superato la soglia
-                // Per semplicità: timer <name> → true se esiste
                 var parts2 = expr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 if (parts2.Length >= 2)
                 {
                     string tname = parts2[1].ToLower();
                     if (_timers.TryGetValue(tname, out long t))
-                        return Environment.TickCount64 - t >= 0;
+                    {
+                        long elapsed = (long)Environment.TickCount64 - t;
+                        if (parts2.Length >= 4)
+                        {
+                            long val = ParseInt(parts2[3]);
+                            string op = parts2[2];
+                            return op switch { ">" => elapsed > val, ">=" => elapsed >= val, "<" => elapsed < val, "<=" => elapsed <= val, "==" => elapsed == val, _ => false };
+                        }
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -380,6 +542,12 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             {
                 string lname = expr.Substring(10).Trim().ToLower();
                 return _lists.TryGetValue(lname, out var l) && l.Count > 0;
+            }
+            if (expr.StartsWith("inrange "))
+            {
+                var parts = expr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 3) return _misc.Distance(_player.X, _player.Y, (int)ParseSerial(parts[1]), (int)ParseSerial(parts[2])) <= ParseInt(parts[2]);
+                if (parts.Length == 2) return _misc.Distance(_player.X, _player.Y, (int)ParseSerial(parts[1]), (int)ParseSerial(parts[1])) <= 2;
             }
 
             // Proprietà booleane
@@ -390,10 +558,12 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                 case "hidden":    return _player.IsHidden;
                 case "mounted":   return _player.IsOnMount;
                 case "warmode":   return _player.WarMode;
-                case "paralyzed": return false; // no packet tracking yet
+                case "paralyzed": return false; 
                 case "blessed":   return false;
                 case "yellowhits": return _player.IsYellowHits;
                 case "hasgump":   return _misc.WaitForGumpAny(50);
+                case "waitingfortarget": return false;
+                case "inparty":   return _player.InParty;
             }
 
             return false;
@@ -401,14 +571,15 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
 
         private bool HandleFindType(string expr)
         {
-            // findtype graphic [hue] [container] [range]
             var parts = expr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length < 2) return false;
             
             int graphic = ParseInt(parts[1]);
             int hue = parts.Length > 2 ? ParseInt(parts[2]) : -1;
+            uint container = parts.Length > 3 ? ParseSerial(parts[3]) : 0;
+            int range = parts.Length > 4 ? ParseInt(parts[4]) : -1;
             
-            var item = _items.FindByID(graphic, hue);
+            var item = _items.FindByID(graphic, hue, container, range);
             if (item != null)
             {
                 _aliases["found"] = item.Serial;
@@ -439,7 +610,6 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
 
         private long GetValue(string term)
         {
-            // Variabili script
             if (_variables.TryGetValue(term, out string? varVal) && long.TryParse(varVal, out long varNum)) return varNum;
 
             if (long.TryParse(term, out long val)) return val;
@@ -449,33 +619,37 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             {
                 "hits"         => _player.Hits,
                 "maxhits"      => _player.HitsMax,
+                "diffhits"     => _player.HitsMax - _player.Hits,
                 "mana"         => _player.Mana,
                 "maxmana"      => _player.ManaMax,
+                "diffmana"     => _player.ManaMax - _player.Mana,
                 "stam"         => _player.Stam,
                 "maxstam"      => _player.StamMax,
+                "diffstam"     => _player.StamMax - _player.Stam,
                 "str"          => _player.Str,
                 "dex"          => _player.Dex,
                 "int"          => _player.Int,
                 "serial"       => _player.Serial,
                 "weight"       => _player.Weight,
                 "maxweight"    => _player.MaxWeight,
+                "diffweight"   => _player.MaxWeight - _player.Weight,
                 "followers"    => _player.Followers,
                 "maxfollowers" => _player.FollowersMax,
                 "gold"         => _player.Gold,
                 "armor"        => _player.Armor,
                 "fame"         => _player.Fame,
                 "karma"        => _player.Karma,
+                "luck"         => _player.Luck,
                 "x"            => _player.X,
                 "y"            => _player.Y,
                 "z"            => _player.Z,
                 "random"       => _rng.Next(0, 100),
-                _ => ParseSerial(term) // Prova se è un alias
+                _ => ParseSerial(term)
             };
         }
 
         private bool HandleCountType(string expr)
         {
-            // counttype graphic [hue] [container]  →  true se count > 0
             var parts = expr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length < 2) return false;
             int graphic = ParseInt(parts[1]);
@@ -486,7 +660,6 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
 
         private void HandleFor(string[] args)
         {
-            // for <count>  →  ripete il blocco <count> volte
             int limit = args.Length > 0 ? ParseInt(args[0]) : 0;
             if (limit <= 0)
             {
@@ -504,9 +677,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             if (next < limit)
             {
                 _forStack.Push((lineIndex, next, limit, varName));
-                _currentLineIndex = lineIndex; // Torna all'inizio del for (verrà incrementato nel loop)
+                _currentLineIndex = lineIndex;
             }
-            // Se completato, continua normalmente
         }
 
         private uint ParseSerial(string s)

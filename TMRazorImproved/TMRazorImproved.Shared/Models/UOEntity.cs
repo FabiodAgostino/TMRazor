@@ -9,6 +9,7 @@ namespace TMRazorImproved.Shared.Models
     {
         public virtual object SyncRoot { get; } = new();
         public virtual uint Serial { get; }
+        public virtual string Name { get; set; } = "Unknown";
         public virtual ushort Graphic { get; set; }
         public virtual ushort Hue { get; set; }
         /// <summary>Alias per Hue — usato dalle API di scripting.</summary>
@@ -39,7 +40,6 @@ namespace TMRazorImproved.Shared.Models
     /// </summary>
     public class Mobile : UOEntity
     {
-        public virtual string Name { get; set; } = "Unknown";
         public virtual bool IsHidden { get; set; }
 
         // Stats base
@@ -70,6 +70,15 @@ namespace TMRazorImproved.Shared.Models
         public virtual uint AttackTarget { get; set; }
         public virtual uint LastObject { get; set; }
         public virtual System.Collections.Generic.List<uint> Pets { get; } = new();
+
+        /// <summary>ID abilità speciale primaria corrente (0 = nessuna)</summary>
+        public int PrimaryAbilityId { get; set; }
+        /// <summary>ID abilità speciale secondaria corrente (0 = nessuna)</summary>
+        public int SecondaryAbilityId { get; set; }
+        /// <summary>True se la primaria è attiva</summary>
+        public bool PrimaryAbilityActive { get; set; }
+        /// <summary>True se la secondaria è attiva</summary>
+        public bool SecondaryAbilityActive { get; set; }
 
         // Stats estese (0x11 type >= 3, AOS+)
         public virtual ushort Gold { get; set; }
@@ -166,7 +175,6 @@ namespace TMRazorImproved.Shared.Models
     /// </summary>
     public class Item : UOEntity
     {
-        public virtual string Name { get; set; } = "Unknown Item";
         public virtual ushort Amount { get; set; }
         public virtual uint Container { get; set; }
         /// <summary>Alias per Container — usato dalle API di scripting.</summary>

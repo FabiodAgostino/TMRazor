@@ -139,11 +139,11 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return true;
         }
 
-        public virtual bool HasSpecial => false; // TODO: Implement Special Move tracking
-        public virtual bool HasPrimarySpecial => false;
-        public virtual bool HasSecondarySpecial => false;
-        public virtual int PrimarySpecialId => 0;
-        public virtual int SecondarySpecialId => 0;
+        public virtual bool HasSpecial          => (P?.PrimaryAbilityActive   ?? false) || (P?.SecondaryAbilityActive ?? false);
+        public virtual bool HasPrimarySpecial   => P?.PrimaryAbilityActive   ?? false;
+        public virtual bool HasSecondarySpecial => P?.SecondaryAbilityActive ?? false;
+        public virtual int  PrimarySpecialId    => P?.PrimaryAbilityId       ?? 0;
+        public virtual int  SecondarySpecialId  => P?.SecondaryAbilityId     ?? 0;
         public virtual bool InParty => _world.PartyMembers.Count > 0;
 
         public virtual List<ScriptMobile> Pets
@@ -491,11 +491,30 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 _packet.SendToServer(new byte[] { 0x02, (byte)dir, 0x00 });
         }
 
+        public virtual void Turn(string direction)
+        {
+            _cancel.ThrowIfCancelled();
+            if (Enum.TryParse<TMRazorImproved.Shared.Enums.Direction>(direction, true, out var dir))
+            {
+                var currentDir = P != null ? (TMRazorImproved.Shared.Enums.Direction)(P.Direction & 0x07) : TMRazorImproved.Shared.Enums.Direction.North;
+                if (currentDir != dir)
+                    _packet.SendToServer(new byte[] { 0x02, (byte)dir, 0x00 });
+            }
+        }
+
         public virtual void PathFindTo(int x, int y, int z)
         {
             _cancel.ThrowIfCancelled();
-            // TODO: Ensure PathFindTo exists in IPathFindingService or send packet manually.
-            // _packet.SendToClient(new byte[] { 0x38, ... });
+            // Invia al client il pacchetto 0x38 ripetuto per forzare il pathfinding alla coordinata
+            byte[] packet = new byte[7 * 20];
+            for (int i = 0; i < 20; i++)
+            {
+                packet[i * 7] = 0x38;
+                System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(packet.AsSpan(i * 7 + 1), (ushort)x);
+                System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(packet.AsSpan(i * 7 + 3), (ushort)y);
+                System.Buffers.Binary.BinaryPrimitives.WriteInt16BigEndian(packet.AsSpan(i * 7 + 5), (short)z);
+            }
+            _packet.SendToClient(packet);
         }
 
         public virtual void Fly(bool status)
@@ -786,7 +805,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 "primary" => 1, "secondary" => 2, "clear" => 0,
                 _ => int.TryParse(abilityName, out int n) ? n : 0
             };
-            _packet.SendToServer(new byte[] { 0xBF, 0x00, 0x07, 0x00, 0x14, (byte)(ability >> 8), (byte)ability });
+            
+            // Format for The Miracle shard (D7)
+            byte[] pkt = new byte[9];
+            pkt[0] = 0xD7;
+            pkt[1] = 0x00; pkt[2] = 0x09;
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(3), Serial);
+            pkt[7] = 0x00; pkt[8] = (byte)ability;
+            _packet.SendToServer(pkt);
         }
 
         public virtual void Cast(string spellName)

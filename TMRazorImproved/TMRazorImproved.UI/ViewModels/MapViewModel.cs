@@ -5,13 +5,17 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+using System.Windows;
 
 namespace TMRazorImproved.UI.ViewModels
 {
-    public partial class MapViewModel : ViewModelBase
+    public partial class MapViewModel : ViewModelBase, IDisposable
     {
         private readonly IWorldService _worldService;
         private readonly IMapService _mapService;
+        private readonly DispatcherTimer _updateTimer;
 
         [ObservableProperty]
         private int _playerX;
@@ -28,6 +32,9 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty]
         private bool _isTracking = true;
 
+        [ObservableProperty]
+        private WriteableBitmap? _radarBitmap;
+
         public ObservableCollection<MapMarker> Markers { get; } = new();
 
         public MapViewModel(IWorldService worldService, IMapService mapService)
@@ -35,7 +42,13 @@ namespace TMRazorImproved.UI.ViewModels
             _worldService = worldService;
             _mapService = mapService;
 
-            // Sottoscrizione eventi mondo (se esistenti) o aggiornamento periodico
+            // Radar 256x256 tiles (standard size for UO radar)
+            RadarBitmap = new WriteableBitmap(256, 256, 96, 96, System.Windows.Media.PixelFormats.Bgr555, null);
+
+            _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+            _updateTimer.Tick += (s, e) => UpdatePosition();
+            _updateTimer.Start();
+
             UpdatePosition();
         }
 
@@ -48,6 +61,8 @@ namespace TMRazorImproved.UI.ViewModels
                 PlayerY = _worldService.Player.Y;
                 MapId = _worldService.Player.MapId;
 
+                UpdateRadar();
+
                 if (IsTracking)
                 {
                     UpdateMarkers();
@@ -55,25 +70,46 @@ namespace TMRazorImproved.UI.ViewModels
             }
         }
 
+        private void UpdateRadar()
+        {
+            if (RadarBitmap == null) return;
+
+            // Centro del radar sul player (128, 128)
+            // Area 256x256
+            int startX = PlayerX - 128;
+            int startY = PlayerY - 128;
+
+            byte[]? data = _mapService.GetMapImage(MapId, startX, startY, 256, 256, true);
+            if (data != null && data.Length > 0)
+            {
+                RadarBitmap.WritePixels(new Int32Rect(0, 0, 256, 256), data, 256 * 2, 0);
+            }
+        }
+
         private void UpdateMarkers()
         {
             Markers.Clear();
             
-            // Aggiungi Player
-            Markers.Add(new MapMarker { X = PlayerX, Y = PlayerY, Color = "Gold", Name = "You", Type = "Player" });
+            // Aggiungi Player (al centro del radar)
+            Markers.Add(new MapMarker { X = 128, Y = 128, Color = "Gold", Name = "You", Type = "Player" });
 
-            // Aggiungi Mobiles vicini
+            // Aggiungi Mobiles vicini (relativi al player)
             foreach (var mobile in _worldService.Mobiles.Take(50))
             {
                 if (mobile.Serial == _worldService.Player?.Serial) continue;
                 
+                int relX = 128 + (mobile.X - PlayerX);
+                int relY = 128 + (mobile.Y - PlayerY);
+
+                if (relX < 0 || relX >= 256 || relY < 0 || relY >= 256) continue;
+
                 string color = "Crimson"; // Nemico
                 if (mobile.Notoriety == 1) color = "DodgerBlue"; // Alleato
                 if (mobile.Notoriety == 3) color = "Gray"; // Neutrale
                 
                 Markers.Add(new MapMarker { 
-                    X = mobile.X, 
-                    Y = mobile.Y, 
+                    X = relX, 
+                    Y = relY, 
                     Color = color, 
                     Name = mobile.Name,
                     Type = "Mobile"
@@ -86,6 +122,11 @@ namespace TMRazorImproved.UI.ViewModels
 
         [RelayCommand]
         private void ZoomOut() => Zoom = Math.Max(0.5, Zoom - 0.2);
+
+        public void Dispose()
+        {
+            _updateTimer.Stop();
+        }
     }
 
     public class MapMarker
@@ -97,3 +138,4 @@ namespace TMRazorImproved.UI.ViewModels
         public string Type { get; set; } = "Default";
     }
 }
+

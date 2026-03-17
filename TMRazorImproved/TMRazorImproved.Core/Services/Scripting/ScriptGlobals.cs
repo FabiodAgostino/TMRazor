@@ -15,7 +15,9 @@ namespace TMRazorImproved.Core.Services.Scripting
         public MobilesApi Mobiles { get; set; } = null!;
         public MiscApi Misc { get; set; } = null!;
         public JournalApi Journal { get; set; } = null!;
-        public GumpsApi Gumps { get; set; } = null!;
+        public GumpsApi Gump { get; set; } = null!;
+        /// <summary>Alias per Gump — compatibilità RazorEnhanced.</summary>
+        public GumpsApi Gumps { get => Gump; set => Gump = value; }
         public TargetApi Target { get; set; } = null!;
         public SkillsApi Skills { get; set; } = null!;
         public SpellsApi Spells { get; set; } = null!;
@@ -23,6 +25,13 @@ namespace TMRazorImproved.Core.Services.Scripting
         public FriendApi Friend { get; set; } = null!;
         public FiltersApi Filters { get; set; } = null!;
         public TimerApi Timer { get; set; } = null!;
+        public SpecialMovesApi SpecialMoves { get; set; } = null!;
+        public AutoLootApi AutoLoot { get; set; } = null!;
+        public DressApi Dress { get; set; } = null!;
+        public ScavengerApi Scavenger { get; set; } = null!;
+        public RestockApi Restock { get; set; } = null!;
+        public OrganizerApi Organizer { get; set; } = null!;
+        public BandageHealApi BandageHeal { get; set; } = null!;
 
         /// <summary>
         /// Token di cancellazione per lo script corrente.

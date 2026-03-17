@@ -597,12 +597,15 @@ namespace TMRazorImproved.Core.Services
         // Recording
         // -------------------------------------------------------------------------
 
-        public void Record(string name)
+        public void StartRecording(string? name = null)
         {
             if (_isPlaying || _isRecording) return;
             _isRecording = true;
-            ActiveMacro = name;
-            _recordingBuffer.Clear();
+            ActiveMacro = name ?? $"macro_{DateTime.Now:yyyyMMdd_HHmmss}";
+            lock (_recordingBuffer)
+            {
+                _recordingBuffer.Clear();
+            }
             _recordingUnsubscribers.Clear();
 
             // FIX BUG-P1-05: viewer C2S per catturare le azioni del giocatore
@@ -696,7 +699,7 @@ namespace TMRazorImproved.Core.Services
         // Stop / Save / Load / Delete / Rename
         // -------------------------------------------------------------------------
 
-        public void Stop()
+        public void StopRecording()
         {
             if (_isPlaying && _playCts != null)
                 _playCts.Cancel();

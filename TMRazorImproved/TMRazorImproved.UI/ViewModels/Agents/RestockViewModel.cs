@@ -150,7 +150,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private async Task SetSourceAsync()
         {
             StatusText = _lang.GetString("Agents.General.SelectContainer");
-            var serial = await _targeting.AcquireTargetAsync();
+            var targetInfo = await _targeting.AcquireTargetAsync(); var serial = targetInfo.Serial;
             if (serial != 0)
             {
                 SourceName = $"0x{serial:X8}";
@@ -166,7 +166,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private async Task SetDestinationAsync()
         {
             StatusText = _lang.GetString("Agents.General.SelectContainer");
-            var serial = await _targeting.AcquireTargetAsync();
+            var targetInfo = await _targeting.AcquireTargetAsync(); var serial = targetInfo.Serial;
             if (serial != 0)
             {
                 DestinationName = $"0x{serial:X8}";
@@ -219,7 +219,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             if (SelectedList == null) return;
 
             StatusText = _lang.GetString("Agents.General.SelectItem");
-            var serial = await _targeting.AcquireTargetAsync();
+            var targetInfo = await _targeting.AcquireTargetAsync(); var serial = targetInfo.Serial;
             if (serial != 0)
             {
                 var item = new LootItem((int)0x0F7A, -1, "Targeted Item") { Amount = 50 };

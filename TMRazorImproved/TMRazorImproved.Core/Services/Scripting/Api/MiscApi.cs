@@ -114,9 +114,12 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         // Physical mouse clicks (Win32)
         // ------------------------------------------------------------------
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT { public int X; public int Y; }
+
         [DllImport("user32.dll", EntryPoint = "SetCursorPos")] private static extern bool SetCursorPos_PInvoke(int x, int y);
-        [DllImport("user32.dll")] private static extern bool GetCursorPos(ref System.Drawing.Point lp);
-        [DllImport("user32.dll")] private static extern bool ClientToScreen(IntPtr hWnd, ref System.Drawing.Point lp);
+        [DllImport("user32.dll")] private static extern bool GetCursorPos(ref POINT lp);
+        [DllImport("user32.dll")] private static extern bool ClientToScreen(IntPtr hWnd, ref POINT lp);
         [DllImport("user32.dll")] private static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtra);
 
         private const int MOUSEEVENTF_LEFTDOWN  = 0x0002;
@@ -131,11 +134,11 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             try
             {
                 var hwnd = _interop.GetWindowHandle();
-                var old  = new System.Drawing.Point();
+                var old  = new POINT();
                 GetCursorPos(ref old);
                 if (clientCoords)
                 {
-                    var pnt = new System.Drawing.Point(xpos, ypos);
+                    var pnt = new POINT { X = xpos, Y = ypos };
                     ClientToScreen(hwnd, ref pnt);
                     xpos = pnt.X; ypos = pnt.Y;
                 }
@@ -154,11 +157,11 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             try
             {
                 var hwnd = _interop.GetWindowHandle();
-                var old  = new System.Drawing.Point();
+                var old  = new POINT();
                 GetCursorPos(ref old);
                 if (clientCoords)
                 {
-                    var pnt = new System.Drawing.Point(xpos, ypos);
+                    var pnt = new POINT { X = xpos, Y = ypos };
                     ClientToScreen(hwnd, ref pnt);
                     xpos = pnt.X; ypos = pnt.Y;
                 }
@@ -435,7 +438,13 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return Math.Sqrt(dx * dx + dy * dy);
         }
 
-        /// <summary>Chebyshev (UO tile) distance between two coordinates.</summary>
+        /// <summary>
+        /// Distanza di Chebyshev (UO tile-based) tra due punti.
+        /// NOTA: In UO, la distanza "ufficiale" è Chebyshev perché il movimento in diagonale
+        /// conta 1 tile esattamente come il movimento cardinale.
+        /// Se hai bisogno della distanza Euclidea (in linea d'aria), usa DistanceSqrt().
+        /// Comportamento identico all'originale TMRazor.
+        /// </summary>
         public virtual int Distance(int x1, int y1, int x2, int y2)
         {
             _cancel.ThrowIfCancelled();
@@ -754,8 +763,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         {
             _cancel.ThrowIfCancelled();
             if (_scripting == null) return;
-            if (string.Equals(_scripting.CurrentScriptName, scriptfile, StringComparison.OrdinalIgnoreCase))
-                _ = _scripting.StopAsync();
+            _scripting.StopScript(scriptfile);
         }
 
         public virtual void ScriptStopAll(bool skipCurrent = false)

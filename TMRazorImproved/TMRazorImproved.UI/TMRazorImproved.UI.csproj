@@ -81,4 +81,10 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Config\**\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
