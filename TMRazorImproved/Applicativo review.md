@@ -1,506 +1,670 @@
 # Applicativo Review — TMRazorImproved
 **Data revisione:** 17 marzo 2026
 **Revisore:** Architetto Software Senior
+**Metodologia:** Analisi diretta del codice sorgente (nessun documento preesistente usato come fonte)
 **Branch:** `claude/tmrazor-migration-review-DMs0o`
-**Esito generale:** ⚠️ MIGRAZIONE PARZIALE — struttura solida, ma funzionalità critiche incomplete o non corrette
 
 ---
 
-## 1. Panoramica dello Stato Attuale
+## 1. Stato Generale
 
-### Cosa è stato fatto bene
-- Architettura a 4 layer (Shared / Core / UI / Plugin) pulita e ben separata
-- Stack tecnologico moderno: .NET 10, WPF + WPF-UI, MVVM + CommunityToolkit, DI con `IHost`
-- Threading: eliminati tutti i `Thread.Abort()`, adottato pattern `CancellationToken` cooperativo
-- Packet engine funzionante con shared-memory e `TMRazorPlugin` (classicuo plugin in net48)
-- Suite di test presente (unit, mock, stress, fuzz)
-- Localizzazione dichiarativa via `{loc:Loc}` e `.resx`
-- Tutti i servizi agente (AutoLoot, Scavenger, Dress, Organizer, BandageHeal, Restock) hanno Service + ViewModel + View
+La migrazione è in ottimo stato. L'architettura a layer (Shared / Core / UI / Plugin) è pulita,
+il threading è corretto, il sistema di DI è ben configurato e la quasi totalità delle API di scripting
+è funzionante. Le criticità rimanenti si concentrano in tre aree distinte:
 
-### Cosa è ancora rotto, incompleto o mancante
-Vedi sezioni 2–5. Le criticità si dividono in:
-- **Blocchi di compilazione** (1): il codice non compila
-- **Bug funzionali gravi** (19): script esistenti sono silenziosi o errati
-- **Feature non migrate** (6 intere aree): Macro engine incompleto, gRPC, ScriptRecorder, AutoDoc, Gump Inspector, Build/Publish pipeline
+| Area | Stato |
+|------|-------|
+| Scripting API (PlayerApi, SpellsApi, TargetApi, ecc.) | ✅ Quasi completo |
+| Macro Engine (MacrosService) | ⚠️ Parzialmente incompleto |
+| Feature non migrate (gRPC, ScriptRecorder, GumpInspector, AutoDoc) | ❌ Assenti |
+| Stub minori sparsi | ⚠️ Da completare |
 
 ---
 
-## 2. Criticità Emerse dall'Analisi
+## 2. Criticità Emerse dall'Analisi del Codice
 
-> Le criticità contrassegnate con 🔴 bloccano il funzionamento degli script legacy.
-> Quelle con 🟠 degradano silenziosamente il comportamento.
-> Quelle con 🟡 sono incomplete ma non critiche per il core.
+### 2.1 Stub confermati in `MiscApi.cs`
 
-### 2.1 Errore di Compilazione (build rotta)
-| ID | File | Problema |
-|----|------|---------|
-| **S1-01** 🔴 | `TargetApi.cs` righe 231 e 312 | Due metodi `TargetResource(uint, int)` con firma identica → CS0111. Il progetto non compila. |
+I seguenti metodi sono stub confermati (corpo vuoto o return hardcoded),
+verificati direttamente leggendo il file:
 
-### 2.2 Bug Funzionali Gravi (script legacy rotti)
-| ID | File | Problema |
-|----|------|---------|
-| **S2-01** 🔴 | `TargetApi.cs` | `TargetExecuteRelative` ignora il parametro `offset`; mining script non funzionano |
-| **S2-02** 🔴 | `TargetApi.cs` | `TargetResource` invia un target generico invece del pacchetto `TargetByResource` specializzato |
-| **S2-03** 🔴 | `TargetApi.cs` | `WaitForTargetOrFizzle` non rileva mai il fizzle (`0x54`/`0x5c`); aspetta l'intero timeout |
-| **S2-04** 🔴 | `TargetApi.cs` | `PromptGroundTarget` ritorna sempre `null` (le coordinate X/Y/Z non vengono catturate) |
-| **S2-05** 🔴 | `TargetApi.cs` | `HasTarget()` manca il parametro stringa `targetFlag`; script `HasTarget("Harmful")` crashano |
-| **S2-06** 🟠 | `TargetApi.cs` | `TargetType` cerca prima mobiles poi items: ordine invertito rispetto all'originale |
-| **S2-07** 🟠 | `PlayerApi.cs` | `Area()` e `Zone()` hardcoded a `"Britannia"` |
-| **S2-08** 🔴 | `TargetApi.cs` | `GetLastAttack()` ritorna sempre `0` |
-| **S2-09** 🔴 | `TargetApi.cs` | `LastUsedObject()` ritorna sempre `0` invece di `LastObject` dal WorldService |
-| **S2-10** 🔴 | `SpellsApi.cs` | `Cast` manca gli overload `(name, target, wait, waitAfter)` usati nella maggior parte degli script |
-| **S2-11** 🟠 | `SpellsApi.cs` | `WaitCastComplete` fa polling a 50ms; nessuna rilevazione di fizzle né di paralisi |
+| Metodo | Comportamento attuale | Impatto |
+|--------|-----------------------|---------|
+| `ClearDragQueue()` | Corpo vuoto (stub esplicito) | Basso |
+| `ShardName()` | Ritorna `string.Empty` | Medio — script che usano il nome dello shard falliranno silenziosamente |
+| `FilterSeason(bool, uint)` | Corpo vuoto | Basso |
+| `HasMenu()` | Ritorna `false` | Medio — pre-context-menu UO (server datati) |
+| `CloseMenu()` | Corpo vuoto | Medio |
+| `MenuContain(string)` | Ritorna `false` | Medio |
+| `GetMenuTitle()` | Ritorna `string.Empty` | Medio |
+| `WaitForMenu(int)` | Ritorna `false` | Medio |
+| `MenuResponse(string)` | Corpo vuoto | Medio |
+| `HasQueryString()` | Ritorna `false` | Medio |
+| `WaitForQueryString(int)` | Ritorna `false` | Medio |
+| `QueryStringResponse(bool, string)` | Corpo vuoto | Medio |
+| `GetMapInfo(uint)` | Ritorna oggetto con solo Serial popolato | Basso |
+| `NoRunStealthToggle(bool)` | Parziale — scrive config ma non invia pacchetto | Basso |
 
-### 2.3 Type Mismatch (script Python silenziosamente rotti)
-| ID | File | Problema |
-|----|------|---------|
-| **S3-01** 🔴 | `TargetApi.cs` | `GetLast()` ritorna `uint` invece di `int`; il pattern `== -1` non funziona mai |
-| **S3-02** 🔴 | `TargetApi.cs` | `PromptTarget()` ritorna `uint`; cancellazione non distinguibile da serial `0` |
-| **S3-03** 🔴 | `ItemsApi.cs` | `Filter.OnGround` è `bool` invece di tristate `int` (-1/0/1) |
-| **S3-04** 🔴 | `MobilesApi.cs` | `Filter.Notoriety` è singolo `int` invece di `List<byte> Notorieties` |
+### 2.2 Stub in `PlayerApi.cs`
 
-### 2.4 Proprietà Filter Mancanti
-| ID | Filter | Proprietà mancanti |
-|----|--------|-------------------|
-| **S4-01** 🟠 | `Items.Filter` | `IsContainer`, `IsCorpse`, `IsDrop` (tristate), `RangeMin`, `RangeMax`, `Parent`, `ExcludeSerial` |
-| **S4-02** 🟠 | `Mobiles.Filter` | `IsHuman`, `IsGhost`, `IsAlly`, `IsEnemy`, `IsNeutral` (tristate) |
+| Metodo | Comportamento attuale | Impatto |
+|--------|-----------------------|---------|
+| `HashSet(string key, object value)` | Corpo completamente vuoto | Basso — feature raramente usata |
+| `SpellIsEnabled(string spellName)` | Ritorna sempre `true` hardcoded | Medio — script che controllano se una spell è abilitata non funzionano |
 
-### 2.5 Overload Mancanti
-| ID | File | Problema |
-|----|------|---------|
-| **S5-01** 🔴 | `TargetApi.cs` | `TargetResource` ha solo 1 overload su 4; mancano quelli con `string resource_name` e `Item item` |
-| **S5-02** 🟠 | `ItemsApi.cs` | `FindByID` 4° parametro è `bool recurse` invece di `int range` |
+### 2.3 Stub in `StaticsApi.cs`
 
-### 2.6 Differenze Comportamentali
-| ID | File | Problema |
-|----|------|---------|
-| **S6-01** 🟠 | `SpellDefinitions.cs` | Risoluzione nome spell usa substring matching; l'originale usa Levenshtein. Abbreviazioni falliscono silenziosamente |
-| **S6-02** 🟠 | `PlayerApi.cs` | Pattern `P?.Hits ?? 0` ritorna `0` quando disconnessi; script non distinguono "HP=0 perché morto" da "disconnesso" |
-| **S6-04** 🟠 | `MiscApi.cs` | `SendToClient(string keys)` non interpreta la sintassi SendKeys (`{Enter}`, `^u`, ecc.) |
-| **S6-05** 🟠 | `TargetApi.cs` | `SetLast` non invia il pacchetto di highlight visivo al client |
-| **S6-06** 🔴 | `MiscApi.cs` | `AppendToFile`/`WriteFile`/`DeleteFile` privi di validazione path/estensione: regressione di sicurezza |
-| **S6-07** 🟠 | `MiscApi.cs` | `ScriptStop` può fermare solo lo script corrente, non script "fratelli" |
-| **S6-08** 🟠 | `MiscApi.cs` | `ScriptSuspend` / `ScriptResume` sono stub vuoti |
-| **S6-09** 🟠 | `PlayerApi.cs` | `Pets` basato su notorietà invece di tracking lato server |
-| **S6-10** 🟠 | `MiscApi.cs` | `Distance` usa algoritmo Chebyshev invece di Euclidea |
+| Metodo | Comportamento attuale | Impatto |
+|--------|-----------------------|---------|
+| `CheckDeedHouse()` | Ritorna sempre `false` hardcoded | Basso |
 
-### 2.7 Agenti senza Wrapper Script
-| ID | Problema |
-|----|---------|
-| **S7-01** 🔴 | `AutoLoot`, `Dress`, `Scavenger`, `Restock` esistono come servizi ma non hanno un wrapper Python/UOSteam. Chiamate `AutoLoot.Start()` in script Python danno `AttributeError`. `AgentApis.cs` già contiene `AutoLootApi`, `DressApi`, `ScavengerApi`, `RestockApi` ma **non sono registrati** in `ScriptingService` come variabili Python. |
+### 2.4 `Mobile.LastObject` mai aggiornato
 
-### 2.8 Annotazioni Minori
-| ID | Note |
-|----|------|
-| **S8-01** | `JournalEntry.Timestamp`: `long` ms vs `double` secondi Unix nell'originale — documentare |
-| **S8-02** | `Gumps.WaitForGump(PythonList, int)`: verificare compatibilità IronPython auto-cast |
-| **S8-03** | `Target.SetLast(wait=true)` ignora il parametro `wait` |
-| **S8-04** | `NoRunStealthToggle` / `NoRunStealthStatus` stub vuoti |
-| **S8-05** | Verificare che da Python si possa istanziare `Items.Filter()` come nested class |
+`TargetApi.LastUsedObject()` legge correttamente `Player.LastObject`, ma questa proprietà
+non viene mai scritta: il `WorldPacketHandler` non osserva il pacchetto `0x06`
+(DoubleClick inviato dal client) per aggiornare `LastObject`. Il valore sarà sempre `0`.
 
----
+> **Nota:** `0x08` in `WorldPacketHandler` è registrato come `HandleDropRequest` (pacchetto drop C2S),
+> non come observer del double-click. Sono due pacchetti distinti.
 
-## 3. Feature Non Migrate (Aree Mancanti)
+### 2.5 `CommonConverters.cs` — 10 `ConvertBack` con `NotImplementedException`
 
-| Area | Legacy | Improved | Stato |
-|------|--------|----------|-------|
-| **Macro engine completo** | 43 action types | ~18 commands testuale | ⚠️ Parziale |
-| **gRPC Proto-Control server** | 4 file + .proto | Assente | ❌ Mancante |
-| **Script Recorder** | `ScriptRecorderService` + 3 impl. | Assente | ❌ Mancante |
-| **AutoDoc** | `AutoDoc.cs` (genera JSON da XML) | Assente | ❌ Mancante |
-| **Gump Inspector completo** | `GumpInspector.cs` | TODO nel ViewModel | ⚠️ Stub |
-| **Build & Publish pipeline** | N/A (framework) | Non configurata | ❌ Mancante |
+I seguenti converter WPF hanno il metodo `ConvertBack` che lancia eccezione.
+Per i binding one-way (`Mode=OneWay`) questo non è un problema. Diventa un crash
+se un binding bidirezionale usa questi converter per errore.
 
-### 3.1 Azioni Macro Mancanti
-Le seguenti azioni del motore macro legacy **non sono implementate** nell'interprete testuale di `MacrosService`:
+Converter coinvolti: `NullToVisibilityConverter`, `NotNullToVisibilityConverter`,
+`HotkeyDisplayConverter`, `CaptureAppearanceConverter`, `SpellIconConverter`,
+`IntToVisibilityConverter`, `CountToVisibilityConverter`, `BooleanToTextConverter`,
+`BooleanToIconConverter`, `BooleanToAppearanceConverter`.
 
-| Azione legacy | Comando equivalente | Priorità |
-|--------------|-------------------|----------|
-| `FlyAction` / `LandAction` | `FLY` / `LAND` | Media |
-| `InvokeVirtueAction` | `INVOKEVIRTUE` | Media |
-| `MoveItemAction` (drag A→B) | `MOVEITEM` | Alta |
-| `PickupAction` (→backpack) | `PICKUP` | Alta |
-| `DropAction` (→ground) | `DROP` | Alta |
-| `PromptResponseAction` | `PROMPTRESPONSE` | Media |
-| `QueryStringResponseAction` | `QUERYSTRING` | Bassa |
-| `RemoveAliasAction` | `REMOVEALIAS` | Media |
-| `SetAliasAction` | `SETALIAS` | Media |
-| `RenameMobileAction` | `RENAMEMOBILE` | Bassa |
-| `RunOrganizerOnceAction` | `RUNORGANIZER` | Media |
-| `UseContextMenuAction` | `USECONTEXTMENU` | Alta |
-| `UseEmoteAction` | `EMOTE` | Bassa |
-| `UsePotionAction` | `USEPOTION` | Media |
-| `WaitForGumpAction` | `WAITFORGUMP` | Alta |
-| `ArmDisarmAction` | `ARM` / `DISARM` | Media |
-| `BandageAction` (in macro ctx) | `BANDAGE` | Alta |
-| `TargetResource` (in macro ctx) | `TARGETRESOURCE` | Alta |
-| `ToggleWarModeAction` | `WARMODE` | Alta |
-| `DisconnectAction` | `DISCONNECT` | Media |
-| `ResyncAction` | `RESYNC` | Media |
-| `ClearJournalAction` | `CLEARJOURNAL` | Media |
+### 2.6 TODO aperti nella UI
+
+| File | Riga | Descrizione |
+|------|------|-------------|
+| `GumpListViewModel.cs` | 59 | "Apri Gump Inspector con questo gump" — la finestra non esiste |
+| `InspectorViewModel.cs` | 250 | "Implementare targeting specifico per locazione/terreno nel targetingService" |
+
+### 2.7 Macro Engine — Comandi di esecuzione mancanti
+
+`MacrosService.ExecuteActionAsync()` gestisce attualmente questi comandi:
+`IF/ELSEIF/ELSE/ENDIF`, `WHILE/ENDWHILE`, `FOR/ENDFOR`, `PAUSE/WAIT`, `SAY/MSG`,
+`DOUBLECLICK/DCLICK`, `SINGLECLICK`, `TARGET`, `CAST`, `USESKILL`, `ATTACK`,
+`WAITFORTARGET`, `USETYPE`, `EQUIPITEM`, `MOUNT`, `DISMOUNT`, `RESPONDGUMP`.
+
+I seguenti comandi presenti nel legacy **non sono implementati**:
+
+| Comando | Descrizione |
+|---------|-------------|
+| `WARMODE on/off/toggle` | Attiva/disattiva modalità guerra |
+| `FLY` / `LAND` | Toggle volo |
+| `MOVEITEM <serial> <dest> [amount]` | Sposta item tra container |
+| `PICKUP <serial> [amount]` | Raccoglie item nel backpack |
+| `DROP <serial> <x> <y> <z>` | Lascia cadere item a terra |
+| `USECONTEXTMENU <serial> <entry>` | Apre e usa voce del menu contestuale |
+| `WAITFORGUMP <serial> <timeout>` | Attende arrivo di un gump specifico |
+| `ARMDISARM` | Equip/unequip arma a due mani |
+| `BANDAGE [target_serial]` | Usa bende sul target (o su se stessi) |
+| `TARGETRESOURCE <serial> <resource>` | Target per raccolta risorse (mining, ecc.) |
+| `DISCONNECT` | Disconnette dal server |
+| `RESYNC` | Invia pacchetto di risincronizzazione |
+| `CLEARJOURNAL` | Svuota il journal |
+| `INVOKEVIRTUE <name>` | Attiva virtù (Honor, Sacrifice, Valor, ecc.) |
+| `EMOTE <text>` | Invia azione emote |
+| `RENAMEMOBILE <serial> <name>` | Rinomina un mobile |
+| `RUNORGANIZER` | Esegue l'Organizer agent una volta |
+| `USEPOTIONTYPE <name>` | Usa una pozione dal backpack per tipo |
+| `SETALIAS <name> <serial>` | Imposta un alias locale |
+| `REMOVEALIAS <name>` | Rimuove un alias locale |
+| `PROMPTRESPONSE <text>` | Risponde a un prompt di testo del server |
+
+### 2.8 Macro Recording — Azioni non catturate
+
+Il recorder di `MacrosService` cattura: `DOUBLECLICK`, `SINGLECLICK`, `SAY`, `TARGET`,
+`CAST`, `USESKILL`, `ATTACK`. Non cattura:
+
+| Azione | Pacchetto |
+|--------|-----------|
+| Cambio WarMode | `0x72` |
+| Toggle volo | `0xBF.0x32` |
+| Set alias | N/A — locale |
+| Remove alias | N/A — locale |
 
 ---
 
-## 4. Task List Completa — Cosa Fare per la Migrazione al 100%
+## 3. Feature Non Migrate
+
+Le seguenti funzionalità del legacy TMRazor **non hanno alcun file corrispondente**
+in TMRazorImproved (verificato con ricerca sul filesystem):
+
+| Feature | Legacy | TMRazorImproved |
+|---------|--------|-----------------|
+| **gRPC Proto-Control server** | `Proto-Control/` (4 file + `.proto`) | ❌ Zero file |
+| **Script Recorder** | `ScriptRecorderService` + 3 impl. (Python/C#/UOSteam) | ❌ Zero file |
+| **AutoDoc** | `AutoDoc.cs` (genera `api.json` da XML comments) | ❌ Zero file |
+| **Gump Inspector Window** | `GumpInspector.cs` | ❌ Zero file |
+| **Build / Publish pipeline** | N/A (era .NET Framework) | ❌ Non configurata |
 
 ---
 
-### TASK-01 — Correggere l'Errore di Compilazione (S1-01)
-**Priorità:** 🔴 CRITICA — senza questo fix niente compila
-**File:** `TMRazorImproved.Core/Services/Scripting/Api/TargetApi.cs`
-**Tempo stimato:** 15 minuti
+## 4. Task List — Tutto Quello da Fare per la Migrazione al 100%
 
-**Sottotask:**
-
-#### TASK-01.1 — Rimuovere il metodo duplicato
-1. Aprire `TMRazorImproved.Core/Services/Scripting/Api/TargetApi.cs`
-2. Cercare "TargetResource" nel file (ci sono due metodi con la stessa firma `public virtual void TargetResource(uint item_serial, int resource_number)`)
-3. Cancellare **interamente** il secondo blocco (quello vuoto, riga ~312), mantenendo solo il primo
-4. Compilare (`dotnet build`) e verificare che non ci siano errori CS0111
+I task sono ordinati per priorità. Inizia sempre dall'alto verso il basso.
 
 ---
 
-### TASK-02 — Fix del Sistema di Targeting (S2-01 / S2-02 / S2-03 / S2-04 / S2-05 / S2-08 / S2-09 / S3-01 / S3-02 / S5-01 / S6-05 / S8-03)
-**Priorità:** 🔴 CRITICA
-**File:** `TMRazorImproved.Core/Services/Scripting/Api/TargetApi.cs` e `TMRazorImproved.Shared/Interfaces/ITargetingService.cs`
-**Tempo stimato:** 3–4 ore
+### TASK-01 — Aggiornare `Mobile.LastObject` dal pacchetto DoubleClick
+**Priorità:** 🔴 Alta — `LastUsedObject()` ritorna sempre 0
+**File:** `TMRazorImproved.Core/Handlers/WorldPacketHandler.cs`
+**Tempo stimato:** 30 minuti
 
-**Sottotask:**
+**Contesto:**
+`TargetApi.LastUsedObject()` legge `Player.LastObject`. Questa proprietà però non viene mai
+scritta perché non esiste un observer sul pacchetto `0x06` (DoubleClick C2S).
 
-#### TASK-02.1 — Aggiungere `LastAttack` e `LastObject` al WorldService
-1. Aprire `TMRazorImproved.Shared/Interfaces/IWorldService.cs`
-2. Aggiungere le proprietà:
+**Passi:**
+
+1. Aprire `WorldPacketHandler.cs`
+2. Nel metodo che registra i viewer dei pacchetti (cerca `RegisterViewer`), aggiungere:
    ```csharp
-   uint LastAttackSerial { get; }
-   uint LastUsedObjectSerial { get; }
+   _packetService.RegisterViewer(PacketPath.ClientToServer, 0x06, HandleDoubleClick);
    ```
-3. Aprire `TMRazorImproved.Core/Services/WorldService.cs`
-4. Aggiungere le implementazioni con i relativi backing field (`private uint _lastAttack`, `private uint _lastUsed`)
-5. Aprire `TMRazorImproved.Core/Handlers/WorldPacketHandler.cs`
-6. Nel handler del pacchetto `0xAA` (AttackOK) → assegnare `_worldService.LastAttackSerial`
-7. Nel handler del pacchetto `0x08` (DoubleClick inviato dal client) → assegnare `_worldService.LastUsedObjectSerial`
-
-#### TASK-02.2 — Correggere `GetLastAttack` e `LastUsedObject` in TargetApi
-1. Aprire `TargetApi.cs`
-2. Trovare il metodo `GetLastAttack()` (attualmente `return 0`)
-3. Cambiarlo in: `return (int)_worldService.LastAttackSerial;`
-4. Trovare il metodo `LastUsedObject()` (attualmente `return 0`)
-5. Cambiarlo in: `return (int)_worldService.LastUsedObjectSerial;`
-   - Se il valore è `0`, restituire `-1` (semantica "non disponibile" dell'originale)
-
-#### TASK-02.3 — Correggere il tipo di ritorno di `GetLast()` e `PromptTarget()`
-1. Trovare `GetLast()` in `TargetApi.cs`
-2. Cambiare il tipo di ritorno da `uint` a `int`
-3. Aggiungere: se `LastTarget == 0`, restituire `-1`
-4. Trovare `PromptTarget(...)` in `TargetApi.cs`
-5. Cambiare il tipo di ritorno da `uint` a `int`
-6. Se l'utente cancella il prompt (es. preme ESC), restituire `-1` invece di `0`
-
-#### TASK-02.4 — Aggiungere il parametro `targetFlag` a `HasTarget`
-1. Trovare `HasTarget()` in `TargetApi.cs`
-2. Aggiungere il parametro opzionale: `public virtual bool HasTarget(string targetFlag = "Any")`
-3. Logica: se `targetFlag == "Any"`, restituire come prima; altrimenti controllare il tipo di cursore target (`Beneficial`, `Harmful`, `Neutral`) che deve essere salvato nel `ITargetingService` quando arriva il pacchetto `0x6C` dal server
-
-#### TASK-02.5 — Aggiungere cattura coordinate X/Y/Z per ground target
-1. Aprire `TMRazorImproved.Shared/Interfaces/ITargetingService.cs`
-2. Aggiungere: `TargetInfo? LastGroundTarget { get; }` dove `TargetInfo` include `X`, `Y`, `Z`, `Serial`
-3. Aprire `TMRazorImproved.Core/Handlers/WorldPacketHandler.cs`
-4. Nel handler del pacchetto `0x6C` (client → server, TargetCursor), quando `Serial == 0` (click a terra), leggere X/Y/Z dal pacchetto e salvarli in `ITargetingService.LastGroundTarget`
-5. Aprire `TargetApi.cs` → metodo `PromptGroundTarget`
-6. Usare `ITargetingService.LastGroundTarget` per restituire le coordinate corrette invece di `null`
-
-#### TASK-02.6 — Implementare `TargetExecuteRelative` con offset direzionale
-1. Aprire `TargetApi.cs` → metodo `TargetExecuteRelative(uint serial, int offset)`
-2. Leggere la posizione dell'entità target dal `IWorldService`
-3. Leggere la direzione dell'entità (property `Direction` nel modello `Mobile`)
-4. Calcolare la posizione risultante applicando l'offset nelle 8 direzioni (N/S/E/W + diagonali):
+3. Aggiungere il metodo handler:
+   ```csharp
+   private void HandleDoubleClick(byte[] data)
+   {
+       // 0x06: cmd(1) serial(4)
+       if (data.Length < 5) return;
+       var reader = new UOBufferReader(data);
+       reader.ReadByte(); // skip cmd
+       uint serial = reader.ReadUInt32();
+       var player = _worldService.Player;
+       if (player != null)
+           lock (player.SyncRoot) { player.LastObject = serial; }
+   }
    ```
-   North:     (X,   Y-1, Z)
-   South:     (X,   Y+1, Z)
-   East:      (X+1, Y,   Z)
-   West:      (X-1, Y,   Z)
-   NorthEast: (X+1, Y-1, Z)
-   NorthWest: (X-1, Y-1, Z)
-   SouthEast: (X+1, Y+1, Z)
-   SouthWest: (X-1, Y+1, Z)
-   Up:        (X,   Y,   Z+1)
-   Down:      (X,   Y,   Z-1)
-   ```
-5. Inviare il target di terra sulla posizione calcolata usando `PacketBuilder.BuildTarget(x, y, z)`
-
-#### TASK-02.7 — Implementare `TargetResource` con il pacchetto corretto + tutti gli overload
-1. Cercare nel legacy `Target.cs` come viene costruito il pacchetto `TargetByResource` (è un pacchetto `0x6C` con campo resource_number)
-2. Aggiungere in `PacketBuilder.cs` il metodo `BuildTargetByResource(uint serial, int resourceNumber)`
-3. In `TargetApi.cs` implementare i 4 overload:
-   - `TargetResource(uint serial, int resourceNumber)` → usa `BuildTargetByResource`
-   - `TargetResource(uint serial, string resourceName)` → mappa il nome al numero (es. `"ore"→0`, `"sand"→1`, `"wood"→2`, `"graves"→3`, `"red_mushroom"→4`) poi chiama il primo overload
-   - `TargetResource(Item item, int resourceNumber)` → estrae `item.Serial` e chiama il primo overload
-   - `TargetResource(Item item, string resourceName)` → mappa e chiama il secondo overload
-
-#### TASK-02.8 — Implementare l'highlight visivo in `SetLast`
-1. In `TargetApi.cs` → metodo `SetLast(int serial, bool wait)`
-2. Prima di aggiornare `_targeting.LastTarget`, inviare via `_packetService` il pacchetto di highlight (packet `0x6C` formato targeting che evidenzia l'entità)
-3. Se `wait == true`, attendere la conferma dal server prima di ritornare (usare `WaitForTarget` internamente)
+4. Compilare (`dotnet build`) e verificare che non ci siano errori
+5. Aprire `TMRazorImproved.Tests/MockTests/Networking/WorldPacketHandlerTests.cs`
+   e aggiungere un test che verifica che dopo il pacchetto `0x06`, `Player.LastObject` sia aggiornato
 
 ---
 
-### TASK-03 — Fix del Sistema Spell (S2-10 / S2-11 / S6-01)
-**Priorità:** 🔴 CRITICA
-**File:** `TMRazorImproved.Core/Services/Scripting/Api/SpellsApi.cs`, `SpellDefinitions.cs`
-**Tempo stimato:** 2 ore
+### TASK-02 — Completare `SpellIsEnabled` in `PlayerApi.cs`
+**Priorità:** 🟠 Media
+**File:** `TMRazorImproved.Core/Services/Scripting/Api/PlayerApi.cs`
+**Tempo stimato:** 45 minuti
 
-#### TASK-03.1 — Aggiungere gli overload di `Cast` con target e wait
-1. Aprire `SpellsApi.cs`
-2. Aggiungere gli overload:
-   ```csharp
-   public virtual bool Cast(string spellName, uint target, bool wait = true, int waitAfter = 0)
-   public virtual bool Cast(string spellName, Mobile mobile, bool wait = true, int waitAfter = 0)
-   ```
-3. Implementare l'overload completo:
-   - Inviare il cast come fa il metodo `Cast(string)` esistente
-   - Se `wait == true`, chiamare `WaitForTarget(5000)`
-   - Inviare il target con `_targetApi.TargetExecute(target)`
-   - Se `waitAfter > 0`, chiamare `Thread.Sleep(waitAfter)` (o `Task.Delay` con CancellationToken)
+**Contesto:**
+`SpellIsEnabled(string spellName)` ritorna sempre `true`. Nel legacy leggeva dalla configurazione
+del profilo se la spell è nella lista delle spell abilitate/disabilitate.
 
-#### TASK-03.2 — Sostituire il polling di `WaitCastComplete` con event-driven
-1. In `SpellsApi.cs` trovare `WaitCastComplete` (o `WaitCast`)
-2. Creare un `ManualResetEventSlim _fizzleEvent` a livello di classe
-3. In `PacketService` (o `WorldPacketHandler`), registrare un handler sul pacchetto `0x54` (PlaySound)
-4. Quando il sound ID è `0x5c` (fizzle sound), segnalare `_fizzleEvent.Set()`
-5. In `WaitCastComplete`, usare `_fizzleEvent.Wait(timeout)` invece del ciclo `while + Sleep(50)`
-6. Resettare `_fizzleEvent` all'inizio di ogni attesa
+**Passi:**
 
-#### TASK-03.3 — Aggiungere fallback Levenshtein in `TryGetSpellId`
-1. Aprire `TMRazorImproved.Shared/Models/SpellDefinitions.cs`
-2. Trovare il metodo `TryGetSpellId`
-3. Dopo il fallimento della ricerca per substring, aggiungere un terzo step:
-   - Calcolare la distanza di Levenshtein tra il nome cercato e ogni spell nella lista
-   - Restituire la spell con distanza minima (solo se la distanza è ≤ 3 caratteri, per evitare false match)
-4. Aggiungere il metodo helper `LevenshteinDistance(string a, string b)` (algoritmo standard DP)
+1. Aprire `PlayerApi.cs`, trovare il metodo `SpellIsEnabled`
+2. Aprire `TMRazorImproved.Shared/Interfaces/IConfigService.cs` e verificare se esiste
+   una lista di spell abilitate nel profilo (cerca `EnabledSpells`, `DisabledSpells`, o simili)
+3. **Se la lista esiste nel profilo:**
+   - Implementare: `return _config.GetCurrentProfile()?.EnabledSpells?.Contains(spellName) ?? true;`
+4. **Se la lista non esiste nel profilo:**
+   - Aggiungere `List<string> DisabledSpells` al modello di profilo in `ConfigModels.cs`
+   - Implementare il controllo
+5. Testare con uno script Python: `if Player.SpellIsEnabled("Greater Heal"): ...`
 
 ---
 
-### TASK-04 — Fix dei Filter (S3-03 / S3-04 / S4-01 / S4-02 / S5-02)
-**Priorità:** 🔴 CRITICA
-**File:** `TMRazorImproved.Core/Services/Scripting/Api/ItemsApi.cs`, `MobilesApi.cs`
-**Tempo stimato:** 2–3 ore
+### TASK-03 — Implementare `ShardName()` in `MiscApi.cs`
+**Priorità:** 🟠 Media
+**File:** `TMRazorImproved.Core/Services/Scripting/Api/MiscApi.cs`
+**Tempo stimato:** 30 minuti
 
-#### TASK-04.1 — Correggere `Items.Filter.OnGround` da `bool` a tristate `int`
-1. Aprire `ItemsApi.cs` → classe interna `Filter`
-2. Trovare la proprietà `OnGround` (attualmente `bool`)
-3. Cambiarla in `public int OnGround { get; set; } = 0;` (0=qualsiasi, 1=solo a terra, -1=solo in container)
-4. Nel metodo `ApplyFilter`, aggiornare la logica:
-   ```csharp
-   if (filter.OnGround == 1)  → includi solo item con Z accessibile e non in container
-   if (filter.OnGround == -1) → includi solo item in container
-   ```
+**Contesto:**
+`ShardName()` ritorna `string.Empty`. Il nome dello shard è disponibile nel profilo di configurazione
+(campo Server/Shard).
 
-#### TASK-04.2 — Correggere `Mobiles.Filter.Notoriety` da singolo a lista
-1. Aprire `MobilesApi.cs` → classe interna `Filter`
-2. Trovare la proprietà `Notoriety` (attualmente `int`)
-3. Rinominarla in `Notorieties` e cambiarla in `public List<byte> Notorieties { get; } = new();`
-4. Nel metodo `ApplyFilter`, aggiornare la logica:
-   ```csharp
-   if (filter.Notorieties.Any() && !filter.Notorieties.Contains(mobile.Notoriety)) → escludi
-   ```
+**Passi:**
 
-#### TASK-04.3 — Aggiungere le 7 proprietà mancanti in `Items.Filter`
-1. Nella classe `Filter` di `ItemsApi.cs`, aggiungere:
-   ```csharp
-   public int IsContainer { get; set; } = 0;   // tristate: 1=solo container, -1=no container
-   public int IsCorpse    { get; set; } = 0;   // tristate: 1=solo corpse
-   public int IsDrop      { get; set; } = 0;   // tristate: 1=solo droppable
-   public int RangeMin    { get; set; } = -1;  // distanza minima (-1=nessun limite)
-   public int RangeMax    { get; set; } = -1;  // distanza massima (-1=nessun limite)
-   public int Parent      { get; set; } = -1;  // serial del container padre (-1=qualsiasi)
-   public int ExcludeSerial { get; set; } = -1; // serial da escludere (-1=nessuno)
-   ```
-2. Nel metodo `ApplyFilter`, implementare i controlli corrispondenti per ogni nuova proprietà
-
-#### TASK-04.4 — Aggiungere le 5 proprietà mancanti in `Mobiles.Filter`
-1. Nella classe `Filter` di `MobilesApi.cs`, aggiungere:
-   ```csharp
-   public int IsHuman   { get; set; } = 0;  // tristate
-   public int IsGhost   { get; set; } = 0;  // tristate
-   public int IsAlly    { get; set; } = 0;  // tristate (in party/guild)
-   public int IsEnemy   { get; set; } = 0;  // tristate
-   public int IsNeutral { get; set; } = 0;  // tristate
-   ```
-2. Nel metodo `ApplyFilter`, implementare i controlli:
-   - `IsHuman`: controllare se il graphic ID del mobile corrisponde a una body human (0x190, 0x191, ecc.)
-   - `IsGhost`: controllare se il graphic è 0x192/0x193 o se la proprietà `IsGhost` del modello `Mobile` è vera
-   - `IsAlly`/`IsEnemy`/`IsNeutral`: confrontare con la `FriendsList` e la `Notoriety`
-
-#### TASK-04.5 — Correggere la firma di `FindByID` (4° parametro)
-1. In `ItemsApi.cs` trovare il metodo `FindByID`
-2. Aggiungere un overload che rispetti la firma originale:
-   ```csharp
-   public virtual Item? FindByID(int itemid, int color = -1, int container = -1, int range = -1)
-   ```
-3. Nell'implementazione, se `range >= 0`, filtrare gli item per distanza dal player
+1. Aprire `MiscApi.cs`, trovare il metodo `ShardName()`
+2. Verificare in `IConfigService` come si legge il nome del shard (cerca `ShardName`, `ServerName`, `Server`)
+3. Implementare: `return _config.GetCurrentProfile()?.ShardName ?? string.Empty;`
+4. Il nome dello shard viene tipicamente impostato nella pagina General durante la configurazione
 
 ---
 
-### TASK-05 — Fix Differenze Comportamentali (S6-02 / S6-04 / S6-06 / S6-07 / S6-08 / S6-10)
-**Priorità:** 🟠 ALTA
-**Tempo stimato:** 2 ore
+### TASK-04 — Completare le azioni mancanti nel Macro Engine
+**Priorità:** 🟠 Alta — molti script legacy usano queste azioni
+**File:** `TMRazorImproved.Core/Services/MacrosService.cs`
+**Tempo stimato:** 5–7 ore totali (suddiviso in sottotask)
 
-#### TASK-05.1 — Aggiungere `Player.IsValid` come guard esplicito (S6-02)
-1. Aprire `PlayerApi.cs`
-2. Verificare che esista `public virtual bool IsConnected` (dovrebbe esserci già)
-3. Aggiungere anche `public virtual bool IsValid => _world.Player != null;`
-4. Aggiungere un commento XML che documenta chiaramente: "tutte le proprietà numeriche restituiscono 0 quando il player non è connesso"
+**Contesto:**
+Il `MacrosService` interpreta un testo riga per riga e per ogni riga chiama `ExecuteActionAsync()`.
+Per aggiungere un nuovo comando basta aggiungere un `case` allo switch esistente.
+I servizi disponibili (iniettati nel costruttore) sono: `_packetService`, `_worldService`, `_targetingService`.
 
-#### TASK-05.2 — Implementare parser SendKeys in `Misc.SendToClient` (S6-04)
-1. Aprire `MiscApi.cs` → metodo `SendToClient(string keys)`
-2. Aggiungere un parser che traduca le sequenze speciali:
-   - `{Enter}` → tasto VK_RETURN (WM_KEYDOWN + WM_KEYUP)
-   - `{Tab}` → VK_TAB
-   - `{Esc}` → VK_ESCAPE
-   - `{Back}` → VK_BACK
-   - `{Delete}` → VK_DELETE
-   - `^` + char → CTRL + char (es. `^u` → Ctrl+U)
-   - `%` + char → ALT + char
-   - `+` + char → SHIFT + char
-3. Inviare `PostMessage(hWnd, WM_KEYDOWN, vk, 0)` invece di WM_CHAR per queste sequenze
+---
 
-#### TASK-05.3 — Aggiungere validazione path in operazioni file (S6-06)
-1. Aprire `MiscApi.cs`
-2. Il metodo privato `IsValidPath` dovrebbe esistere già; verificarne il contenuto
-3. Assicurarsi che sia applicato a `AppendToFile`, `WriteFile`, `ReadFile`, `DeleteFile`
-4. La whitelist deve includere solo: `Scripts/`, `Data/`, `Profiles/`, `Config/`, `Logs/` (relative a `AppContext.BaseDirectory`)
-5. Aggiungere una whitelist di estensioni permesse: `.txt`, `.data`, `.xml`, `.map`, `.csv`, `.json`, `.log`
+#### TASK-04.1 — Aggiungere `WARMODE`
+**Tempo:** 20 minuti
 
-#### TASK-05.4 — Implementare registry multi-script e ScriptStop per nome (S6-07)
-1. Aprire `TMRazorImproved.Shared/Interfaces/IScriptingService.cs`
+**Passi:**
+1. Aprire `MacrosService.cs`, trovare lo switch in `ExecuteActionAsync`
 2. Aggiungere:
    ```csharp
-   IReadOnlyDictionary<string, CancellationTokenSource> RunningScripts { get; }
-   void StopScript(string scriptName);
+   case "WARMODE":
+   {
+       bool enable = args.Equals("on", StringComparison.OrdinalIgnoreCase) ||
+                     (args.Equals("toggle", StringComparison.OrdinalIgnoreCase)
+                         ? !(_worldService.Player?.WarMode ?? false)
+                         : false);
+       // Pacchetto 0x72: cmd(1) flag(1) unk(1) unk(1) unk(1)
+       var pkt = new byte[] { 0x72, (byte)(enable ? 1 : 0), 0x00, 0x32, 0x00 };
+       _packetService.SendToServer(pkt);
+       break;
+   }
    ```
-3. Aprire `TMRazorImproved.Core/Services/Scripting/ScriptingService.cs`
-4. Aggiungere un `Dictionary<string, CancellationTokenSource>` che mappa nome script → CTS
-5. Registrare ogni script all'avvio e rimuoverlo al termine
-6. Implementare `StopScript(name)` che chiama `Cancel()` sulla CTS corrispondente
-7. In `MiscApi.cs` → `ScriptStop(string name)`, usare `_scripting.StopScript(name)` invece del controllo sul nome corrente
-
-#### TASK-05.5 — Implementare ScriptSuspend / ScriptResume (S6-08)
-1. In `IScriptingService.cs`, aggiungere:
-   ```csharp
-   void SuspendScript(string scriptName);
-   void ResumeScript(string scriptName);
-   bool IsScriptSuspended(string scriptName);
-   ```
-2. In `ScriptingService.cs`, aggiungere un `Dictionary<string, ManualResetEventSlim>` per gli script sospesi
-3. In `SuspendScript`: creare un evento non-segnalato per lo script e mettere il thread in attesa
-4. In `ResumeScript`: segnalare l'evento → il thread si sblocca
-5. Nel loop di esecuzione Python, aggiungere un check cooperativo ogni N istruzioni: `_suspendEvents.TryGetValue(name, out var e); e?.Wait(token);`
-6. In `MiscApi.cs` → collegare `ScriptSuspend`/`ScriptResume`/`ScriptIsSuspended` al servizio
-
-#### TASK-05.6 — Correggere `Misc.Distance` da Chebyshev a Euclidea (S6-10)
-1. Aprire `MiscApi.cs` → metodo `Distance(int x1, int y1, int x2, int y2)`
-2. Cambiare da:
-   ```csharp
-   return Math.Max(Math.Abs(x2-x1), Math.Abs(y2-y1));
-   ```
-   a:
-   ```csharp
-   int dx = x2 - x1, dy = y2 - y1;
-   return (int)Math.Round(Math.Sqrt(dx * dx + dy * dy));
-   ```
-   > **Nota:** Verificare prima nel codice legacy `Utility.cs` che `Utility.Distance` usi effettivamente Euclidea e non Chebyshev, per confermare la correzione.
+3. Aggiungere anche nel recorder (sezione `StartRecording`): osservare pacchetto `0x72` C2S e
+   registrare `WARMODE on` o `WARMODE off` in base al flag
 
 ---
 
-### TASK-06 — Registrare i Wrapper Agenti in ScriptingService (S7-01)
-**Priorità:** 🔴 CRITICA
-**File:** `TMRazorImproved.Core/Services/Scripting/ScriptingService.cs`, `AgentApis.cs`
-**Tempo stimato:** 1 ora
+#### TASK-04.2 — Aggiungere `FLY` e `LAND`
+**Tempo:** 20 minuti
 
-#### TASK-06.1 — Verificare che tutti i wrapper esistano in AgentApis.cs
-1. Aprire `TMRazorImproved.Core/Services/Scripting/Api/AgentApis.cs`
-2. Verificare che esistano le classi: `AutoLootApi`, `DressApi`, `ScavengerApi`, `RestockApi`
-3. Verificare che ogni classe abbia i metodi: `Start()`, `Stop()`, `ChangeList(string name)`, `Status()`
-
-#### TASK-06.2 — Registrare i wrapper come variabili Python
-1. Aprire `TMRazorImproved.Core/Services/Scripting/ScriptingService.cs`
-2. Trovare dove vengono registrate le variabili nel scope Python (es. `scope.SetVariable("Player", playerApi)`)
-3. Aggiungere le registrazioni mancanti:
+**Passi:**
+1. Aggiungere i case:
    ```csharp
-   scope.SetVariable("AutoLoot",  _autoLootApi);
-   scope.SetVariable("Dress",     _dressApi);
-   scope.SetVariable("Scavenger", _scavengerApi);
-   scope.SetVariable("Restock",   _restockApi);
+   case "FLY":
+   case "LAND":
+   {
+       // Pacchetto 0xBF sub-command 0x32: toggle volo
+       var pkt = new byte[] { 0xBF, 0x00, 0x05, 0x00, 0x32, 0x00 };
+       _packetService.SendToServer(pkt);
+       break;
+   }
    ```
-4. Fare lo stesso per l'UOSteam interpreter (verificare che riceva i wrapper nel costruttore — già presenti in `UOSteamInterpreter.cs`)
+2. Aggiungere nel recorder: osservare `0xBF` + sub `0x32` e registrare `FLY` o `LAND`
+   in base allo stato corrente del player (`Player.IsFlying`)
 
 ---
 
-### TASK-07 — Completare il Macro Engine (Azioni Mancanti)
-**Priorità:** 🟠 ALTA
-**File:** `TMRazorImproved.Core/Services/MacrosService.cs`
-**Tempo stimato:** 4–6 ore
+#### TASK-04.3 — Aggiungere `DISCONNECT` e `RESYNC`
+**Tempo:** 20 minuti
 
-Ogni sottotask aggiunge uno o più comandi all'interprete testuale in `ExecuteAction()` dentro `MacrosService.cs`. Il pattern generale è:
-- Aggiungere un `case "NOMECMD":` nel grande switch
-- Estrarre i parametri da `args`
-- Eseguire l'azione via i servizi iniettati (IPacketService, IWorldService, ecc.)
-- Registrare anche il comando nel `RecordAction()` per la funzione di registrazione
+**Passi:**
+1. Aggiungere:
+   ```csharp
+   case "DISCONNECT":
+       _clientInterop.Disconnect();
+       break;
 
-#### TASK-07.1 — Comandi drag-n-drop (MOVEITEM, PICKUP, DROP)
-**Cosa fanno:**
-- `MOVEITEM <serial> <destContainer> [amount]` — sposta un item da un container a un altro
-- `PICKUP <serial> [amount]` — raccoglie un item nel backpack del player
-- `DROP <serial> <x> <y> <z>` — lascia cadere un item a terra
-
-**Come implementarli:**
-1. `MOVEITEM`: inviare pacchetto `0x07` (PickupItem) poi `0x08` (DropItem) con serial destinazione
-2. `PICKUP`: inviare `0x07` (PickupItem) con serial del backpack come destinazione
-3. `DROP`: inviare `0x07` + `0x08` con coordinate X/Y/Z e container serial `0xFFFFFFFF`
-
-#### TASK-07.2 — Comandi warmode e combat (WARMODE, ATTACK)
-> `ATTACK` è già presente. Aggiungere `WARMODE`.
-
-1. Aggiungere `case "WARMODE":` con argomento `"on"`/`"off"`/`"toggle"`
-2. Inviare pacchetto `0x72` con flag appropriato
-
-#### TASK-07.3 — Comandi sessione (DISCONNECT, RESYNC, CLEARJOURNAL)
-1. `DISCONNECT`: chiudere la connessione via `IClientInteropService.Disconnect()`
-2. `RESYNC`: inviare il pacchetto di resync `0x22`
-3. `CLEARJOURNAL`: chiamare `IJournalService.Clear()`
-
-#### TASK-07.4 — Comandi context menu e gump (USECONTEXTMENU, WAITFORGUMP)
-1. `USECONTEXTMENU <serial> <entryIndex>` — inviare pacchetto `0xBF.0x13` (context menu request) poi `0xBF.0x15` (context menu response)
-2. `WAITFORGUMP <serial> <timeout>` — attendere che arrivi il pacchetto `0xB0` (SendGump) con il serial specificato; usare `ManualResetEventSlim` event-driven (non polling)
-
-#### TASK-07.5 — Comandi skill avanzati (USEPOTIONTYPE, BANDAGE, ARMDISARM)
-1. `USEPOTIONTYPE <potionName>` — trovare nel backpack un item che corrisponda al nome pozione, usarlo con double-click
-2. `BANDAGE [target_serial]` — trovare una benda nel backpack, usarla sul target; se target omesso, usare sul player
-3. `ARM <layer>` / `DISARM <layer>` — equipaggiare/rimuovere l'item nel layer specificato (usa `IPacketService` per pacchetti `0x13`/`0x07`)
-
-#### TASK-07.6 — Comandi alias (SETALIAS, REMOVEALIAS)
-> Probabilmente già presenti nell'UOSteam interpreter — verificare che funzionino anche nel motore macro.
-
-1. `SETALIAS <name> <serial>` — salvare nella dictionary degli alias (`_macroAliases`)
-2. `REMOVEALIAS <name>` — rimuovere l'alias
-3. Aggiornare la risoluzione dei serial in tutti gli altri comandi per leggere dagli alias (es. `TARGET lasttarget` deve risolvere il serial corretto)
-
-#### TASK-07.7 — Comandi volo, virtù, emote e rename (minore priorità)
-1. `FLY` / `LAND` — toggle volo via pacchetto `0xBF.0x32`
-2. `INVOKEVIRTUE <virtueName>` — mappare nome→ID (Honor=0x01, Sacrifice=0x02, Valor=0x04) e inviare `0x12` con type `0x69`
-3. `EMOTE <text>` — inviare chat con tipo emote (`0xAD` con type `0x03`)
-4. `RENAMEMOBILE <serial> <newName>` — inviare pacchetto `0x75`
-5. `RUNORGANIZER` — chiamare `IOrganizerService.RunOnce()`
+   case "RESYNC":
+   {
+       // Pacchetto 0x22 0xFF: resync
+       _packetService.SendToServer(new byte[] { 0x22, 0xFF });
+       break;
+   }
+   ```
+2. Per `DISCONNECT`, iniettare `IClientInteropService` nel costruttore di `MacrosService`
+   (probabilmente è già presente come dipendenza — verificare)
 
 ---
 
-### TASK-08 — Implementare il Script Recorder
-**Priorità:** 🟡 MEDIA
-**Cosa manca:** Il legacy ha un `ScriptRecorderService` che intercetta le azioni dell'utente (click, target, cast, skill) e genera automaticamente il codice corrispondente in Python, C# o UOSteam.
+#### TASK-04.4 — Aggiungere `CLEARJOURNAL`
+**Tempo:** 15 minuti
+
+**Passi:**
+1. Iniettare `IJournalService` nel costruttore di `MacrosService` (se non già presente)
+2. Aggiungere:
+   ```csharp
+   case "CLEARJOURNAL":
+       _journalService.Clear();
+       break;
+   ```
+
+---
+
+#### TASK-04.5 — Aggiungere `MOVEITEM`, `PICKUP`, `DROP`
+**Tempo:** 45 minuti
+
+**Contesto:**
+Questi tre comandi usano i pacchetti di lift/drop del protocollo UO:
+- Lift (`0x07`): prende un item in mano
+- Drop (`0x08`): rilascia l'item in mano su container o a terra
+
+**Passi per `MOVEITEM <serial> <destContainer> [amount]`:**
+1. Aggiungere:
+   ```csharp
+   case "MOVEITEM":
+   {
+       var parts = args.Split(' ');
+       if (parts.Length < 2) break;
+       uint serial = Convert.ToUInt32(parts[0], parts[0].StartsWith("0x") ? 16 : 10);
+       uint dest   = Convert.ToUInt32(parts[1], parts[1].StartsWith("0x") ? 16 : 10);
+       ushort amount = parts.Length > 2 ? ushort.Parse(parts[2]) : (ushort)0;
+
+       // Pacchetto 0x07: cmd(1) serial(4) amount(2)
+       var lift = new byte[7];
+       lift[0] = 0x07;
+       // serial big-endian
+       lift[1] = (byte)(serial >> 24); lift[2] = (byte)(serial >> 16);
+       lift[3] = (byte)(serial >>  8); lift[4] = (byte)(serial);
+       lift[5] = (byte)(amount >>  8); lift[6] = (byte)(amount);
+       _packetService.SendToServer(lift);
+
+       await Task.Delay(100, ct); // Breve pausa tra lift e drop
+
+       // Pacchetto 0x08: cmd(1) serial(4) x(2) y(2) z(1) containerSerial(4)
+       var drop = new byte[14];
+       drop[0] = 0x08;
+       drop[1] = (byte)(serial >> 24); drop[2] = (byte)(serial >> 16);
+       drop[3] = (byte)(serial >>  8); drop[4] = (byte)(serial);
+       drop[5] = 0xFF; drop[6] = 0xFF; // x = 0xFFFF
+       drop[7] = 0xFF; drop[8] = 0xFF; // y = 0xFFFF
+       drop[9] = 0x00;                 // z = 0
+       drop[10] = (byte)(dest >> 24); drop[11] = (byte)(dest >> 16);
+       drop[12] = (byte)(dest >>  8); drop[13] = (byte)(dest);
+       _packetService.SendToServer(drop);
+       break;
+   }
+   ```
+
+2. **`PICKUP <serial> [amount]`**: stesso approccio ma il container destinazione è il serial del backpack
+   (`_worldService.Player?.Backpack?.Serial ?? 0`)
+
+3. **`DROP <serial> <x> <y> <z>`**: lift + drop con coordinate invece del container serial
+   (container serial = `0xFFFFFFFF` per drop a terra)
+
+---
+
+#### TASK-04.6 — Aggiungere `EMOTE`, `INVOKEVIRTUE`, `RENAMEMOBILE`
+**Tempo:** 30 minuti
+
+**`EMOTE <text>`:**
+```csharp
+case "EMOTE":
+{
+    // Pacchetto 0xAD: speech con type 0x03 (emote)
+    // usa già _packetService.SendSpeech(...) se disponibile
+    // altrimenti costruisci pacchetto 0xAD manualmente con type=0x03
+    break;
+}
+```
+
+**`INVOKEVIRTUE <name>`:**
+```csharp
+case "INVOKEVIRTUE":
+{
+    var virtueMap = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["honor"]     = 0x01, ["sacrifice"] = 0x02, ["valor"]    = 0x04,
+        ["compassion"]= 0x08, ["honesty"]   = 0x10, ["humility"] = 0x20,
+        ["justice"]   = 0x40, ["spirituality"] = 0x80
+    };
+    if (virtueMap.TryGetValue(args.Trim(), out byte id))
+    {
+        // Pacchetto 0x12: cmd(1) type(1)=0x69 len(1) id(1) 0x00
+        var pkt = new byte[] { 0x12, 0x69, 0x02, id, 0x00 };
+        _packetService.SendToServer(pkt);
+    }
+    break;
+}
+```
+
+**`RENAMEMOBILE <serial> <newName>`:**
+```csharp
+case "RENAMEMOBILE":
+{
+    var idx = args.IndexOf(' ');
+    if (idx < 0) break;
+    uint serial = Convert.ToUInt32(args[..idx].Trim(), 16);
+    string name = args[(idx + 1)..].Trim();
+    // Pacchetto 0x75: cmd(1) serial(4) name(30, null-terminated)
+    var pkt = new byte[35];
+    pkt[0] = 0x75;
+    pkt[1] = (byte)(serial >> 24); pkt[2] = (byte)(serial >> 16);
+    pkt[3] = (byte)(serial >> 8);  pkt[4] = (byte)(serial);
+    var nameBytes = System.Text.Encoding.ASCII.GetBytes(name);
+    Array.Copy(nameBytes, 0, pkt, 5, Math.Min(nameBytes.Length, 29));
+    _packetService.SendToServer(pkt);
+    break;
+}
+```
+
+---
+
+#### TASK-04.7 — Aggiungere `USECONTEXTMENU` e `WAITFORGUMP`
+**Tempo:** 45 minuti
+
+**`USECONTEXTMENU <serial> <entryIndex>`:**
+```csharp
+case "USECONTEXTMENU":
+{
+    var parts = args.Split(' ');
+    if (parts.Length < 2) break;
+    uint serial = Convert.ToUInt32(parts[0], 16);
+    ushort entry = ushort.Parse(parts[1]);
+    // Request menu: 0xBF sub 0x13
+    var req = new byte[] { 0xBF, 0x00, 0x07, 0x00, 0x13,
+        (byte)(serial >> 8), (byte)serial };
+    _packetService.SendToServer(req);
+    await Task.Delay(150, ct);
+    // Response: 0xBF sub 0x15
+    var resp = new byte[] { 0xBF, 0x00, 0x09, 0x00, 0x15,
+        (byte)(serial >> 8), (byte)serial,
+        (byte)(entry >> 8), (byte)entry };
+    _packetService.SendToServer(resp);
+    break;
+}
+```
+
+**`WAITFORGUMP <typeId> <timeout>`:**
+```csharp
+case "WAITFORGUMP":
+{
+    var parts = args.Split(' ');
+    uint typeId = Convert.ToUInt32(parts[0], 16);
+    int timeout = parts.Length > 1 ? int.Parse(parts[1]) : 5000;
+
+    var tcs = new TaskCompletionSource<bool>();
+    void Handler(UOPacketMessage msg)
+    {
+        // msg.Data[0] == 0xB0 (SendGump)
+        // parsare il typeId dal pacchetto e confrontare
+        if (msg.Data != null && msg.Data.Length > 8)
+        {
+            // offset 5: typeId uint32 big-endian
+            uint t = (uint)(msg.Data[5] << 24 | msg.Data[6] << 16 |
+                            msg.Data[7] << 8  | msg.Data[8]);
+            if (t == typeId) tcs.TrySetResult(true);
+        }
+    }
+    _packetService.OnPacketReceived += Handler;
+    try
+    {
+        await Task.WhenAny(tcs.Task, Task.Delay(timeout, ct));
+    }
+    finally
+    {
+        _packetService.OnPacketReceived -= Handler;
+    }
+    break;
+}
+```
+
+---
+
+#### TASK-04.8 — Aggiungere `ARMDISARM`, `BANDAGE`, `TARGETRESOURCE`, `USEPOTIONTYPE`
+**Tempo:** 45 minuti
+
+**`ARMDISARM`:**
+```csharp
+case "ARMDISARM":
+{
+    // Cerca un item nel layer "TwoHanded" o "MainHand"
+    var player = _worldService.Player;
+    if (player == null) break;
+    var weapon = player.GetItemOnLayer(Layer.MainHand)
+                 ?? player.GetItemOnLayer(Layer.TwoHanded);
+    if (weapon != null)
+    {
+        // Unequip: lift → drop backpack
+        // [usa logica simile a MOVEITEM con backpack come destinazione]
+    }
+    break;
+}
+```
+
+**`BANDAGE [target_serial]`:**
+```csharp
+case "BANDAGE":
+{
+    // Trova bende nel backpack (graphic 0x0E21)
+    var bandage = /* Items.FindByID(0x0E21, -1, backpackSerial) */;
+    if (bandage == null) break;
+    uint target = string.IsNullOrEmpty(args)
+        ? _worldService.Player?.Serial ?? 0
+        : Convert.ToUInt32(args, 16);
+    // DoubleClick bandage + target
+    _packetService.SendToServer(new byte[] { 0x06,
+        (byte)(bandage.Serial >> 24), (byte)(bandage.Serial >> 16),
+        (byte)(bandage.Serial >> 8),  (byte)(bandage.Serial) });
+    await Task.Delay(100, ct);
+    _targetingService.SendTarget(target);
+    break;
+}
+```
+
+**`TARGETRESOURCE <serial> <resourceName>`:**
+```csharp
+case "TARGETRESOURCE":
+{
+    var parts = args.Split(' ');
+    if (parts.Length < 2) break;
+    uint serial = Convert.ToUInt32(parts[0], 16);
+    // usa TargetApi.TargetResource(serial, resourceName) se accessibile
+    // altrimenti costruisci direttamente il pacchetto TargetByResource
+    break;
+}
+```
+
+**`USEPOTIONTYPE <potionName>`:**
+```csharp
+case "USEPOTIONTYPE":
+{
+    var potionGraphics = new Dictionary<string, ushort>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["heal"] = 0x0F0C,  ["cure"] = 0x0F07,  ["refresh"] = 0x0F0B,
+        ["agility"] = 0x0F08, ["strength"] = 0x0F09, ["explosion"] = 0x0F0D
+    };
+    if (!potionGraphics.TryGetValue(args.Trim(), out ushort graphic)) break;
+    // FindByID nel backpack e DoubleClick
+    break;
+}
+```
+
+---
+
+#### TASK-04.9 — Aggiungere `SETALIAS`, `REMOVEALIAS`, `PROMPTRESPONSE`, `RUNORGANIZER`
+**Tempo:** 30 minuti
+
+Aggiungere un dizionario `_aliases` privato in `MacrosService` (già parzialmente presente per le variabili):
+
+**`SETALIAS <name> <serial>`:**
+```csharp
+case "SETALIAS":
+{
+    var idx = args.IndexOf(' ');
+    if (idx < 0) break;
+    string aliasName = args[..idx].Trim();
+    uint serial = Convert.ToUInt32(args[(idx + 1)..].Trim(), 16);
+    _aliases[aliasName.ToLower()] = serial;
+    break;
+}
+```
+
+**`REMOVEALIAS <name>`:**
+```csharp
+case "REMOVEALIAS":
+    _aliases.Remove(args.Trim().ToLower());
+    break;
+```
+
+**Aggiornare la risoluzione serial** in tutti i case esistenti: prima di `Convert.ToUInt32`,
+controllare se il valore è un alias:
+```csharp
+uint ResolveSerial(string s) =>
+    _aliases.TryGetValue(s.ToLower(), out uint v) ? v
+    : Convert.ToUInt32(s, s.StartsWith("0x") ? 16 : 10);
+```
+
+**`PROMPTRESPONSE <text>`:**
+```csharp
+case "PROMPTRESPONSE":
+    _targetingService.SendPrompt(args);
+    break;
+```
+
+**`RUNORGANIZER`:**
+```csharp
+case "RUNORGANIZER":
+    await _organizerService.RunOnceAsync(ct);
+    break;
+```
+Iniettare `IOrganizerService` nel costruttore se non già presente.
+
+---
+
+### TASK-05 — Creare la `GumpInspectorWindow`
+**Priorità:** 🟠 Media
+**File:** Nuovi file in `TMRazorImproved.UI/`
+**Tempo stimato:** 3–4 ore
+
+**Contesto:**
+`GumpListViewModel.cs:59` ha un TODO per aprire il Gump Inspector. La finestra deve mostrare
+la struttura di un gump ricevuto dal server (titolo, layout XML, lista pulsanti e testi).
+
+#### TASK-05.1 — Creare il ViewModel
+1. Creare `TMRazorImproved.UI/ViewModels/GumpInspectorViewModel.cs`:
+   ```csharp
+   public partial class GumpInspectorViewModel : ObservableObject
+   {
+       [ObservableProperty] private uint _serial;
+       [ObservableProperty] private uint _typeId;
+       [ObservableProperty] private string _rawLayout = string.Empty;
+       [ObservableProperty] private ObservableCollection<GumpControl> _controls = new();
+   }
+   ```
+2. Popolare i dati da `IWorldService.GetGump(serial)` o `IWorldService.CurrentGump`
+
+#### TASK-05.2 — Creare la Window XAML
+1. Creare `TMRazorImproved.UI/Views/Windows/GumpInspectorWindow.xaml`
+2. Layout minimo:
+   - Header: Serial, TypeId, dimensioni W/H
+   - Tab 1 "Layout": TextBox read-only con il layout grezzo
+   - Tab 2 "Controlli": DataGrid con colonne Tipo, Testo, X, Y, W, H, ButtonID
+   - Pulsante "Invia Risposta": apre un dialog per inserire il ButtonID e inviarla
+
+#### TASK-05.3 — Collegare il TODO nel GumpListViewModel
+1. Aprire `GumpListViewModel.cs` riga 59
+2. Sostituire il commento TODO con:
+   ```csharp
+   var win = new GumpInspectorWindow(SelectedGump.Serial, _world);
+   win.Show();
+   ```
+3. Registrare `GumpInspectorWindow` nel DI container se necessario
+
+---
+
+### TASK-06 — Implementare il Sistema di Script Recorder
+**Priorità:** 🟡 Media — feature importante per l'usabilità
 **Tempo stimato:** 6–8 ore
 
-#### TASK-08.1 — Creare l'interfaccia e il servizio base
-1. In `TMRazorImproved.Shared/Interfaces/`, creare `IScriptRecorderService.cs`:
+**Contesto:**
+Il legacy ha un `ScriptRecorderService` che ascolta le azioni dell'utente (click, target, cast, skill)
+e genera automaticamente il codice corrispondente in Python, C# o UOSteam.
+Non esiste nessun file corrispondente in TMRazorImproved.
+
+#### TASK-06.1 — Creare l'interfaccia
+1. Creare `TMRazorImproved.Shared/Interfaces/IScriptRecorderService.cs`:
    ```csharp
    public interface IScriptRecorderService
    {
@@ -509,236 +673,244 @@ Ogni sottotask aggiunge uno o più comandi all'interprete testuale in `ExecuteAc
        string StopRecording();  // restituisce il codice generato
    }
    ```
-2. In `TMRazorImproved.Core/Services/`, creare `ScriptRecorderService.cs`
-3. Registrarlo nel DI container in `App.xaml.cs`
 
-#### TASK-08.2 — Intercettare le azioni e generare codice
-1. In `ScriptRecorderService`, sottoscrivere agli eventi di `IPacketService` per i pacchetti client-side:
-   - `0x06` (SingleClick) → genera `Items.SingleClick(0x{serial})`
-   - `0x08` (DoubleClick) → genera `Items.UseItem(0x{serial})` o `Misc.UseSkill(...)` se è un'abilità
-   - `0x12` (Action: say) → genera `Player.ChatMessage("{text}")`
-   - `0x6C` (TargetResponse) → genera `Target.TargetExecute(0x{serial})`
-   - `0xBF` (cast spell via `0x12` + type `0x56`) → genera `Spells.Cast("{spellName}")`
-2. Implementare generatori separati per ogni linguaggio (Python, C#, UOSteam)
+#### TASK-06.2 — Creare il servizio
+1. Creare `TMRazorImproved.Core/Services/ScriptRecorderService.cs`
+2. Nel costruttore, iniettare `IPacketService`
+3. In `StartRecording`, sottoscriversi agli eventi dei pacchetti C2S via `IPacketService.RegisterViewer`:
+   - `0x06` → genera `Items.UseItem(0x{serial})`
+   - `0x09` → genera `Items.SingleClick(0x{serial})`
+   - `0xAD` → genera `Player.ChatMessage("{text}")`
+   - `0x6C` → genera `Target.TargetExecute(0x{serial})`
+   - `0x12` type `0x56`/`0x27` → genera `Spells.Cast("{spellName}")`
+   - `0x12` type `0x24` → genera `Player.UseSkill("{skillName}")`
+   - `0x05` → genera `Player.Attack(0x{serial})`
+   - `0x72` → genera `Player.SetWarMode(true/false)`
+4. In `StopRecording`, de-sottoscriversi e restituire il codice accumulato nel buffer
+5. Implementare generatori separati per Python, C# e UOSteam (3 classi interne `PyGenerator`, `CsGenerator`, `UosGenerator`)
 
-#### TASK-08.3 — Collegare il recorder alla UI di scripting
-1. In `ScriptingViewModel.cs`, aggiungere un comando `RecordCommand` (pulsante "Registra")
-2. In `ScriptingPage.xaml`, aggiungere un pulsante Record/Stop accanto ai pulsanti Play/Stop esistenti
-3. Quando si clicca "Stop Recording", il codice generato viene inserito nell'editor AvalonEdit
+#### TASK-06.3 — Collegare il recorder alla pagina Scripting
+1. In `ScriptingViewModel.cs`, aggiungere:
+   ```csharp
+   [RelayCommand] void StartRecord() => _recorder.StartRecording(SelectedLanguage);
+   [RelayCommand] void StopRecord()  { Code = _recorder.StopRecording(); }
+   ```
+2. In `ScriptingPage.xaml`, aggiungere un pulsante "⏺ Registra" / "⏹ Stop" nella toolbar
+3. Il codice generato viene inserito nell'editor AvalonEdit
 
 ---
 
-### TASK-09 — Implementare il gRPC Proto-Control Server
-**Priorità:** 🟡 MEDIA
-**Cosa manca:** Il legacy espone un server gRPC su porta configurabile che permette a script esterni (Python, ecc.) di controllare TMRazor remotamente.
-**Tempo stimato:** 4–6 ore
+### TASK-07 — Implementare il gRPC Proto-Control Server
+**Priorità:** 🟡 Media — permette controllo remoto da script esterni
+**Tempo stimato:** 5–6 ore
 
-#### TASK-09.1 — Aggiungere le dipendenze gRPC al progetto Core
+**Contesto:**
+Il legacy espone un server gRPC su porta configurabile che permette a script Python/altri
+di controllare TMRazor remotamente senza aprire la UI.
+Non esistono file corrispondenti in TMRazorImproved.
+
+#### TASK-07.1 — Aggiungere le dipendenze
 1. Aprire `TMRazorImproved.Core/TMRazorImproved.Core.csproj`
-2. Aggiungere i pacchetti:
+2. Aggiungere:
    ```xml
    <PackageReference Include="Google.Protobuf" Version="3.29.3" />
    <PackageReference Include="Grpc.Core" Version="2.46.6" />
    <PackageReference Include="Grpc.Tools" Version="2.70.0" />
    ```
-3. Copiare il file `ProtoControl.proto` dal legacy in `TMRazorImproved.Core/Proto/`
 
-#### TASK-09.2 — Generare il codice C# dal .proto
-1. Aggiungere nel `.csproj`:
+#### TASK-07.2 — Creare il file `.proto`
+1. Creare `TMRazorImproved.Core/Proto/ProtoControl.proto`
+2. Copiare (e adattare) il contenuto da `/home/user/TMRazor/Razor/RazorEnhanced/Proto-Control/ProtoControl.proto`
+3. Aggiungere nel `.csproj`:
    ```xml
    <Protobuf Include="Proto/ProtoControl.proto" GrpcServices="Server" />
    ```
-2. Compilare → il codice stub viene generato automaticamente
+4. Compilare → il codice C# stub viene generato automaticamente da `Grpc.Tools`
 
-#### TASK-09.3 — Implementare il server gRPC
+#### TASK-07.3 — Implementare il server
 1. Creare `TMRazorImproved.Core/Services/ProtoControlService.cs`
 2. Implementare la classe derivata dal server stub generato
-3. Esporre i metodi RPC principali: `ExecuteScript`, `GetPlayerStatus`, `GetItems`, `SendPacket`
-4. Avviare il server in `App.xaml.cs` come `IHostedService` su porta configurabile (default 50051)
+3. I metodi principali da implementare:
+   - `ExecuteScript(request)` → chiama `IScriptingService.RunAsync(...)`
+   - `GetPlayerStatus(request)` → legge da `IWorldService.Player`
+   - `GetItems(request)` → query su `IWorldService.Items`
+   - `SendPacket(request)` → delega a `IPacketService.SendToServer(...)`
+4. Registrare il servizio in `App.xaml.cs` come `IHostedService`:
+   ```csharp
+   services.AddHostedService<ProtoControlService>();
+   ```
+5. Porta di default: 50051, configurabile nel profilo
 
 ---
 
-### TASK-10 — Completare il Gump Inspector
-**Priorità:** 🟡 MEDIA
-**File:** `TMRazorImproved.UI/ViewModels/GumpListViewModel.cs`
+### TASK-08 — Implementare AutoDoc (generazione `api.json`)
+**Priorità:** 🟢 Bassa
 **Tempo stimato:** 2–3 ore
 
-#### TASK-10.1 — Aprire Gump Inspector dal ViewModel
-1. Aprire `GumpListViewModel.cs`
-2. Trovare il commento `// TODO: Apri Gump Inspector con questo gump`
-3. Creare un comando `InspectGumpCommand` che apre una nuova finestra `GumpInspectorWindow`
+**Contesto:**
+Il legacy ha un `AutoDoc.cs` che genera un file `api.json` leggendo i commenti XML
+dai file delle API. Questo file è usato per il completamento automatico nell'editor.
+`CompletionService.cs` in `TMRazorImproved.UI` è già pronto a caricare dati di completamento.
 
-#### TASK-10.2 — Creare la finestra Gump Inspector
-1. Creare `TMRazorImproved.UI/Views/Windows/GumpInspectorWindow.xaml` e `.cs`
-2. Creare `TMRazorImproved.UI/ViewModels/GumpInspectorViewModel.cs`
-3. La finestra deve mostrare:
-   - Il Gump ID e Serial
-   - Lista dei controlli del Gump (Label, Button, Checkbox, RadioButton, TextEntry)
-   - Per ogni controllo: tipo, testo, posizione X/Y, dimensioni W/H
-   - Una sezione "Interazione" che permette di cliccare button o inviare testo tramite UI
-4. Collegare i dati a `IWorldService.GetGump(serial)`
+#### TASK-08.1 — Creare il generatore
+1. Creare `TMRazorImproved.Core/Utilities/ApiDocGenerator.cs`
+2. Usare reflection per enumerare tutte le classi API (`PlayerApi`, `ItemsApi`, ecc.)
+3. Per ogni metodo pubblico, estrarre il commento `<summary>` dal file XML di documentazione
+   (il file `.xml` viene generato automaticamente da `dotnet build` se aggiungi `<GenerateDocumentationFile>true</GenerateDocumentationFile>` al csproj)
+4. Serializzare il risultato in `api.json` nella cartella di output
+
+#### TASK-08.2 — Integrare con il completamento AvalonEdit
+1. Aprire `TMRazorImproved.UI/Utilities/CompletionService.cs`
+2. Caricare `api.json` generato dal passo precedente
+3. Usare i dati per arricchire i suggerimenti di completamento già presenti
 
 ---
 
-### TASK-11 — Completare la Pipeline di Build e Publish
-**Priorità:** 🟡 MEDIA
+### TASK-09 — Configurare Build, Publish e CI/CD
+**Priorità:** 🟡 Media — necessario per la distribuzione
 **Tempo stimato:** 2–3 ore
 
-#### TASK-11.1 — Configurare la publish Single-File per .NET 10
+#### TASK-09.1 — Aggiungere la configurazione di Publish
 1. Aprire `TMRazorImproved.UI/TMRazorImproved.UI.csproj`
 2. Aggiungere nella `<PropertyGroup>`:
    ```xml
    <PublishSingleFile>true</PublishSingleFile>
    <SelfContained>false</SelfContained>
    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
-   <PublishReadyToRun>true</PublishReadyToRun>
    ```
-3. Creare uno script `publish.ps1` nella root della solution:
+3. Creare `publish.ps1` nella root:
    ```powershell
    dotnet publish TMRazorImproved/TMRazorImproved.UI/TMRazorImproved.UI.csproj `
      -c Release -r win-x86 --self-contained false `
-     -o ./publish/TMRazorImproved
+     -o ./dist/TMRazorImproved
    ```
 
-#### TASK-11.2 — Configurare GitHub Actions per CI/CD
-1. Creare `.github/workflows/build.yml`
-2. Il workflow deve:
-   - Triggerare su `push` a `main` e su ogni PR
-   - Eseguire `dotnet build` per verificare che compili
-   - Eseguire `dotnet test` per far girare tutta la suite di test
-   - (Opzionale) Creare un Release con l'artefatto `.zip` contenente il publish
+#### TASK-09.2 — Configurare GitHub Actions
+1. Creare `.github/workflows/build.yml` con:
+   ```yaml
+   on: [push, pull_request]
+   jobs:
+     build:
+       runs-on: windows-latest
+       steps:
+         - uses: actions/checkout@v4
+         - uses: actions/setup-dotnet@v4
+           with: { dotnet-version: '10.x' }
+         - run: dotnet build TMRazorImproved/ --configuration Release
+         - run: dotnet test TMRazorImproved/ --configuration Release
+   ```
 
-#### TASK-11.3 — Test di stabilità memoria
-1. Aggiungere in `TMRazorImproved.Tests/MockTests/Stress/` un test `MemoryLeakTest.cs`
+#### TASK-09.3 — Test di stabilità memoria
+1. Creare `TMRazorImproved.Tests/MockTests/Stress/MemoryLeakTest.cs`
 2. Il test deve:
-   - Avviare e fermare il `PacketService` 100 volte
+   - Avviare e fermare `ScriptingService` 50 volte con script brevi
    - Misurare `GC.GetTotalMemory(true)` prima e dopo
-   - Fallire se la memoria cresce di più del 10%
-3. Fare lo stesso per `ScriptingService` (avvio/stop di 50 script brevi)
+   - Fallire se la memoria cresce di più del 10% tra inizio e fine
 
 ---
 
-### TASK-12 — Implementare AutoDoc (generazione documentazione API)
-**Priorità:** 🟢 BASSA
-**Cosa manca:** Il legacy ha `AutoDoc.cs` che legge i commenti XML dai file delle API e genera un file `api.json` usabile per la documentazione e il completamento automatico.
-**Tempo stimato:** 3 ore
+### TASK-10 — Stub minori da completare (bassa priorità)
+**Priorità:** 🟢 Bassa
+**Tempo stimato:** 2 ore totali
 
-#### TASK-12.1 — Creare il generatore di documentazione
-1. Creare `TMRazorImproved.Core/Utilities/ApiDocGenerator.cs`
-2. Il generatore deve:
-   - Usare reflection per enumerare tutte le classi di API (`PlayerApi`, `ItemsApi`, ecc.)
-   - Per ogni metodo pubblico, estrarre il commento XML con `System.Xml.XPath`
-   - Generare un file `api.json` nella cartella di output
-3. Il formato JSON deve essere compatibile con il `CompletionService.cs` già esistente in `TMRazorImproved.UI/Utilities/`
+Questi stub hanno impatto molto limitato ma andrebbero completati prima del rilascio finale:
 
-#### TASK-12.2 — Integrare il completamento automatico con i dati generati
-1. Aprire `TMRazorImproved.UI/Utilities/CompletionService.cs`
-2. Caricare il file `api.json` generato
-3. Usare i dati per alimentare i suggerimenti di completamento nell'editor AvalonEdit
+#### TASK-10.1 — `ClearDragQueue()` in `MiscApi.cs`
+Se esiste un sistema di drag-drop (vedi `DragDropManager` nel legacy), collegare questo metodo
+al reset della coda. Se il sistema non è stato migrato, lasciarlo come stub documentato.
 
----
+#### TASK-10.2 — `FilterSeason()` in `MiscApi.cs`
+Inviare il pacchetto `0xBC` (Season) con il flag appropriato:
+```csharp
+public override void FilterSeason(bool enable, uint seasonFlag)
+{
+    _cancel.ThrowIfCancelled();
+    var pkt = new byte[] { 0xBC, (byte)seasonFlag, (byte)(enable ? 1 : 0) };
+    _packetService.SendToServer(pkt);
+}
+```
 
-### TASK-13 — Miglioramenti Vari Post-Release (S6-09 / Player.Pets / S8-01)
-**Priorità:** 🟢 BASSA
-**Tempo stimato:** 2 ore
+#### TASK-10.3 — `HashSet()` in `PlayerApi.cs`
+Valutare se questa feature (salvataggio di coppie chiave/valore locali per script) è necessaria.
+Se sì, aggiungere un `Dictionary<string, object>` statico in `MiscApi` (o `ScriptGlobals`)
+e implementare `HashSet`, `HashGet`, `HashDelete`.
 
-#### TASK-13.1 — Implementare `Player.Pets` via tracking server
-1. In `IWorldService`, aggiungere `List<uint> PetSerials { get; }` (lista serial dei pet conosciuti)
-2. Nel `WorldPacketHandler`, nel handler del pacchetto `0x11` (MobileStatus), se il mobile è un pet (flag bonding), aggiungerne il serial a `PetSerials`
-3. In `PlayerApi.cs` → `Pets`, filtrare `IWorldService.GetMobileSnapshots()` usando `PetSerials` invece della notorietà
+#### TASK-10.4 — `InspectorViewModel` — ground targeting (TODO riga 250)
+Quando l'utente clicca "Target Terreno" nell'Inspector, usare:
+```csharp
+var target = await _targetingService.AcquireTargetAsync(ct);
+// Il pacchetto 0x6C C2S con serial=0 porta X/Y/Z: leggere LastGroundTarget
+```
 
-#### TASK-13.2 — Documentare la differenza di timestamp in JournalEntry (S8-01)
-1. Aprire `TMRazorImproved.Shared/Models/JournalEntry.cs`
-2. Aggiungere un commento XML su `Timestamp`:
-   ```csharp
-   /// <remarks>
-   /// NOTA: in TMRazorImproved Timestamp è espresso in millisecondi Unix (long).
-   /// Nell'originale TMRazor era in secondi Unix (double).
-   /// Convertire con: timestampMs / 1000.0
-   /// </remarks>
-   ```
-
-#### TASK-13.3 — Implementare `Player.Area()` e `Player.Zone()` (S2-07)
-1. Creare un file `TMRazorImproved.Shared/Data/UORegions.cs` con una lista statica delle regioni UO principali:
-   - Ogni regione ha: nome, mappa ID, rectangle bounds (X1,Y1,X2,Y2)
-2. In `PlayerApi.cs` → `Area()`:
-   - Leggere le coordinate del player da `IWorldService.Player`
-   - Cercare nella lista quale regione contiene il player
-   - Restituire il nome della regione trovata, o `"Unknown"` se fuori da tutte le regioni note
-3. `Zone()` può restituire la regione di livello più specifico (sub-regione, es. "Britain Graveyard" vs "Britannia")
+#### TASK-10.5 — Documentare `ConvertBack` in `CommonConverters.cs`
+I `ConvertBack` che lanciano `NotImplementedException` sono tecnicamente corretti per converter
+one-way, ma è bene aggiungere un commento XML che lo espliciti, per prevenire confusione:
+```csharp
+/// <inheritdoc />
+/// <remarks>Questo converter è one-way. ConvertBack non è supportato.</remarks>
+public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    => throw new NotImplementedException("One-way converter.");
+```
 
 ---
 
-## 5. Riepilogo Finale per Priorità
+## 5. Riepilogo Priorità
 
-### 🔴 Da fare subito (blocca build o script legacy)
-| Task | Contenuto | Ore |
-|------|-----------|-----|
-| TASK-01 | Fix compilazione (duplicato TargetResource) | 0.25 |
-| TASK-02 | Fix sistema targeting | 4 |
-| TASK-03 | Fix sistema spell (Cast overload + WaitCast + Levenshtein) | 2 |
-| TASK-04 | Fix Filter (tristate, proprietà mancanti, FindByID) | 3 |
-| TASK-06 | Registrare wrapper agenti in ScriptingService | 1 |
+### 🔴 Alta (da fare subito)
+| Task | Descrizione | Ore |
+|------|-------------|-----|
+| TASK-01 | Fix LastObject mai aggiornato (observer 0x06) | 0.5 |
+| TASK-04 | Completare macro engine (21 comandi mancanti) | 7 |
 
-**Totale lavoro critico: ~10.25 ore**
+### 🟠 Media (da fare nel prossimo sprint)
+| Task | Descrizione | Ore |
+|------|-------------|-----|
+| TASK-02 | SpellIsEnabled reale | 0.75 |
+| TASK-03 | ShardName reale | 0.5 |
+| TASK-05 | GumpInspectorWindow | 4 |
+| TASK-06 | Script Recorder | 7 |
+| TASK-09 | Build pipeline e CI/CD | 3 |
 
-### 🟠 Alta priorità (degrado silenzioso o feature importanti)
-| Task | Contenuto | Ore |
-|------|-----------|-----|
-| TASK-05 | Differenze comportamentali (SendKeys, path validation, ScriptStop, Suspend, Distance) | 2 |
-| TASK-07 | Completare macro engine (21 azioni mancanti) | 6 |
+### 🟡 Bassa (backlog)
+| Task | Descrizione | Ore |
+|------|-------------|-----|
+| TASK-07 | gRPC Proto-Control server | 6 |
+| TASK-08 | AutoDoc + completamento | 3 |
+| TASK-10 | Stub minori (drag queue, season, hash set, ecc.) | 2 |
 
-**Totale lavoro alta priorità: ~8 ore**
-
-### 🟡 Media priorità (feature non migrate)
-| Task | Contenuto | Ore |
-|------|-----------|-----|
-| TASK-08 | Script Recorder | 7 |
-| TASK-09 | gRPC Proto-Control server | 5 |
-| TASK-10 | Gump Inspector completo | 3 |
-| TASK-11 | Build/Publish pipeline | 3 |
-
-**Totale lavoro media priorità: ~18 ore**
-
-### 🟢 Bassa priorità (nice-to-have)
-| Task | Contenuto | Ore |
-|------|-----------|-----|
-| TASK-12 | AutoDoc + completamento AvalonEdit | 3 |
-| TASK-13 | Pet tracking, Region table, doc timestamp | 2 |
-
-**Totale lavoro bassa priorità: ~5 ore**
+**Totale ore stimate: ~34 ore**
 
 ---
 
-## 6. Come Leggere e Usare Questo Documento
+## 6. Riferimento Rapido — Struttura del Progetto
 
-**Per un profilo junior:**
-1. Inizia sempre da `TASK-01` — è il più piccolo (15 min) e sblocca tutto il resto
-2. Per ogni sottotask, il file da modificare è indicato nella sezione del task padre
-3. Dopo ogni modifica, esegui `dotnet build` dalla root della solution per verificare che il codice compili
-4. Dopo ogni gruppo di fix, esegui `dotnet test` per verificare che i test passino
-5. Se un test fallisce dopo la tua modifica, leggi il messaggio di errore prima di chiedere aiuto
+Per chi non conosce la codebase:
 
-**Struttura dei progetti (dove si trovano i file):**
 ```
 TMRazorImproved/
-├── TMRazorImproved.Shared/       ← Interfacce, modelli, enums (cambia qui prima)
-│   ├── Interfaces/               ← IWorldService, ITargetingService, ecc.
-│   ├── Models/                   ← UOEntity, Mobile, Item, Filter, ecc.
-│   └── Messages/                 ← Messaggi IMessenger
-├── TMRazorImproved.Core/         ← Logica di business (servizi, handler)
-│   ├── Services/                 ← WorldService, PacketService, ScriptingService, ecc.
-│   │   └── Scripting/Api/        ← PlayerApi, TargetApi, SpellsApi, ItemsApi, ecc.
-│   └── Handlers/                 ← WorldPacketHandler (decodifica i pacchetti UO)
-├── TMRazorImproved.UI/           ← Interfaccia WPF
-│   ├── ViewModels/               ← I ViewModel (logica della UI)
-│   └── Views/Pages/              ← Le pagine XAML
-└── TMRazorImproved.Tests/        ← Test automatici
-    ├── MockTests/                ← Test con mock (veloci)
-    └── IntegrationTests/         ← Test di integrazione (più lenti)
+├── TMRazorImproved.Shared/        ← Interfacce, modelli, enums
+│   ├── Interfaces/                ← IWorldService, ITargetingService, IPacketService…
+│   ├── Models/                    ← UOEntity, Mobile, Item, UOBufferReader…
+│   └── Messages/                  ← Messaggi per IMessenger (es. PlayerStatusMessage)
+├── TMRazorImproved.Core/          ← Logica pura, nessuna dipendenza WPF
+│   ├── Services/                  ← WorldService, PacketService, MacrosService…
+│   │   └── Scripting/Api/         ← PlayerApi, TargetApi, SpellsApi, ItemsApi…
+│   └── Handlers/                  ← WorldPacketHandler (decodifica pacchetti UO)
+├── TMRazorImproved.UI/            ← Tutto WPF
+│   ├── ViewModels/                ← Logica UI (si interfaccia con i servizi Core)
+│   └── Views/                    ← File XAML + code-behind minimi
+├── TMRazorImproved.Tests/         ← Test automatici
+│   ├── MockTests/                 ← Test veloci con mock
+│   └── IntegrationTests/          ← Test di integrazione (più lenti)
+└── TMRazorPlugin/                 ← Plugin per ClassicUO (net48, separato)
 ```
+
+**Workflow raccomandato:**
+1. Modifica → `dotnet build` per verificare la compilazione
+2. `dotnet test` per verificare che i test passino
+3. Se aggiungi una nuova funzionalità, aggiungi almeno un test in `MockTests/`
 
 ---
 
-*Documento generato dall'analisi del codice sorgente in data 17 marzo 2026.*
-*Basato su: confronto diretto tra TMRazor legacy (Razor/) e TMRazorImproved/, `finalreview.md`, `TMRazorImprovedProgress.md`.*
+*Documento generato dall'analisi diretta del codice sorgente — 17 marzo 2026.*
+*Nessun documento preesistente (`.md`) è stato usato come fonte per questa revisione.*
