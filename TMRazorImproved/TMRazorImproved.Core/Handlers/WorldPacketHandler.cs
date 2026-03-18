@@ -2211,7 +2211,6 @@ namespace TMRazorImproved.Core.Handlers
         private void HandleServerList(byte[] data)
         {
             // 0xA8: cmd(1) len(2) unk(1) count(2) [server: idx(2) name[32] full%(1) tz(1s) ip(4)]
-            // Solo tracking del nome del shard
             if (data.Length < 6) return;
             var reader = new UOBufferReader(data);
             reader.ReadByte();           // 0xA8
@@ -2219,7 +2218,14 @@ namespace TMRazorImproved.Core.Handlers
             reader.ReadByte();           // unknown
             ushort numServers = reader.ReadUInt16();
 
-            // Parsing semplificato — non gestiamo server list lato TMRazorImproved
+            // Legge il nome del primo server e lo salva nel profilo come ShardName
+            if (numServers > 0 && data.Length >= reader.Position + 2 + 32)
+            {
+                reader.ReadUInt16(); // server index
+                string serverName = System.Text.Encoding.ASCII.GetString(data, reader.Position, 32).TrimEnd('\0').Trim();
+                if (!string.IsNullOrEmpty(serverName) && _configService.CurrentProfile != null)
+                    _configService.CurrentProfile.ShardName = serverName;
+            }
         }
 
         private void HandleDisplayStringQuery(byte[] data)
