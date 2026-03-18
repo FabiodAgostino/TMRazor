@@ -1,0 +1,6 @@
+ leggi @"Final Review.md"  e passa al task  successivo. Prima di cominciare il task  leggi bene tutta la
+   documentazione pertinente descritta nell'.md, cerca di capire a cosa faceva riferimento il senior che ha
+   effettuato la stesura guardando sia il codice del vecchio applicativo (da cui stiamo migrando) e quello nuovo
+   (TMRazor Improved) a cui si fa riferimento. Successivamente passa alla correzione / sviluppo richiesta. Dopo la
+   modifica builda per capire se tutto è andato come previsto.  Al termine lascia un identificativo sul .md per far
+   comprendere che è stato fatto.
