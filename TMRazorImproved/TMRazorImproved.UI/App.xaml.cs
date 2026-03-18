@@ -90,6 +90,7 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
                 services.AddSingleton<IVideoCaptureService, VideoCaptureService>();
                 services.AddSingleton<IUOModService, UOModService>();
+                services.AddSingleton<IScriptRecorderService, ScriptRecorderService>();
 
                 // Handlers (Singleton)
                 services.AddSingleton<WorldPacketHandler>();

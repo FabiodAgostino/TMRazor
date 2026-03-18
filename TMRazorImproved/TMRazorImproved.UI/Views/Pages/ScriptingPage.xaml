@@ -59,8 +59,27 @@
                                 VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Right: Run / Stop -->
+                <!-- Right: Record / Stop Record / Run / Stop -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:Button Content="⏺ Registra"
+                               Appearance="Secondary"
+                               Command="{Binding StartRecordCommand}"
+                               Padding="12,6"
+                               Margin="0,0,4,0"
+                               ToolTip="Avvia registrazione azioni di gioco come script"
+                               Visibility="{Binding IsNotRecordingScript, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <ui:Button Content="⏹ Ferma Reg."
+                               Appearance="Caution"
+                               Command="{Binding StopRecordCommand}"
+                               Padding="12,6"
+                               Margin="0,0,4,0"
+                               ToolTip="Ferma la registrazione e inserisce il codice nell'editor"
+                               Visibility="{Binding IsRecordingScript, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <Border Width="1" Background="{DynamicResource ControlBorderColorBrush}"
+                            Margin="0,4,8,4"/>
+
                     <ui:Button Content="{loc:Loc Scripting.Run}"
                                Appearance="Primary"
                                Command="{Binding RunScriptCommand}"
