@@ -23,6 +23,7 @@ namespace TMRazorImproved.Core.Services
         private readonly IJournalService? _journalService;
         private readonly IOrganizerService? _organizerService;
         private readonly ILogger<MacrosService> _logger;
+        private readonly ConditionEvaluator _conditionEvaluator;
 
         // Alias locali definiti via SETALIAS/REMOVEALIAS
         private readonly Dictionary<string, uint> _aliases = new(StringComparer.OrdinalIgnoreCase);
@@ -55,7 +56,8 @@ namespace TMRazorImproved.Core.Services
             ITargetingService targetingService,
             ILogger<MacrosService> logger,
             IJournalService? journalService = null,
-            IOrganizerService? organizerService = null)
+            IOrganizerService? organizerService = null,
+            ISkillsService? skillsService = null)
         {
             _config = config;
             _packetService = packetService;
@@ -64,6 +66,7 @@ namespace TMRazorImproved.Core.Services
             _logger = logger;
             _journalService = journalService;
             _organizerService = organizerService;
+            _conditionEvaluator = new ConditionEvaluator(worldService, skillsService, journalService, targetingService);
             _macrosPath = Path.Combine(AppContext.BaseDirectory, "Macros");
             // FIX P0-04: cattura il contesto UI. Se siamo già sul thread UI (App startup), sarà
             // il WPF SynchronizationContext; se null (unit test), le add vengono eseguite in-thread.
@@ -354,72 +357,12 @@ namespace TMRazorImproved.Core.Services
         }
 
         /// <summary>
-        /// Valuta una condizione testuale rispetto allo stato corrente del player.
-        /// Supporta: POISONED, HIDDEN, WARMODE, DEAD (+ NOT prefisso),
-        ///           HP/MANA/STAM/STR/DEX/INT/WEIGHT con operatori &lt; &gt; &lt;= &gt;= == !=
+        /// Valuta una condizione testuale delegando al ConditionEvaluator.
+        /// Supporta 9 categorie: PlayerStats, PlayerStatus, Skill, Find, Count,
+        /// InRange, TargetExists, InJournal, BuffExists (+ prefisso NOT).
         /// </summary>
         private bool EvaluateCondition(string condition)
-        {
-            if (string.IsNullOrWhiteSpace(condition)) return true;
-
-            var cond   = condition.Trim();
-            bool negate = false;
-            if (cond.StartsWith("NOT ", StringComparison.OrdinalIgnoreCase))
-            {
-                negate = true;
-                cond = cond.Substring(4).Trim();
-            }
-
-            var player = _worldService.Player;
-            bool result;
-
-            switch (cond.ToUpperInvariant())
-            {
-                case "POISONED": result = player?.IsPoisoned ?? false; break;
-                case "HIDDEN":   result = player?.IsHidden   ?? false; break;
-                case "WARMODE":  result = player?.WarMode    ?? false; break;
-                case "DEAD":     result = player?.Hits == 0;           break;
-                default:
-                {
-                    // Formato: PROPERTY OPERATOR VALUE  (es. "HP < 80")
-                    var tokens = cond.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries);
-                    if (tokens.Length < 3 || player == null) { result = false; break; }
-
-                    if (!int.TryParse(tokens[2], out int val)) { result = false; break; }
-
-                    int pv = tokens[0].ToUpperInvariant() switch
-                    {
-                        "HP" or "HITS"       => player.Hits,
-                        "MAXHP" or "MAXHITS" => (int)player.HitsMax,
-                        "MANA"               => player.Mana,
-                        "MAXMANA"            => (int)player.ManaMax,
-                        "STAM" or "STAMINA"  => player.Stam,
-                        "MAXSTAM"            => (int)player.StamMax,
-                        "STR"                => player.Str,
-                        "DEX"                => player.Dex,
-                        "INT"                => player.Int,
-                        "WEIGHT"             => player.Weight,
-                        _                    => -1
-                    };
-
-                    if (pv == -1) { result = false; break; }
-
-                    result = tokens[1] switch
-                    {
-                        "<"         => pv < val,
-                        ">"         => pv > val,
-                        "<="        => pv <= val,
-                        ">="        => pv >= val,
-                        "==" or "=" => pv == val,
-                        "!="        => pv != val,
-                        _           => false
-                    };
-                    break;
-                }
-            }
-
-            return negate ? !result : result;
-        }
+            => _conditionEvaluator.Evaluate(condition);
 
         private async Task ExecuteActionAsync(string action, string args, CancellationToken token)
         {

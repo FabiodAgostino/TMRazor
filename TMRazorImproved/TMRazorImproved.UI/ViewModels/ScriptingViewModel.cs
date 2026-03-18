@@ -23,6 +23,7 @@ namespace TMRazorImproved.UI.ViewModels
     public sealed partial class ScriptingViewModel : ViewModelBase, IDisposable
     {
         private readonly IScriptingService _scriptingService;
+        private readonly IScriptRecorderService? _recorder;
         private readonly object _logLock = new();
 
         [ObservableProperty]
@@ -44,29 +45,43 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty]
         private ScriptLanguage _selectedLanguage = ScriptLanguage.Python;
 
-        public IEnumerable<ScriptLanguage> AvailableLanguages => 
+        [ObservableProperty]
+        private bool _isRecordingScript;
+
+        /// <summary>Inverso di IsRecordingScript — usato per la visibilità del pulsante "Registra".</summary>
+        public bool IsNotRecordingScript => !IsRecordingScript;
+
+        partial void OnIsRecordingScriptChanged(bool value)
+            => OnPropertyChanged(nameof(IsNotRecordingScript));
+
+        public IEnumerable<ScriptLanguage> AvailableLanguages =>
             Enum.GetValues(typeof(ScriptLanguage)).Cast<ScriptLanguage>();
 
         public ObservableCollection<ScriptLogEntry> LogEntries { get; } = new();
 
-        public IAsyncRelayCommand RunScriptCommand  { get; }
-        public IAsyncRelayCommand StopScriptCommand { get; }
-        public IRelayCommand      ClearLogCommand   { get; }
-        public IRelayCommand      NewScriptCommand  { get; }
-        public IRelayCommand      OpenScriptCommand { get; }
-        public IRelayCommand      SaveScriptCommand { get; }
+        public IAsyncRelayCommand RunScriptCommand      { get; }
+        public IAsyncRelayCommand StopScriptCommand     { get; }
+        public IRelayCommand      ClearLogCommand       { get; }
+        public IRelayCommand      NewScriptCommand      { get; }
+        public IRelayCommand      OpenScriptCommand     { get; }
+        public IRelayCommand      SaveScriptCommand     { get; }
+        public IRelayCommand      StartRecordCommand    { get; }
+        public IRelayCommand      StopRecordCommand     { get; }
 
-        public ScriptingViewModel(IScriptingService scriptingService)
+        public ScriptingViewModel(IScriptingService scriptingService, IScriptRecorderService? recorder = null)
         {
             _scriptingService = scriptingService;
+            _recorder         = recorder;
             EnableThreadSafeCollection(LogEntries, _logLock);
 
-            RunScriptCommand  = new AsyncRelayCommand(RunScriptAsync,  () => !IsRunning);
-            StopScriptCommand = new AsyncRelayCommand(StopScriptAsync, () => IsRunning);
-            ClearLogCommand   = new RelayCommand(ClearLog);
-            NewScriptCommand  = new RelayCommand(NewScript,   () => !IsRunning);
-            OpenScriptCommand = new RelayCommand(OpenScript,  () => !IsRunning);
-            SaveScriptCommand = new RelayCommand(SaveScript);
+            RunScriptCommand   = new AsyncRelayCommand(RunScriptAsync,    () => !IsRunning);
+            StopScriptCommand  = new AsyncRelayCommand(StopScriptAsync,   () => IsRunning);
+            ClearLogCommand    = new RelayCommand(ClearLog);
+            NewScriptCommand   = new RelayCommand(NewScript,   () => !IsRunning);
+            OpenScriptCommand  = new RelayCommand(OpenScript,  () => !IsRunning);
+            SaveScriptCommand  = new RelayCommand(SaveScript);
+            StartRecordCommand = new RelayCommand(StartRecording, () => !IsRecordingScript && !IsRunning);
+            StopRecordCommand  = new RelayCommand(StopRecording,  () => IsRecordingScript);
 
             _scriptingService.OutputReceived  += OnOutputReceived;
             _scriptingService.ErrorReceived   += OnErrorReceived;
@@ -253,12 +268,53 @@ namespace TMRazorImproved.UI.ViewModels
             });
         }
 
+        // ------------------------------------------------------------------
+        // Recording commands
+        // ------------------------------------------------------------------
+
+        private void StartRecording()
+        {
+            if (_recorder == null)
+            {
+                AddLog("ScriptRecorderService non disponibile.", ScriptLogType.System);
+                return;
+            }
+            _recorder.StartRecording(SelectedLanguage);
+            IsRecordingScript = true;
+            NotifyCommandsCanExecuteChanged();
+            AddLog($"--- Registrazione avviata ({SelectedLanguage}) ---", ScriptLogType.System);
+        }
+
+        private void StopRecording()
+        {
+            if (_recorder == null) return;
+            _recorder.StopRecording();
+            IsRecordingScript = false;
+
+            string recorded = _recorder.GetRecordedScript();
+            if (!string.IsNullOrWhiteSpace(recorded))
+            {
+                // Appende il codice registrato all'editor
+                ScriptCode = string.IsNullOrWhiteSpace(ScriptCode)
+                    ? recorded
+                    : ScriptCode + Environment.NewLine + Environment.NewLine + recorded;
+                AddLog("--- Registrazione inserita nell'editor ---", ScriptLogType.System);
+            }
+            else
+            {
+                AddLog("--- Registrazione vuota ---", ScriptLogType.System);
+            }
+            NotifyCommandsCanExecuteChanged();
+        }
+
         private void NotifyCommandsCanExecuteChanged()
         {
             RunScriptCommand.NotifyCanExecuteChanged();
             StopScriptCommand.NotifyCanExecuteChanged();
             NewScriptCommand.NotifyCanExecuteChanged();
             OpenScriptCommand.NotifyCanExecuteChanged();
+            StartRecordCommand.NotifyCanExecuteChanged();
+            StopRecordCommand.NotifyCanExecuteChanged();
         }
 
         public void Dispose()

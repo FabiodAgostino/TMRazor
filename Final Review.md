@@ -271,9 +271,9 @@ Metodi legacy:
 
 ---
 
-#### TASK-012: Script Recorder (ScriptRecorder.cs)
+#### TASK-012: Script Recorder (ScriptRecorder.cs) ✅ COMPLETATO
 **Legacy:** `Razor/RazorEnhanced/ScriptRecorder.cs`
-**Nuovo:** Nessun equivalente
+**Nuovo:** `IScriptRecorderService` + `ScriptRecorderService` + integrazione UI
 
 Sistema di registrazione che cattura azioni del giocatore e le converte in codice script:
 - `PyScriptRecorder` - Genera codice Python
@@ -609,7 +609,7 @@ Funzionalita legacy mancanti nel nuovo codice:
 
 ### 4.1 Sistema Macro - Gap Architetturale Principale
 
-#### TASK-025: LegacyMacroMigrator - Copertura Azioni
+#### TASK-025: LegacyMacroMigrator - Copertura Azioni ✅ COMPLETATO
 **Criticita:** ALTA
 
 Il `LegacyMacroMigrator.cs` gestisce solo **15 dei 43 tipi di azione** macro del legacy. Le azioni non gestite vengono convertite in commenti `// UNMIGRATED: ...`.
@@ -695,7 +695,7 @@ case "WaitForGump":
 
 ### 4.2 Condition Evaluation Engine
 
-#### TASK-026: MacrosService - Valutazione Condizioni If/While
+#### TASK-026: MacrosService - Valutazione Condizioni If/While ✅ COMPLETATO
 **Legacy:** `IfAction.cs` - 568 righe con 9 categorie di condizioni (PlayerStats, PlayerStatus, Skill, Find, Count, InRange, TargetExists, InJournal, BuffExists)
 **Nuovo:** `MacrosService` - Parsing basico di stringhe IF/WHILE senza documentazione della logica di valutazione
 
@@ -898,12 +898,12 @@ Il nuovo `ClientInteropService` supporta solo il modello OSI-style con DLL injec
 
 ### Priorita CRITICA (Funzionalita core perse per l'utente)
 
-| # | Task | File da Modificare | Effort |
-|---|------|-------------------|--------|
-| TASK-012 | Script Recorder | Nuovo servizio + collegamento UI | Alto |
-| TASK-025 | Macro Migrator - 28 azioni mancanti | `LegacyMacroMigrator.cs` | Alto |
-| TASK-026 | Condition Evaluation Engine | Nuovo `ConditionEvaluator.cs` | Alto |
-| TASK-013 | DragDrop Coordinator | Nuovo servizio | Medio |
+| # | Task | File da Modificare | Effort | Stato |
+|---|------|-------------------|--------|-------|
+| TASK-012 | Script Recorder | `IScriptRecorderService.cs` + `ScriptRecorderService.cs` + `ScriptingViewModel.cs` + `ScriptingPage.xaml` | Alto | ✅ COMPLETATO (2026-03-18) |
+| TASK-025 | Macro Migrator - 28 azioni mancanti | `LegacyMacroMigrator.cs` | Alto | ✅ COMPLETATO (2026-03-18) |
+| TASK-026 | Condition Evaluation Engine | `ConditionEvaluator.cs` + `MacrosService.cs` | Alto | ✅ COMPLETATO (2026-03-18) |
+| TASK-013 | DragDrop Coordinator | Nuovo servizio | Medio | Pendente |
 
 ### Priorità ALTA (Feature significative mancanti)
 
