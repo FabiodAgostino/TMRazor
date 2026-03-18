@@ -33,7 +33,11 @@ namespace TMRazorImproved.Shared.Models.Config
     {
         public string Name { get; set; } = "Default";
         public string ShardId { get; set; } = "Unknown";
-        
+        public string ShardName { get; set; } = string.Empty;
+
+        // Spell management
+        public List<string> DisabledSpells { get; set; } = new();
+
         // General Options
         public bool FiltersEnabled { get; set; } = true;
         

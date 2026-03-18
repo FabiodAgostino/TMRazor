@@ -559,15 +559,24 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return _world.Player?.Serial ?? 0;
         }
 
-        /// <summary>Name of the current shard (stub).</summary>
+        /// <summary>Name of the current shard.</summary>
         public virtual string ShardName()
         {
             _cancel.ThrowIfCancelled();
-            return string.Empty;
+            var profile = _config?.CurrentProfile;
+            if (profile != null && !string.IsNullOrEmpty(profile.ShardName))
+                return profile.ShardName;
+            return _config?.CurrentShardId ?? string.Empty;
         }
 
-        /// <summary>Enable/disable season filter (stub).</summary>
-        public virtual void FilterSeason(bool enable, uint seasonFlag) { }
+        /// <summary>Enable/disable season filter — sends 0xBC (Season) packet to client.</summary>
+        public virtual void FilterSeason(bool enable, uint seasonFlag)
+        {
+            _cancel.ThrowIfCancelled();
+            // 0xBC S2C: cmd(1) season(1) playSound(1)
+            var pkt = new byte[] { 0xBC, (byte)seasonFlag, (byte)(enable ? 1 : 0) };
+            _packetService.SendToClient(pkt);
+        }
 
         // ------------------------------------------------------------------
         // Serial type checks

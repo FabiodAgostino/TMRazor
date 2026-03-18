@@ -609,7 +609,13 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         }
 
         public virtual void SetStaticMount(uint serial) => StaticMount = serial;
-        public virtual bool SpellIsEnabled(string spellName) { _cancel.ThrowIfCancelled(); return true; }
+        public virtual bool SpellIsEnabled(string spellName)
+        {
+            _cancel.ThrowIfCancelled();
+            var disabled = _config?.CurrentProfile?.DisabledSpells;
+            if (disabled == null || disabled.Count == 0) return true;
+            return !disabled.Contains(spellName, StringComparer.OrdinalIgnoreCase);
+        }
 
         public virtual int SumAttribute(string name)
         {

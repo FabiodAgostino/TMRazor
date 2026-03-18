@@ -20,7 +20,12 @@ namespace TMRazorImproved.Core.Services
         private readonly IPacketService _packetService;
         private readonly IWorldService _worldService;
         private readonly ITargetingService _targetingService;
+        private readonly IJournalService? _journalService;
+        private readonly IOrganizerService? _organizerService;
         private readonly ILogger<MacrosService> _logger;
+
+        // Alias locali definiti via SETALIAS/REMOVEALIAS
+        private readonly Dictionary<string, uint> _aliases = new(StringComparer.OrdinalIgnoreCase);
 
         // FIX P0-04: cattura il SynchronizationContext del thread UI al momento della costruzione
         // (App.xaml.cs esegue il costruttore sul thread UI) per poter aggiornare MacroList
@@ -48,13 +53,17 @@ namespace TMRazorImproved.Core.Services
             IPacketService packetService,
             IWorldService worldService,
             ITargetingService targetingService,
-            ILogger<MacrosService> logger)
+            ILogger<MacrosService> logger,
+            IJournalService? journalService = null,
+            IOrganizerService? organizerService = null)
         {
             _config = config;
             _packetService = packetService;
             _worldService = worldService;
             _targetingService = targetingService;
             _logger = logger;
+            _journalService = journalService;
+            _organizerService = organizerService;
             _macrosPath = Path.Combine(AppContext.BaseDirectory, "Macros");
             // FIX P0-04: cattura il contesto UI. Se siamo già sul thread UI (App startup), sarà
             // il WPF SynchronizationContext; se null (unit test), le add vengono eseguite in-thread.
@@ -587,10 +596,265 @@ namespace TMRazorImproved.Core.Services
                     break;
                 }
 
+                // ── TASK-04.1 — WARMODE ────────────────────────────────────────────────────────
+                case "WARMODE":
+                {
+                    bool enable;
+                    if (args.Equals("toggle", StringComparison.OrdinalIgnoreCase))
+                        enable = !(_worldService.Player?.WarMode ?? false);
+                    else
+                        enable = args.Equals("on", StringComparison.OrdinalIgnoreCase);
+                    _packetService.SendToServer(new byte[] { 0x72, (byte)(enable ? 0x01 : 0x00), 0x00, 0x32, 0x00 });
+                    break;
+                }
+
+                // ── TASK-04.2 — FLY / LAND ─────────────────────────────────────────────────────
+                case "FLY":
+                case "LAND":
+                    // 0xBF sub 0x32: toggle volo
+                    _packetService.SendToServer(new byte[] { 0xBF, 0x00, 0x05, 0x00, 0x32 });
+                    break;
+
+                // ── TASK-04.3 — RESYNC ─────────────────────────────────────────────────────────
+                case "RESYNC":
+                    _packetService.SendToServer(new byte[] { 0x22, 0xFF, 0x00 });
+                    break;
+
+                // ── TASK-04.4 — CLEARJOURNAL ───────────────────────────────────────────────────
+                case "CLEARJOURNAL":
+                    _journalService?.Clear();
+                    break;
+
+                // ── TASK-04.5 — MOVEITEM / PICKUP / DROP ───────────────────────────────────────
+                case "MOVEITEM":
+                {
+                    var parts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 2) break;
+                    uint mvSerial = ResolveSerial(parts[0]);
+                    uint mvDest   = ResolveSerial(parts[1]);
+                    ushort mvAmt  = parts.Length > 2 && ushort.TryParse(parts[2], out ushort pa) ? pa : (ushort)1;
+                    _packetService.SendToServer(PacketBuilder.LiftItem(mvSerial, mvAmt));
+                    await Task.Delay(100, token);
+                    _packetService.SendToServer(PacketBuilder.DropToContainer(mvSerial, mvDest));
+                    break;
+                }
+
+                case "PICKUP":
+                {
+                    var parts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 1) break;
+                    uint puSerial  = ResolveSerial(parts[0]);
+                    ushort puAmt   = parts.Length > 1 && ushort.TryParse(parts[1], out ushort pa) ? pa : (ushort)1;
+                    uint backpack  = _worldService.Player?.Backpack?.Serial ?? 0;
+                    if (backpack == 0) break;
+                    _packetService.SendToServer(PacketBuilder.LiftItem(puSerial, puAmt));
+                    await Task.Delay(100, token);
+                    _packetService.SendToServer(PacketBuilder.DropToContainer(puSerial, backpack));
+                    break;
+                }
+
+                case "DROP":
+                {
+                    var parts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 4) break;
+                    uint drSerial = ResolveSerial(parts[0]);
+                    if (!ushort.TryParse(parts[1], out ushort drX) ||
+                        !ushort.TryParse(parts[2], out ushort drY) ||
+                        !short.TryParse(parts[3], out short drZ)) break;
+                    _packetService.SendToServer(PacketBuilder.LiftItem(drSerial));
+                    await Task.Delay(100, token);
+                    _packetService.SendToServer(PacketBuilder.DropToWorld(drSerial, drX, drY, drZ));
+                    break;
+                }
+
+                // ── TASK-04.6 — EMOTE / INVOKEVIRTUE / RENAMEMOBILE ───────────────────────────
+                case "EMOTE":
+                    _packetService.SendToServer(PacketBuilder.UnicodeSpeech(args, 0x03, 0x024));
+                    break;
+
+                case "INVOKEVIRTUE":
+                {
+                    byte virtueId = args.Trim().ToLowerInvariant() switch
+                    {
+                        "honor"        => 1, "sacrifice"    => 2, "valor"       => 3,
+                        "compassion"   => 4, "honesty"      => 5, "humility"    => 6,
+                        "justice"      => 7, "spirituality" => 8, _ => 0
+                    };
+                    if (virtueId != 0)
+                        _packetService.SendToServer(new byte[] { 0xB2, virtueId });
+                    break;
+                }
+
+                case "RENAMEMOBILE":
+                {
+                    int idx = args.IndexOf(' ');
+                    if (idx < 0) break;
+                    uint rnSerial = ResolveSerial(args[..idx].Trim());
+                    string rnName = args[(idx + 1)..].Trim();
+                    // Pacchetto 0x75: cmd(1) serial(4) name(30, null-terminated)
+                    var pkt = new byte[35];
+                    pkt[0] = 0x75;
+                    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(1), rnSerial);
+                    var nameBytes = System.Text.Encoding.ASCII.GetBytes(rnName);
+                    Array.Copy(nameBytes, 0, pkt, 5, Math.Min(nameBytes.Length, 29));
+                    _packetService.SendToServer(pkt);
+                    break;
+                }
+
+                // ── TASK-04.7 — USECONTEXTMENU / WAITFORGUMP ──────────────────────────────────
+                case "USECONTEXTMENU":
+                {
+                    var parts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 2) break;
+                    uint cmSerial = ResolveSerial(parts[0]);
+                    if (!ushort.TryParse(parts[1], out ushort cmEntry)) break;
+                    // Request: 0xBF sub 0x13 — richiede il menu contestuale
+                    var req = new byte[9];
+                    req[0] = 0xBF;
+                    System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(req.AsSpan(1), 9);
+                    System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(req.AsSpan(3), 0x13);
+                    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(req.AsSpan(5), cmSerial);
+                    _packetService.SendToServer(req);
+                    await Task.Delay(150, token);
+                    // Response: 0xBF sub 0x15 — sceglie la voce di menu
+                    var resp = new byte[11];
+                    resp[0] = 0xBF;
+                    System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(resp.AsSpan(1), 11);
+                    System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(resp.AsSpan(3), 0x15);
+                    System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(resp.AsSpan(5), cmSerial);
+                    System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(resp.AsSpan(9), cmEntry);
+                    _packetService.SendToServer(resp);
+                    break;
+                }
+
+                case "WAITFORGUMP":
+                {
+                    var parts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    uint wfgTypeId = parts.Length > 0 && uint.TryParse(parts[0], System.Globalization.NumberStyles.HexNumber, null, out uint tid) ? tid : 0;
+                    int wfgTimeout = parts.Length > 1 && int.TryParse(parts[1], out int wt) ? wt : 5000;
+                    var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    Action<byte[]> gumpHandler = data =>
+                    {
+                        // 0xB0: cmd(1) len(2) serial(4) typeId(4) ...
+                        if (data.Length > 12)
+                        {
+                            uint t = System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(7));
+                            if (wfgTypeId == 0 || t == wfgTypeId) tcs.TrySetResult(true);
+                        }
+                    };
+                    _packetService.RegisterViewer(PacketPath.ServerToClient, 0xB0, gumpHandler);
+                    try
+                    {
+                        using var linked = CancellationTokenSource.CreateLinkedTokenSource(token);
+                        linked.CancelAfter(wfgTimeout);
+                        await tcs.Task.WaitAsync(linked.Token);
+                    }
+                    catch (OperationCanceledException) { }
+                    finally { _packetService.UnregisterViewer(PacketPath.ServerToClient, 0xB0, gumpHandler); }
+                    break;
+                }
+
+                // ── TASK-04.8 — ARMDISARM / BANDAGE / TARGETRESOURCE / USEPOTIONTYPE ──────────
+                case "ARMDISARM":
+                {
+                    var player = _worldService.Player;
+                    if (player == null) break;
+                    const byte mainHand = (byte)TMRazorImproved.Shared.Enums.Layer.RightHand;
+                    const byte twoHanded = (byte)TMRazorImproved.Shared.Enums.Layer.LeftHand;
+                    var weapon = _worldService.Items.FirstOrDefault(i => i.Container == player.Serial && (i.Layer == mainHand || i.Layer == twoHanded));
+                    var backpack = player.Backpack;
+                    if (weapon != null && backpack != null)
+                    {
+                        _packetService.SendToServer(PacketBuilder.LiftItem(weapon.Serial, weapon.Amount));
+                        await Task.Delay(100, token);
+                        _packetService.SendToServer(PacketBuilder.DropToContainer(weapon.Serial, backpack.Serial));
+                    }
+                    break;
+                }
+
+                case "BANDAGE":
+                {
+                    var bpContainer = _worldService.Player?.Backpack;
+                    if (bpContainer == null) break;
+                    var bandage = _worldService.Items.FirstOrDefault(i => i.Container == bpContainer.Serial && i.Graphic == 0x0E21);
+                    if (bandage == null) break;
+                    uint bTarget = string.IsNullOrEmpty(args)
+                        ? _worldService.Player?.Serial ?? 0
+                        : ResolveSerial(args.Trim());
+                    _packetService.SendToServer(PacketBuilder.DoubleClick(bandage.Serial));
+                    await Task.Delay(100, token);
+                    _targetingService.SendTarget(bTarget);
+                    break;
+                }
+
+                case "TARGETRESOURCE":
+                {
+                    var parts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 2) break;
+                    uint trSerial = ResolveSerial(parts[0]);
+                    int resourceType = parts[1].StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+                        ? Convert.ToInt32(parts[1], 16)
+                        : int.TryParse(parts[1], out int ri) ? ri : 0;
+                    _packetService.SendToServer(PacketBuilder.TargetByResource(trSerial, resourceType));
+                    break;
+                }
+
+                case "USEPOTIONTYPE":
+                {
+                    var potionGraphics = new Dictionary<string, ushort>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        ["heal"]      = 0x0F0C, ["cure"]      = 0x0F07, ["refresh"]   = 0x0F0B,
+                        ["agility"]   = 0x0F08, ["strength"]  = 0x0F09, ["explosion"] = 0x0F0D,
+                        ["poison"]    = 0x0F0A, ["nightsight"]= 0x0F06
+                    };
+                    if (!potionGraphics.TryGetValue(args.Trim(), out ushort potGraphic)) break;
+                    var bp = _worldService.Player?.Backpack;
+                    if (bp == null) break;
+                    var potion = _worldService.Items.FirstOrDefault(i => i.Container == bp.Serial && i.Graphic == potGraphic);
+                    if (potion != null)
+                        _packetService.SendToServer(PacketBuilder.DoubleClick(potion.Serial));
+                    break;
+                }
+
+                // ── TASK-04.9 — SETALIAS / REMOVEALIAS / PROMPTRESPONSE / RUNORGANIZER ────────
+                case "SETALIAS":
+                {
+                    int idx = args.IndexOf(' ');
+                    if (idx < 0) break;
+                    string aliasName = args[..idx].Trim();
+                    uint aliasSerial = ResolveSerial(args[(idx + 1)..].Trim());
+                    _aliases[aliasName] = aliasSerial;
+                    break;
+                }
+
+                case "REMOVEALIAS":
+                    _aliases.Remove(args.Trim());
+                    break;
+
+                case "PROMPTRESPONSE":
+                    _targetingService.SendPrompt(args);
+                    break;
+
+                case "RUNORGANIZER":
+                    _organizerService?.Start();
+                    break;
+
                 default:
                     _logger.LogWarning("Unknown macro action: {Action}", action);
                     break;
             }
+        }
+
+        /// <summary>
+        /// Risolve un argomento serial: prima controlla gli alias locali,
+        /// poi prova a parsare come numero decimale o esadecimale (prefisso 0x).
+        /// </summary>
+        private uint ResolveSerial(string s)
+        {
+            if (_aliases.TryGetValue(s, out uint aliasValue)) return aliasValue;
+            if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                return Convert.ToUInt32(s, 16);
+            return uint.TryParse(s, out uint v) ? v : 0;
         }
 
         // -------------------------------------------------------------------------
@@ -678,12 +942,27 @@ namespace TMRazorImproved.Core.Services
                 }
             };
 
+            // TASK-04.1 recording: WarMode 0x72
+            Action<byte[]> onWarMode = data =>
+            {
+                if (data.Length >= 2)
+                    lock (_recordingBuffer) _recordingBuffer.Add($"WARMODE {(data[1] != 0 ? "on" : "off")}");
+            };
+            // TASK-04.2 recording: FLY 0xBF sub 0x32
+            Action<byte[]> onExtendedC2S = data =>
+            {
+                if (data.Length >= 5 && data[3] == 0x00 && data[4] == 0x32)
+                    lock (_recordingBuffer) _recordingBuffer.Add(_worldService.Player?.Flying ?? false ? "FLY" : "LAND");
+            };
+
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x06, onDoubleClick);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x09, onSingleClick);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0xAD, onSpeech);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x6C, onTarget);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x12, onTextCmd);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x05, onAttack);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x72, onWarMode);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0xBF, onExtendedC2S);
 
             _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0x06, onDoubleClick));
             _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0x09, onSingleClick));
@@ -691,6 +970,8 @@ namespace TMRazorImproved.Core.Services
             _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0x6C, onTarget));
             _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0x12, onTextCmd));
             _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0x05, onAttack));
+            _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0x72, onWarMode));
+            _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0xBF, onExtendedC2S));
 
             _logger.LogInformation("Recording macro '{Name}' started", name);
         }
