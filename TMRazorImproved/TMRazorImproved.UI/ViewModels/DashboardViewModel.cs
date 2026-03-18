@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -11,12 +12,15 @@ using Wpf.Ui;
 
 namespace TMRazorImproved.UI.ViewModels
 {
-    public partial class DashboardViewModel : ViewModelBase
+    public partial class DashboardViewModel : ViewModelBase, 
+        CommunityToolkit.Mvvm.Messaging.IRecipient<TMRazorImproved.Shared.Messages.PingUpdatedMessage>
     {
         private readonly IScreenCaptureService _screenCapture;
         private readonly IVideoCaptureService _videoCapture;
         private readonly ISnackbarService _snackbar;
         private readonly ILanguageService _languageService;
+        private readonly IWorldService _worldService;
+        private readonly CommunityToolkit.Mvvm.Messaging.IMessenger _messenger;
 
         [ObservableProperty]
         private bool _isRecording;
@@ -24,16 +28,36 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty]
         private string _selectedLanguage;
 
+        [ObservableProperty]
+        private double _currentPing;
+
+        [ObservableProperty]
+        private double _minPing;
+
+        [ObservableProperty]
+        private double _maxPing;
+
+        [ObservableProperty]
+        private double _avgPing;
+
         public ObservableCollection<string> RecentScreenshots { get; } = new();
         public ObservableCollection<string> AvailableLanguages { get; } = new();
 
-        public DashboardViewModel(IScreenCaptureService screenCapture, IVideoCaptureService videoCapture, ISnackbarService snackbar, ILanguageService languageService, IConfigService configService)
+        public DashboardViewModel(IScreenCaptureService screenCapture, IVideoCaptureService videoCapture, ISnackbarService snackbar, ILanguageService languageService, IConfigService configService, IWorldService worldService, CommunityToolkit.Mvvm.Messaging.IMessenger messenger)
         {
             _screenCapture = screenCapture;
             _videoCapture = videoCapture;
             _snackbar = snackbar;
             _languageService = languageService;
+            _worldService = worldService;
+            _messenger = messenger;
+            _messenger.RegisterAll(this);
             
+            _currentPing = _worldService.CurrentPing;
+            _minPing = _worldService.MinPing == double.MaxValue ? 0 : _worldService.MinPing;
+            _maxPing = _worldService.MaxPing;
+            _avgPing = _worldService.AvgPing;
+
             foreach (var lang in _languageService.GetAvailableLanguages())
             {
                 AvailableLanguages.Add(lang);
@@ -43,6 +67,24 @@ namespace TMRazorImproved.UI.ViewModels
             _selectedLanguage = configService.Global.Language;
 
             LoadRecentScreenshots();
+        }
+
+        public void Receive(TMRazorImproved.Shared.Messages.PingUpdatedMessage message)
+        {
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                CurrentPing = _worldService.CurrentPing;
+                MinPing = _worldService.MinPing == double.MaxValue ? 0 : _worldService.MinPing;
+                MaxPing = _worldService.MaxPing;
+                AvgPing = _worldService.AvgPing;
+            });
+        }
+
+        [RelayCommand]
+        private void StartPing()
+        {
+            _worldService.StartPing(5);
+            _snackbar.Show("Ping Started", "Pinging server with 5 packets...", Wpf.Ui.Controls.ControlAppearance.Info, null, TimeSpan.FromSeconds(2));
         }
 
         partial void OnSelectedLanguageChanged(string value)

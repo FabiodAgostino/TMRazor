@@ -19,6 +19,7 @@ namespace TMRazorImproved.Core.Services
     {
         private readonly IPacketService _packetService;
         private readonly IWorldService _worldService;
+        private readonly IDragDropCoordinator _dragDropCoordinator;
         private readonly ILogger<ScavengerService> _logger;
         private readonly IMessenger _messenger;
 
@@ -30,12 +31,14 @@ namespace TMRazorImproved.Core.Services
             IPacketService packetService, 
             IConfigService configService,
             IWorldService worldService,
+            IDragDropCoordinator dragDropCoordinator,
             IMessenger messenger,
             IHotkeyService hotkeyService,
             ILogger<ScavengerService> logger) : base(configService)
         {
             _packetService = packetService;
             _worldService = worldService;
+            _dragDropCoordinator = dragDropCoordinator;
             _messenger = messenger;
             _logger = logger;
 
@@ -68,25 +71,30 @@ namespace TMRazorImproved.Core.Services
             if (config == null || !config.Enabled || !IsRunning) return;
 
             var item = message.Value;
-            bool shouldScavenge = config.ItemList.Count == 0 || config.ItemList.Any(i => i.IsEnabled && i.Graphic == item.Graphic);
+            if (_processedSerials.ContainsKey(item.Serial)) return;
 
-            if (shouldScavenge && !_processedSerials.ContainsKey(item.Serial))
+            // Se la lista è vuota, raccoglie tutto (comportamento legacy Scavenger)
+            // Se non è vuota, verifica graphic e proprietà
+            LootItem? lootItemConfig = null;
+            if (config.ItemList.Count > 0)
             {
-                if (_worldService.Player != null)
+                lootItemConfig = config.ItemList.FirstOrDefault(li => li.IsEnabled && li.Graphic == item.Graphic);
+                if (lootItemConfig == null) return;
+                
+                // Verifica proprietà se presenti filtri
+                if (lootItemConfig.PropertyFilters.Any() && !MatchProperties(item, lootItemConfig.PropertyFilters))
+                    return;
+            }
+
+            if (_worldService.Player != null)
+            {
+                int dist = _worldService.Player.DistanceTo(item);
+                if (dist <= config.Range)
                 {
-                    int dist = GetDistance(_worldService.Player.X, _worldService.Player.Y, item.X, item.Y);
-                    if (dist <= config.Range)
-                    {
-                        _scavengeQueue.Enqueue(item.Serial);
-                        _processedSerials.TryAdd(item.Serial, 0);
-                    }
+                    _scavengeQueue.Enqueue(item.Serial);
+                    _processedSerials.TryAdd(item.Serial, 0);
                 }
             }
-        }
-
-        private int GetDistance(int x1, int y1, int x2, int y2)
-        {
-            return Math.Max(Math.Abs(x1 - x2), Math.Abs(y1 - y2));
         }
 
         protected override async Task AgentLoopAsync(CancellationToken token)
@@ -112,7 +120,7 @@ namespace TMRazorImproved.Core.Services
                         var item = _worldService.FindItem(serial);
                         ushort amount = item?.Amount ?? 1;
                         _logger.LogDebug("Scavenging item 0x{Serial:X} (Amount: {Amount})", serial, amount);
-                        MoveItem(serial, amount, targetContainer);
+                        bool success = await MoveItemAsync(serial, amount, targetContainer);
                         await Task.Delay(Math.Max(100, config.Delay), token); 
                     }
                 }
@@ -123,10 +131,9 @@ namespace TMRazorImproved.Core.Services
             }
         }
 
-        private void MoveItem(uint serial, ushort amount, uint targetContainer)
+        private async Task<bool> MoveItemAsync(uint serial, ushort amount, uint targetContainer)
         {
-            _packetService.SendToServer(PacketBuilder.LiftItem(serial, amount));
-            _packetService.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer));
+            return await _dragDropCoordinator.RequestDragDrop(serial, targetContainer, amount);
         }
 
         protected override void OnStopped()

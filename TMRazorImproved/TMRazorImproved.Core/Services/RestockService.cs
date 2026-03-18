@@ -15,6 +15,7 @@ namespace TMRazorImproved.Core.Services
     {
         private readonly IPacketService _packetService;
         private readonly IWorldService _worldService;
+        private readonly IDragDropCoordinator _dragDropCoordinator;
         private readonly ILogger<RestockService> _logger;
 
         public event Action? OnComplete;
@@ -23,11 +24,13 @@ namespace TMRazorImproved.Core.Services
             IPacketService packetService,
             IConfigService configService,
             IWorldService worldService,
+            IDragDropCoordinator dragDropCoordinator,
             IHotkeyService hotkeyService,
             ILogger<RestockService> logger) : base(configService)
         {
             _packetService = packetService;
             _worldService = worldService;
+            _dragDropCoordinator = dragDropCoordinator;
             _logger = logger;
 
             hotkeyService.RegisterAction("Restock: Start", () => Start());
@@ -105,7 +108,7 @@ namespace TMRazorImproved.Core.Services
                     int toMove = Math.Min(item.Amount, needed);
                     _logger.LogInformation("Restocking {Amount} of item 0x{Graphic:X} (needed: {Needed})", toMove, item.Graphic, needed);
 
-                    MoveItem(item.Serial, (ushort)toMove, destination);
+                    await MoveItemAsync(item.Serial, (ushort)toMove, destination);
                     needed -= toMove;
 
                     await Task.Delay(Math.Max(100, config.Delay), token);
@@ -117,10 +120,9 @@ namespace TMRazorImproved.Core.Services
             await StopAsync();
         }
 
-        private void MoveItem(uint serial, ushort amount, uint targetContainer)
+        private async Task<bool> MoveItemAsync(uint serial, ushort amount, uint targetContainer)
         {
-            _packetService.SendToServer(PacketBuilder.LiftItem(serial, amount));
-            _packetService.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer));
+            return await _dragDropCoordinator.RequestDragDrop(serial, targetContainer, amount);
         }
     }
 }

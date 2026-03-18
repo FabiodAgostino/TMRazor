@@ -17,6 +17,7 @@ namespace TMRazorImproved.Shared.Models
         public virtual int X { get; set; }
         public virtual int Y { get; set; }
         public virtual int Z { get; set; }
+        public virtual byte Flags { get; set; }
         public virtual UOPropertyList? OPL { get; set; }
         public virtual System.Collections.Generic.List<string> Properties => OPL?.Properties.Select(p => p.Arguments).ToList() ?? new();
 
@@ -41,6 +42,7 @@ namespace TMRazorImproved.Shared.Models
     public class Mobile : UOEntity
     {
         public virtual bool IsHidden { get; set; }
+        public virtual bool IsHuman => Graphic == 0x0190 || Graphic == 0x0191 || Graphic == 0x025D || Graphic == 0x025E || Graphic == 0x025F || Graphic == 0x0260 || Graphic == 0x02E8 || Graphic == 0x02E9;
 
         // Stats base
         public virtual ushort Hits { get; set; }
@@ -206,6 +208,7 @@ namespace TMRazorImproved.Shared.Models
         public virtual bool IsTwoHanded { get; set; }
         public virtual int Price { get; set; }
         public virtual string BuyDesc { get; set; } = string.Empty;
+        public virtual uint Owner { get; set; }
         public virtual bool PropsUpdated { get; set; }
         public virtual bool Updated { get; set; }
 

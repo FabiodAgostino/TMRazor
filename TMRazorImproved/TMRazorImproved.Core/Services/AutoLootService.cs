@@ -11,6 +11,7 @@ using TMRazorImproved.Shared.Models;
 using TMRazorImproved.Shared.Models.Config;
 using TMRazorImproved.Shared.Messages;
 using System.Buffers.Binary;
+using System.Text.RegularExpressions;
 using TMRazorImproved.Core.Utilities;
 
 namespace TMRazorImproved.Core.Services
@@ -19,6 +20,7 @@ namespace TMRazorImproved.Core.Services
     {
         private readonly IPacketService _packetService;
         private readonly IWorldService _worldService;
+        private readonly IDragDropCoordinator _dragDropCoordinator;
         private readonly ILogger<AutoLootService> _logger;
         private readonly IMessenger _messenger;
 
@@ -30,12 +32,14 @@ namespace TMRazorImproved.Core.Services
             IPacketService packetService, 
             IConfigService configService,
             IWorldService worldService,
+            IDragDropCoordinator dragDropCoordinator,
             IMessenger messenger,
             IHotkeyService hotkeyService,
             ILogger<AutoLootService> logger) : base(configService)
         {
             _packetService = packetService;
             _worldService = worldService;
+            _dragDropCoordinator = dragDropCoordinator;
             _messenger = messenger;
             _logger = logger;
 
@@ -70,11 +74,21 @@ namespace TMRazorImproved.Core.Services
 
             foreach (var item in message.Value.Items)
             {
-                bool shouldLoot = config.ItemList.Any(li => li.IsEnabled && li.Graphic == item.Graphic);
-                if (shouldLoot && !_processedSerials.ContainsKey(item.Serial))
+                if (_processedSerials.ContainsKey(item.Serial)) continue;
+
+                var lootItemConfig = config.ItemList.FirstOrDefault(li => li.IsEnabled && li.Graphic == item.Graphic);
+                if (lootItemConfig != null)
                 {
                     if (config.NoOpenCorpse && IsCorpse(message.Value.ContainerSerial))
                         continue;
+
+                    // Verifica proprietà se presenti filtri
+                    if (lootItemConfig.PropertyFilters.Any())
+                    {
+                        var worldItem = _worldService.FindItem(item.Serial);
+                        if (worldItem == null || !MatchProperties(worldItem, lootItemConfig.PropertyFilters))
+                            continue;
+                    }
 
                     _lootQueue.Enqueue(item.Serial);
                     _processedSerials.TryAdd(item.Serial, 0);
@@ -88,12 +102,16 @@ namespace TMRazorImproved.Core.Services
             if (config == null || !config.Enabled || !IsRunning) return;
 
             var item = _worldService.FindItem(message.Value.ItemSerial);
-            if (item == null) return;
+            if (item == null || _processedSerials.ContainsKey(item.Serial)) return;
 
-            bool shouldLoot = config.ItemList.Any(li => li.IsEnabled && li.Graphic == item.Graphic);
-            if (shouldLoot && !_processedSerials.ContainsKey(item.Serial))
+            var lootItemConfig = config.ItemList.FirstOrDefault(li => li.IsEnabled && li.Graphic == item.Graphic);
+            if (lootItemConfig != null)
             {
                 if (config.NoOpenCorpse && IsCorpse(message.Value.ContainerSerial))
+                    return;
+
+                // Verifica proprietà se presenti filtri
+                if (lootItemConfig.PropertyFilters.Any() && !MatchProperties(item, lootItemConfig.PropertyFilters))
                     return;
 
                 _lootQueue.Enqueue(item.Serial);
@@ -155,7 +173,7 @@ namespace TMRazorImproved.Core.Services
                     {
                         ushort amount = item?.Amount ?? 1;
                         _logger.LogDebug("Looting item 0x{Serial:X} (Amount: {Amount})", serial, amount);
-                        MoveItem(serial, amount, targetContainer);
+                        bool success = await MoveItemAsync(serial, amount, targetContainer);
                         
                         await Task.Delay(Math.Max(100, config.Delay), token); 
                     }
@@ -167,10 +185,9 @@ namespace TMRazorImproved.Core.Services
             }
         }
 
-        private void MoveItem(uint serial, ushort amount, uint targetContainer)
+        private async Task<bool> MoveItemAsync(uint serial, ushort amount, uint targetContainer)
         {
-            _packetService.SendToServer(PacketBuilder.LiftItem(serial, amount));
-            _packetService.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer));
+            return await _dragDropCoordinator.RequestDragDrop(serial, targetContainer, amount);
         }
 
         protected override void OnStopped()

@@ -8,6 +8,7 @@ namespace TMRazorImproved.Shared.Interfaces
     /// </summary>
     public interface IWorldService
     {
+        System.DateTime ConnectionStart { get; }
         Mobile? Player { get; }
         UOGump? CurrentGump { get; }
         System.Collections.Concurrent.ConcurrentDictionary<uint, UOGump> OpenGumps { get; }
@@ -24,6 +25,7 @@ namespace TMRazorImproved.Shared.Interfaces
         Item? FindItem(uint serial);
         UOEntity? FindEntity(uint serial);
         IEnumerable<Item> GetItemsInContainer(uint containerSerial);
+        uint GetRootContainer(uint serial);
 
         void AddMobile(Mobile mobile);
         void AddItem(Item item);
@@ -41,6 +43,13 @@ namespace TMRazorImproved.Shared.Interfaces
         void RemoveGump(uint gumpId);
         void RemoveGump(); // Rimuove il CurrentGump (per compatibilità)
         void SetLastOpenedContainer(uint serial);
+
+        double CurrentPing { get; }
+        double MinPing { get; }
+        double MaxPing { get; }
+        double AvgPing { get; }
+        void UpdatePing(double ms);
+        void StartPing(int count);
 
         void Clear();
     }

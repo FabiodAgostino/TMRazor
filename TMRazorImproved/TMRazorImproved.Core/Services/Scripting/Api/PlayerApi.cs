@@ -35,6 +35,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         private readonly ITargetingService _targeting;
         private readonly ISkillsService _skills;
         private readonly IPathFindingService? _pathfinding;
+        private readonly IClientInteropService _interop;
         private readonly ScriptCancellationController _cancel;
         private readonly ILogger<PlayerApi>? _logger;
         private readonly IConfigService? _config;
@@ -45,6 +46,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             ITargetingService targeting,
             ISkillsService skills,
             ScriptCancellationController cancel,
+            IClientInteropService interop,
             IPathFindingService? pathfinding = null,
             ILogger<PlayerApi>? logger = null,
             IConfigService? config = null)
@@ -54,6 +56,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _targeting = targeting;
             _skills = skills;
             _cancel = cancel;
+            _interop = interop;
             _pathfinding = pathfinding;
             _logger = logger;
             _config = config;
@@ -505,7 +508,10 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void PathFindTo(int x, int y, int z)
         {
             _cancel.ThrowIfCancelled();
-            // Invia al client il pacchetto 0x38 ripetuto per forzare il pathfinding alla coordinata
+            // Prova via interop (macro client)
+            _interop.Pathfind(x, y, z);
+
+            // Invia anche al client il pacchetto 0x38 ripetuto per forzare il pathfinding alla coordinata
             byte[] packet = new byte[7 * 20];
             for (int i = 0; i < 20; i++)
             {
@@ -515,6 +521,24 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 System.Buffers.Binary.BinaryPrimitives.WriteInt16BigEndian(packet.AsSpan(i * 7 + 5), (short)z);
             }
             _packet.SendToClient(packet);
+        }
+
+        public virtual void WeaponPrimarySA() => SetAbility("primary");
+        public virtual void WeaponSecondarySA() => SetAbility("secondary");
+        public virtual void WeaponClearSA() => SetAbility("clear");
+        public virtual void WeaponDisarmSA() => AttackType("disarm");
+        public virtual void WeaponStunSA() => AttackType("grapple");
+
+        public virtual void WeaponPrimary()
+        {
+            _cancel.ThrowIfCancelled();
+            _interop.WeaponPrimary();
+        }
+
+        public virtual void WeaponSecondary()
+        {
+            _cancel.ThrowIfCancelled();
+            _interop.WeaponSecondary();
         }
 
         public virtual void Fly(bool status)
@@ -552,12 +576,6 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             if (val != 0) _packet.SendToServer(new byte[] { 0xBF, 0x00, 0x05, 0x00, val });
         }
 
-        public virtual void WeaponPrimarySA() => SetAbility("primary");
-        public virtual void WeaponSecondarySA() => SetAbility("secondary");
-        public virtual void WeaponClearSA() => SetAbility("clear");
-        public virtual void WeaponDisarmSA() => AttackType("disarm");
-        public virtual void WeaponStunSA() => AttackType("grapple");
-
         public virtual void EquipLastWeapon()
         {
             _cancel.ThrowIfCancelled();
@@ -567,7 +585,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void ToggleAlwaysRun()
         {
             _cancel.ThrowIfCancelled();
-            _packet.SendToServer(new byte[] { 0xBF, 0x00, 0x05, 0x00, 0x24 });
+            _interop.ToggleAlwaysRun();
         }
 
         public virtual void GuildButton()

@@ -81,6 +81,12 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         [ObservableProperty]
         private bool _useNormalTarget;
 
+        [ObservableProperty]
+        private bool _poisonBlock;
+
+        [ObservableProperty]
+        private bool _mortalBlock;
+
         public ObservableCollection<string> TargetTypes { get; } = new() { "Self", "Last", "Friend", "Target" };
         public ObservableCollection<LogEntry> Logs { get; } = new();
 
@@ -141,6 +147,8 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                 TextMsgTarget = bh.TextMsgTarget;
                 TextMsgSelf = bh.TextMsgSelf;
                 UseNormalTarget = bh.UseNormalTarget;
+                PoisonBlock = bh.PoisonBlock;
+                MortalBlock = bh.MortalBlock;
             }
         }
 
@@ -181,6 +189,8 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         partial void OnTextMsgTargetChanged(string value) => SaveConfig();
         partial void OnTextMsgSelfChanged(string value) => SaveConfig();
         partial void OnUseNormalTargetChanged(bool value) => SaveConfig();
+        partial void OnPoisonBlockChanged(bool value) => SaveConfig();
+        partial void OnMortalBlockChanged(bool value) => SaveConfig();
 
         private void SaveConfig()
         {
@@ -207,6 +217,8 @@ namespace TMRazorImproved.UI.ViewModels.Agents
                 bh.TextMsgTarget = TextMsgTarget;
                 bh.TextMsgSelf = TextMsgSelf;
                 bh.UseNormalTarget = UseNormalTarget;
+                bh.PoisonBlock = PoisonBlock;
+                bh.MortalBlock = MortalBlock;
                 _config.Save();
             }
         }

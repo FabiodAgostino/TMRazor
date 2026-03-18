@@ -18,14 +18,21 @@ namespace TMRazorImproved.Core.Services
             _logger = logger;
         }
 
-        public void PlaySound(ushort soundId)
+        public void PlaySound(ushort soundId, int x = 0, int y = 0, int z = 0)
         {
-            // 0x54: cmd(1) mode(1) itemID(2) unk(1) x(2) y(2) z(2)
+            // 0x54: cmd(1) flags(1) soundID(2) volume(2) x(2) y(2) z(2) = 12 bytes
             byte[] data = new byte[12];
             data[0] = 0x54;
-            data[1] = 0x01;
+            data[1] = 0x01; // flags
             data[2] = (byte)(soundId >> 8);
             data[3] = (byte)soundId;
+            // data[4], data[5] volume (0)
+            data[6] = (byte)(x >> 8);
+            data[7] = (byte)x;
+            data[8] = (byte)(y >> 8);
+            data[9] = (byte)y;
+            data[10] = (byte)(z >> 8);
+            data[11] = (byte)z;
             _packetService.SendToClient(data);
         }
 

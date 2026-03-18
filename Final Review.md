@@ -39,9 +39,9 @@
 
 ### 2.1 FILTRI - Assenti in TMRazorImproved
 
-#### TASK-001: Mobile Graphics Filter (MobileFilter.cs)
+#### TASK-001: Mobile Graphics Filter (MobileFilter.cs) ✅ COMPLETATO
 **Legacy:** `Razor/Filters/MobileFilter.cs`
-**Nuovo:** Nessun equivalente
+**Nuovo:** `FilterHandler.cs`
 
 Il legacy contiene tre metodi statici che sostituiscono la grafica di creature specifiche per ridurre il lag visivo:
 - `ApplyDragonFilter(Packet p, Mobile m)` - Sostituisce grafica Draghi/Wyrm
@@ -60,20 +60,20 @@ Il legacy contiene tre metodi statici che sostituiscono la grafica di creature s
 
 ---
 
-#### TASK-002: Target Filter Manager (TargetFilterManager.cs)
+#### TASK-002: Target Filter Manager (TargetFilterManager.cs) ✅ COMPLETATO
 **Legacy:** `Razor/Filters/TargetFilterManager.cs`
-**Nuovo:** Nessun equivalente
+**Nuovo:** `ITargetFilterService` + `TargetFilterService` + UI in `TargetingPage.xaml`
 
 Sistema completo per filtrare bersagli specifici dal targeting automatico:
-- `AddTargetFilter(string name, Serial serial)` - Aggiunge serial alla lista filtrata
-- `AddAllMobileAsTargetFilters()` - Aggiunge tutti i mobile visibili
-- `AddAllHumanoidsAsTargetFilters()` - Aggiunge solo umanoidi
-- `IsFilteredTarget(Serial serial)` - Verifica se un serial e filtrato
-- `RemoveTargetFilter(int index)` / `ClearTargetFilters()`
-- Persistenza XML con `Save()` / `Load()`
-- Inner class `TargetFilter` con proprietà `Name` e `Serial`
+- `AddFilter(uint serial, string name)` - Aggiunge serial alla lista filtrata
+- `AddAllMobiles()` - Aggiunge tutti i mobile visibili
+- `AddAllHumanoids()` - Aggiunge solo umanoidi
+- `IsFiltered(uint serial)` - Verifica se un serial e filtrato
+- `RemoveFilter(uint serial)` / `ClearAll()`
+- Persistenza in `UserProfile` tramite `ExcludedTargets`
+- UI integrata in `TargetingPage.xaml` con gestione lista e pulsanti rapidi
 
-**Impatto utente:** Impossibilita di escludere NPC/giocatori specifici dal targeting automatico.
+**Impatto utente:** Ripristinata la possibilità di escludere NPC/giocatori specifici dal targeting automatico.
 
 **Come implementare:**
 1. Creare interfaccia `ITargetFilterService` in `TMRazorImproved.Shared/Interfaces/`
@@ -96,7 +96,7 @@ Sistema completo per filtrare bersagli specifici dal targeting automatico:
 
 ---
 
-#### TASK-003: Vet Reward Gump Filter (VetRewardGumpFilter.cs)
+#### TASK-003: Vet Reward Gump Filter (VetRewardGumpFilter.cs) ✅ COMPLETATO
 **Legacy:** `Razor/Filters/VetRewardGumpFilter.cs`
 **Nuovo:** Nessun equivalente
 
@@ -112,7 +112,7 @@ Blocca il gump delle ricompense veterano (cliloc 1006046) su pacchetti `0xB0` e 
 
 ---
 
-#### TASK-004: Wall Static Filter (WallStaticFilter.cs)
+#### TASK-004: Wall Static Filter (WallStaticFilter.cs) ✅ COMPLETATO
 **Legacy:** `Razor/Filters/WallStaticFilter.cs`
 **Nuovo:** Nessun equivalente
 
@@ -129,7 +129,7 @@ Converte muri animati in grafiche statiche per ridurre il rendering.
 
 ---
 
-#### TASK-005: Staff Items & Staff NPCs Filter
+#### TASK-005: Staff Items & Staff NPCs Filter ✅ COMPLETATO
 **Legacy:** `Razor/Filters/StaffItems.cs` + `Razor/Filters/StaffNpcs.cs`
 **Nuovo:** Nessun equivalente
 
@@ -147,9 +147,9 @@ Converte muri animati in grafiche statiche per ridurre il rendering.
 
 ### 2.2 RETE - Moduli Assenti
 
-#### TASK-006: Packet Logger (PacketLogger.cs)
+#### TASK-006: Packet Logger (PacketLogger.cs) ✅ COMPLETATO
 **Legacy:** `Razor/Network/PacketLogger.cs`
-**Nuovo:** UI presente (`PacketLoggerPage.xaml` + `PacketLoggerViewModel.cs`) ma il servizio backend completo manca
+**Nuovo:** UI presente (`PacketLoggerPage.xaml` + `PacketLoggerViewModel.cs`) e servizio backend implementato (`IPacketLoggerService` + `PacketLoggerService`)
 
 Il legacy ha un sistema completo:
 - Whitelist/blacklist per packet ID
@@ -168,7 +168,7 @@ Il legacy ha un sistema completo:
 
 ---
 
-#### TASK-007: UO Mod Injection (UoMod.cs)
+#### TASK-007: UO Mod Injection (UoMod.cs) ✅ COMPLETATO
 **Legacy:** `Razor/Network/UoMod.cs`
 **Nuovo:** Nessun equivalente
 
@@ -187,9 +187,9 @@ Sistema per iniettare patch client-side nel processo UO:
 
 ---
 
-#### TASK-008: Ping/Latency Measurement (Ping.cs)
+#### TASK-008: Ping/Latency Measurement (Ping.cs) ✅ COMPLETATO
 **Legacy:** `Razor/Network/Ping.cs`
-**Nuovo:** Nessun equivalente
+**Nuovo:** `IWorldService` + `WorldPacketHandler.cs` + `DashboardViewModel.cs` / `TitleBarService.cs`
 
 Misura la latenza server con min/max/media:
 - `StartPing(int count)` - Avvia sequenza ping
@@ -207,9 +207,9 @@ Misura la latenza server con min/max/media:
 
 ---
 
-#### TASK-009: UO Warper (UoWarper.cs)
+#### TASK-009: UO Warper (UoWarper.cs) ✅ COMPLETATO
 **Legacy:** `Razor/Network/UoWarper.cs`
-**Nuovo:** Nessun equivalente
+**Nuovo:** `IClientInteropService` + `PlayerApi.cs` + `MiscApi.cs`
 
 Interfaccia per eseguire comandi macro via DLL:
 - `Pathfind(int X, int Y, int Z)` - Pathfinding via client
@@ -219,18 +219,18 @@ Interfaccia per eseguire comandi macro via DLL:
 - `NextContPos(X, Y)` - Posizione prossimo contenitore
 - `ToggleAlwaysRun()` - Toggle corsa automatica
 
-**Impatto utente:** Alcune macro avanzate che usano questi comandi non funzioneranno.
+**Impatto utente:** Ripristinata la possibilità di eseguire comandi macro diretti al client.
 
 **Come implementare:**
 1. Integrare questi metodi in `IClientInteropService` come metodi aggiuntivi
-2. Usare `PostMessage` per inviare i comandi al client UO
+2. Usare `PostMessage` per inviare i comandi al client UO (usando `WM_UOA_MSG`)
 3. Esporre nell'API scripting tramite `PlayerApi` o `MiscApi`
 
 ---
 
 ### 2.3 SCRIPTING API - Assenti
 
-#### TASK-010: Sound API (Sound.cs)
+#### TASK-010: Sound API (Sound.cs) ✅ COMPLETATO
 **Legacy:** `Razor/RazorEnhanced/Sound.cs`
 **Nuovo:** Nessun equivalente nell'API di scripting (il `SoundService` e `SoundViewModel` esistono per la UI, ma non sono esposti agli script)
 
@@ -327,15 +327,15 @@ Il legacy ha un manager centralizzato che coordina tutte le operazioni di drag-d
 
 ---
 
-#### TASK-014: EncodedSpeech (EncodedSpeech.cs)
+#### TASK-014: EncodedSpeech (EncodedSpeech.cs) ✅ COMPLETATO
 **Legacy:** `Razor/RazorEnhanced/EncodedSpeech.cs`
-**Nuovo:** Nessun equivalente
+**Nuovo:** `EncodedSpeechHelper.cs` + `WorldPacketHandler.cs` integration
 
 Gestisce la codifica/decodifica del protocollo di speech encoded di UO (pacchetto `0xAD`).
 
 **Come implementare:**
 1. Creare `EncodedSpeechHelper.cs` in `TMRazorImproved.Core/Utilities/`
-2. Portare la tabella di codifica e i metodi `Encode()`/`Decode()` dal legacy
+2. Portare la tabella di codifica e i metodi `Encode()`/`Decode()` dal legacy (usando `Ultima.SpeechList`)
 3. Usare in `WorldPacketHandler` per gestire correttamente il pacchetto `0xAD`
 
 ---
@@ -400,83 +400,31 @@ Le seguenti finestre di dialogo legacy non hanno equivalente nella nuova UI:
 
 ### 3.1 TODO nel Codice
 
-#### TASK-017: FriendApi.AddFriendTarget() (TODO)
+#### TASK-017: FriendApi.AddFriendTarget() (TODO) ✅ COMPLETATO
 **File:** `TMRazorImproved.Core/Services/Scripting/Api/FriendApi.cs:35`
-**Problema:** Il metodo `AddFriendTarget()` ha solo un commento `// TODO: Delega al TargetService per ottenere il target e aggiungerlo`
-**Corpo attuale:** Vuoto (solo `_cancel.ThrowIfCancelled()`)
-
-**Come fixare:**
-```csharp
-public virtual void AddFriendTarget()
-{
-    _cancel.ThrowIfCancelled();
-    // 1. Richiedi un target al TargetingService
-    var targetInfo = _targetingService.WaitForTarget(10000); // 10s timeout
-    if (targetInfo != null && targetInfo.Serial != 0)
-    {
-        // 2. Cerca il mobile nel WorldService
-        var mobile = _worldService.FindMobile(targetInfo.Serial);
-        string name = mobile?.Name ?? $"Unknown_0x{targetInfo.Serial:X}";
-        // 3. Aggiungi alla lista amici
-        _friends.AddFriend(targetInfo.Serial, name);
-    }
-}
-```
-Richiede l'iniezione di `ITargetingService` e `IWorldService` nel costruttore di `FriendApi`.
+**Problema:** Il metodo `AddFriendTarget()` aveva solo un commento TODO.
+**Soluzione:** Implementato utilizzando `ITargetingService.AcquireTargetAsync()` e aggiunta automatica alla lista amici.
 
 ---
 
-#### TASK-018: LegacyMacroMigrator - UseSkill (TODO)
+#### TASK-018: LegacyMacroMigrator - UseSkill (TODO) ✅ COMPLETATO
 **File:** `TMRazorImproved.Core/Utilities/LegacyMacroMigrator.cs:59`
-**Problema:** `return $"// TODO: USESKILL {parts[1]} (needs ID)";`
-**Il migrator non converte le azioni UseSkill perche manca la tabella di mapping nome→ID.**
-
-**Come fixare:**
-1. Aggiungere dizionario statico nel migrator:
-```csharp
-private static readonly Dictionary<string, int> SkillNameToId = new()
-{
-    { "Anatomy", 1 }, { "AnimalLore", 2 }, { "AnimalTaming", 35 },
-    { "ArmsLore", 4 }, { "Begging", 6 }, { "Cartography", 12 },
-    { "DetectHidden", 14 }, { "Discordance", 15 }, { "EvalInt", 16 },
-    { "Forensics", 19 }, { "Healing", 17 }, { "Herding", 18 },
-    { "Hiding", 21 }, { "Inscription", 23 }, { "ItemID", 3 },
-    { "Meditation", 46 }, { "Peacemaking", 9 }, { "Poisoning", 30 },
-    { "Provocation", 22 }, { "RemoveTrap", 48 }, { "SpiritSpeak", 32 },
-    { "Stealing", 33 }, { "Stealth", 47 }, { "Taste", 36 },
-    { "Tracking", 38 }
-};
-```
-2. Nel case `"UseSkill"`:
-```csharp
-case "UseSkill":
-    if (parts.Length >= 2 && SkillNameToId.TryGetValue(parts[1], out int skillId))
-        return $"USESKILL {skillId}";
-    return $"USESKILL {parts[1]}"; // fallback al nome
-```
+**Problema:** Mancava la tabella di mapping nome→ID per le skill.
+**Soluzione:** Aggiunto dizionario `SkillNameToId` completo e logica di lookup nel migrator.
 
 ---
 
-#### TASK-019: InspectorViewModel - Targeting per Locazione (TODO)
+#### TASK-019: InspectorViewModel - Targeting per Locazione (TODO) ✅ COMPLETATO
 **File:** `TMRazorImproved.UI/ViewModels/InspectorViewModel.cs:250`
-**Problema:** `// TODO: Implementare targeting specifico per locazione/terreno nel targetingService`
-**Il pulsante "Inspect Map" imposta `IsWaitingForTarget = true` ma non invia effettivamente una richiesta di targeting location-based.**
-
-**Come fixare:**
-1. In `ITargetingService`, aggiungere metodo `RequestLocationTarget()` che invia un pacchetto target cursor con flag `0x01` (location target)
-2. Nel `InspectorViewModel.InspectMap()`, chiamare `_targetingService.RequestLocationTarget()` invece del commento TODO
-3. Nel callback `OnTargetReceived`, gestire il caso in cui `info.Serial == 0` (location target) mostrando le coordinate X/Y/Z e il tile static
+**Problema:** Il pulsante "Inspect Map" non inviava una richiesta di targeting reale.
+**Soluzione:** Aggiunto metodo `RequestLocationTarget()` in `ITargetingService` e collegato al pulsante dell'inspector.
 
 ---
 
-#### TASK-020: GumpListViewModel - Open Gump Inspector (TODO)
+#### TASK-020: GumpListViewModel - Open Gump Inspector (TODO) ✅ COMPLETATO
 **File:** `TMRazorImproved.UI/ViewModels/GumpListViewModel.cs:59`
-**Problema:** `// TODO: Apri Gump Inspector con questo gump`
-
-**Come fixare:**
-1. Il `GumpListViewModel` deve navigare alla sezione Inspector con il gump selezionato
-2. Usare `IMessenger` per inviare un messaggio `NavigateToInspectorMessage(UOGump gump)`
-3. L'`InspectorViewModel` riceve il messaggio e chiama `InspectSpecificGump(gump)` (metodo gia esistente)
+**Problema:** Il pulsante di ispezione nella lista gump non faceva nulla.
+**Soluzione:** Implementata navigazione automatica all'inspector utilizzando `NavigateToInspectorMessage` e `IMessenger`.
 
 ---
 
@@ -903,39 +851,39 @@ Il nuovo `ClientInteropService` supporta solo il modello OSI-style con DLL injec
 | TASK-012 | Script Recorder | `IScriptRecorderService.cs` + `ScriptRecorderService.cs` + `ScriptingViewModel.cs` + `ScriptingPage.xaml` | Alto | ✅ COMPLETATO (2026-03-18) |
 | TASK-025 | Macro Migrator - 28 azioni mancanti | `LegacyMacroMigrator.cs` | Alto | ✅ COMPLETATO (2026-03-18) |
 | TASK-026 | Condition Evaluation Engine | `ConditionEvaluator.cs` + `MacrosService.cs` | Alto | ✅ COMPLETATO (2026-03-18) |
-| TASK-013 | DragDrop Coordinator | Nuovo servizio | Medio | Pendente |
+| TASK-013 | DragDrop Coordinator | Nuovo servizio | Medio | ✅ COMPLETATO (2026-03-18) |
 
 ### Priorità ALTA (Feature significative mancanti)
 
-| # | Task | File da Modificare | Effort |
-|---|------|-------------------|--------|
-| TASK-001 | Mobile Graphics Filter | `FilterHandler.cs` + config | Basso |
-| TASK-002 | Target Filter Manager | Nuovo servizio + UI | Medio |
-| TASK-010 | Sound API per scripting | Nuovo `SoundApi.cs` | Basso |
-| TASK-011 | HotKey API per scripting | Nuovo `HotkeyApi.cs` | Basso |
-| TASK-016 | Dialog editing proprietà item (AutoLoot/Scavenger) | Nuovi XAML + VM | Medio |
-| TASK-022 | Dress - Conflitto armi 2 mani | `DressService.cs` | Medio |
-| TASK-023 | BandageHeal - Feature avanzate | `BandageHealService.cs` | Medio |
-| TASK-024 | AutoLoot/Scavenger - Property Filter | Servizi + config + UI | Medio |
-| TASK-028 | Item Model - Campi mancanti | `Item.cs` + `WorldService.cs` | Basso |
+| # | Task | File da Modificare | Effort | Stato |
+|---|------|-------------------|--------|-------|
+| TASK-001 | Mobile Graphics Filter | `FilterHandler.cs` + config | Basso | ✅ COMPLETATO |
+| TASK-002 | Target Filter Manager | Nuovo servizio + UI | Medio | ✅ COMPLETATO |
+| TASK-010 | Sound API per scripting | Nuovo `SoundApi.cs` | Basso | ✅ COMPLETATO (2026-03-18) |
+| TASK-011 | HotKey API per scripting | Nuovo `HotkeyApi.cs` | Basso | ✅ COMPLETATO (2026-03-18) |
+| TASK-016 | Dialog editing proprietà item (AutoLoot/Scavenger) | Nuovi XAML + VM | Medio | ✅ COMPLETATO (2026-03-18) |
+| TASK-022 | Dress - Conflitto armi 2 mani | `DressService.cs` | Medio | ✅ COMPLETATO (2026-03-18) |
+| TASK-023 | BandageHeal - Feature avanzate | `BandageHealService.cs` | Medio | ✅ COMPLETATO (2026-03-18) |
+| TASK-024 | AutoLoot/Scavenger - Property Filter | Servizi + config + UI | Medio | ✅ COMPLETATO (2026-03-18) |
+| TASK-028 | Item Model - Campi mancanti | `Item.cs` + `WorldService.cs` | Basso | ✅ COMPLETATO (2026-03-18) |
 
 ### Priorità MEDIA (Funzionalità secondarie)
 
 | # | Task | File da Modificare | Effort |
 |---|------|-------------------|--------|
-| TASK-003 | Vet Reward Gump Filter | `FilterHandler.cs` | Basso |
-| TASK-004 | Wall Static Filter | `WorldPacketHandler.cs` | Basso |
-| TASK-005 | Staff Items/NPCs Filter | `FilterHandler.cs` | Medio |
-| TASK-006 | Packet Logger Backend | Nuovo servizio | Medio |
-| TASK-007 | UO Mod Injection | Nuovo servizio | Alto |
-| TASK-008 | Ping/Latency | `WorldPacketHandler.cs` | Basso |
-| TASK-009 | UO Warper | `ClientInteropService.cs` | Medio |
-| TASK-014 | EncodedSpeech | Nuova utility | Basso |
-| TASK-017 | FriendApi.AddFriendTarget() | `FriendApi.cs` | Basso |
-| TASK-018 | Migrator UseSkill fix | `LegacyMacroMigrator.cs` | Basso |
-| TASK-019 | Inspector location targeting | `InspectorViewModel.cs` | Basso |
-| TASK-020 | Gump Inspector navigation | `GumpListViewModel.cs` | Basso |
-| TASK-021 | ConvertBack fix | `CommonConverters.cs` | Basso |
+| TASK-003 | Vet Reward Gump Filter | `FilterHandler.cs` | Basso | ✅ COMPLETATO (2026-03-18) |
+| TASK-004 | Wall Static Filter | `WorldPacketHandler.cs` | Basso | ✅ COMPLETATO (2026-03-18) |
+| TASK-005 | Staff Items/NPCs Filter | `FilterHandler.cs` | Medio | ✅ COMPLETATO (2026-03-18) |
+| TASK-006 | Packet Logger Backend | Nuovo servizio | Medio | ✅ COMPLETATO (2026-03-18) |
+| TASK-007 | UO Mod Injection | Nuovo servizio | Alto | ✅ COMPLETATO (2026-03-18) |
+| TASK-008 | Ping/Latency | `WorldPacketHandler.cs` | Basso | ✅ COMPLETATO (2026-03-18) |
+| TASK-009 | UO Warper | `ClientInteropService.cs` | Medio | ✅ COMPLETATO (2026-03-18) |
+| TASK-014 | EncodedSpeech | Nuova utility | Basso | ✅ COMPLETATO (2026-03-18) |
+| TASK-017 | FriendApi.AddFriendTarget() | `FriendApi.cs` | Basso | ✅ COMPLETATO (2026-03-18) |
+| TASK-018 | Migrator UseSkill fix | `LegacyMacroMigrator.cs` | Basso | ✅ COMPLETATO (2026-03-18) |
+| TASK-019 | Inspector location targeting | `InspectorViewModel.cs` | Basso | ✅ COMPLETATO (2026-03-18) |
+| TASK-020 | Gump Inspector navigation | `GumpListViewModel.cs` | Basso | ✅ COMPLETATO (2026-03-18) |
+| TASK-021 | ConvertBack fix | `CommonConverters.cs` | Basso | ✅ COMPLETATO (2026-03-18) |
 
 ### Priorità BASSA (Nice-to-have)
 

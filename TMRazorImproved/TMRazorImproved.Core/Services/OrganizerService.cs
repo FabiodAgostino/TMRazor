@@ -16,6 +16,7 @@ namespace TMRazorImproved.Core.Services
     {
         private readonly IPacketService _packetService;
         private readonly IWorldService _worldService;
+        private readonly IDragDropCoordinator _dragDropCoordinator;
         private readonly ILogger<OrganizerService> _logger;
         
         public event Action? OnComplete;
@@ -24,11 +25,13 @@ namespace TMRazorImproved.Core.Services
             IPacketService packetService, 
             IConfigService configService,
             IWorldService worldService,
+            IDragDropCoordinator dragDropCoordinator,
             IHotkeyService hotkeyService,
             ILogger<OrganizerService> logger) : base(configService)
         {
             _packetService = packetService;
             _worldService = worldService;
+            _dragDropCoordinator = dragDropCoordinator;
             _logger = logger;
 
             hotkeyService.RegisterAction("Organizer Start", () => Start());
@@ -85,7 +88,7 @@ namespace TMRazorImproved.Core.Services
 
                 _logger.LogTrace("Moving item 0x{Serial:X} (Graphic: 0x{Graphic:X})", item.Serial, item.Graphic);
                 
-                MoveItem(item.Serial, item.Amount, config.Destination);
+                await MoveItemAsync(item.Serial, item.Amount, config.Destination);
 
                 // Delay tra uno spostamento e l'altro (tipico di Razor)
                 await Task.Delay(Math.Max(100, config.Delay), token);
@@ -95,10 +98,9 @@ namespace TMRazorImproved.Core.Services
             OnComplete?.Invoke();
         }
 
-        private void MoveItem(uint serial, ushort amount, uint targetContainer)
+        private async Task<bool> MoveItemAsync(uint serial, ushort amount, uint targetContainer)
         {
-            _packetService.SendToServer(PacketBuilder.LiftItem(serial, amount));
-            _packetService.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer));
+            return await _dragDropCoordinator.RequestDragDrop(serial, targetContainer, amount);
         }
     }
 }

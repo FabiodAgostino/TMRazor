@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -10,13 +11,15 @@ using TMRazorImproved.Shared.Models;
 
 namespace TMRazorImproved.UI.ViewModels
 {
-    public partial class InspectorViewModel : ViewModelBase
+    public partial class InspectorViewModel : ViewModelBase,
+        CommunityToolkit.Mvvm.Messaging.IRecipient<TMRazorImproved.Shared.Messages.NavigateToInspectorMessage>
     {
         private readonly ITargetingService _targetingService;
         private readonly IWorldService _worldService;
         private readonly ILanguageService _languageService;
         private readonly IPacketService _packetService;
         private readonly IMapService _mapService;
+        private readonly CommunityToolkit.Mvvm.Messaging.IMessenger _messenger;
 
         public MapViewModel Map { get; }
 
@@ -64,13 +67,14 @@ namespace TMRazorImproved.UI.ViewModels
         public string InspectedContainer => (InspectedEntity is Item item2) ? $"0x{item2.Container:X8}" : "N/A";
         public string InspectedAmount => (InspectedEntity is Item item3) ? item3.Amount.ToString() : "N/A";
 
-        public InspectorViewModel(ITargetingService targetingService, IWorldService worldService, ILanguageService languageService, IPacketService packetService, IMapService mapService)
+        public InspectorViewModel(ITargetingService targetingService, IWorldService worldService, ILanguageService languageService, IPacketService packetService, IMapService mapService, CommunityToolkit.Mvvm.Messaging.IMessenger messenger)
         {
             _targetingService = targetingService;
             _worldService = worldService;
             _languageService = languageService;
             _packetService = packetService;
             _mapService = mapService;
+            _messenger = messenger;
 
             Map = new MapViewModel(_worldService, _mapService);
 
@@ -79,6 +83,7 @@ namespace TMRazorImproved.UI.ViewModels
             _mapInfo = _languageService.GetString("Inspector.Map.NoMapData");
 
             _targetingService.TargetReceived += OnTargetReceived;
+            _messenger.RegisterAll(this);
             
             EnableThreadSafeCollection(RecentSerials, new object());
             EnableThreadSafeCollection(GumpControls, new object());
@@ -247,7 +252,24 @@ namespace TMRazorImproved.UI.ViewModels
         {
             IsWaitingForTarget = true;
             StatusMessage = _languageService.GetString("Inspector.Status.SelectMapLocation");
-            // TODO: Implementare targeting specifico per locazione/terreno nel targetingService
+            _targetingService.RequestLocationTarget();
+        }
+
+        public void Receive(TMRazorImproved.Shared.Messages.NavigateToInspectorMessage message)
+        {
+            if (message.Value is UOGump gump)
+            {
+                InspectSpecificGump(gump);
+            }
+            else if (message.Value is UOEntity entity)
+            {
+                InspectedEntity = entity;
+            }
+            else if (message.Value is uint serial)
+            {
+                var ent = _worldService.FindEntity(serial);
+                if (ent != null) InspectedEntity = ent;
+            }
         }
 
         private void OnTargetReceived(TMRazorImproved.Shared.Models.TargetInfo info)

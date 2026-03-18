@@ -21,7 +21,7 @@ namespace TMRazorImproved.UI.Views.Converters
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            return Binding.DoNothing;
         }
     }
 
@@ -34,7 +34,7 @@ namespace TMRazorImproved.UI.Views.Converters
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            return Binding.DoNothing;
         }
     }
 
@@ -57,7 +57,7 @@ namespace TMRazorImproved.UI.Views.Converters
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            return Binding.DoNothing;
         }
     }
 
@@ -72,7 +72,7 @@ namespace TMRazorImproved.UI.Views.Converters
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            return Binding.DoNothing;
         }
     }
 
@@ -109,7 +109,7 @@ namespace TMRazorImproved.UI.Views.Converters
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-            => throw new NotImplementedException();
+            => Binding.DoNothing;
     }
 
     public class SpellIconConverter : IValueConverter
@@ -144,7 +144,7 @@ namespace TMRazorImproved.UI.Views.Converters
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            return Binding.DoNothing;
         }
     }
 
@@ -157,7 +157,7 @@ namespace TMRazorImproved.UI.Views.Converters
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-            => throw new NotImplementedException();
+            => Binding.DoNothing;
     }
 
     public class IntToBoolConverter : IValueConverter
@@ -192,7 +192,7 @@ namespace TMRazorImproved.UI.Views.Converters
             }
             return value?.ToString() ?? "";
         }
-        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotImplementedException();
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => Binding.DoNothing;
     }
 
     public class BooleanToIconConverter : IValueConverter
@@ -206,7 +206,7 @@ namespace TMRazorImproved.UI.Views.Converters
             }
             return null;
         }
-        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotImplementedException();
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => Binding.DoNothing;
     }
 
     public class BooleanToAppearanceConverter : IValueConverter
@@ -225,6 +225,6 @@ namespace TMRazorImproved.UI.Views.Converters
             }
             return ControlAppearance.Primary;
         }
-        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotImplementedException();
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => Binding.DoNothing;
     }
 }

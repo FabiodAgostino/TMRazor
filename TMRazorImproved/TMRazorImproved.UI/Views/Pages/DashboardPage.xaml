@@ -23,6 +23,10 @@
                           Margin="0,0,0,24" />
 
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
@@ -54,8 +58,51 @@
                     </StackPanel>
                 </ui:Card>
 
-                <!-- Media & Capture -->
+                <!-- Ping Status -->
                 <ui:Card Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Top">
+                    <StackPanel>
+                        <ui:TextBlock Text="Ping Status" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                        
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBlock Text="Current Ping:" VerticalAlignment="Center"/>
+                            <ui:TextBlock Grid.Column="1" Text="{Binding CurrentPing, StringFormat='{}{0:F0} ms'}" FontWeight="Bold"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <ui:TextBlock Text="Min" FontSize="12" Appearance="Secondary" HorizontalAlignment="Center"/>
+                                <ui:TextBlock Text="{Binding MinPing, StringFormat='{}{0:F0} ms'}" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <ui:TextBlock Text="Max" FontSize="12" Appearance="Secondary" HorizontalAlignment="Center"/>
+                                <ui:TextBlock Text="{Binding MaxPing, StringFormat='{}{0:F0} ms'}" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <ui:TextBlock Text="Avg" FontSize="12" Appearance="Secondary" HorizontalAlignment="Center"/>
+                                <ui:TextBlock Text="{Binding AvgPing, StringFormat='{}{0:F0} ms'}" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <ui:Button Command="{Binding StartPingCommand}" 
+                                   Content="Start Ping Test" 
+                                   Icon="Pulse24"
+                                   HorizontalAlignment="Stretch" 
+                                   Margin="0,8,0,0"
+                                   Appearance="Secondary"/>
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- Media & Capture -->
+                <ui:Card Grid.Column="0" Grid.Row="1" Margin="0,16,8,0" VerticalAlignment="Top">
                     <StackPanel>
                         <ui:TextBlock Text="{loc:Loc Dashboard.MediaCapture}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
                         

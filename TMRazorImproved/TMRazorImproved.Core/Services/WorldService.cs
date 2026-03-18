@@ -78,6 +78,24 @@ namespace TMRazorImproved.Core.Services
             return _items.Values.Where(i => i.Container == containerSerial);
         }
 
+        public uint GetRootContainer(uint serial)
+        {
+            var item = FindItem(serial);
+            if (item == null) return serial;
+
+            uint current = serial;
+            uint parent = item.Container;
+
+            while (parent != 0)
+            {
+                current = parent;
+                var next = FindItem(parent);
+                if (next == null) break; // Root is likely a mobile
+                parent = next.Container;
+            }
+            return current;
+        }
+
         public UOEntity? FindEntity(uint serial)
         {
             if (_mobiles.TryGetValue(serial, out var m)) return m;
@@ -109,9 +127,15 @@ namespace TMRazorImproved.Core.Services
 
         public void SetPlayer(Mobile player)
         {
+            if (_player == null)
+            {
+                ConnectionStart = System.DateTime.UtcNow;
+            }
             _player = player;
             AddMobile(player);
         }
+
+        public System.DateTime ConnectionStart { get; private set; } = System.DateTime.MinValue;
 
         public void SetCurrentGump(UOGump? gump)
         {
@@ -145,6 +169,32 @@ namespace TMRazorImproved.Core.Services
             LastOpenedContainer = serial;
         }
 
+        public double CurrentPing { get; private set; }
+        public double MinPing { get; private set; } = double.MaxValue;
+        public double MaxPing { get; private set; }
+        public double AvgPing { get; private set; }
+
+        private readonly List<double> _pingHistory = new();
+        private const int MaxPingHistory = 10;
+
+        public void UpdatePing(double ms)
+        {
+            CurrentPing = ms;
+            if (ms < MinPing) MinPing = ms;
+            if (ms > MaxPing) MaxPing = ms;
+
+            _pingHistory.Add(ms);
+            if (_pingHistory.Count > MaxPingHistory) _pingHistory.RemoveAt(0);
+            AvgPing = _pingHistory.Average();
+            
+            _messenger.Send(new TMRazorImproved.Shared.Messages.PingUpdatedMessage(ms));
+        }
+
+        public void StartPing(int count)
+        {
+            _messenger.Send(new TMRazorImproved.Shared.Messages.StartPingRequestMessage(count));
+        }
+
         public void Clear()
         {
             _mobiles.Clear();
@@ -152,6 +202,11 @@ namespace TMRazorImproved.Core.Services
             _player = null;
             CurrentGump = null;
             OpenGumps.Clear();
+            CurrentPing = 0;
+            MinPing = double.MaxValue;
+            MaxPing = 0;
+            AvgPing = 0;
+            _pingHistory.Clear();
         }
     }
 }

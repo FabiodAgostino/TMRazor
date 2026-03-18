@@ -420,10 +420,10 @@ namespace TMRazorImproved.UI.ViewModels
                     // da TmClient) e popola PacketTable in modo che GetPacketLength funzioni.
                     // I WH hook non funzionano su TmClient (x64) ma non sono più necessari.
 
-                    if (AllowMultiClient && gamePid != 0)
+                    if (gamePid != 0)
                     {
                         _uoModService.InjectUoMod(gamePid);
-                        _uoModService.EnablePatch(UOPatchType.MultiUO, true);
+                        _uoModService.ApplyProfilePatches(_configService.CurrentProfile);
                     }
                 });
 

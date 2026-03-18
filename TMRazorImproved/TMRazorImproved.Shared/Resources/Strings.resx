@@ -3275,4 +3275,10 @@ print('HP:', Player.Hits, '/', Player.HitsMax)</value>
   <data name="Options.PathFindingMaxRange.ToolTip" xml:space="preserve">
     <value>Maximum distance (in tiles) the pathfinding engine will scan to find a path.</value>
   </data>
+  <data name="PacketLogger.OpenLog" xml:space="preserve">
+    <value>Open Log Folder</value>
+  </data>
+  <data name="PacketLogger.OpenLog.ToolTip" xml:space="preserve">
+    <value>Open the folder where the packet log is stored.</value>
+  </data>
 </root>

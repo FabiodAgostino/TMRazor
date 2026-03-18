@@ -26,6 +26,7 @@ namespace TMRazorImproved.Tests.Integration
                 new Mock<IJournalService>().Object,
                 new Mock<ISkillsService>().Object,
                 new Mock<IFriendsService>().Object,
+                new Mock<IHotkeyService>().Object,
                 new Mock<IConfigService>().Object,
                 new Mock<IAutoLootService>().Object,
                 new Mock<IScavengerService>().Object,
@@ -33,6 +34,7 @@ namespace TMRazorImproved.Tests.Integration
                 new Mock<IBandageHealService>().Object,
                 new Mock<IDressService>().Object,
                 new Mock<IRestockService>().Object,
+                new Mock<ISoundService>().Object,
                 WeakReferenceMessenger.Default,
                 logger,
                 new NullLoggerFactory()
@@ -125,6 +127,7 @@ namespace TMRazorImproved.Tests.Integration
                 new Mock<IJournalService>().Object,
                 new Mock<ISkillsService>().Object,
                 new Mock<IFriendsService>().Object,
+                new Mock<IHotkeyService>().Object,
                 new Mock<IConfigService>().Object,
                 new Mock<IAutoLootService>().Object,
                 new Mock<IScavengerService>().Object,
@@ -132,6 +135,7 @@ namespace TMRazorImproved.Tests.Integration
                 new Mock<IBandageHealService>().Object,
                 new Mock<IDressService>().Object,
                 new Mock<IRestockService>().Object,
+                new Mock<ISoundService>().Object,
                 WeakReferenceMessenger.Default,
                 logger,
                 new NullLoggerFactory()

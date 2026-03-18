@@ -44,6 +44,9 @@ namespace TMRazorImproved.Shared.Interfaces
         // Richiede un target al client e notifica tramite evento
         void RequestTarget();
 
+        /// <summary>Richiede al client di selezionare una locazione (terreno/mappa).</summary>
+        void RequestLocationTarget();
+
         // Richiede un target al client e attende il risultato in modo asincrono
         Task<TargetInfo> AcquireTargetAsync();
     }

@@ -56,7 +56,8 @@ namespace TMRazorImproved.UI.ViewModels
         [RelayCommand]
         private void InspectGump(UOGump gump)
         {
-            // TODO: Apri Gump Inspector con questo gump
+            if (gump == null) return;
+            WeakReferenceMessenger.Default.Send(new NavigateToInspectorMessage(gump));
         }
     }
 }

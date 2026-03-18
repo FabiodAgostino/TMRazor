@@ -22,6 +22,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
         private readonly RestockApi _restockApi;
         private readonly OrganizerApi _organizerApi;
         private readonly BandageHealApi _bandageHealApi;
+        private readonly HotkeyApi _hotkeyApi;
         private readonly ScriptCancellationController _cancel;
         private readonly Action<string> _output;
 
@@ -51,6 +52,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             RestockApi restockApi,
             OrganizerApi organizerApi,
             BandageHealApi bandageHealApi,
+            HotkeyApi hotkeyApi,
             ScriptCancellationController cancel,
             Action<string> output)
         {
@@ -68,6 +70,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             _restockApi = restockApi;
             _organizerApi = organizerApi;
             _bandageHealApi = bandageHealApi;
+            _hotkeyApi = hotkeyApi;
             _cancel = cancel;
             _output = output;
 
@@ -344,6 +347,16 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                         break;
                     case "bandageheal":
                         if (args.Length > 0 && args[0] == "off") _bandageHealApi.Stop(); else _bandageHealApi.Start();
+                        break;
+                    case "playsound":
+                        if (args.Length > 0) _misc.PlaySound(ParseInt(args[0]));
+                        break;
+                    case "playmusic":
+                        if (args.Length > 0) _misc.PlayMusic(ParseInt(args[0]));
+                        break;
+                    case "stopmusic":
+                    case "stopsound":
+                        _misc.StopMusic();
                         break;
                     case "getlabel":
                         if (args.Length >= 2)

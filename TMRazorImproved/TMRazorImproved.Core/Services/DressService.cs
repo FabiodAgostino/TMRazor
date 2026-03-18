@@ -17,6 +17,7 @@ namespace TMRazorImproved.Core.Services
     {
         private readonly IPacketService _packetService;
         private readonly IWorldService _worldService;
+        private readonly IWeaponService _weaponService;
         private readonly ILogger<DressService> _logger;
         
         private readonly ConcurrentQueue<ActionTask> _actionQueue = new();
@@ -28,10 +29,12 @@ namespace TMRazorImproved.Core.Services
             IConfigService configService,
             IWorldService worldService,
             IHotkeyService hotkeyService,
+            IWeaponService weaponService,
             ILogger<DressService> logger) : base(configService)
         {
             _packetService = packetService;
             _worldService = worldService;
+            _weaponService = weaponService;
             _logger = logger;
 
             // In TMRazor le hotkey sono dinamiche per ogni lista.
@@ -109,7 +112,35 @@ namespace TMRazorImproved.Core.Services
                 {
                     if (task.IsDress)
                     {
-                        EquipItem(task.Serial, task.Layer);
+                        var item = _worldService.FindItem(task.Serial);
+                        if (item != null)
+                        {
+                            // Risoluzione conflitti 2-mani
+                            if (_weaponService.IsTwoHanded(item.Graphic))
+                            {
+                                // Se l'item è a 2 mani, rimuovi sia RightHand che LeftHand prima
+                                await UnequipLayer(0x01, token); // RightHand
+                                await UnequipLayer(0x02, token); // LeftHand
+                            }
+                            else if (task.Layer == 0x02) // LeftHand (Scudo o arma 1-mano)
+                            {
+                                // Se vogliamo equipaggiare qualcosa in LeftHand, 
+                                // controlliamo se c'è un'arma a 2 mani in RightHand
+                                var rightItem = GetItemOnLayer(0x01);
+                                if (rightItem != null && _weaponService.IsTwoHanded(rightItem.Graphic))
+                                {
+                                    await UnequipLayer(0x01, token);
+                                }
+                            }
+                            else if (task.Layer == 0x01) // RightHand
+                            {
+                                // Se equipaggiamo in RightHand, controlliamo se c'è già qualcosa
+                                // (WearItem di solito fallisce se lo slot è occupato)
+                                await UnequipLayer(0x01, token);
+                            }
+
+                            EquipItem(task.Serial, task.Layer);
+                        }
                     }
                     else
                     {
@@ -125,6 +156,21 @@ namespace TMRazorImproved.Core.Services
                     break; 
                 }
             }
+        }
+
+        private async Task UnequipLayer(byte layer, CancellationToken token)
+        {
+            var item = GetItemOnLayer(layer);
+            if (item != null)
+            {
+                UnequipItem(item.Serial);
+                await Task.Delay(600, token);
+            }
+        }
+
+        private Item? GetItemOnLayer(byte layer)
+        {
+            return _worldService.Items.FirstOrDefault(i => i.Container == _worldService.Player?.Serial && i.Layer == layer);
         }
 
         private void EquipItem(uint serial, byte layer)

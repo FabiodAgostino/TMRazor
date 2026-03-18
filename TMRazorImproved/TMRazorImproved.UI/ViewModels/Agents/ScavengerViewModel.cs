@@ -228,7 +228,16 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private void EditItem(LootItem? item)
         {
             if (item == null) return;
-            StatusText = _lang.GetString("Agents.General.EditNotImplemented");
+            
+            var vm = new Windows.EditLootItemViewModel(item);
+            var win = new Views.Windows.EditLootItemWindow(vm);
+            
+            if (win.ShowDialog() == true)
+            {
+                _config.Save();
+                StatusText = _lang.GetString("Agents.General.ItemUpdated");
+                OnPropertyChanged(nameof(LootItems)); // Forza refresh UI
+            }
         }
 
         private void RemoveItem(LootItem? item)

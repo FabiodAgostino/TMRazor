@@ -61,12 +61,21 @@
                     <UniformGrid Columns="2">
                         <StackPanel Margin="0,0,8,8">
                             <ui:TextBlock Text="{loc:Loc Agents.General.Delay}" Appearance="Secondary" FontSize="12" />
-                            <ui:NumberBox Value="{Binding Delay, Mode=TwoWay}" Minimum="100" Maximum="10000" SmallChange="50" />
+                            <ui:NumberBox Value="{Binding CustomDelay, Mode=TwoWay}" Minimum="0" Maximum="10000" SmallChange="50" 
+                                         ToolTip="Set to 0 for automatic DEX-based delay"/>
                         </StackPanel>
                         <ui:ToggleSwitch Content="{loc:Loc Agents.BandageHeal.ShowHP}" 
-                                         IsChecked="{Binding ShowHPOverBody}" 
+                                         IsChecked="{Binding ShowCountdown, Mode=TwoWay}" 
                                          Margin="0,4"
                                          ToolTip="{loc:Loc Agents.BandageHeal.ShowHP.ToolTip}"/>
+                    </UniformGrid>
+
+                    <Separator Margin="0,12" />
+
+                    <ui:TextBlock Text="Heal Blocks" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                    <UniformGrid Columns="2">
+                        <ui:ToggleSwitch Content="Block if Poisoned" IsChecked="{Binding PoisonBlock, Mode=TwoWay}" Margin="0,0,0,4"/>
+                        <ui:ToggleSwitch Content="Block if Mortal" IsChecked="{Binding MortalBlock, Mode=TwoWay}" Margin="0,0,0,4"/>
                     </UniformGrid>
                 </StackPanel>
             </ui:Card>

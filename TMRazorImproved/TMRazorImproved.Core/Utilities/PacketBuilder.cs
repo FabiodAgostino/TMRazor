@@ -362,5 +362,49 @@ namespace TMRazorImproved.Core.Utilities
             BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(5), serial);
             return pkt;
         }
+
+        // -------------------------------------------------------------------------
+        // World Items (Server -> Client simulation)
+        // -------------------------------------------------------------------------
+
+        /// <summary>
+        /// World Item 0x1A: crea un pacchetto per mostrare un oggetto a terra.
+        /// Versione non bit-packed per semplicità (tutti i campi opzionali inclusi).
+        /// Layout: cmd(1) len(2) serial|0x80000000(4) itemId|0x8000(2) amount(2) x|0x8000(2) y|0x8000|0x4000(2) dir(1) z(1) hue(2) flags(1)
+        /// Total len: 1+2+4+2+2+2+2+1+1+2+1 = 20 bytes.
+        /// </summary>
+        public static byte[] WorldItem(uint serial, ushort itemId, ushort amount, ushort x, ushort y, sbyte z, ushort hue, byte flags)
+        {
+            byte[] pkt = new byte[20];
+            pkt[0] = 0x1A;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), 20);
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(3), serial | 0x80000000);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(7), (ushort)(itemId | 0x8000));
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(9), amount);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(11), (ushort)(x | 0x8000));
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(13), (ushort)(y | 0xC000));
+            pkt[15] = 0; // dir
+            pkt[16] = (byte)z;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(17), hue);
+            pkt[19] = flags;
+            return pkt;
+        }
+
+        /// <summary>
+        /// Mobile Update 0x20: aggiorna le informazioni di un mobile (corpo, hue, flags).
+        /// </summary>
+        public static byte[] MobileUpdate(uint serial, ushort body, ushort hue, byte flags, ushort x, ushort y, sbyte z, byte dir)
+        {
+            byte[] pkt = new byte[15];
+            pkt[0] = 0x20;
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(1), serial);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(5), body);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(7), hue);
+            pkt[9] = flags;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(10), x);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(12), y);
+            pkt[14] = (byte)z; // Note: layout variant, usually includes dir at end but 0x20 is simple
+            return pkt;
+        }
     }
 }

@@ -210,4 +210,10 @@ namespace TMRazorImproved.Shared.Messages
     {
         public WeatherMessage(byte type, byte count, byte temperature) : base((type, count, temperature)) { }
     }
+
+    /// <summary>Richiesta di navigazione verso la pagina Inspector per un'entità o un gump specifico.</summary>
+    public class NavigateToInspectorMessage : ValueChangedMessage<object>
+    {
+        public NavigateToInspectorMessage(object target) : base(target) { }
+    }
 }

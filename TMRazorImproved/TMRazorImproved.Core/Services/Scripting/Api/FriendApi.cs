@@ -8,11 +8,15 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
     public class FriendApi
     {
         private readonly IFriendsService _friends;
+        private readonly ITargetingService _targeting;
+        private readonly IWorldService _world;
         private readonly ScriptCancellationController _cancel;
 
-        public FriendApi(IFriendsService friends, ScriptCancellationController cancel)
+        public FriendApi(IFriendsService friends, ITargetingService targeting, IWorldService world, ScriptCancellationController cancel)
         {
             _friends = friends;
+            _targeting = targeting;
+            _world = world;
             _cancel = cancel;
         }
 
@@ -32,7 +36,25 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void AddFriendTarget()
         {
             _cancel.ThrowIfCancelled();
-            // TODO: Delega al TargetService per ottenere il target e aggiungerlo
+
+            // Richiede un target al client
+            _targeting.RequestTarget();
+
+            // Attende il risultato (stile TargetApi)
+            var task = _targeting.AcquireTargetAsync();
+            while (!task.IsCompleted)
+            {
+                _cancel.ThrowIfCancelled();
+                System.Threading.Thread.Sleep(50);
+            }
+
+            var info = task.GetAwaiter().GetResult();
+            if (info.Serial != 0)
+            {
+                var mobile = _world.FindMobile(info.Serial);
+                string name = mobile?.Name ?? $"Unknown_0x{info.Serial:X}";
+                _friends.AddFriend(info.Serial, name);
+            }
         }
 
         public virtual void AddPlayer(string friendlist, string name, int serial)

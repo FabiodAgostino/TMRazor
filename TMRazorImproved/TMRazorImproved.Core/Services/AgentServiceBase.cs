@@ -1,9 +1,10 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using TMRazorImproved.Shared.Interfaces;
+using TMRazorImproved.Shared.Models;
 using TMRazorImproved.Shared.Models.Config;
 
 namespace TMRazorImproved.Core.Services
@@ -128,6 +129,32 @@ namespace TMRazorImproved.Core.Services
         /// </summary>
         protected virtual void OnStopped()
         {
+        }
+
+        protected bool MatchProperties(Item item, List<PropertyFilter> filters)
+        {
+            var itemProps = item.Properties;
+            if (itemProps == null || itemProps.Count == 0) return false;
+
+            return filters.All(pf =>
+            {
+                var matchingProp = itemProps.FirstOrDefault(p => p.Contains(pf.Name, StringComparison.OrdinalIgnoreCase));
+                if (matchingProp == null) return false;
+
+                double val = ExtractValue(matchingProp);
+                return val >= pf.MinValue && val <= pf.MaxValue;
+            });
+        }
+
+        protected double ExtractValue(string propertyLine)
+        {
+            // Regex semplice per estrarre il primo numero (intero o decimale) dalla riga
+            var match = Regex.Match(propertyLine, @"(\d+(\.\d+)?)");
+            if (match.Success && double.TryParse(match.Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double result))
+            {
+                return result;
+            }
+            return 0;
         }
 
         public void Dispose()

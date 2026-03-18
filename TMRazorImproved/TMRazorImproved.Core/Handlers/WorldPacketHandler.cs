@@ -1,10 +1,13 @@
 using System;
 using System.Buffers.Binary;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Messaging;
 using TMRazorImproved.Core.Utilities;
 using TMRazorImproved.Shared.Enums;
@@ -14,7 +17,7 @@ using TMRazorImproved.Shared.Models;
 
 namespace TMRazorImproved.Core.Handlers
 {
-    public class WorldPacketHandler
+    public class WorldPacketHandler : IRecipient<StartPingRequestMessage>
     {
         private readonly IPacketService _packetService;
         private readonly IWorldService _worldService;
@@ -25,6 +28,9 @@ namespace TMRazorImproved.Core.Handlers
         private readonly IScreenCaptureService _screenCapture;
         private readonly ITargetingService _targetingService;
         private readonly IMessenger _messenger;
+
+        private readonly ConcurrentDictionary<byte, long> _sentPings = new();
+        private int _pingsRemaining = 0;
 
         public WorldPacketHandler(
             IPacketService packetService,
@@ -46,8 +52,28 @@ namespace TMRazorImproved.Core.Handlers
             _screenCapture = screenCapture;
             _targetingService = targetingService;
             _messenger = messenger;
+            _messenger.RegisterAll(this);
 
             RegisterHandlers();
+        }
+
+        public void Receive(StartPingRequestMessage message)
+        {
+            _pingsRemaining = Math.Max(1, Math.Min(20, message.Value));
+            _sentPings.Clear();
+            SendPing();
+        }
+
+        private void SendPing()
+        {
+            if (_pingsRemaining <= 0) return;
+
+            _pingsRemaining--;
+            byte seq;
+            do { seq = (byte)Random.Shared.Next(256); } while (_sentPings.ContainsKey(seq));
+
+            _sentPings[seq] = Stopwatch.GetTimestamp();
+            _packetService.SendToServer(new byte[] { 0x73, seq });
         }
 
         private void MorphGraphic(ref ushort graphic, ref ushort hue)
@@ -98,6 +124,7 @@ namespace TMRazorImproved.Core.Handlers
             // ── Messages & Journal ───────────────────────────────────────────────────────
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0x1C, HandleAsciiMessage);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xAE, HandleUnicodeMessage);
+            _packetService.RegisterViewer(PacketPath.ServerToClient, 0xAD, HandleEncodedUnicodeSpeech);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xAF, HandleDeathAnimation);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xC1, HandleLocalizedMessage);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xC2, HandleUnicodePromptReceived);
@@ -275,8 +302,27 @@ namespace TMRazorImproved.Core.Handlers
         {
             // 0x73: cmd(1) seq(1) — il server fa ping, rispondiamo
             if (data.Length < 2) return;
-            byte[] response = new byte[] { 0x73, data[1] };
-            _packetService.SendToServer(response);
+            
+            byte seq = data[1];
+
+            if (_sentPings.TryRemove(seq, out long sentTimestamp))
+            {
+                long now = Stopwatch.GetTimestamp();
+                double ms = (double)(now - sentTimestamp) * 1000.0 / Stopwatch.Frequency;
+                
+                _worldService.UpdatePing(ms);
+
+                if (_pingsRemaining > 0)
+                {
+                    SendPing();
+                }
+            }
+            else
+            {
+                // Server-initiated ping: respond with the same sequence
+                byte[] response = new byte[] { 0x73, seq };
+                _packetService.SendToServer(response);
+            }
         }
 
         private void HandleClientVersion(byte[] data)
@@ -573,6 +619,7 @@ namespace TMRazorImproved.Core.Handlers
                 mobile.Direction = dir;
                 mobile.Hue = hue;
                 mobile.Notoriety = notoriety;
+                mobile.Flags = flags;
                 mobile.IsHidden = (flags & 0x80) != 0;
                 mobile.IsPoisoned = (flags & 0x04) != 0;
                 mobile.IsYellowHits = (flags & 0x08) != 0;
@@ -718,6 +765,7 @@ namespace TMRazorImproved.Core.Handlers
                 mobile.Direction = dir;
                 mobile.Hue = hue;
                 mobile.Notoriety = notoriety;
+                mobile.Flags = flags;
                 mobile.IsHidden = (flags & 0x80) != 0;
                 mobile.IsPoisoned = (flags & 0x04) != 0;
                 
@@ -886,8 +934,25 @@ namespace TMRazorImproved.Core.Handlers
                 item.Y = y;
                 item.Z = z;
                 item.Hue = hue;
+                item.Flags = flags;
                 item.Container = 0;
                 item.Layer = dir;
+            }
+
+            // Advanced Filter: Static Fields (convert fields like Wall of Stone to static graphics)
+            if (_configService.CurrentProfile.StaticFields && ItemDataHelper.AnimatedWallToStatic.TryGetValue((ushort)(itemId & 0x3FFF), out var staticData))
+            {
+                item.Graphic = staticData.NewItemID;
+                item.Hue = staticData.NewHue;
+
+                var staticPkt = PacketBuilder.WorldItem(serial, staticData.NewItemID, amount, x, y, z, staticData.NewHue, flags);
+                _packetService.SendToClient(staticPkt);
+
+                var labelPkt = PacketBuilder.OverheadUnicodeSpeech(staticData.Label, serial, staticData.NewItemID, hue: staticData.NewHue);
+                _packetService.SendToClient(labelPkt);
+
+                _messenger.Send(new WorldItemMessage(item));
+                return false;
             }
 
             _messenger.Send(new WorldItemMessage(item));
@@ -926,7 +991,7 @@ namespace TMRazorImproved.Core.Handlers
             sbyte z = reader.ReadSByte();
             reader.ReadByte();           // light
             hue = reader.ReadUInt16();
-            reader.ReadByte();           // flags
+            byte flags = reader.ReadByte();           // flags
 
             var item = _worldService.FindItem(serial);
             if (item == null)
@@ -943,8 +1008,25 @@ namespace TMRazorImproved.Core.Handlers
                 item.Y = y;
                 item.Z = z;
                 item.Hue = hue;
+                item.Flags = flags;
                 item.Container = 0;
                 item.Layer = dir;
+            }
+
+            // Advanced Filter: Static Fields (convert fields like Wall of Stone to static graphics)
+            if (_configService.CurrentProfile.StaticFields && ItemDataHelper.AnimatedWallToStatic.TryGetValue((ushort)(itemId & 0x3FFF), out var staticData))
+            {
+                item.Graphic = staticData.NewItemID;
+                item.Hue = staticData.NewHue;
+
+                var staticPkt = PacketBuilder.WorldItem(serial, staticData.NewItemID, amount, x, y, z, staticData.NewHue, flags);
+                _packetService.SendToClient(staticPkt);
+
+                var labelPkt = PacketBuilder.OverheadUnicodeSpeech(staticData.Label, serial, staticData.NewItemID, hue: staticData.NewHue);
+                _packetService.SendToClient(labelPkt);
+
+                _messenger.Send(new WorldItemMessage(item));
+                return false;
             }
 
             _messenger.Send(new WorldItemMessage(item));
@@ -1824,6 +1906,34 @@ namespace TMRazorImproved.Core.Handlers
             reader.ReadString(4);        // language
             string name = reader.ReadString(30);
             string text = reader.ReadUnicodeString();
+
+            _journalService.AddEntry(new JournalEntry(text, name, serial, hue));
+
+            if (msgType != 0x01 && !string.IsNullOrEmpty(text))
+                _messenger.Send(new OverheadMessageMessage(serial, name, text, hue,
+                    (OverheadMessageType)msgType));
+        }
+
+        private void HandleEncodedUnicodeSpeech(byte[] data)
+        {
+            // 0xAD: cmd(1) len(2) serial(4) body(2) type(1) hue(2) font(2) lang[4] keywords(var) text(var Unicode)
+            if (data.Length < 48) return;
+            var reader = new UOBufferReader(data);
+            reader.ReadByte();           // 0xAD
+            reader.ReadUInt16();         // length
+            uint serial = reader.ReadUInt32();
+            reader.ReadUInt16();         // body
+            byte msgType = reader.ReadByte();
+            ushort hue = reader.ReadUInt16();
+            reader.ReadUInt16();         // font
+            reader.ReadString(4);        // language
+
+            // Decode keywords and text using helper
+            string text = EncodedSpeechHelper.Decode(data, reader.Position, out var keywords);
+
+            string name = "Unknown";
+            var mobile = _worldService.FindMobile(serial);
+            if (mobile != null) name = mobile.Name;
 
             _journalService.AddEntry(new JournalEntry(text, name, serial, hue));
 

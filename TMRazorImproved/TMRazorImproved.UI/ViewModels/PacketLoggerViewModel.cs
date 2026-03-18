@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Data;
@@ -14,6 +15,7 @@ namespace TMRazorImproved.UI.ViewModels
     public partial class PacketLoggerViewModel : ViewModelBase, IDisposable
     {
         private readonly IPacketService _packetService;
+        private readonly IPacketLoggerService _packetLoggerService;
         private readonly ILanguageService _languageService;
         private readonly object _lock = new();
 
@@ -38,13 +40,20 @@ namespace TMRazorImproved.UI.ViewModels
             ? _languageService.GetString("PacketLogger.Pause.ToolTip") 
             : _languageService.GetString("PacketLogger.Record.ToolTip");
 
-        public PacketLoggerViewModel(IPacketService packetService, ILanguageService languageService)
+        public PacketLoggerViewModel(IPacketService packetService, IPacketLoggerService packetLoggerService, ILanguageService languageService)
         {
             _packetService = packetService;
+            _packetLoggerService = packetLoggerService;
             _languageService = languageService;
             BindingOperations.EnableCollectionSynchronization(Packets, _lock);
             
             _packetService.PacketReceived += OnPacketReceived;
+            
+            // Inizializza lo stato del servizio in base al VM (o viceversa)
+            if (IsRecording)
+            {
+                _packetLoggerService.StartRecording(true);
+            }
         }
 
         private void OnPacketReceived(PacketPath path, byte[] data)
@@ -82,11 +91,42 @@ namespace TMRazorImproved.UI.ViewModels
         }
 
         [RelayCommand]
-        private void ToggleRecording() => IsRecording = !IsRecording;
+        private void ToggleRecording()
+        {
+            IsRecording = !IsRecording;
+            if (IsRecording)
+                _packetLoggerService.StartRecording(true);
+            else
+                _packetLoggerService.StopRecording();
+        }
+
+        [RelayCommand]
+        private void OpenLogFile()
+        {
+            try
+            {
+                string path = _packetLoggerService.OutputPath;
+                if (File.Exists(path))
+                {
+                    System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\"");
+                }
+                else
+                {
+                    string dir = Path.GetDirectoryName(path);
+                    if (Directory.Exists(dir))
+                        System.Diagnostics.Process.Start("explorer.exe", dir);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Silently fail or log
+            }
+        }
 
         public void Dispose()
         {
             _packetService.PacketReceived -= OnPacketReceived;
+            _packetLoggerService.StopRecording();
         }
     }
 

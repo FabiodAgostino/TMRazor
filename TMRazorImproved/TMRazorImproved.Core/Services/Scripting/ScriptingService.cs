@@ -130,6 +130,7 @@ del _make_tracer_, _sys_
         private readonly IJournalService _journalService;
         private readonly ISkillsService _skillsService;
         private readonly IFriendsService _friendsService;
+        private readonly IHotkeyService _hotkeyService;
         private readonly IConfigService _config;
         private readonly IMessenger _messenger;
         private readonly ILogger<ScriptingService> _logger;
@@ -160,6 +161,7 @@ del _make_tracer_, _sys_
         private readonly IBandageHealService _bandageHeal;
         private readonly IDressService _dress;
         private readonly IRestockService _restock;
+        private readonly ISoundService _sound;
 
         public ScriptingService(
             IWorldService world,
@@ -169,6 +171,7 @@ del _make_tracer_, _sys_
             IJournalService journalService,
             ISkillsService skillsService,
             IFriendsService friendsService,
+            IHotkeyService hotkeyService,
             IConfigService config,
             IAutoLootService autoLoot,
             IScavengerService scavenger,
@@ -176,6 +179,7 @@ del _make_tracer_, _sys_
             IBandageHealService bandageHeal,
             IDressService dress,
             IRestockService restock,
+            ISoundService sound,
             IMessenger messenger,
             ILogger<ScriptingService> logger,
             ILoggerFactory loggerFactory)
@@ -187,6 +191,7 @@ del _make_tracer_, _sys_
             _journalService = journalService;
             _skillsService = skillsService;
             _friendsService = friendsService;
+            _hotkeyService = hotkeyService;
             _config = config;
             _autoLoot = autoLoot;
             _scavenger = scavenger;
@@ -194,6 +199,7 @@ del _make_tracer_, _sys_
             _bandageHeal = bandageHeal;
             _dress = dress;
             _restock = restock;
+            _sound = sound;
             _messenger = messenger;
             _logger = logger;
             _loggerFactory = loggerFactory;
@@ -426,17 +432,19 @@ del _make_tracer_, _sys_
             
             scope.SetVariable("Items",   itemsApi);
             scope.SetVariable("Mobiles", mobilesApi);
-            scope.SetVariable("Player",  new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, logger: _loggerFactory.CreateLogger<PlayerApi>()));
+            scope.SetVariable("Player",  new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _interopService, logger: _loggerFactory.CreateLogger<PlayerApi>()));
             scope.SetVariable("Journal", new JournalApi(_journalService, cancelCtrl));
             scope.SetVariable("Gump",   new GumpsApi(_world, _packetService, cancelCtrl, _messenger));
             scope.SetVariable("Target",  new TargetApi(_targetingService, _world, _config, _packetService, cancelCtrl));
             scope.SetVariable("Skills",  new SkillsApi(_skillsService, _packetService, cancelCtrl));
             scope.SetVariable("Spells",  new SpellsApi(_world, _packetService, cancelCtrl, _targetingService, _messenger, _loggerFactory.CreateLogger<SpellsApi>()));
             scope.SetVariable("Statics", staticsApi);
-            scope.SetVariable("Friend",  new FriendApi(_friendsService, cancelCtrl));
+            scope.SetVariable("Friend",  new FriendApi(_friendsService, _targetingService, _world, cancelCtrl));
             scope.SetVariable("Filters", new FiltersApi(_config, cancelCtrl));
             scope.SetVariable("Timer",   new TimerApi(cancelCtrl, miscApi));
             scope.SetVariable("SpecialMoves", new SpecialMovesApi(_world, _packetService, cancelCtrl));
+            scope.SetVariable("Sound", new SoundApi(_sound, _world, _targetingService, cancelCtrl));
+            scope.SetVariable("Hotkey", new HotkeyApi(_hotkeyService, _config, cancelCtrl));
             
             // Agents
             scope.SetVariable("AutoLoot",    new AutoLootApi(_autoLoot, cancelCtrl));
@@ -479,7 +487,7 @@ del _make_tracer_, _sys_
             var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService);
             var itemsApi   = new ItemsApi(_world, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
             var mobilesApi = new MobilesApi(_world, _friendsService, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
-            var playerApi  = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, logger: _loggerFactory.CreateLogger<PlayerApi>(), config: _config);
+            var playerApi  = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _interopService, logger: _loggerFactory.CreateLogger<PlayerApi>(), config: _config);
             var journalApi = new JournalApi(_journalService, cancelCtrl);
             var targetApi  = new TargetApi(_targetingService, _world, _config, _packetService, cancelCtrl);
             var skillsApi  = new SkillsApi(_skillsService, _packetService, cancelCtrl);
@@ -490,6 +498,7 @@ del _make_tracer_, _sys_
             var restockApi = new RestockApi(_restock, cancelCtrl);
             var organizerApi = new OrganizerApi(_organizer, cancelCtrl);
             var bandageHealApi = new BandageHealApi(_bandageHeal, cancelCtrl);
+            var hotkeyApi = new HotkeyApi(_hotkeyService, _config, cancelCtrl);
 
             var interpreter = new UOSteamInterpreter(
                 miscApi,
@@ -506,6 +515,7 @@ del _make_tracer_, _sys_
                 restockApi,
                 organizerApi,
                 bandageHealApi,
+                hotkeyApi,
                 cancelCtrl,
                 line => OutputReceived?.Invoke(line));
             interpreter.Execute(code);
@@ -526,7 +536,7 @@ del _make_tracer_, _sys_
             var staticsApi = new StaticsApi(cancelCtrl);
             var globals = new ScriptGlobals
             {
-                Player      = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, logger: _loggerFactory.CreateLogger<PlayerApi>()),
+                Player      = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _interopService, logger: _loggerFactory.CreateLogger<PlayerApi>()),
                 Items       = itemsApi,
                 Mobiles     = mobilesApi,
                 Misc        = misc,
@@ -535,10 +545,12 @@ del _make_tracer_, _sys_
                 Target      = new TargetApi(_targetingService, _world, _config, _packetService, cancelCtrl),
                 Skills      = new SkillsApi(_skillsService, _packetService, cancelCtrl),                Spells      = new SpellsApi(_world, _packetService, cancelCtrl, _targetingService, _messenger, _loggerFactory.CreateLogger<SpellsApi>()),
                 Statics     = staticsApi,
-                Friend      = new FriendApi(_friendsService, cancelCtrl),
+                Friend      = new FriendApi(_friendsService, _targetingService, _world, cancelCtrl),
                 Filters     = new FiltersApi(_config, cancelCtrl),
                 Timer       = new TimerApi(cancelCtrl, misc),
                 SpecialMoves = new SpecialMovesApi(_world, _packetService, cancelCtrl),
+                Sound       = new SoundApi(_sound, _world, _targetingService, cancelCtrl),
+                Hotkey      = new HotkeyApi(_hotkeyService, _config, cancelCtrl),
                 AutoLoot    = new AutoLootApi(_autoLoot, cancelCtrl),
                 Dress       = new DressApi(_dress, cancelCtrl),
                 Scavenger   = new ScavengerApi(_scavenger, cancelCtrl),

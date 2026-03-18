@@ -99,5 +99,40 @@ namespace TMRazorImproved.Shared.Interfaces
         /// Imposta la posizione del mouse relativa alla finestra del client.
         /// </summary>
         void SetMousePosition(int x, int y);
+
+        /// <summary>
+        /// Avvia il pathfinding del client verso le coordinate specificate.
+        /// </summary>
+        void Pathfind(int x, int y, int z);
+
+        /// <summary>
+        /// Apre la finestra del paperdoll del player.
+        /// </summary>
+        void OpenPaperdoll();
+
+        /// <summary>
+        /// Abilita l'abilità primaria dell'arma.
+        /// </summary>
+        void WeaponPrimary();
+
+        /// <summary>
+        /// Abilita l'abilità secondaria dell'arma.
+        /// </summary>
+        void WeaponSecondary();
+
+        /// <summary>
+        /// Chiude lo zaino del player.
+        /// </summary>
+        void CloseBackpack();
+
+        /// <summary>
+        /// Imposta la posizione per il prossimo contenitore aperto.
+        /// </summary>
+        void NextContPosition(int x, int y);
+
+        /// <summary>
+        /// Alterna la modalità di corsa automatica.
+        /// </summary>
+        void ToggleAlwaysRun();
     }
 }

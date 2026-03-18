@@ -16,6 +16,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
         private readonly Mock<IConfigService>           _configMock = new();
         private readonly Mock<IWorldService>            _worldMock  = new();
         private readonly Mock<IHotkeyService>           _hotkeyMock = new();
+        private readonly Mock<IWeaponService>           _weaponMock = new();
         private readonly Mock<ILogger<DressService>>    _loggerMock = new();
 
         private readonly UserProfile _profile = new();
@@ -34,6 +35,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _configMock.Object,
                 _worldMock.Object,
                 _hotkeyMock.Object,
+                _weaponMock.Object,
                 _loggerMock.Object);
 
         private static DressList MakeList(string name, uint itemSerial, byte layer = 0x01)

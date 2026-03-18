@@ -1,0 +1,73 @@
+<ui:FluentWindow x:Class="TMRazorImproved.UI.Views.Windows.EditLootItemWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:local="clr-namespace:TMRazorImproved.UI.Views.Windows"
+        mc:Ignorable="d"
+        Title="Edit Loot Item" Height="450" Width="600"
+        WindowStartupLocation="CenterScreen"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ui:TextBlock Text="Edit Loot Item Properties" FontSize="20" FontWeight="Bold" Margin="0,0,0,16"/>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,16">
+            <StackPanel Margin="0,0,16,0">
+                <ui:TextBlock Text="Graphic (Hex)" Appearance="Secondary"/>
+                <ui:TextBox Text="{Binding Item.Graphic, StringFormat=0x{0:X4}, Mode=OneWay}" IsReadOnly="True" Width="100"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,16,0">
+                <ui:TextBlock Text="Hue" Appearance="Secondary"/>
+                <ui:TextBox Text="{Binding Item.FormattedColor, Mode=OneWay}" IsReadOnly="True" Width="100"/>
+            </StackPanel>
+            <StackPanel>
+                <ui:TextBlock Text="Name" Appearance="Secondary"/>
+                <ui:TextBox Text="{Binding Item.Name, Mode=TwoWay}" Width="250"/>
+            </StackPanel>
+        </StackPanel>
+
+        <GroupBox Grid.Row="2" Header="Property Filters">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <DataGrid ItemsSource="{Binding PropertyFilters}" AutoGenerateColumns="False" CanUserAddRows="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Property Name" Binding="{Binding Name, Mode=TwoWay}" Width="*"/>
+                        <DataGridTextColumn Header="Min Value" Binding="{Binding MinValue, Mode=TwoWay}" Width="100"/>
+                        <DataGridTextColumn Header="Max Value" Binding="{Binding MaxValue, Mode=TwoWay}" Width="100"/>
+                        <DataGridTemplateColumn Width="50">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ui:Button Icon="Delete24" Appearance="Danger" Padding="4"
+                                               Command="{Binding DataContext.RemovePropertyCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                               CommandParameter="{Binding}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <ui:Button Grid.Row="1" Content="Add Property" Icon="Add24" Margin="0,8,0,0"
+                           Command="{Binding AddPropertyCommand}"/>
+            </Grid>
+        </GroupBox>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <ui:Button Content="Save" Appearance="Primary" Width="100" Margin="0,0,12,0" Click="Save_Click"/>
+            <ui:Button Content="Cancel" Width="100" Click="Cancel_Click"/>
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

@@ -64,7 +64,9 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<ILanguageService, LanguageService>();
                 services.AddSingleton<ILogService, LogService>();
                 services.AddSingleton<IScriptingService, ScriptingService>();
+                services.AddSingleton<ITargetFilterService, TargetFilterService>();
                 services.AddSingleton<ITargetingService, TargetingService>();
+                services.AddSingleton<IDragDropCoordinator, DragDropCoordinator>();
                 services.AddSingleton<IAutoLootService, AutoLootService>();
                 services.AddSingleton<IScavengerService, ScavengerService>();
                 services.AddSingleton<IOrganizerService, OrganizerService>();
@@ -81,6 +83,7 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<IMacrosService, MacrosService>();
                 services.AddSingleton<IFriendsService, FriendsService>();
                 services.AddSingleton<ISoundService, SoundService>();
+                services.AddSingleton<IWeaponService, WeaponService>();
                 services.AddSingleton<IUltimaImageCache, UltimaImageCache>();
                 services.AddSingleton<ICounterService, CounterService>();
                 services.AddSingleton<IDPSMeterService, DPSMeterService>();
@@ -90,6 +93,7 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
                 services.AddSingleton<IVideoCaptureService, VideoCaptureService>();
                 services.AddSingleton<IUOModService, UOModService>();
+                services.AddSingleton<IPacketLoggerService, PacketLoggerService>();
                 services.AddSingleton<IScriptRecorderService, ScriptRecorderService>();
 
                 // Handlers (Singleton)

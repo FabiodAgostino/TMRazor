@@ -6,6 +6,7 @@ using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
 using TMRazorImproved.Shared.Models.Config;
 using System.Linq;
+using System;
 
 namespace TMRazorImproved.UI.ViewModels.Agents
 {
@@ -14,6 +15,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         private readonly IConfigService _config;
         private readonly ITargetingService _targeting;
         private readonly IFriendsService _friends;
+        private readonly ITargetFilterService _targetFilterService;
         private readonly IWorldService _world;
         private readonly ILanguageService _lang;
         private readonly object _lock = new();
@@ -35,6 +37,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
 
         public ObservableCollection<TargetFilter> TargetLists { get; } = new();
         public ObservableCollection<Mobile> FriendList { get; } = new();
+        public ObservableCollection<TargetFilterEntry> ExcludedTargets { get; } = new();
 
         public IAsyncRelayCommand AddFriendCommand { get; }
         public IRelayCommand<Mobile> RemoveFriendCommand { get; }
@@ -45,16 +48,24 @@ namespace TMRazorImproved.UI.ViewModels.Agents
         public IRelayCommand AddBodyIDCommand { get; }
         public IRelayCommand AddHueCommand { get; }
 
-        public TargetingViewModel(IConfigService config, ITargetingService targeting, IWorldService world, IFriendsService friends, ILanguageService languageService)
+        public IAsyncRelayCommand AddExcludedTargetCommand { get; }
+        public IRelayCommand<TargetFilterEntry> RemoveExcludedTargetCommand { get; }
+        public IRelayCommand AddAllMobilesCommand { get; }
+        public IRelayCommand AddAllHumanoidsCommand { get; }
+        public IRelayCommand ClearExcludedTargetsCommand { get; }
+
+        public TargetingViewModel(IConfigService config, ITargetingService targeting, IWorldService world, IFriendsService friends, ITargetFilterService targetFilterService, ILanguageService languageService)
         {
             _config = config;
             _targeting = targeting;
             _world = world;
             _friends = friends;
+            _targetFilterService = targetFilterService;
             _lang = languageService;
 
             EnableThreadSafeCollection(TargetLists, _lock);
             EnableThreadSafeCollection(FriendList, _lock);
+            EnableThreadSafeCollection(ExcludedTargets, _lock);
 
             AddFriendCommand = new AsyncRelayCommand(AddFriendAsync);
             RemoveFriendCommand = new RelayCommand<Mobile>(RemoveFriend);
@@ -64,6 +75,12 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             RemoveFilterCommand = new RelayCommand(RemoveFilter);
             AddBodyIDCommand = new RelayCommand(AddBodyID);
             AddHueCommand = new RelayCommand(AddHue);
+
+            AddExcludedTargetCommand = new AsyncRelayCommand(AddExcludedTargetAsync);
+            RemoveExcludedTargetCommand = new RelayCommand<TargetFilterEntry>(RemoveExcludedTarget);
+            AddAllMobilesCommand = new RelayCommand(() => { _targetFilterService.AddAllMobiles(); RefreshExcludedTargets(); });
+            AddAllHumanoidsCommand = new RelayCommand(() => { _targetFilterService.AddAllHumanoids(); RefreshExcludedTargets(); });
+            ClearExcludedTargetsCommand = new RelayCommand(() => { _targetFilterService.ClearAll(); RefreshExcludedTargets(); });
 
             LoadConfig();
         }
@@ -89,6 +106,7 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             }
 
             RefreshFriendList();
+            RefreshExcludedTargets();
         }
 
         private void RefreshFriendList()
@@ -98,6 +116,38 @@ namespace TMRazorImproved.UI.ViewModels.Agents
             {
                 var m = _world.FindMobile(friend.Serial) ?? new Mobile(friend.Serial) { Name = friend.Name };
                 FriendList.Add(m);
+            }
+        }
+
+        private void RefreshExcludedTargets()
+        {
+            ExcludedTargets.Clear();
+            foreach (var filter in _targetFilterService.Filters)
+            {
+                ExcludedTargets.Add(filter);
+            }
+        }
+
+        private async Task AddExcludedTargetAsync()
+        {
+            StatusText = _lang.GetString("Agents.General.SelectItem");
+            var targetInfo = await _targeting.AcquireTargetAsync();
+            if (targetInfo.Serial != 0)
+            {
+                var m = _world.FindMobile(targetInfo.Serial);
+                string name = m?.Name ?? $"Mobile_{targetInfo.Serial:X8}";
+                _targetFilterService.AddFilter(targetInfo.Serial, name);
+                RefreshExcludedTargets();
+                StatusText = $"Filtered target: {name}";
+            }
+        }
+
+        private void RemoveExcludedTarget(TargetFilterEntry? entry)
+        {
+            if (entry != null)
+            {
+                _targetFilterService.RemoveFilter(entry.Serial);
+                RefreshExcludedTargets();
             }
         }
 

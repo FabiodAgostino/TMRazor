@@ -45,9 +45,10 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
             var restockApi = new RestockApi(new Mock<IRestockService>().Object, _cancel);
             var organizerApi = new OrganizerApi(new Mock<IOrganizerService>().Object, _cancel);
             var bandageHealApi = new BandageHealApi(new Mock<IBandageHealService>().Object, _cancel);
+            var hotkeyApi = new HotkeyApi(new Mock<IHotkeyService>().Object, configMock.Object, _cancel);
 
             return new UOSteamInterpreter(misc, playerApi, items, mobiles, journal, targetApi, skillsApi, gumpsApi, 
-                autoLootApi, dressApi, scavengerApi, restockApi, organizerApi, bandageHealApi,
+                autoLootApi, dressApi, scavengerApi, restockApi, organizerApi, bandageHealApi, hotkeyApi,
                 _cancel, s => _outputLog.Add(s));
         }
 

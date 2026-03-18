@@ -188,6 +188,31 @@
                     </UniformGrid>
                 </StackPanel>
             </ui:Card>
+
+            <!-- UOMod Patches Card -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel>
+                    <ui:TextBlock Text="UOMod Patches" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    <UniformGrid Columns="2">
+                        <ui:ToggleSwitch Content="FPS Unlock" IsChecked="{Binding UoModFps, Mode=TwoWay}" Margin="0,0,0,8" />
+                        <ui:ToggleSwitch Content="Stamina Check Removal" IsChecked="{Binding UoModStamina, Mode=TwoWay}" Margin="0,0,0,8" />
+                        <ui:ToggleSwitch Content="Always Light" IsChecked="{Binding UoModAlwaysLight, Mode=TwoWay}" Margin="0,0,0,8" />
+                        <ui:ToggleSwitch Content="Paperdoll Slots Fix" IsChecked="{Binding UoModPaperdollSlots, Mode=TwoWay}" Margin="0,0,0,8" />
+                        <ui:ToggleSwitch Content="Skip Splash Screen" IsChecked="{Binding UoModSplashScreen, Mode=TwoWay}" Margin="0,0,0,8" />
+                        <ui:ToggleSwitch Content="Multi-UO Support" IsChecked="{Binding UoModMultiUo, Mode=TwoWay}" Margin="0,0,0,8" />
+                        <ui:ToggleSwitch Content="Disable Encryption" IsChecked="{Binding UoModNoCrypt, Mode=TwoWay}" Margin="0,0,0,8" />
+                        <ui:ToggleSwitch Content="Global Sound" IsChecked="{Binding UoModGlobalSound, Mode=TwoWay}" Margin="0,0,0,8" />
+                        
+                        <StackPanel Margin="0,0,0,8">
+                            <ui:ToggleSwitch Content="Extended View Range" IsChecked="{Binding UoModViewRange, Mode=TwoWay}" />
+                            <StackPanel Orientation="Horizontal" Margin="40,4,0,0" IsEnabled="{Binding UoModViewRange}">
+                                <ui:TextBlock Text="Range:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <ui:NumberBox Value="{Binding UoModViewRangeValue, Mode=TwoWay}" Minimum="10" Maximum="100" Width="80" />
+                            </StackPanel>
+                        </StackPanel>
+                    </UniformGrid>
+                </StackPanel>
+            </ui:Card>
         </StackPanel>
     </ScrollViewer>
 </Page>

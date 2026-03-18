@@ -92,6 +92,10 @@ namespace TMRazorImproved.Core.Services
             string mpmax = player?.ManaMax.ToString() ?? "0";
             string sp = player?.Stam.ToString() ?? "0";
             string spmax = player?.StamMax.ToString() ?? "0";
+            string ping = _worldService.CurrentPing.ToString("F0");
+            string pingmin = _worldService.MinPing == double.MaxValue ? "0" : _worldService.MinPing.ToString("F0");
+            string pingmax = _worldService.MaxPing.ToString("F0");
+            string pingavg = _worldService.AvgPing.ToString("F0");
 
             string title = Template
                 .Replace("{char}", charName)
@@ -100,7 +104,11 @@ namespace TMRazorImproved.Core.Services
                 .Replace("{mp}", mp)
                 .Replace("{mpmax}", mpmax)
                 .Replace("{sp}", sp)
-                .Replace("{spmax}", spmax);
+                .Replace("{spmax}", spmax)
+                .Replace("{ping}", ping)
+                .Replace("{pingmin}", pingmin)
+                .Replace("{pingmax}", pingmax)
+                .Replace("{pingavg}", pingavg);
 
             // Aggiorna finestra UO
             IntPtr hwnd = _interop.FindUOWindow();

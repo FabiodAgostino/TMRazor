@@ -46,13 +46,18 @@ namespace TMRazorImproved.Shared.Models.Config
         public bool FilterWeather { get; set; }
         public bool FilterSound { get; set; }
         public bool FilterDeath { get; set; }
-        public bool FilterStaff { get; set; }
+        public bool FilterStaffItems { get; set; }
+        public bool FilterStaffNpcs { get; set; }
         public bool FilterPoison { get; set; }
         public bool FilterSnoop { get; set; }
         public bool FilterBardMusic { get; set; }
         public bool FilterFootsteps { get; set; }
         public bool FilterKarmaFame { get; set; }
         public bool FilterSeason { get; set; }
+        public bool FilterDragon { get; set; }
+        public bool FilterDrake { get; set; }
+        public bool FilterDaemon { get; set; }
+        public bool FilterVetRewardGump { get; set; }
         
         // Advanced Filters
         public bool HighlightFlags { get; set; }
@@ -118,6 +123,8 @@ namespace TMRazorImproved.Shared.Models.Config
         public List<FriendsConfig> FriendsLists { get; set; } = new() { new FriendsConfig { Name = "Default" } };
         public string ActiveFriendsList { get; set; } = "Default";
 
+        public List<TargetFilterEntry> ExcludedTargets { get; set; } = new();
+
         public SpellGridConfig SpellGrid { get; set; } = new();
         public TargetHPConfig TargetHP { get; set; } = new();
         
@@ -130,6 +137,20 @@ namespace TMRazorImproved.Shared.Models.Config
 
         // Pathfinding
         public int PathFindingMaxRange { get; set; } = 200;
+
+        // UOMod Patches
+        public bool UoModFps { get; set; }
+        public bool UoModStamina { get; set; }
+        public bool UoModAlwaysLight { get; set; }
+        public bool UoModPaperdollSlots { get; set; }
+        public bool UoModSplashScreen { get; set; }
+        public bool UoModResolution { get; set; }
+        public bool UoModOptionsNotification { get; set; }
+        public bool UoModMultiUo { get; set; }
+        public bool UoModNoCrypt { get; set; }
+        public bool UoModGlobalSound { get; set; }
+        public bool UoModViewRange { get; set; }
+        public int UoModViewRangeValue { get; set; } = 30;
     }
 
     public class TargetHPConfig
@@ -166,6 +187,13 @@ namespace TMRazorImproved.Shared.Models.Config
     public class FriendGuild
     {
         public string Name { get; set; } = "Unknown";
+        public bool Enabled { get; set; } = true;
+    }
+
+    public class TargetFilterEntry
+    {
+        public string Name { get; set; } = "Unknown";
+        public uint Serial { get; set; }
         public bool Enabled { get; set; } = true;
     }
 
@@ -276,6 +304,8 @@ namespace TMRazorImproved.Shared.Models.Config
         public string TextMsgTarget { get; set; } = "[band";
         public string TextMsgSelf { get; set; } = "[bandself";
         public bool UseNormalTarget { get; set; }
+        public bool PoisonBlock { get; set; }
+        public bool MortalBlock { get; set; }
     }
 
     public class VendorConfig : AgentConfigBase
@@ -331,5 +361,6 @@ namespace TMRazorImproved.Shared.Models.Config
         public bool Alt { get; set; }
         public bool Shift { get; set; }
         public bool PassThrough { get; set; } = true;
+        public bool Enabled { get; set; } = true;
     }
 }

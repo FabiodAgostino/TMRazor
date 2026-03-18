@@ -24,13 +24,18 @@
                         <ui:ToggleSwitch Content="Weather" IsChecked="{Binding FilterWeather}" Margin="0,4"/>
                         <ui:ToggleSwitch Content="Sound" IsChecked="{Binding FilterSound}" Margin="0,4"/>
                         <ui:ToggleSwitch Content="Death" IsChecked="{Binding FilterDeath}" Margin="0,4"/>
-                        <ui:ToggleSwitch Content="Staff" IsChecked="{Binding FilterStaff}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Staff Items" IsChecked="{Binding FilterStaffItems}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Staff NPCs" IsChecked="{Binding FilterStaffNpcs}" Margin="0,4"/>
                         <ui:ToggleSwitch Content="Poison" IsChecked="{Binding FilterPoison}" Margin="0,4"/>
                         <ui:ToggleSwitch Content="Snoop" IsChecked="{Binding FilterSnoop}" Margin="0,4"/>
                         <ui:ToggleSwitch Content="Bard Music" IsChecked="{Binding FilterBardMusic}" Margin="0,4"/>
                         <ui:ToggleSwitch Content="Footsteps" IsChecked="{Binding FilterFootsteps}" Margin="0,4"/>
                         <ui:ToggleSwitch Content="Karma/Fame" IsChecked="{Binding FilterKarmaFame}" Margin="0,4"/>
                         <ui:ToggleSwitch Content="Season" IsChecked="{Binding FilterSeason}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Dragons" IsChecked="{Binding FilterDragon}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Drakes" IsChecked="{Binding FilterDrake}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Daemons" IsChecked="{Binding FilterDaemon}" Margin="0,4"/>
+                        <ui:ToggleSwitch Content="Vet Reward Gump" IsChecked="{Binding FilterVetRewardGump}" Margin="0,4"/>
                     </UniformGrid>
                 </StackPanel>
             </ui:Card>

@@ -199,7 +199,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public override bool Female { get => _inner.Female; set => _inner.Female = value; }
         public override bool Flying { get => _inner.Flying; set => _inner.Flying = value; }
         public override bool IsGhost { get => _inner.IsGhost; set => _inner.IsGhost = value; }
-        public bool IsHuman => Body == 0x0190 || Body == 0x0191 || Body == 0x025D || Body == 0x025E;
+        public override bool IsHuman => _inner.IsHuman;
         public override byte StrLock { get => _inner.StrLock; set => _inner.StrLock = value; }
         public override byte DexLock { get => _inner.DexLock; set => _inner.DexLock = value; }
         public override byte IntLock { get => _inner.IntLock; set => _inner.IntLock = value; }

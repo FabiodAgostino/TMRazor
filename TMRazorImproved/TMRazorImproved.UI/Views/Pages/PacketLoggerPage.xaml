@@ -47,6 +47,10 @@
                            Appearance="Secondary" Margin="0,0,8,0"
                            ToolTip="{loc:Loc PacketLogger.Clear.ToolTip}"/>
 
+                <ui:Button Content="{loc:Loc PacketLogger.OpenLog}" Icon="FolderOpen24" Command="{Binding OpenLogFileCommand}" 
+                           Appearance="Secondary" Margin="0,0,8,0"
+                           ToolTip="{loc:Loc PacketLogger.OpenLog.ToolTip}"/>
+
                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,0" />
 
                 <ui:TextBox PlaceholderText="{loc:Loc PacketLogger.Filter.Placeholder}" 

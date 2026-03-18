@@ -125,7 +125,7 @@ namespace TMRazorImproved.Core.Services
 
             foreach (var hk in profile.Hotkeys)
             {
-                if (hk.KeyCode == vkCode && hk.Ctrl == ctrl && hk.Alt == alt && hk.Shift == shift)
+                if (hk.Enabled && hk.KeyCode == vkCode && hk.Ctrl == ctrl && hk.Alt == alt && hk.Shift == shift)
                 {
                     ExecuteAction(hk.Action);
                 }

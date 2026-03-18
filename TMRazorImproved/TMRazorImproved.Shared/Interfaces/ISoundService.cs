@@ -2,7 +2,7 @@ namespace TMRazorImproved.Shared.Interfaces
 {
     public interface ISoundService
     {
-        void PlaySound(ushort soundId);
+        void PlaySound(ushort soundId, int x = 0, int y = 0, int z = 0);
         void PlayMusic(ushort musicId);
         void StopMusic();
 

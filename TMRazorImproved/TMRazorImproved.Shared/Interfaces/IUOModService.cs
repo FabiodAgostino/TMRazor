@@ -22,5 +22,7 @@ namespace TMRazorImproved.Shared.Interfaces
     {
         void InjectUoMod(int pid);
         void EnablePatch(UOPatchType patch, bool enable);
+        void SetViewRange(int value);
+        void ApplyProfilePatches(TMRazorImproved.Shared.Models.Config.UserProfile profile);
     }
 }

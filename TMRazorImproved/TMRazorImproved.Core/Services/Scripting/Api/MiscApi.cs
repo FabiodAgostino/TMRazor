@@ -465,7 +465,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             if (sound <= 0 || _world.Player == null) return;
             if (_sound != null)
             {
-                _sound.PlaySound((ushort)sound);
+                _sound.PlaySound((ushort)sound, x, y, z);
                 return;
             }
             // Fallback: send raw 0x54 packet to client
@@ -478,6 +478,18 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             BinaryPrimitives.WriteInt16BigEndian(pkt.AsSpan(8),  (short)y);
             BinaryPrimitives.WriteInt16BigEndian(pkt.AsSpan(10), (short)z);
             _packetService.SendToClient(pkt);
+        }
+
+        public virtual void PlayMusic(int id)
+        {
+            _cancel.ThrowIfCancelled();
+            _sound?.PlayMusic((ushort)id);
+        }
+
+        public virtual void StopMusic()
+        {
+            _cancel.ThrowIfCancelled();
+            _sound?.StopMusic();
         }
 
         /// <summary>Play system beep.</summary>
@@ -1080,21 +1092,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void CloseBackpack()
         {
             _cancel.ThrowIfCancelled();
-            var bp = _world.Player?.Backpack;
-            if (bp != null)
-            {
-                _outputCallback?.Invoke("CloseBackpack: Attempting to close via Gump Response 0.");
-                byte[] closePkt = new byte[23];
-                closePkt[0] = 0xB1;
-                BinaryPrimitives.WriteUInt16BigEndian(closePkt.AsSpan(1), (ushort)closePkt.Length);
-                BinaryPrimitives.WriteUInt32BigEndian(closePkt.AsSpan(3), bp.Serial);
-                BinaryPrimitives.WriteUInt32BigEndian(closePkt.AsSpan(7), 0x0000003C);
-                _packetService.SendToServer(closePkt);
-            }
-            else
-            {
-                _outputCallback?.Invoke("CloseBackpack: Backpack not found.");
-            }
+            _interop.CloseBackpack();
         }
 
         public virtual string CurrentScriptDirectory()
@@ -1136,21 +1134,13 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void NextContPosition(int x, int y)
         {
             _cancel.ThrowIfCancelled();
-            _outputCallback?.Invoke("NextContPosition: Requires DLL injected hook (not implemented).");
+            _interop.NextContPosition(x, y);
         }
 
         public virtual void OpenPaperdoll()
         {
             _cancel.ThrowIfCancelled();
-            var serial = _world.Player?.Serial;
-            if (serial == null || serial.Value == 0) return;
-            
-            byte[] pkt = new byte[9];
-            pkt[0] = 0xBF;
-            pkt[1] = 0x00; pkt[2] = 0x09;
-            pkt[3] = 0x00; pkt[4] = 0x0F;
-            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(5), serial.Value);
-            _packetService.SendToServer(pkt);
+            _interop.OpenPaperdoll();
         }
     }
 }

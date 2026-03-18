@@ -13,6 +13,7 @@ namespace TMRazorImproved.UI.ViewModels
         private readonly ITargetingService _targetingService;
         private readonly ILanguageService _languageService;
         private readonly IClientInteropService _clientInterop;
+        private readonly IUOModService _uoModService;
 
         public UserProfile CurrentProfile => _configService.CurrentProfile;
 
@@ -44,16 +45,31 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty] private bool _incomingNames;
         [ObservableProperty] private bool _showIncomingDamage;
 
+        // UOMod Patches
+        [ObservableProperty] private bool _uoModFps;
+        [ObservableProperty] private bool _uoModStamina;
+        [ObservableProperty] private bool _uoModAlwaysLight;
+        [ObservableProperty] private bool _uoModPaperdollSlots;
+        [ObservableProperty] private bool _uoModSplashScreen;
+        [ObservableProperty] private bool _uoModResolution;
+        [ObservableProperty] private bool _uoModOptionsNotification;
+        [ObservableProperty] private bool _uoModMultiUo;
+        [ObservableProperty] private bool _uoModNoCrypt;
+        [ObservableProperty] private bool _uoModGlobalSound;
+        [ObservableProperty] private bool _uoModViewRange;
+        [ObservableProperty] private int _uoModViewRangeValue;
+
         private Views.Windows.TargetHPWindow? _targetHP;
         private Views.Windows.FloatingToolbarWindow? _toolbar;
         private Views.Windows.OverheadMessageOverlay? _overheadOverlay;
 
-        public OptionsViewModel(IConfigService configService, ITargetingService targetingService, ILanguageService languageService, IClientInteropService clientInterop)
+        public OptionsViewModel(IConfigService configService, ITargetingService targetingService, ILanguageService languageService, IClientInteropService clientInterop, IUOModService uoModService)
         {
             _configService = configService;
             _targetingService = targetingService;
             _languageService = languageService;
             _clientInterop = clientInterop;
+            _uoModService = uoModService;
             LoadFromConfig();
         }
 
@@ -86,6 +102,20 @@ namespace TMRazorImproved.UI.ViewModels
             HighlightTarget = profile.HighlightTarget;
             IncomingNames = profile.IncomingNames;
             ShowIncomingDamage = profile.ShowIncomingDamage;
+
+            // UOMod Patches
+            UoModFps = profile.UoModFps;
+            UoModStamina = profile.UoModStamina;
+            UoModAlwaysLight = profile.UoModAlwaysLight;
+            UoModPaperdollSlots = profile.UoModPaperdollSlots;
+            UoModSplashScreen = profile.UoModSplashScreen;
+            UoModResolution = profile.UoModResolution;
+            UoModOptionsNotification = profile.UoModOptionsNotification;
+            UoModMultiUo = profile.UoModMultiUo;
+            UoModNoCrypt = profile.UoModNoCrypt;
+            UoModGlobalSound = profile.UoModGlobalSound;
+            UoModViewRange = profile.UoModViewRange;
+            UoModViewRangeValue = profile.UoModViewRangeValue;
         }
 
         // Property Changed Handlers
@@ -111,6 +141,31 @@ namespace TMRazorImproved.UI.ViewModels
         partial void OnHighlightTargetChanged(bool value) => SaveToConfig();
         partial void OnIncomingNamesChanged(bool value) => SaveToConfig();
         partial void OnShowIncomingDamageChanged(bool value) => SaveToConfig();
+
+        // UOMod Property Changed Handlers
+        partial void OnUoModFpsChanged(bool value) { SaveToConfig(); _uoModService.EnablePatch(UOPatchType.FPS, value); }
+        partial void OnUoModStaminaChanged(bool value) { SaveToConfig(); _uoModService.EnablePatch(UOPatchType.Stamina, value); }
+        partial void OnUoModAlwaysLightChanged(bool value) { SaveToConfig(); _uoModService.EnablePatch(UOPatchType.AlwaysLight, value); }
+        partial void OnUoModPaperdollSlotsChanged(bool value) { SaveToConfig(); _uoModService.EnablePatch(UOPatchType.PaperdollSlots, value); }
+        partial void OnUoModSplashScreenChanged(bool value) { SaveToConfig(); _uoModService.EnablePatch(UOPatchType.SplashScreen, value); }
+        partial void OnUoModResolutionChanged(bool value) { SaveToConfig(); _uoModService.EnablePatch(UOPatchType.Resolution, value); }
+        partial void OnUoModOptionsNotificationChanged(bool value) { SaveToConfig(); _uoModService.EnablePatch(UOPatchType.OptionsNotification, value); }
+        partial void OnUoModMultiUoChanged(bool value) { SaveToConfig(); _uoModService.EnablePatch(UOPatchType.MultiUO, value); }
+        partial void OnUoModNoCryptChanged(bool value) { SaveToConfig(); _uoModService.EnablePatch(UOPatchType.NoCrypt, value); }
+        partial void OnUoModGlobalSoundChanged(bool value) { SaveToConfig(); _uoModService.EnablePatch(UOPatchType.GlobalSound, value); }
+        
+        partial void OnUoModViewRangeChanged(bool value) 
+        { 
+            SaveToConfig(); 
+            if (value) _uoModService.SetViewRange(UoModViewRangeValue);
+            _uoModService.EnablePatch(UOPatchType.ViewRange, value); 
+        }
+        
+        partial void OnUoModViewRangeValueChanged(int value) 
+        { 
+            SaveToConfig(); 
+            if (UoModViewRange) _uoModService.SetViewRange(value); 
+        }
 
         // Automation Commands
         [RelayCommand]
@@ -197,6 +252,20 @@ namespace TMRazorImproved.UI.ViewModels
             profile.HighlightTarget = HighlightTarget;
             profile.IncomingNames = IncomingNames;
             profile.ShowIncomingDamage = ShowIncomingDamage;
+
+            // UOMod Patches
+            profile.UoModFps = UoModFps;
+            profile.UoModStamina = UoModStamina;
+            profile.UoModAlwaysLight = UoModAlwaysLight;
+            profile.UoModPaperdollSlots = UoModPaperdollSlots;
+            profile.UoModSplashScreen = UoModSplashScreen;
+            profile.UoModResolution = UoModResolution;
+            profile.UoModOptionsNotification = UoModOptionsNotification;
+            profile.UoModMultiUo = UoModMultiUo;
+            profile.UoModNoCrypt = UoModNoCrypt;
+            profile.UoModGlobalSound = UoModGlobalSound;
+            profile.UoModViewRange = UoModViewRange;
+            profile.UoModViewRangeValue = UoModViewRangeValue;
             
             _configService.Save();
         }

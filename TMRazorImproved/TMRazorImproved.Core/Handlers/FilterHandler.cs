@@ -1,10 +1,17 @@
 using System;
 using System.Buffers.Binary;
+using System.IO;
+using System.IO.Compression;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using TMRazorImproved.Shared.Enums;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models.Config;
+using TMRazorImproved.Shared.Messages;
 using Microsoft.Extensions.Logging;
+using CommunityToolkit.Mvvm.Messaging;
+using TMRazorImproved.Core.Utilities;
 
 namespace TMRazorImproved.Core.Handlers
 {
@@ -16,36 +23,65 @@ namespace TMRazorImproved.Core.Handlers
     {
         private readonly IPacketService _packetService;
         private readonly IConfigService _configService;
+        private readonly IWorldService _worldService;
         private readonly ILogger<FilterHandler> _logger;
 
         // Sound IDs dei passi in UO Classic (footstep sounds).
         // Coprono camminare su: erba/terra (0x12-0x13), pietra (0x14-0x15),
         // legno (0x16-0x17), acqua superficiale (0x18-0x1A).
-        private static readonly System.Collections.Generic.HashSet<ushort> _footstepSoundIds = new()
+        private static readonly HashSet<ushort> _footstepSoundIds = new()
         {
             0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017, 0x0018, 0x0019, 0x001A
         };
 
-        public FilterHandler(IPacketService packetService, IConfigService configService, ILogger<FilterHandler> logger)
+        // Mappature sostitutive per filtri grafici (Originale -> Sostitutiva)
+        // Usiamo Slime (0x0033) come sostituto leggero.
+        private static readonly Dictionary<ushort, ushort> _dragonGraphics = new()
+        {
+            { 0x000C, 0x0033 }, { 0x003B, 0x0033 }
+        };
+        private static readonly Dictionary<ushort, ushort> _drakeGraphics = new()
+        {
+            { 0x003C, 0x0033 }, { 0x003D, 0x0033 }
+        };
+        private static readonly Dictionary<ushort, ushort> _daemonGraphics = new()
+        {
+            { 0x0009, 0x0033 }
+        };
+
+        public FilterHandler(IPacketService packetService, IConfigService configService, IWorldService worldService, ILogger<FilterHandler> logger, IMessenger messenger)
         {
             _packetService = packetService;
             _configService = configService;
+            _worldService = worldService;
             _logger = logger;
 
             RegisterFilters();
+
+            // Sottoscrizione ai cambi di configurazione per aggiornare la visualizzazione staff items/npcs
+            messenger.Register<ConfigChangedMessage>(this, (r, m) =>
+            {
+                if (m.PropertyName == nameof(UserProfile.FilterStaffItems))
+                    RefreshStaffItems();
+                else if (m.PropertyName == nameof(UserProfile.FilterStaffNpcs))
+                    RefreshStaffNpcs();
+            });
         }
 
         private void RegisterFilters()
         {
             // ─── Filtri packet-level (blocco intero pacchetto) ────────────────────────
 
+            // Vet Reward Gump Filter (0xB0, 0xDD)
+            // Blocca il gump delle ricompense veterano se appare nel primo minuto di connessione.
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0xB0, data => FilterVetRewardGump(data, isCompressed: false));
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0xDD, data => FilterVetRewardGump(data, isCompressed: true));
+
             // Light Filter (0x4E personal light, 0x4F overall light)
             _packetService.RegisterFilter(PacketPath.ServerToClient, 0x4E, data =>
             {
                 if (_configService.CurrentProfile.FilterLight)
                 {
-                    // If we block personal light, we can also force it to max (0) or just let the global handle it.
-                    // Personal light packet: 0x4E cmd(1) serial(4) level(1)
                     if (data.Length >= 6)
                     {
                         byte[] maxLight = new byte[6];
@@ -62,7 +98,6 @@ namespace TMRazorImproved.Core.Handlers
             {
                 if (_configService.CurrentProfile.FilterLight)
                 {
-                    // Global light packet: 0x4F cmd(1) level(1)
                     _packetService.SendToClient(new byte[] { 0x4F, 0x00 });
                     return false;
                 }
@@ -72,16 +107,24 @@ namespace TMRazorImproved.Core.Handlers
             // Weather Filter (0x65)
             _packetService.RegisterFilter(PacketPath.ServerToClient, 0x65, _ => !_configService.CurrentProfile.FilterWeather);
 
-            // Sound Filter (0x54) — blocca TUTTI i suoni
+            // Sound Filter (0x54)
             _packetService.RegisterFilter(PacketPath.ServerToClient, 0x54, _ => !_configService.CurrentProfile.FilterSound);
 
-            // Death Filter (0x2C death animation)
+            // Death Filter (0x2C)
             _packetService.RegisterFilter(PacketPath.ServerToClient, 0x2C, _ => !_configService.CurrentProfile.FilterDeath);
 
             // Season Filter (0xBC)
             _packetService.RegisterFilter(PacketPath.ServerToClient, 0xBC, _ => !_configService.CurrentProfile.FilterSeason);
 
-            // BardMusic Filter (0x6D PlayMusic) — blocca tutta la musica del bardo/ambient
+            // Staff Items Filter (0x1A)
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0x1A, FilterStaffItems);
+
+            // Staff NPCs Filter (0x78, 0x20, 0x77)
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0x78, data => FilterStaffNpcs(data, 18));
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0x20, data => FilterStaffNpcs(data, 9));
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0x77, data => FilterStaffNpcs(data, 15));
+
+            // BardMusic Filter (0x6D)
             _packetService.RegisterFilter(PacketPath.ServerToClient, 0x6D, _ => !_configService.CurrentProfile.FilterBardMusic);
 
             // Block Trade Request (0x6F)
@@ -89,7 +132,6 @@ namespace TMRazorImproved.Core.Handlers
             {
                 if (!_configService.CurrentProfile.BlockTradeRequest) return true;
                 if (data.Length < 2) return true;
-                // action 0 = Start. We only block the start request
                 return data[1] != 0; 
             });
 
@@ -98,126 +140,117 @@ namespace TMRazorImproved.Core.Handlers
             {
                 if (!_configService.CurrentProfile.BlockPartyInvite) return true;
                 if (data.Length < 5) return true;
-                
-                // 0xBF: cmd(1) len(2) sub(2) + dati dipendenti dal sub-command
                 ushort sub = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(3));
-                if (sub == 0x06 && data.Length >= 6) // Party Message
+                if (sub == 0x06 && data.Length >= 6)
                 {
                     byte type = data[5];
-                    if (type == 0x07) // Party Invite
+                    if (type == 0x07)
                     {
                         if (data.Length >= 10)
                         {
                             uint leaderSerial = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(6));
                             DeclineParty(leaderSerial);
                         }
-                        return false; // Blocca il pacchetto verso il client
+                        return false;
                     }
                 }
                 return true;
             });
 
-            // Footsteps Filter (0x54) — blocca solo i sound ID riconosciuti come passi.
-            // Nota: FilterSound già blocca tutto il 0x54; questo filtro agisce in modo
-            // additivo quando FilterSound=false ma FilterFootsteps=true.
+            // Footsteps Filter (0x54)
             _packetService.RegisterFilter(PacketPath.ServerToClient, 0x54, data =>
             {
                 if (!_configService.CurrentProfile.FilterFootsteps) return true;
                 if (data.Length < 4) return true;
-                // 0x54: [0] cmd [1] flags [2-3] soundId (big-endian)
                 ushort soundId = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(2));
                 return !_footstepSoundIds.Contains(soundId);
             });
 
-            // ─── Filtri content-level su messaggi ASCII (0x1C) ───────────────────────
-            // Blocca Poison / KarmaFame / Snoop in base al testo del messaggio.
-            // 0x1C layout: [0] cmd [1-2] len [3-6] serial [7-8] graphic
-            //              [9] type [10-11] hue [12-13] font
-            //              [14-43] name (30 ASCII, null-padded) [44+] text (ASCII null-term)
+            // ASCII Message (0x1C)
             _packetService.RegisterFilter(PacketPath.ServerToClient, 0x1C, data =>
             {
                 return FilterMessageContent(data, isUnicode: false);
             });
 
-            // ─── Filtri content-level su messaggi Unicode (0xAE) ────────────────────
-            // 0xAE layout: [0] cmd [1-2] len [3-6] serial [7-8] graphic
-            //              [9] type [10-11] hue [12-13] font [14-17] lang (4 ASCII)
-            //              [18-47] name (30 ASCII, null-padded) [48+] text (UTF-16 BE null-term)
+            // Unicode Message (0xAE)
             _packetService.RegisterFilter(PacketPath.ServerToClient, 0xAE, data =>
             {
                 return FilterMessageContent(data, isUnicode: true);
             });
 
+            // Graphics Filters
+            _packetService.RegisterViewer(PacketPath.ServerToClient, 0x78, ApplyMobileIncomingGraphicsFilter);
+            _packetService.RegisterViewer(PacketPath.ServerToClient, 0x20, ApplyMobileUpdateGraphicsFilter);
+
             _logger.LogInformation("Classic Razor filters registered");
         }
 
-        /// <summary>
-        /// Applica i filtri content-based (Poison, KarmaFame, Snoop) a un messaggio.
-        /// Ritorna true = lascia passare il pacchetto; false = blocca.
-        /// </summary>
+        private void ApplyMobileIncomingGraphicsFilter(byte[] data)
+        {
+            if (data.Length < 9) return;
+            ushort body = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(7));
+            ushort newBody = GetReplacementGraphic(body);
+            if (newBody != body)
+            {
+                BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(7), newBody);
+            }
+        }
+
+        private void ApplyMobileUpdateGraphicsFilter(byte[] data)
+        {
+            if (data.Length < 7) return;
+            ushort body = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(5));
+            ushort newBody = GetReplacementGraphic(body);
+            if (newBody != body)
+            {
+                BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(5), newBody);
+            }
+        }
+
+        private ushort GetReplacementGraphic(ushort originalBody)
+        {
+            var profile = _configService.CurrentProfile;
+            if (profile.FilterDragon && _dragonGraphics.TryGetValue(originalBody, out ushort dragonRep)) return dragonRep;
+            if (profile.FilterDrake && _drakeGraphics.TryGetValue(originalBody, out ushort drakeRep)) return drakeRep;
+            if (profile.FilterDaemon && _daemonGraphics.TryGetValue(originalBody, out ushort daemonRep)) return daemonRep;
+            return originalBody;
+        }
+
         private bool FilterMessageContent(byte[] data, bool isUnicode)
         {
             var profile = _configService.CurrentProfile;
-
-            // Se nessun filtro content-based è attivo, passa subito
-            if (!profile.FilterPoison && !profile.FilterKarmaFame && !profile.FilterSnoop)
-                return true;
+            if (!profile.FilterPoison && !profile.FilterKarmaFame && !profile.FilterSnoop) return true;
 
             string text;
             try
             {
                 if (isUnicode)
                 {
-                    // Testo UTF-16 BE da offset 48
-                    if (data.Length < 52) return true; // troppo corto
+                    if (data.Length < 52) return true;
                     int byteLen = data.Length - 48;
-                    // Rimuovi null terminator (ultimi 2 byte)
                     if (byteLen >= 2) byteLen -= 2;
-                    text = byteLen > 0
-                        ? Encoding.BigEndianUnicode.GetString(data, 48, byteLen).TrimEnd('\0')
-                        : string.Empty;
+                    text = byteLen > 0 ? Encoding.BigEndianUnicode.GetString(data, 48, byteLen).TrimEnd('\0') : string.Empty;
                 }
                 else
                 {
-                    // Testo ASCII da offset 44
-                    if (data.Length < 46) return true; // troppo corto
+                    if (data.Length < 46) return true;
                     int byteLen = data.Length - 44;
                     text = Encoding.ASCII.GetString(data, 44, byteLen).TrimEnd('\0');
                 }
             }
-            catch
-            {
-                return true; // parsing fallito → lascia passare
-            }
+            catch { return true; }
 
             if (string.IsNullOrEmpty(text)) return true;
 
-            // Poison: "poison", "veleno", "veneno", "gift" (UO uses "poisoned")
-            if (profile.FilterPoison &&
-                (text.Contains("poison", StringComparison.OrdinalIgnoreCase) ||
-                 text.Contains("veleno", StringComparison.OrdinalIgnoreCase)))
-                return false;
-
-            // KarmaFame: messaggi di variazione fama/karma
-            if (profile.FilterKarmaFame &&
-                (text.Contains("fame", StringComparison.OrdinalIgnoreCase) ||
-                 text.Contains("karma", StringComparison.OrdinalIgnoreCase) ||
-                 text.Contains("notoriety", StringComparison.OrdinalIgnoreCase)))
-                return false;
-
-            // Snoop: messaggi relativi al peek/snoop su borse altrui
-            if (profile.FilterSnoop &&
-                (text.Contains("snoop", StringComparison.OrdinalIgnoreCase) ||
-                 text.Contains("peek", StringComparison.OrdinalIgnoreCase)))
-                return false;
+            if (profile.FilterPoison && (text.Contains("poison", StringComparison.OrdinalIgnoreCase) || text.Contains("veleno", StringComparison.OrdinalIgnoreCase))) return false;
+            if (profile.FilterKarmaFame && (text.Contains("fame", StringComparison.OrdinalIgnoreCase) || text.Contains("karma", StringComparison.OrdinalIgnoreCase) || text.Contains("notoriety", StringComparison.OrdinalIgnoreCase))) return false;
+            if (profile.FilterSnoop && (text.Contains("snoop", StringComparison.OrdinalIgnoreCase) || text.Contains("peek", StringComparison.OrdinalIgnoreCase))) return false;
 
             return true;
         }
 
         private void DeclineParty(uint leaderSerial)
         {
-            // 0xBF sub 0x06 type 0x09: Decline Party
-            // length = 10 (0xBF 1 0x000A 0x0006 0x09 leader(4))
             byte[] response = new byte[10];
             response[0] = 0xBF;
             response[1] = 0x00;
@@ -226,8 +259,93 @@ namespace TMRazorImproved.Core.Handlers
             response[4] = 0x06;
             response[5] = 0x09;
             BinaryPrimitives.WriteUInt32BigEndian(response.AsSpan(6), leaderSerial);
-            
             _packetService.SendToServer(response);
+        }
+
+        private bool FilterVetRewardGump(byte[] data, bool isCompressed)
+        {
+            if (!_configService.CurrentProfile.FilterVetRewardGump) return true;
+            if (_worldService.ConnectionStart != DateTime.MinValue && _worldService.ConnectionStart.AddMinutes(1) < DateTime.UtcNow) return true;
+
+            try
+            {
+                string layout = string.Empty;
+                if (isCompressed)
+                {
+                    if (data.Length < 27) return true;
+                    int cLen = BinaryPrimitives.ReadInt32BigEndian(data.AsSpan(19));
+                    int layoutCompressedSize = cLen - 4;
+                    if (layoutCompressedSize <= 0 || data.Length < 27 + layoutCompressedSize) return true;
+                    using var ms = new MemoryStream(data, 27, layoutCompressedSize);
+                    using var zlib = new ZLibStream(ms, CompressionMode.Decompress);
+                    using var sr = new StreamReader(zlib, Encoding.ASCII);
+                    layout = sr.ReadToEnd();
+                }
+                else
+                {
+                    if (data.Length < 21) return true;
+                    int layoutLen = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(19));
+                    if (layoutLen <= 0 || data.Length < 21 + layoutLen) return true;
+                    layout = Encoding.ASCII.GetString(data, 21, layoutLen);
+                }
+
+                if (string.IsNullOrEmpty(layout)) return true;
+                var numbers = Regex.Split(layout, @"\D+");
+                foreach (string val in numbers)
+                {
+                    if (!string.IsNullOrEmpty(val) && int.TryParse(val, out int i) && i == 1006046) return false;
+                }
+            }
+            catch (Exception ex) { _logger.LogWarning(ex, "Error filtering VetRewardGump"); }
+            return true;
+        }
+
+        private bool FilterStaffItems(byte[] data)
+        {
+            if (!_configService.CurrentProfile.FilterStaffItems) return true;
+            if (data.Length < 9) return true;
+            ushort itemId = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(7));
+            ushort baseId = (ushort)(itemId & 0x3FFF);
+            if (baseId == 0x36FF || baseId == 0x1183) return false;
+            return true;
+        }
+
+        private bool FilterStaffNpcs(byte[] data, int flagsOffset)
+        {
+            if (!_configService.CurrentProfile.FilterStaffNpcs) return true;
+            if (data.Length <= flagsOffset) return true;
+            uint serial = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(1)) & 0x7FFFFFFF;
+            if (_worldService.Player != null && serial == _worldService.Player.Serial) return true;
+            if ((data[flagsOffset] & 0x80) != 0) return false;
+            return true;
+        }
+
+        private void RefreshStaffItems()
+        {
+            bool filterEnabled = _configService.CurrentProfile.FilterStaffItems;
+            foreach (var item in _worldService.Items)
+            {
+                ushort baseId = (ushort)(item.Graphic & 0x3FFF);
+                if (baseId == 0x36FF || baseId == 0x1183)
+                {
+                    if (filterEnabled) _packetService.SendToClient(PacketBuilder.RemoveObject(item.Serial));
+                    else _packetService.SendToClient(PacketBuilder.WorldItem(item.Serial, item.Graphic, item.Amount, (ushort)item.X, (ushort)item.Y, (sbyte)item.Z, item.Hue, item.Flags));
+                }
+            }
+        }
+
+        private void RefreshStaffNpcs()
+        {
+            bool filterEnabled = _configService.CurrentProfile.FilterStaffNpcs;
+            foreach (var m in _worldService.Mobiles)
+            {
+                if (_worldService.Player != null && m.Serial == _worldService.Player.Serial) continue;
+                if ((m.Flags & 0x80) != 0)
+                {
+                    if (filterEnabled) _packetService.SendToClient(PacketBuilder.RemoveObject(m.Serial));
+                    else _packetService.SendToClient(PacketBuilder.MobileUpdate(m.Serial, m.Graphic, m.Hue, m.Flags, (ushort)m.X, (ushort)m.Y, (sbyte)m.Z, m.Direction));
+                }
+            }
         }
     }
 }

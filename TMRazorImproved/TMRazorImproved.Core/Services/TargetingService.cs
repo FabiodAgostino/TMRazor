@@ -16,6 +16,7 @@ namespace TMRazorImproved.Core.Services
         private readonly IConfigService _configService;
         private readonly IWorldService _worldService;
         private readonly IFriendsService _friendsService;
+        private readonly ITargetFilterService _targetFilterService;
         private readonly ILogger<TargetingService> _logger;
 
         // BUG-P1-01 FIX: _lastTarget e _hasPrompt acceduti da packet thread e UI thread →
@@ -57,12 +58,14 @@ namespace TMRazorImproved.Core.Services
             IWorldService worldService,
             IHotkeyService hotkeyService,
             IFriendsService friendsService,
+            ITargetFilterService targetFilterService,
             ILogger<TargetingService> logger)
         {
             _packetService = packetService;
             _configService = configService;
             _worldService = worldService;
             _friendsService = friendsService;
+            _targetFilterService = targetFilterService;
             _logger = logger;
 
             // Registrazione Handlers Pacchetti Server->Client (richiesta di target)
@@ -149,6 +152,19 @@ namespace TMRazorImproved.Core.Services
             packet[6] = 0x00; // Action: Request
             
             _logger.LogDebug("Requesting target cursor from client");
+            _packetService.SendToClient(packet);
+        }
+
+        public void RequestLocationTarget()
+        {
+            // Invia il pacchetto 0x6C (Target Cursor) al client in modalità locazione
+            byte[] packet = new byte[19];
+            packet[0] = 0x6C;
+            packet[1] = 0x00; // Location mode (0x00 = ground/land)
+            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(2), 0xDEADC0DE); 
+            packet[6] = 0x00; // Action: Request
+            
+            _logger.LogDebug("Requesting location target cursor from client");
             _packetService.SendToClient(packet);
         }
 
@@ -323,6 +339,9 @@ namespace TMRazorImproved.Core.Services
                 .Where(m => GetDistanceToPlayer(m) <= config.Range)
                 .Where(m => 
                 {
+                    // Filtro Target Esclusi (TargetFilterManager legacy)
+                    if (_targetFilterService.IsFiltered(m.Serial)) return false;
+
                     // Filtro Amici
                     if (_friendsService.IsFriend(m.Serial)) return config.TargetFriends;
                     

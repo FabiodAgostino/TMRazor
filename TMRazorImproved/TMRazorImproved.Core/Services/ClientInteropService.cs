@@ -544,6 +544,52 @@ namespace TMRazorImproved.Core.Services
             return NativeMethods.PostMessage(hWnd, msg, wParam, lParam);
         }
 
+        #region UO Warper Implementation
+
+        private const uint WM_UOA_MSG = 0x0400 + 3; // WM_USER + 3
+
+        /// <summary>
+        /// Avvia il pathfinding del client verso le coordinate specificate.
+        /// Usa il comando macro 100 (estensione per pathfinding).
+        /// </summary>
+        public void Pathfind(int x, int y, int z)
+        {
+            var hwnd = FindUOWindow();
+            if (hwnd != IntPtr.Zero)
+            {
+                // Impacchetta X e Y in lParam (Z spesso ignorato nel pathfinding macro)
+                IntPtr lParam = (IntPtr)((x & 0xFFFF) | ((y & 0xFFFF) << 16));
+                PostMessage(hwnd, WM_UOA_MSG, (IntPtr)100, lParam);
+            }
+        }
+
+        public void OpenPaperdoll() => SendUoaMacro(8, 1);
+        public void WeaponPrimary() => SendUoaMacro(35, 0);
+        public void WeaponSecondary() => SendUoaMacro(36, 0);
+        public void CloseBackpack() => SendUoaMacro(9, 7);
+        public void ToggleAlwaysRun() => SendUoaMacro(32, 0);
+
+        public void NextContPosition(int x, int y)
+        {
+            var hwnd = FindUOWindow();
+            if (hwnd != IntPtr.Zero)
+            {
+                IntPtr lParam = (IntPtr)((x & 0xFFFF) | ((y & 0xFFFF) << 16));
+                PostMessage(hwnd, WM_UOA_MSG, (IntPtr)101, lParam);
+            }
+        }
+
+        private void SendUoaMacro(int type, int index)
+        {
+            var hwnd = FindUOWindow();
+            if (hwnd != IntPtr.Zero)
+            {
+                PostMessage(hwnd, WM_UOA_MSG, (IntPtr)type, (IntPtr)index);
+            }
+        }
+
+        #endregion
+
         public bool SetWindowText(IntPtr hWnd, string text)
         {
             return NativeMethods.SetWindowText(hWnd, text);

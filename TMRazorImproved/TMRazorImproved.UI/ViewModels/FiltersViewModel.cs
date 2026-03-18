@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.ObjectModel;
 using System.Linq;
 using TMRazorImproved.Shared.Interfaces;
@@ -11,16 +12,18 @@ namespace TMRazorImproved.UI.ViewModels
     {
         private readonly IConfigService _config;
         private readonly ITargetingService _targeting;
+        private readonly IMessenger _messenger;
         private readonly object _graphLock = new();
 
         public UserProfile Profile => _config.CurrentProfile;
 
         public ObservableCollection<GraphChangeData> GraphFilters { get; } = new();
 
-        public FiltersViewModel(IConfigService config, ITargetingService targeting)
+        public FiltersViewModel(IConfigService config, ITargetingService targeting, IMessenger messenger)
         {
             _config = config;
             _targeting = targeting;
+            _messenger = messenger;
             
             EnableThreadSafeCollection(GraphFilters, _graphLock);
             SyncCollection(GraphFilters, Profile.GraphFilters, _graphLock);
@@ -31,13 +34,38 @@ namespace TMRazorImproved.UI.ViewModels
         public bool FilterWeather { get => Profile.FilterWeather; set { Profile.FilterWeather = value; _config.Save(); OnPropertyChanged(); } }
         public bool FilterSound { get => Profile.FilterSound; set { Profile.FilterSound = value; _config.Save(); OnPropertyChanged(); } }
         public bool FilterDeath { get => Profile.FilterDeath; set { Profile.FilterDeath = value; _config.Save(); OnPropertyChanged(); } }
-        public bool FilterStaff { get => Profile.FilterStaff; set { Profile.FilterStaff = value; _config.Save(); OnPropertyChanged(); } }
+        public bool FilterStaffItems 
+        { 
+            get => Profile.FilterStaffItems; 
+            set 
+            { 
+                Profile.FilterStaffItems = value; 
+                _config.Save(); 
+                OnPropertyChanged(); 
+                _messenger.Send(new Shared.Messages.ConfigChangedMessage(nameof(UserProfile.FilterStaffItems)));
+            } 
+        }
+        public bool FilterStaffNpcs 
+        { 
+            get => Profile.FilterStaffNpcs; 
+            set 
+            { 
+                Profile.FilterStaffNpcs = value; 
+                _config.Save(); 
+                OnPropertyChanged(); 
+                _messenger.Send(new Shared.Messages.ConfigChangedMessage(nameof(UserProfile.FilterStaffNpcs)));
+            } 
+        }
         public bool FilterPoison { get => Profile.FilterPoison; set { Profile.FilterPoison = value; _config.Save(); OnPropertyChanged(); } }
         public bool FilterSnoop { get => Profile.FilterSnoop; set { Profile.FilterSnoop = value; _config.Save(); OnPropertyChanged(); } }
         public bool FilterBardMusic { get => Profile.FilterBardMusic; set { Profile.FilterBardMusic = value; _config.Save(); OnPropertyChanged(); } }
         public bool FilterFootsteps { get => Profile.FilterFootsteps; set { Profile.FilterFootsteps = value; _config.Save(); OnPropertyChanged(); } }
         public bool FilterKarmaFame { get => Profile.FilterKarmaFame; set { Profile.FilterKarmaFame = value; _config.Save(); OnPropertyChanged(); } }
         public bool FilterSeason { get => Profile.FilterSeason; set { Profile.FilterSeason = value; _config.Save(); OnPropertyChanged(); } }
+        public bool FilterDragon { get => Profile.FilterDragon; set { Profile.FilterDragon = value; _config.Save(); OnPropertyChanged(); } }
+        public bool FilterDrake { get => Profile.FilterDrake; set { Profile.FilterDrake = value; _config.Save(); OnPropertyChanged(); } }
+        public bool FilterDaemon { get => Profile.FilterDaemon; set { Profile.FilterDaemon = value; _config.Save(); OnPropertyChanged(); } }
+        public bool FilterVetRewardGump { get => Profile.FilterVetRewardGump; set { Profile.FilterVetRewardGump = value; _config.Save(); OnPropertyChanged(); } }
 
         // Advanced Filters Properties
         public bool HighlightFlags { get => Profile.HighlightFlags; set { Profile.HighlightFlags = value; _config.Save(); OnPropertyChanged(); } }

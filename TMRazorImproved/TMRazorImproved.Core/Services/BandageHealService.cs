@@ -62,6 +62,20 @@ namespace TMRazorImproved.Core.Services
                         continue;
                     }
 
+                    // PoisonBlock
+                    if (config.PoisonBlock && player.IsPoisoned)
+                    {
+                        await Task.Delay(200, token);
+                        continue;
+                    }
+
+                    // MortalBlock
+                    if (config.MortalBlock && player.IsYellowHits)
+                    {
+                        await Task.Delay(200, token);
+                        continue;
+                    }
+
                     // Determina il target
                     uint targetSerial = GetTargetSerial(config, player);
                     var target = _worldService.FindMobile(targetSerial);
@@ -132,10 +146,8 @@ namespace TMRazorImproved.Core.Services
         {
             if (customDelay > 0) return customDelay;
 
-            // Formula classica UO: (11 - (DEX / 20)) secondi; minimo 2s
-            double seconds = 11.0 - (dex / 20.0);
-            if (seconds < 2.0) seconds = 2.0;
-            return (int)(seconds * 1000);
+            // Formula UO suggerita in Final Review: base 8 secondi, -1 sec ogni 20 DEX (min 3 sec)
+            return Math.Max(3000, 8000 - (dex / 20) * 1000);
         }
 
         protected override void OnStopped()

@@ -14,6 +14,7 @@ namespace TMRazorImproved.Core.Services
         private readonly IClientInteropService _interopService;
 
         private IntPtr _modHandle = IntPtr.Zero;
+        private TaskCompletionSource<bool> _handleReady = new TaskCompletionSource<bool>();
 
         // Privileges for process opening
         private const int PROCESS_CREATE_THREAD = 0x0002;
@@ -43,10 +44,12 @@ namespace TMRazorImproved.Core.Services
 
         public void InjectUoMod(int pid)
         {
+            _handleReady = new TaskCompletionSource<bool>();
             string dllPath = Path.Combine(AppContext.BaseDirectory, "UOMod.dll");
             if (!File.Exists(dllPath))
             {
                 _logger.LogWarning("UOMod.dll non trovata al percorso: {Path}", dllPath);
+                _handleReady.TrySetResult(false);
                 return;
             }
 
@@ -58,6 +61,7 @@ namespace TMRazorImproved.Core.Services
             if (hProcess == IntPtr.Zero)
             {
                 _logger.LogError("Impossibile aprire il processo UO per l'iniezione (PID {PID}).", pid);
+                _handleReady.TrySetResult(false);
                 return;
             }
 
@@ -72,6 +76,7 @@ namespace TMRazorImproved.Core.Services
                 if (pszLibFileRemote == IntPtr.Zero)
                 {
                     _logger.LogError("VirtualAllocEx fallita.");
+                    _handleReady.TrySetResult(false);
                     return;
                 }
 
@@ -79,6 +84,7 @@ namespace TMRazorImproved.Core.Services
                 if (!WriteProcessMemory(hProcess, pszLibFileRemote, bytes, (uint)bytes.Length, out _))
                 {
                     _logger.LogError("WriteProcessMemory fallita.");
+                    _handleReady.TrySetResult(false);
                     return;
                 }
 
@@ -86,6 +92,7 @@ namespace TMRazorImproved.Core.Services
                 if (pfnThreadRtn == IntPtr.Zero)
                 {
                     _logger.LogError("Impossibile trovare LoadLibraryA.");
+                    _handleReady.TrySetResult(false);
                     return;
                 }
 
@@ -93,6 +100,7 @@ namespace TMRazorImproved.Core.Services
                 if (hThread == IntPtr.Zero)
                 {
                     _logger.LogError("CreateRemoteThread fallita.");
+                    _handleReady.TrySetResult(false);
                     return;
                 }
 
@@ -102,24 +110,27 @@ namespace TMRazorImproved.Core.Services
                 // Attendi e trova la finestra
                 Task.Run(async () =>
                 {
-                    await Task.Delay(1500);
-                    IntPtr hwnd = _interopService.GetWindowHandle();
-                    if (hwnd != IntPtr.Zero)
+                    for (int i = 0; i < 20; i++) // Prova per 10 secondi
                     {
-                        string windowName = "UOModWindow_" + hwnd.ToString("x8").ToUpper();
-                        _modHandle = FindWindow(null, windowName);
+                        await Task.Delay(500);
+                        IntPtr hwnd = _interopService.GetWindowHandle();
+                        if (hwnd != IntPtr.Zero)
+                        {
+                            string windowName = "UOModWindow_" + hwnd.ToString("x8").ToUpper();
+                            _modHandle = FindWindow(null, windowName);
 
-                        if (_modHandle != IntPtr.Zero)
-                        {
-                            SendMessage(_modHandle, (int)PatchMessages.PM_VIEW_RANGE_VALUE, IntPtr.Zero, new IntPtr(0));
-                            SendMessage(_modHandle, (int)PatchMessages.PM_INFO, IntPtr.Zero, new IntPtr(-1)); // 0xFFFFFFFF
-                            _logger.LogInformation("Connessione a UOModWindow stabilita.");
-                        }
-                        else
-                        {
-                            _logger.LogWarning("UOModWindow non trovata.");
+                            if (_modHandle != IntPtr.Zero)
+                            {
+                                SendMessage(_modHandle, (int)PatchMessages.PM_VIEW_RANGE_VALUE, IntPtr.Zero, new IntPtr(0));
+                                SendMessage(_modHandle, (int)PatchMessages.PM_INFO, IntPtr.Zero, new IntPtr(-1)); // 0xFFFFFFFF
+                                _logger.LogInformation("Connessione a UOModWindow stabilita.");
+                                _handleReady.TrySetResult(true);
+                                return;
+                            }
                         }
                     }
+                    _logger.LogWarning("UOModWindow non trovata dopo 10 secondi.");
+                    _handleReady.TrySetResult(false);
                 });
             }
             finally
@@ -145,6 +156,44 @@ namespace TMRazorImproved.Core.Services
 
             int msg = enable ? (int)PatchMessages.PM_ENABLE : (int)PatchMessages.PM_DISABLE;
             SendMessage(_modHandle, msg, IntPtr.Zero, new IntPtr((int)patch));
+        }
+
+        public void SetViewRange(int value)
+        {
+            if (_modHandle == IntPtr.Zero) return;
+            SendMessage(_modHandle, (int)PatchMessages.PM_VIEW_RANGE_VALUE, IntPtr.Zero, new IntPtr(value));
+        }
+
+        public async void ApplyProfilePatches(TMRazorImproved.Shared.Models.Config.UserProfile profile)
+        {
+            // Attendi l'handle se l'iniezione è in corso
+            if (_modHandle == IntPtr.Zero)
+            {
+                await _handleReady.Task;
+            }
+
+            if (_modHandle == IntPtr.Zero) return;
+
+            EnablePatch(UOPatchType.FPS, profile.UoModFps);
+            EnablePatch(UOPatchType.Stamina, profile.UoModStamina);
+            EnablePatch(UOPatchType.AlwaysLight, profile.UoModAlwaysLight);
+            EnablePatch(UOPatchType.PaperdollSlots, profile.UoModPaperdollSlots);
+            EnablePatch(UOPatchType.SplashScreen, profile.UoModSplashScreen);
+            EnablePatch(UOPatchType.Resolution, profile.UoModResolution);
+            EnablePatch(UOPatchType.OptionsNotification, profile.UoModOptionsNotification);
+            EnablePatch(UOPatchType.MultiUO, profile.UoModMultiUo);
+            EnablePatch(UOPatchType.NoCrypt, profile.UoModNoCrypt);
+            EnablePatch(UOPatchType.GlobalSound, profile.UoModGlobalSound);
+            
+            if (profile.UoModViewRange)
+            {
+                SetViewRange(profile.UoModViewRangeValue);
+                EnablePatch(UOPatchType.ViewRange, true);
+            }
+            else
+            {
+                EnablePatch(UOPatchType.ViewRange, false);
+            }
         }
 
         #region P/Invoke

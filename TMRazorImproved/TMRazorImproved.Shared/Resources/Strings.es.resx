@@ -3248,4 +3248,10 @@ print('HP:', Player.Hits, '/', Player.HitsMax)</value>
   <data name="Agents.Vendor.SellBag" xml:space="preserve">
     <value>Bolsa de Origen de Venta</value>
   </data>
+  <data name="PacketLogger.OpenLog" xml:space="preserve">
+    <value>Abrir Carpeta de Log</value>
+  </data>
+  <data name="PacketLogger.OpenLog.ToolTip" xml:space="preserve">
+    <value>Abre la carpeta donde se guarda el log de paquetes.</value>
+  </data>
 </root>

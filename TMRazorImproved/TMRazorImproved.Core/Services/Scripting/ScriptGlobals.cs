@@ -26,6 +26,8 @@ namespace TMRazorImproved.Core.Services.Scripting
         public FiltersApi Filters { get; set; } = null!;
         public TimerApi Timer { get; set; } = null!;
         public SpecialMovesApi SpecialMoves { get; set; } = null!;
+        public SoundApi Sound { get; set; } = null!;
+        public HotkeyApi Hotkey { get; set; } = null!;
         public AutoLootApi AutoLoot { get; set; } = null!;
         public DressApi Dress { get; set; } = null!;
         public ScavengerApi Scavenger { get; set; } = null!;

@@ -5,8 +5,10 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
+      xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels.Agents"
       mc:Ignorable="d" 
       d:DesignHeight="600" d:DesignWidth="800"
+      d:DataContext="{d:DesignInstance vm:TargetingViewModel}"
       Title="Targeting">
 
     <Grid Margin="12">
@@ -17,21 +19,78 @@
 
         <ui:TextBlock Text="{loc:Loc Agents.Targeting.Title}" FontSize="24" FontWeight="Bold" Margin="0,0,0,16" Grid.Row="0" />
 
-        <ui:Card Grid.Row="1" VerticalAlignment="Top">
+        <ScrollViewer Grid.Row="1">
             <StackPanel>
-                <ui:ToggleSwitch Content="{loc:Loc Agents.Targeting.SmartTarget}" 
-                                 IsChecked="{Binding SmartTarget}" 
-                                 Margin="0,0,0,12"
-                                 ToolTip="{loc:Loc Agents.Targeting.SmartTarget.ToolTip}"/>
-                <ui:ToggleSwitch Content="{loc:Loc Agents.Targeting.AutoQueue}" 
-                                 IsChecked="{Binding AutoQueue}" 
-                                 Margin="0,0,0,12"
-                                 ToolTip="{loc:Loc Agents.Targeting.AutoQueue.ToolTip}"/>
-                <ui:ToggleSwitch Content="{loc:Loc Agents.Targeting.RangeCheck}" 
-                                 IsChecked="{Binding RangeCheck}" 
-                                 Margin="0,0,0,12"
-                                 ToolTip="{loc:Loc Agents.Targeting.RangeCheck.ToolTip}"/>
+                <!-- General Settings -->
+                <ui:Card Margin="0,0,0,12">
+                    <StackPanel>
+                        <ui:TextBlock Text="General Settings" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        
+                        <DockPanel Margin="0,0,0,8">
+                            <ui:TextBlock Text="Target Range" VerticalAlignment="Center" Width="120"/>
+                            <ui:NumberBox Value="{Binding Range}" Minimum="1" Maximum="30" Width="120" HorizontalAlignment="Left"/>
+                        </DockPanel>
+
+                        <ui:ToggleSwitch Content="Target Friends" IsChecked="{Binding TargetFriends}" Margin="0,0,0,8" />
+                        <ui:ToggleSwitch Content="Target Innocents (Blue)" IsChecked="{Binding TargetInnocents}" Margin="0,0,0,8" />
+
+                        <DockPanel Margin="0,0,0,8">
+                            <ui:TextBlock Text="Target Priority" VerticalAlignment="Center" Width="120"/>
+                            <ComboBox ItemsSource="{Binding Source={StaticResource TargetPriorityEnumValues}}" 
+                                      SelectedItem="{Binding Priority}"
+                                      Width="150" HorizontalAlignment="Left"/>
+                        </DockPanel>
+                        
+                        <ui:Button Content="Clear Last Target" Command="{Binding ClearTargetCommand}" Icon="{ui:SymbolIcon Delete24}" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- Excluded Targets (Target Filter Manager) -->
+                <ui:Card>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="200" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <ui:TextBlock Text="Excluded Targets (Target Filter)" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8" Grid.Row="0"/>
+
+                        <ListView ItemsSource="{Binding ExcludedTargets}" Grid.Row="1" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="200"/>
+                                    <GridViewColumn Header="Serial" DisplayMemberBinding="{Binding Serial, StringFormat=0x{0:X8}}" Width="100"/>
+                                    <GridViewColumn Header="Enabled" Width="80">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding Enabled}" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Actions" Width="100">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ui:Button Content="Remove" 
+                                                           Command="{Binding DataContext.RemoveExcludedTargetCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                                           CommandParameter="{Binding}"
+                                                           Padding="4,2" FontSize="11" Appearance="Danger"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+
+                        <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,8,0,0">
+                            <ui:Button Content="Add Target" Command="{Binding AddExcludedTargetCommand}" Icon="{ui:SymbolIcon Add24}" Margin="0,0,8,0"/>
+                            <ui:Button Content="Add All Mobiles" Command="{Binding AddAllMobilesCommand}" Margin="0,0,8,0" />
+                            <ui:Button Content="Add All Humanoids" Command="{Binding AddAllHumanoidsCommand}" Margin="0,0,8,0" />
+                            <ui:Button Content="Clear All" Command="{Binding ClearExcludedTargetsCommand}" Appearance="Secondary"/>
+                        </StackPanel>
+                    </Grid>
+                </ui:Card>
             </StackPanel>
-        </ui:Card>
+        </ScrollViewer>
     </Grid>
 </Page>

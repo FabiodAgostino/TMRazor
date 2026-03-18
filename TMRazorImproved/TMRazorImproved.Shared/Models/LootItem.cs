@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TMRazorImproved.Shared.Models
 {
@@ -22,7 +23,7 @@ namespace TMRazorImproved.Shared.Models
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(FormattedProperties))]
-        private List<string> _properties = new();
+        private List<PropertyFilter> _propertyFilters = new();
 
         public LootItem() { }
 
@@ -35,6 +36,6 @@ namespace TMRazorImproved.Shared.Models
 
         public string FormattedGraphic => $"0x{Graphic:X4}";
         public string FormattedColor => Color == -1 ? "Any" : $"0x{Color:X4}";
-        public string FormattedProperties => Properties.Count > 0 ? string.Join(", ", Properties) : "Any";
+        public string FormattedProperties => PropertyFilters.Count > 0 ? string.Join(", ", PropertyFilters.Select(pf => pf.ToString())) : "Any";
     }
 }

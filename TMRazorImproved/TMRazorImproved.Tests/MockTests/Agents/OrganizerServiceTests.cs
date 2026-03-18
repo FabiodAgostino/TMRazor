@@ -17,6 +17,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
         private readonly Mock<IPacketService> _packetServiceMock = new();
         private readonly Mock<IConfigService> _configServiceMock = new();
         private readonly Mock<IWorldService> _worldServiceMock = new();
+        private readonly Mock<IDragDropCoordinator> _dragDropCoordinatorMock = new();
         private readonly Mock<IHotkeyService> _hotkeyServiceMock = new();
         private readonly Mock<ILogger<OrganizerService>> _loggerMock = new();
         private readonly UserProfile _profile = new();
@@ -25,6 +26,9 @@ namespace TMRazorImproved.Tests.MockTests.Agents
         {
             _configServiceMock.Setup(c => c.CurrentProfile).Returns(_profile);
             _worldServiceMock.Setup(w => w.Player).Returns(new Mobile(0x123));
+            
+            _dragDropCoordinatorMock.Setup(d => d.RequestDragDrop(It.IsAny<uint>(), It.IsAny<uint>(), It.IsAny<ushort>()))
+                                    .ReturnsAsync(true);
         }
 
         [Fact]
@@ -52,6 +56,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _packetServiceMock.Object,
                 _configServiceMock.Object,
                 _worldServiceMock.Object,
+                _dragDropCoordinatorMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 
@@ -69,8 +74,10 @@ namespace TMRazorImproved.Tests.MockTests.Agents
 
             // Assert
             // 0x07 = Lift, 0x08 = Drop
-            _packetServiceMock.Verify(p => p.SendToServer(It.Is<byte[]>(b => b[0] == 0x07)), Times.Once);
-            _packetServiceMock.Verify(p => p.SendToServer(It.Is<byte[]>(b => b[0] == 0x08)), Times.Once);
+            // NOTA: Con l'introduzione di IDragDropCoordinator, OrganizerService chiama MoveItemAsync
+            // che a sua volta chiama _dragDropCoordinator.RequestDragDrop.
+            // Quindi dobbiamo verificare la chiamata a RequestDragDrop invece che a SendToServer.
+            _dragDropCoordinatorMock.Verify(d => d.RequestDragDrop(itemSerial, destSerial, 100), Times.Once);
             
             service.Stop();
         }
@@ -87,6 +94,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _packetServiceMock.Object,
                 _configServiceMock.Object,
                 _worldServiceMock.Object,
+                _dragDropCoordinatorMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 
@@ -95,7 +103,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
             await Task.Delay(200);
 
             // Assert
-            _packetServiceMock.Verify(p => p.SendToServer(It.IsAny<byte[]>()), Times.Never);
+            _dragDropCoordinatorMock.Verify(d => d.RequestDragDrop(It.IsAny<uint>(), It.IsAny<uint>(), It.IsAny<ushort>()), Times.Never);
             service.Stop();
         }
 
@@ -109,6 +117,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _packetServiceMock.Object,
                 _configServiceMock.Object,
                 _worldServiceMock.Object,
+                _dragDropCoordinatorMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 
