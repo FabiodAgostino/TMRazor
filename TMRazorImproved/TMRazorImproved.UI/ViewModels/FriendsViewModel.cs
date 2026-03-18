@@ -23,6 +23,12 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty]
         private string _newGuildName = string.Empty;
 
+        [ObservableProperty]
+        private string _newPlayerName = string.Empty;
+
+        [ObservableProperty]
+        private string _newPlayerSerial = string.Empty;
+
         public ObservableCollection<string> FriendsLists { get; } = new();
         
         [ObservableProperty]
@@ -89,6 +95,23 @@ namespace TMRazorImproved.UI.ViewModels
                 _friendsService.DeleteList(SelectedList);
                 RefreshLists();
             }
+        }
+
+        [RelayCommand]
+        private void AddFriendManual()
+        {
+            if (string.IsNullOrWhiteSpace(NewPlayerName)) return;
+            uint serial = 0;
+            var s = NewPlayerSerial.Trim();
+            if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                uint.TryParse(s[2..], System.Globalization.NumberStyles.HexNumber, null, out serial);
+            else
+                uint.TryParse(s, out serial);
+            if (serial == 0) return;
+            _friendsService.AddFriend(serial, NewPlayerName.Trim());
+            RefreshActiveList();
+            NewPlayerName = string.Empty;
+            NewPlayerSerial = string.Empty;
         }
 
         [RelayCommand]

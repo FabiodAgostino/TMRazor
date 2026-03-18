@@ -138,11 +138,17 @@
                                    Margin="0,0,8,0"
                                    ToolTip="{loc:Loc General.Action.Toolbar.ToolTip}"/>
 
-                        <ui:Button Content="{loc:Loc General.Action.DPSMeter}" 
+                        <ui:Button Content="{loc:Loc General.Action.DPSMeter}"
                                    Icon="{ui:SymbolIcon Timer24}"
                                    Command="{Binding ToggleDPSMeterCommand}"
                                    Margin="0,0,8,0"
                                    ToolTip="{loc:Loc General.Action.DPSMeter.ToolTip}"/>
+
+                        <ui:Button Content="{loc:Loc General.Action.Changelog}"
+                                   Icon="{ui:SymbolIcon Document24}"
+                                   Command="{Binding ShowChangelogCommand}"
+                                   Margin="0,0,8,0"
+                                   ToolTip="{loc:Loc General.Action.Changelog.ToolTip}"/>
                         
                         <ui:Button Content="{loc:Loc General.Action.SpellGrid}" 
                                    Icon="{ui:SymbolIcon Flash24}"

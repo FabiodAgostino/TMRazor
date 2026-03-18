@@ -55,6 +55,7 @@ namespace TMRazorImproved.UI
 
                 // Services Core (Backend)
                 services.AddSingleton<IClientInteropService, ClientInteropService>();
+                services.AddSingleton<TMRazorImproved.Shared.Interfaces.Adapters.IClientAdapterFactory, TMRazorImproved.Core.Services.Adapters.ClientAdapterFactory>();
                 services.AddSingleton<ISearchService, SearchService>();
                 services.AddSingleton<IPacketService, PacketService>();
                 services.AddSingleton<IWorldService, WorldService>();
@@ -95,6 +96,7 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<IUOModService, UOModService>();
                 services.AddSingleton<IPacketLoggerService, PacketLoggerService>();
                 services.AddSingleton<IScriptRecorderService, ScriptRecorderService>();
+                services.AddSingleton<IProtoControlService, ProtoControlService>();
 
                 // Handlers (Singleton)
                 services.AddSingleton<WorldPacketHandler>();
@@ -216,6 +218,9 @@ namespace TMRazorImproved.UI
                 _host.Services.GetRequiredService<IBoneCutterService>().Start();
                 _host.Services.GetRequiredService<IAutoRemountService>().Start();
                 
+                // Avvia il server ProtoControl (WebSocket per controllo remoto)
+                _host.Services.GetRequiredService<IProtoControlService>().Start();
+
                 // Inizializza altri servizi che devono essere attivi
                 _host.Services.GetRequiredService<IOrganizerService>();
                 _host.Services.GetRequiredService<IVendorService>();
@@ -285,6 +290,7 @@ namespace TMRazorImproved.UI
         protected override async void OnExit(ExitEventArgs e)
         {
             // Disponi esplicitamente i servizi che implementano IDisposable
+            (_host.Services.GetService<IProtoControlService>() as IDisposable)?.Dispose();
             (_host.Services.GetService<IScriptingService>() as IDisposable)?.Dispose();
             (_host.Services.GetService<JournalViewModel>() as IDisposable)?.Dispose();
             (_host.Services.GetService<PacketLoggerViewModel>() as IDisposable)?.Dispose();

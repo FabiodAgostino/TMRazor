@@ -549,5 +549,12 @@ namespace TMRazorImproved.UI.ViewModels
                 else _dpsMeter.Show();
             }
         }
+
+        [RelayCommand]
+        private void ShowChangelog()
+        {
+            var win = new Views.Windows.ChangelogWindow();
+            win.Show();
+        }
     }
 }

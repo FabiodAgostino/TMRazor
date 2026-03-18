@@ -1,24 +1,194 @@
 <Page x:Class="TMRazorImproved.UI.Views.Pages.Agents.FriendsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
-      mc:Ignorable="d" 
-      d:DesignHeight="600" d:DesignWidth="800"
+      mc:Ignorable="d"
+      d:DesignHeight="700" d:DesignWidth="800"
       Title="Friends">
 
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <ui:TextBlock Text="{loc:Loc Agents.Friends.Title}" FontSize="24" FontWeight="Bold" Margin="0,0,0,16" Grid.Row="0" />
+        <!-- Titolo -->
+        <ui:TextBlock Text="{loc:Loc Agents.Friends.Title}" FontSize="24" FontWeight="Bold" Margin="0,0,0,12" Grid.Row="0" />
 
-        <ui:Card Grid.Row="1" VerticalAlignment="Top">
-            <TextBlock Text="{loc:Loc Agents.Friends.Management}" />
+        <!-- Gestione liste amici -->
+        <ui:Card Grid.Row="1" Padding="12" Margin="0,0,0,12">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <ui:TextBlock Text="{loc:Loc Agents.General.ActiveList}" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="SemiBold"/>
+                    <ComboBox Width="180"
+                              ItemsSource="{Binding FriendsLists}"
+                              SelectedItem="{Binding SelectedList, Mode=TwoWay}"
+                              VerticalAlignment="Center"/>
+                    <ui:Button Command="{Binding DeleteListCommand}"
+                               Icon="{ui:SymbolIcon Delete24}"
+                               Appearance="Secondary"
+                               Margin="8,0,0,0"
+                               ToolTip="{loc:Loc Agents.General.RemoveList.ToolTip}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <ui:TextBox Text="{Binding NewListName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                PlaceholderText="{loc:Loc Agents.Friends.NewListName}"
+                                Width="180" Margin="0,0,8,0"/>
+                    <ui:Button Content="{loc:Loc Agents.Friends.CreateList}"
+                               Command="{Binding CreateListCommand}"
+                               Icon="{ui:SymbolIcon Add24}"/>
+                </StackPanel>
+            </StackPanel>
         </ui:Card>
+
+        <!-- Contenuto principale -->
+        <ScrollViewer Grid.Row="2">
+            <StackPanel>
+
+                <!-- Opzioni -->
+                <ui:Card Margin="0,0,0,12" Padding="12">
+                    <StackPanel>
+                        <ui:TextBlock Text="{loc:Loc Agents.Friends.Options}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <UniformGrid Columns="2">
+                            <ui:ToggleSwitch Content="{loc:Loc Agents.Friends.AutoAcceptParty}"
+                                             IsChecked="{Binding AutoAcceptParty, Mode=TwoWay}"
+                                             Margin="0,0,8,4"/>
+                            <ui:ToggleSwitch Content="{loc:Loc Agents.Friends.PreventAttack}"
+                                             IsChecked="{Binding PreventAttack, Mode=TwoWay}"
+                                             Margin="8,0,0,4"/>
+                            <ui:ToggleSwitch Content="{loc:Loc Agents.Friends.IncludeParty}"
+                                             IsChecked="{Binding IncludeParty, Mode=TwoWay}"
+                                             Margin="0,0,8,4"/>
+                        </UniformGrid>
+                        <Separator Margin="0,8"/>
+                        <ui:TextBlock Text="{loc:Loc Agents.Friends.FactionFriends}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <UniformGrid Columns="4">
+                            <ui:ToggleSwitch Content="Silver League" IsChecked="{Binding SLFriend, Mode=TwoWay}" Margin="0,0,4,0"/>
+                            <ui:ToggleSwitch Content="True Britannia" IsChecked="{Binding TBFriend, Mode=TwoWay}" Margin="4,0,4,0"/>
+                            <ui:ToggleSwitch Content="Circle of Magi" IsChecked="{Binding COMFriend, Mode=TwoWay}" Margin="4,0,4,0"/>
+                            <ui:ToggleSwitch Content="Minax" IsChecked="{Binding MINFriend, Mode=TwoWay}" Margin="4,0,0,0"/>
+                        </UniformGrid>
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- Lista Giocatori -->
+                <ui:Card Margin="0,0,0,12" Padding="12">
+                    <StackPanel>
+                        <ui:TextBlock Text="{loc:Loc Agents.Friends.Players}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+                        <!-- Add by target -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <ui:Button Content="{loc:Loc Agents.Friends.AddByTarget}"
+                                       Command="{Binding AddFriendTargetCommand}"
+                                       Icon="{ui:SymbolIcon Target24}"
+                                       Margin="0,0,8,0"/>
+                        </StackPanel>
+
+                        <!-- Add manuale -->
+                        <ui:Card Padding="8" Margin="0,0,0,8">
+                            <StackPanel>
+                                <ui:TextBlock Text="{loc:Loc Agents.Friends.AddManual}" FontSize="12" Margin="0,0,0,4"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:TextBox Text="{Binding NewPlayerName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                PlaceholderText="{loc:Loc Agents.Friends.PlayerName}"
+                                                Width="160" Margin="0,0,8,0"/>
+                                    <ui:TextBox Text="{Binding NewPlayerSerial, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                PlaceholderText="Serial (0x...)"
+                                                Width="120" Margin="0,0,8,0"/>
+                                    <ui:Button Content="{loc:Loc Agents.General.Add}"
+                                               Command="{Binding AddFriendManualCommand}"
+                                               Icon="{ui:SymbolIcon PersonAdd24}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </ui:Card>
+
+                        <!-- Griglia giocatori -->
+                        <ListView ItemsSource="{Binding Players}" MinHeight="120" MaxHeight="220"
+                                  BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="{loc:Loc Agents.General.Col.Enabled}" Width="60">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay}" HorizontalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="{loc:Loc Agents.General.Col.Name}" DisplayMemberBinding="{Binding Name}" Width="180"/>
+                                    <GridViewColumn Header="Serial" Width="110">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Serial, StringFormat=0x{0:X8}}" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="{loc:Loc Agents.General.Col.Actions}" Width="80">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ui:Button Icon="{ui:SymbolIcon Delete24}"
+                                                           Appearance="Transparent"
+                                                           Padding="4"
+                                                           Command="{Binding DataContext.RemoveFriendCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                           CommandParameter="{Binding}"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- Lista Gilde -->
+                <ui:Card Padding="12">
+                    <StackPanel>
+                        <ui:TextBlock Text="{loc:Loc Agents.Friends.Guilds}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+                        <!-- Add gilda -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <ui:TextBox Text="{Binding NewGuildName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        PlaceholderText="{loc:Loc Agents.Friends.GuildName}"
+                                        Width="200" Margin="0,0,8,0"/>
+                            <ui:Button Content="{loc:Loc Agents.General.Add}"
+                                       Command="{Binding AddGuildCommand}"
+                                       Icon="{ui:SymbolIcon Add24}"/>
+                        </StackPanel>
+
+                        <!-- Griglia gilde -->
+                        <ListView ItemsSource="{Binding Guilds}" MinHeight="80" MaxHeight="160"
+                                  BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="{loc:Loc Agents.General.Col.Enabled}" Width="60">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay}" HorizontalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="{loc:Loc Agents.General.Col.Name}" DisplayMemberBinding="{Binding Name}" Width="300"/>
+                                    <GridViewColumn Header="{loc:Loc Agents.General.Col.Actions}" Width="80">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ui:Button Icon="{ui:SymbolIcon Delete24}"
+                                                           Appearance="Transparent"
+                                                           Padding="4"
+                                                           Command="{Binding DataContext.RemoveGuildCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                           CommandParameter="{Binding}"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </StackPanel>
+                </ui:Card>
+
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Page>

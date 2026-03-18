@@ -4,3 +4,5 @@
    (TMRazor Improved) a cui si fa riferimento. Successivamente passa alla correzione / sviluppo richiesta. Dopo la
    modifica builda per capire se tutto è andato come previsto.  Al termine lascia un identificativo sul .md per far
    comprendere che è stato fatto.
+
+

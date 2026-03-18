@@ -2158,6 +2158,12 @@
   <data name="General.Action.Toolbar.ToolTip" xml:space="preserve">
     <value>Show/Hide the floating toolbar for quick access to agents and tools.</value>
   </data>
+  <data name="General.Action.Changelog" xml:space="preserve">
+    <value>Changelog</value>
+  </data>
+  <data name="General.Action.Changelog.ToolTip" xml:space="preserve">
+    <value>View the application changelog and version history.</value>
+  </data>
   <data name="General.Patch.Encryption" xml:space="preserve">
     <value>Patch Encryption</value>
   </data>
@@ -3280,5 +3286,44 @@ print('HP:', Player.Hits, '/', Player.HitsMax)</value>
   </data>
   <data name="PacketLogger.OpenLog.ToolTip" xml:space="preserve">
     <value>Open the folder where the packet log is stored.</value>
+  </data>
+  <data name="Agents.Friends.NewListName" xml:space="preserve">
+    <value>New list name...</value>
+  </data>
+  <data name="Agents.Friends.CreateList" xml:space="preserve">
+    <value>Create List</value>
+  </data>
+  <data name="Agents.Friends.Options" xml:space="preserve">
+    <value>Options</value>
+  </data>
+  <data name="Agents.Friends.AutoAcceptParty" xml:space="preserve">
+    <value>Auto Accept Party</value>
+  </data>
+  <data name="Agents.Friends.PreventAttack" xml:space="preserve">
+    <value>Prevent Attack on Friends</value>
+  </data>
+  <data name="Agents.Friends.IncludeParty" xml:space="preserve">
+    <value>Include Party Members</value>
+  </data>
+  <data name="Agents.Friends.FactionFriends" xml:space="preserve">
+    <value>Faction Friends</value>
+  </data>
+  <data name="Agents.Friends.Players" xml:space="preserve">
+    <value>Players</value>
+  </data>
+  <data name="Agents.Friends.AddByTarget" xml:space="preserve">
+    <value>Add by Target</value>
+  </data>
+  <data name="Agents.Friends.AddManual" xml:space="preserve">
+    <value>Add manually (name + serial)</value>
+  </data>
+  <data name="Agents.Friends.PlayerName" xml:space="preserve">
+    <value>Player name...</value>
+  </data>
+  <data name="Agents.Friends.Guilds" xml:space="preserve">
+    <value>Guilds</value>
+  </data>
+  <data name="Agents.Friends.GuildName" xml:space="preserve">
+    <value>Guild name...</value>
   </data>
 </root>

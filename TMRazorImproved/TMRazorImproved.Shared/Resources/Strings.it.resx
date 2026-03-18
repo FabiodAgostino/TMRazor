@@ -3010,6 +3010,12 @@
   <data name="General.Action.Toolbar.ToolTip" xml:space="preserve">
     <value>Mostra/Nascondi la barra degli strumenti fluttuante per un accesso rapido agli agenti e agli strumenti.</value>
   </data>
+  <data name="General.Action.Changelog" xml:space="preserve">
+    <value>Changelog</value>
+  </data>
+  <data name="General.Action.Changelog.ToolTip" xml:space="preserve">
+    <value>Visualizza il changelog dell'applicazione e la cronologia delle versioni.</value>
+  </data>
   <data name="General.Patch.Encryption" xml:space="preserve">
     <value>Patch Criptazione</value>
   </data>
@@ -4132,5 +4138,44 @@ print('HP:', Player.Hits, '/', Player.HitsMax)</value>
   </data>
   <data name="PacketLogger.OpenLog.ToolTip" xml:space="preserve">
     <value>Apre la cartella in cui è salvato il log dei pacchetti.</value>
+  </data>
+  <data name="Agents.Friends.NewListName" xml:space="preserve">
+    <value>Nome nuova lista...</value>
+  </data>
+  <data name="Agents.Friends.CreateList" xml:space="preserve">
+    <value>Crea Lista</value>
+  </data>
+  <data name="Agents.Friends.Options" xml:space="preserve">
+    <value>Opzioni</value>
+  </data>
+  <data name="Agents.Friends.AutoAcceptParty" xml:space="preserve">
+    <value>Accetta Gruppo Automaticamente</value>
+  </data>
+  <data name="Agents.Friends.PreventAttack" xml:space="preserve">
+    <value>Blocca Attacco su Amici</value>
+  </data>
+  <data name="Agents.Friends.IncludeParty" xml:space="preserve">
+    <value>Includi Membri del Gruppo</value>
+  </data>
+  <data name="Agents.Friends.FactionFriends" xml:space="preserve">
+    <value>Amici di Fazione</value>
+  </data>
+  <data name="Agents.Friends.Players" xml:space="preserve">
+    <value>Giocatori</value>
+  </data>
+  <data name="Agents.Friends.AddByTarget" xml:space="preserve">
+    <value>Aggiungi tramite Target</value>
+  </data>
+  <data name="Agents.Friends.AddManual" xml:space="preserve">
+    <value>Aggiungi manualmente (nome + serial)</value>
+  </data>
+  <data name="Agents.Friends.PlayerName" xml:space="preserve">
+    <value>Nome giocatore...</value>
+  </data>
+  <data name="Agents.Friends.Guilds" xml:space="preserve">
+    <value>Gilde</value>
+  </data>
+  <data name="Agents.Friends.GuildName" xml:space="preserve">
+    <value>Nome gilda...</value>
   </data>
 </root>
