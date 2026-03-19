@@ -2693,6 +2693,15 @@ print('HP:', Player.Hits, '/', Player.HitsMax)</value>
   <data name="Inspector.Tab.MapInspector" xml:space="preserve">
     <value>Map Inspector</value>
   </data>
+  <data name="Inspector.Tab.GumpHistory" xml:space="preserve">
+    <value>Gump History</value>
+  </data>
+  <data name="Inspector.GumpHistory.Title" xml:space="preserve">
+    <value>Gump Response History</value>
+  </data>
+  <data name="Inspector.GumpHistory.Clear" xml:space="preserve">
+    <value>Clear History</value>
+  </data>
   <data name="Inspector.GumpList.Title" xml:space="preserve">
     <value>Gump List Manager</value>
   </data>
@@ -3325,5 +3334,47 @@ print('HP:', Player.Hits, '/', Player.HitsMax)</value>
   </data>
   <data name="Agents.Friends.GuildName" xml:space="preserve">
     <value>Guild name...</value>
+  </data>
+  <data name="Media.Title" xml:space="preserve">
+    <value>Media &amp; Screenshots</value>
+  </data>
+  <data name="Media.Screenshots" xml:space="preserve">
+    <value>Screenshot Settings</value>
+  </data>
+  <data name="Media.Video" xml:space="preserve">
+    <value>Video Recording</value>
+  </data>
+  <data name="Media.OutputDirectory" xml:space="preserve">
+    <value>Output Directory</value>
+  </data>
+  <data name="Media.Browse" xml:space="preserve">
+    <value>Browse</value>
+  </data>
+  <data name="Media.Format" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="Media.Quality" xml:space="preserve">
+    <value>Quality (JPG only)</value>
+  </data>
+  <data name="Media.AutoScreenshot" xml:space="preserve">
+    <value>Auto Screenshot on Death</value>
+  </data>
+  <data name="Media.TakeScreenshot" xml:space="preserve">
+    <value>Take Screenshot Now</value>
+  </data>
+  <data name="Media.Fps" xml:space="preserve">
+    <value>Frames Per Second</value>
+  </data>
+  <data name="Media.Codec" xml:space="preserve">
+    <value>Codec</value>
+  </data>
+  <data name="Media.PerfNote" xml:space="preserve">
+    <value>Uncompressed video recording can generate very large files and impact performance.</value>
+  </data>
+  <data name="Media.ScreenshotTaken" xml:space="preserve">
+    <value>Screenshot captured successfully.</value>
+  </data>
+  <data name="Nav.MediaSettings" xml:space="preserve">
+    <value>Media Settings</value>
   </data>
 </root>

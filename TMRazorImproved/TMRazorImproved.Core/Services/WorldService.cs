@@ -60,6 +60,10 @@ namespace TMRazorImproved.Core.Services
         // Senza volatile il JIT può cachearlo in registro → lo script non vede mai l'aggiornamento.
         private volatile bool _isCasting;
         public bool IsCasting { get => _isCasting; set => _isCasting = value; }
+        
+        public byte CurrentLight { get; set; }
+        public byte CurrentSeason { get; set; }
+        
         public UOGump? CurrentGump { get; private set; }
         public ConcurrentDictionary<uint, UOGump> OpenGumps { get; } = new();
         public uint LastOpenedContainer { get; private set; }

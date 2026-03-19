@@ -71,4 +71,17 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void Stop() { _cancel.ThrowIfCancelled(); _ = _service.StopAsync(); }
         public virtual bool Status() => _service.IsRunning;
     }
+
+    public class VendorApi : AgentApiBase
+    {
+        private readonly IVendorService _service;
+        public VendorApi(IVendorService service, ScriptCancellationController cancel) : base(cancel) { _service = service; }
+        public virtual void Start() { _cancel.ThrowIfCancelled(); _service.Start(); }
+        public virtual void Stop() { _cancel.ThrowIfCancelled(); _ = _service.StopAsync(); }
+        public virtual bool Status() => _service.IsRunning;
+        public virtual void SetBuyList(string name) { _cancel.ThrowIfCancelled(); _service.SetBuyList(name); }
+        public virtual void SetSellList(string name) { _cancel.ThrowIfCancelled(); _service.SetSellList(name); }
+        public virtual void ClearBuyList() { _cancel.ThrowIfCancelled(); _service.ClearBuyList(); }
+        public virtual void ClearSellList() { _cancel.ThrowIfCancelled(); _service.ClearSellList(); }
+    }
 }

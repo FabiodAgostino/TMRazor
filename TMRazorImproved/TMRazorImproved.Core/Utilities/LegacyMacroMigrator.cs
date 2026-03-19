@@ -70,15 +70,10 @@ namespace TMRazorImproved.Core.Utilities
             {
                 // ── Controllo flusso ────────────────────────────────────────────────
                 case "If":
-                    // Format: If|property|operator|value
-                    if (parts.Length >= 4)
-                        return $"IF {parts[1]} {parts[2]} {parts[3]}";
-                    return parts.Length >= 2 ? $"IF {parts[1]}" : "IF";
+                    return MigrateCondition("IF", parts);
 
                 case "ElseIf":
-                    if (parts.Length >= 4)
-                        return $"ELSEIF {parts[1]} {parts[2]} {parts[3]}";
-                    return parts.Length >= 2 ? $"ELSEIF {parts[1]}" : "ELSEIF";
+                    return MigrateCondition("ELSEIF", parts);
 
                 case "Else":
                 case "else":
@@ -88,9 +83,7 @@ namespace TMRazorImproved.Core.Utilities
                     return "ENDIF";
 
                 case "While":
-                    if (parts.Length >= 4)
-                        return $"WHILE {parts[1]} {parts[2]} {parts[3]}";
-                    return parts.Length >= 2 ? $"WHILE {parts[1]}" : "WHILE";
+                    return MigrateCondition("WHILE", parts);
 
                 case "EndWhile":
                     return "ENDWHILE";
@@ -331,6 +324,165 @@ namespace TMRazorImproved.Core.Utilities
                 default:
                     return $"// UNMIGRATED: {line}";
             }
+        }
+
+        private static string MigrateCondition(string command, string[] parts)
+        {
+            if (parts.Length < 2) return command;
+
+            // In legacy, the condition type is at parts[1] (e.g. PlayerStats, Find, etc.)
+            string type = parts[1];
+            string result = command;
+            string warning = "";
+
+            switch (type)
+            {
+                case "PlayerStats":
+                    if (parts.Length >= 13)
+                    {
+                        // In legacy, stat is at parts[11] (PlayerStatType enum)
+                        string stat = parts[11].ToUpperInvariant();
+                        if (stat == "HITPOINTS") stat = "HP";
+                        string op = GetOperator(parts[2]);
+                        string val = parts[3];
+                        result = $"{command} {stat} {op} {val}";
+                    }
+                    break;
+
+                case "PlayerStatus":
+                    if (parts.Length >= 13)
+                    {
+                        // In legacy, status is at parts[12] (PlayerStatusType enum)
+                        string status = parts[12].ToUpperInvariant();
+                        bool boolVal = parts.Length >= 9 && parts[8].Equals("True", StringComparison.OrdinalIgnoreCase);
+                        string notPrefix = boolVal ? "" : "NOT ";
+                        result = $"{command} {notPrefix}{status}";
+                    }
+                    break;
+
+                case "Skill":
+                    if (parts.Length >= 7)
+                    {
+                        // In legacy, skill name is at parts[6]
+                        string skill = parts[6];
+                        string op = GetOperator(parts[2]);
+                        string val = parts[3];
+                        result = $"{command} SKILL \"{skill}\" {op} {val}";
+                    }
+                    break;
+
+                case "Find":
+                    if (parts.Length >= 22)
+                    {
+                        string graphic = parts[4];
+                        string range = parts[20];
+                        string location = parts[18]; // Backpack, Container, Ground
+                        string container = parts[19];
+                        bool storeSerial = parts[21].Equals("True", StringComparison.OrdinalIgnoreCase);
+
+                        if (location == "Container")
+                        {
+                            result = $"{command} FIND {graphic} {range} {container}";
+                        }
+                        else
+                        {
+                            result = $"{command} FIND {graphic} {range}";
+                            if (location == "Backpack")
+                                warning = "// WARNING: FIND in Backpack converted to general FIND (range-based)";
+                        }
+
+                        if (storeSerial)
+                        {
+                            if (!string.IsNullOrEmpty(warning)) warning += "\n";
+                            warning += "// WARNING: FindStoreSerial (save to 'found' alias) is not supported in macros";
+                        }
+                    }
+                    break;
+
+                case "Count":
+                    if (parts.Length >= 6)
+                    {
+                        string graphic = parts[4];
+                        string op = GetOperator(parts[2]);
+                        string val = parts[3];
+                        result = $"{command} COUNT {graphic} {op} {val}";
+                    }
+                    break;
+
+                case "InRange":
+                    if (parts.Length >= 17)
+                    {
+                        string mode = parts[13]; // LastTarget, Serial, ItemType, MobileType
+                        string range = parts[3];
+
+                        switch (mode)
+                        {
+                            case "LastTarget":
+                                result = $"{command} INRANGE last {range}";
+                                break;
+                            case "Serial":
+                                result = $"{command} INRANGE {parts[14]} {range}";
+                                break;
+                            case "ItemType":
+                                result = $"{command} INRANGETYPE ITEM {parts[15]} {range}";
+                                break;
+                            case "MobileType":
+                                result = $"{command} INRANGETYPE MOBILE {parts[15]} {range}";
+                                break;
+                        }
+                    }
+                    break;
+
+                case "TargetExists":
+                    {
+                        bool boolVal = parts.Length >= 9 && parts[8].Equals("True", StringComparison.OrdinalIgnoreCase);
+                        string notPrefix = boolVal ? "" : "NOT ";
+                        result = $"{command} {notPrefix}TARGETEXISTS";
+                    }
+                    break;
+
+                case "InJournal":
+                    {
+                        string text = parts.Length >= 8 ? parts[7] : "";
+                        bool boolVal = parts.Length >= 9 && parts[8].Equals("True", StringComparison.OrdinalIgnoreCase);
+                        string notPrefix = boolVal ? "" : "NOT ";
+                        result = $"{command} {notPrefix}INJOURNAL \"{text}\"";
+                    }
+                    break;
+
+                case "BuffExists":
+                    {
+                        string buff = parts.Length >= 11 ? parts[10] : "";
+                        bool boolVal = parts.Length >= 9 && parts[8].Equals("True", StringComparison.OrdinalIgnoreCase);
+                        string notPrefix = boolVal ? "" : "NOT ";
+                        result = $"{command} {notPrefix}BUFFEXISTS \"{buff}\"";
+                    }
+                    break;
+
+                default:
+                    // Format: If|property|operator|value
+                    if (parts.Length >= 4)
+                        result = $"{command} {parts[1]} {GetOperator(parts[2])} {parts[3]}";
+                    else if (parts.Length >= 2)
+                        result = $"{command} {parts[1]}";
+                    break;
+            }
+
+            return string.IsNullOrEmpty(warning) ? result : $"{warning}\n{result}";
+        }
+
+        private static string GetOperator(string op)
+        {
+            return op switch
+            {
+                "GreaterThan" => ">",
+                "LessThan" => "<",
+                "Equal" => "==",
+                "GreaterOrEqual" => ">=",
+                "LessOrEqual" => "<=",
+                "NotEqual" => "!=",
+                _ => op
+            };
         }
     }
 }

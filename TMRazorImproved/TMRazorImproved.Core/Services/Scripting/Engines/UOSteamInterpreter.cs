@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using TMRazorImproved.Core.Services.Scripting.Api;
+using TMRazorImproved.Shared.Interfaces;
 
 namespace TMRazorImproved.Core.Services.Scripting.Engines
 {
@@ -23,13 +24,22 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
         private readonly OrganizerApi _organizerApi;
         private readonly BandageHealApi _bandageHealApi;
         private readonly HotkeyApi _hotkeyApi;
+        private readonly VendorApi _vendorApi;
+        private readonly IFriendsService _friends;
+        private readonly IMacrosService _macros;
+        private readonly IWorldService _world;
         private readonly ScriptCancellationController _cancel;
         private readonly Action<string> _output;
+
+        private uint _lastMount;
+        private uint _toggleLeftSave;
+        private uint _toggleRightSave;
 
         private readonly Dictionary<string, uint> _aliases = new();
         private readonly Dictionary<string, List<uint>> _lists = new();
         private readonly Dictionary<string, long> _timers = new();
         private readonly Dictionary<string, string> _variables = new();
+        private readonly List<uint> _useOnceIgnoreList = new();
         private readonly Stack<int> _loopStack = new();
         private readonly Stack<(int lineIndex, int counter, int limit, string varName)> _forStack = new();
         private readonly Stack<bool> _ifSucceededStack = new(); // Traccia se un ramo if/elseif è già stato eseguito
@@ -53,6 +63,10 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             OrganizerApi organizerApi,
             BandageHealApi bandageHealApi,
             HotkeyApi hotkeyApi,
+            VendorApi vendorApi,
+            IFriendsService friends,
+            IMacrosService macros,
+            IWorldService world,
             ScriptCancellationController cancel,
             Action<string> output)
         {
@@ -71,6 +85,10 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             _organizerApi = organizerApi;
             _bandageHealApi = bandageHealApi;
             _hotkeyApi = hotkeyApi;
+            _vendorApi = vendorApi;
+            _friends = friends;
+            _macros = macros;
+            _world = world;
             _cancel = cancel;
             _output = output;
 
@@ -78,6 +96,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             _aliases["backpack"] = 0;
             _aliases["lasttarget"] = 0;
             _aliases["found"] = 0;
+            _useOnceIgnoreList.Clear();
         }
 
         public void Execute(string code)
@@ -87,6 +106,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             _loopStack.Clear();
             _forStack.Clear();
             _ifSucceededStack.Clear();
+            _useOnceIgnoreList.Clear();
 
             while (_currentLineIndex < _lines.Length)
             {
@@ -320,8 +340,129 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                     case "walk":
                         if (args.Length > 0) _player.Walk(args[0]);
                         break;
+                    case "run":
+                        if (args.Length > 0) _player.Run(args[0]);
+                        break;
                     case "turn":
                         if (args.Length > 0) _player.Turn(args[0]);
+                        break;
+                    case "fly":
+                        _player.Fly(true);
+                        break;
+                    case "land":
+                        _player.Fly(false);
+                        break;
+                    case "pathfindto":
+                        if (args.Length >= 3) _player.PathFindTo(ParseInt(args[0]), ParseInt(args[1]), ParseInt(args[2]));
+                        break;
+                    case "miniheal":
+                        {
+                            uint mhTarget = args.Length > 0 ? ParseSerial(args[0]) : _player.Serial;
+                            if (_skillsApi.GetValue("Chivalry") >= 30)
+                            {
+                                _player.Cast("Close Wounds");
+                                _misc.WaitForTarget(2500);
+                                if (_targetApi.HasTarget()) { if (mhTarget == _player.Serial) _player.TargetSelf(); else _targetApi.Target(mhTarget); }
+                            }
+                            else if (_skillsApi.GetValue("Magery") >= 10)
+                            {
+                                _player.Cast("Heal");
+                                _misc.WaitForTarget(2500);
+                                if (_targetApi.HasTarget()) { if (mhTarget == _player.Serial) _player.TargetSelf(); else _targetApi.Target(mhTarget); }
+                            }
+                            else
+                            {
+                                var b = _items.FindByID(0x0E21, -1, _player.Backpack?.Serial ?? 0, -1);
+                                if (b != null) { _items.UseItem(b.Serial); _misc.WaitForTarget(1000); _player.TargetSelf(); }
+                            }
+                        }
+                        break;
+                    case "bigheal":
+                        {
+                            _player.Cast("Greater Heal");
+                            _misc.WaitForTarget(2500);
+                            if (_targetApi.HasTarget())
+                            {
+                                if (args.Length > 0) _targetApi.Target(ParseSerial(args[0]));
+                                else _player.TargetSelf();
+                            }
+                        }
+                        break;
+                    case "chivalryheal":
+                        _player.Cast("Close Wounds");
+                        break;
+                    case "bandageself":
+                        {
+                            var b = _items.FindByID(0x0E21, -1, _player.Backpack?.Serial ?? 0, -1);
+                            if (b != null) { _items.UseItem(b.Serial); _misc.WaitForTarget(1000); _player.TargetSelf(); }
+                        }
+                        break;
+                    case "targettype":
+                        if (args.Length >= 1)
+                        {
+                            int ttGraphic = ParseInt(args[0]);
+                            int ttColor = args.Length > 1 ? ParseInt(args[1]) : -1;
+                            if (args.Length >= 3)
+                            {
+                                // Third arg: large value = container serial, small value = range (legacy behavior)
+                                uint ttThird = ParseSerial(args[2]);
+                                if (ttThird > 0x7FFF)
+                                {
+                                    var ttFound = _world.Items.FirstOrDefault(i =>
+                                        i.Graphic == (ushort)ttGraphic &&
+                                        (ttColor == -1 || i.Hue == (ushort)ttColor) &&
+                                        (i.Container == ttThird || i.ContainerSerial == ttThird));
+                                    if (ttFound != null) _targetApi.Target(ttFound.Serial);
+                                }
+                                else
+                                {
+                                    _targetApi.TargetType(ttGraphic, ttColor, (int)ttThird);
+                                }
+                            }
+                            else
+                            {
+                                _targetApi.TargetType(ttGraphic, ttColor);
+                            }
+                        }
+                        break;
+                    case "targetground":
+                        if (args.Length >= 1)
+                        {
+                            var g = ParseInt(args[0]);
+                            var c = args.Length > 1 ? ParseInt(args[1]) : -1;
+                            var range = args.Length > 2 ? ParseInt(args[2]) : 20;
+                            // TargetApi.TargetType checks backpack then ground items. For UOSteam's targetground we'll reuse it for now.
+                            _targetApi.TargetType(g, c, range, "Nearest");
+                        }
+                        break;
+                    case "targettile":
+                        if (args.Length >= 3) _targetApi.TargetXYZ(ParseInt(args[0]), ParseInt(args[1]), ParseInt(args[2]));
+                        break;
+                    case "targettileoffset":
+                        if (args.Length >= 3)
+                        {
+                            _targetApi.TargetXYZ(_player.X + ParseInt(args[0]), _player.Y + ParseInt(args[1]), _player.Z + ParseInt(args[2]));
+                        }
+                        break;
+                    case "targettilerelative":
+                        if (args.Length >= 3)
+                        {
+                            _targetApi.TargetExecuteRelative(ParseSerial(args[0]), ParseInt(args[1]));
+                        }
+                        break;
+                    case "targetresource":
+                        // UOSteam: targetresource tool_serial resource_name (ore/sand/wood/graves/red mushrooms)
+                        if (args.Length >= 2)
+                            _targetApi.TargetResource(ParseSerial(args[0]), args[1]);
+                        break;
+                    case "cleartargetqueue":
+                        _targetApi.ClearQueue();
+                        break;
+                    case "autotargetobject":
+                        if (args.Length >= 1) _targetApi.SetLastTarget(ParseSerial(args[0]));
+                        break;
+                    case "cancelautotarget":
+                        _targetApi.ClearLast();
                         break;
                     case "autoloot":
                         if (args.Length > 0 && args[0] == "off") _autoLootApi.Stop(); else _autoLootApi.Start();
@@ -348,6 +489,47 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                     case "bandageheal":
                         if (args.Length > 0 && args[0] == "off") _bandageHealApi.Stop(); else _bandageHealApi.Start();
                         break;
+                    case "buy":
+                        if (args.Length > 0) _vendorApi.SetBuyList(args[0]);
+                        _vendorApi.Start(); // UOSteam buy can also just enable
+                        break;
+                    case "sell":
+                        if (args.Length > 0) _vendorApi.SetSellList(args[0]);
+                        _vendorApi.Start(); // UOSteam sell enables sell agent
+                        break;
+                    case "clearbuy":
+                        _vendorApi.ClearBuyList();
+                        break;
+                    case "clearsell":
+                        _vendorApi.ClearSellList();
+                        break;
+                    case "contextmenu":
+                        // Legacy: contextmenu serial optionString — uses string name matching, 1s timeout
+                        if (args.Length >= 2)
+                        {
+                            uint serial = ParseSerial(args[0]);
+                            string option = args[1];
+                            _misc.UseContextMenu(serial, option, 1000);
+                        }
+                        break;
+                    case "waitforcontext":
+                        // Legacy: waitforcontext serial intIndex [timeout] — uses integer index, longer timeout
+                        if (args.Length >= 2)
+                        {
+                            uint serial = ParseSerial(args[0]);
+                            int index = ParseInt(args[1]);
+                            int timeout = args.Length > 2 ? ParseInt(args[2]) : 5000;
+                            _misc.ContextMenu(serial);
+                            _misc.WaitForContext(serial, timeout);
+                            _misc.ContextReply(serial, index);
+                        }
+                        else if (args.Length == 1)
+                        {
+                            uint serial = ParseSerial(args[0]);
+                            _misc.ContextMenu(serial);
+                            _misc.WaitForContext(serial, 5000);
+                        }
+                        break;
                     case "playsound":
                         if (args.Length > 0) _misc.PlaySound(ParseInt(args[0]));
                         break;
@@ -364,6 +546,314 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                             var item = _items.FindBySerial(ParseSerial(args[0]));
                             if (item != null) _variables[args[1].ToLower()] = string.Join(" ", item.Properties);
                         }
+                        break;
+                    case "useonce":
+                        if (args.Length >= 1)
+                        {
+                            int graphic = ParseInt(args[0]);
+                            int hue = args.Length > 1 ? ParseInt(args[1]) : -1;
+                            var backpackSerial = _player.Backpack?.Serial ?? 0;
+                            var item = _items.FindAllByID(graphic, hue, backpackSerial, true)
+                                .FirstOrDefault(i => !_useOnceIgnoreList.Contains(i.Serial));
+                            if (item != null)
+                            {
+                                _useOnceIgnoreList.Add(item.Serial);
+                                _items.UseItem(item.Serial);
+                            }
+                        }
+                        break;
+                    case "clearusequeue":
+                        _useOnceIgnoreList.Clear();
+                        break;
+                    case "moveitemoffset":
+                        if (args.Length >= 2)
+                        {
+                            uint serial = ParseSerial(args[0]);
+                            string target = args[1].ToLower();
+                            int amount = 1;
+                            if (args.Length == 3) amount = ParseInt(args[2]);
+                            else if (args.Length >= 6) amount = ParseInt(args[5]);
+
+                            if (target == "ground")
+                            {
+                                if (args.Length >= 5)
+                                    _items.MoveOnGround(serial, _player.X + ParseInt(args[2]), _player.Y + ParseInt(args[3]), _player.Z + ParseInt(args[4]), amount);
+                                else
+                                    _items.DropItemGroundSelf(serial, amount);
+                            }
+                            else
+                            {
+                                uint contSerial = ParseSerial(args[1]);
+                                if (args.Length >= 5)
+                                    _items.Move(serial, contSerial, amount, ParseInt(args[2]), ParseInt(args[3]));
+                                else
+                                    _items.Move(serial, contSerial, amount);
+                            }
+                        }
+                        break;
+                    case "movetypeoffset":
+                        if (args.Length >= 2)
+                        {
+                            int graphic = ParseInt(args[0]);
+                            uint srcCont = ParseSerial(args[1]);
+                            int amount = -1;
+                            int hue = -1;
+                            var item = _items.FindByID(graphic, hue, srcCont, true);
+                            if (item != null)
+                            {
+                                if (args.Length >= 8) amount = ParseInt(args[7]);
+                                if (args.Length >= 7) hue = ParseInt(args[6]);
+                                
+                                // Source logic already handled by FindByID
+                                if (args.Length >= 6)
+                                    _items.MoveOnGround(item.Serial, _player.X + ParseInt(args[3]), _player.Y + ParseInt(args[4]), _player.Z + ParseInt(args[5]), amount == -1 ? item.Amount : amount);
+                                else
+                                    _items.DropItemGroundSelf(item.Serial, amount == -1 ? item.Amount : amount);
+                            }
+                        }
+                        break;
+                    case "waitforproperties":
+                        if (args.Length >= 1)
+                        {
+                            uint serial = ParseSerial(args[0]);
+                            int timeout = args.Length > 1 ? ParseInt(args[1]) : 5000;
+                            _items.WaitForProps(serial, timeout);
+                        }
+                        break;
+                    case "getenemy":
+                        if (args.Length > 0)
+                        {
+                            var filter = _mobiles.Filter();
+                            filter.OnlyAlive = true;
+                            bool nearest = false;
+                            foreach (var arg in args)
+                            {
+                                string a = arg.ToLower();
+                                if (a == "nearest" || a == "closest") nearest = true;
+                                else if (a == "friend") filter.Notorieties.Add(1);
+                                else if (a == "innocent") filter.Notorieties.Add(2);
+                                else if (a == "criminal") filter.Notorieties.Add(4);
+                                else if (a == "gray") { filter.Notorieties.Add(3); filter.Notorieties.Add(4); }
+                                else if (a == "murderer") filter.Notorieties.Add(6);
+                                else if (a == "enemy") { filter.Notorieties.Add(6); filter.Notorieties.Add(5); filter.Notorieties.Add(4); }
+                                else if (a == "humanoid") filter.IsHuman = 1;
+                            }
+                            var list = _mobiles.ApplyFilter(filter);
+                            if (list.Count > 0)
+                            {
+                                var enemy = nearest ? list.OrderBy(m => m._inner.DistanceTo(_world.Player)).First() : list[0];
+                                _aliases["enemy"] = enemy.Serial;
+                                _targetApi.SetLastTarget(enemy.Serial);
+                                if (!line.Contains("quiet", StringComparison.OrdinalIgnoreCase))
+                                    _player.HeadMsg($"[Enemy] {enemy.Name}", 138);
+                            }
+                            else _aliases.Remove("enemy");
+                        }
+                        break;
+                    case "getfriend":
+                        if (args.Length > 0)
+                        {
+                            var filter = _mobiles.Filter();
+                            filter.OnlyAlive = true;
+                            bool nearest = false;
+                            foreach (var arg in args)
+                            {
+                                string a = arg.ToLower();
+                                if (a == "nearest" || a == "closest") nearest = true;
+                                else if (a == "friend") filter.Notorieties.Add(1);
+                                else if (a == "innocent") filter.Notorieties.Add(2);
+                                else if (a == "criminal" || a == "gray") { filter.Notorieties.Add(3); filter.Notorieties.Add(4); }
+                                else if (a == "murderer") filter.Notorieties.Add(6);
+                                else if (a == "enemy") { filter.Notorieties.Add(6); filter.Notorieties.Add(5); filter.Notorieties.Add(4); }
+                                else if (a == "invulnerable") filter.Notorieties.Add(7);
+                                else if (a == "humanoid") filter.IsHuman = 1;
+                            }
+                            var list = _mobiles.ApplyFilter(filter);
+                            if (list.Count > 0)
+                            {
+                                var friend = nearest ? list.OrderBy(m => m._inner.DistanceTo(_world.Player)).First() : list[0];
+                                _aliases["friend"] = friend.Serial;
+                                _targetApi.SetLastTarget(friend.Serial);
+                                if (!line.Contains("quiet", StringComparison.OrdinalIgnoreCase))
+                                    _player.HeadMsg($"[Friend] {friend.Name}", 168);
+                            }
+                            else _aliases.Remove("friend");
+                        }
+                        break;
+                    case "ignoreobject":
+                        if (args.Length > 0) _misc.IgnoreObject(ParseSerial(args[0]));
+                        break;
+                    case "clearignorelist":
+                        _misc.ClearIgnore();
+                        break;
+                    case "partymsg":
+                        if (args.Length > 0) _player.ChatParty(args[0]);
+                        break;
+                    case "guildmsg":
+                        if (args.Length > 0) _player.ChatGuild(args[0]);
+                        break;
+                    case "allymsg":
+                        if (args.Length > 0) _player.ChatAlliance(args[0]);
+                        break;
+                    case "whispermsg":
+                        if (args.Length >= 2) _player.ChatWhisper(args[0], ParseInt(args[1]));
+                        else if (args.Length == 1) _player.ChatWhisper(args[0]);
+                        break;
+                    case "yellmsg":
+                        if (args.Length >= 2) _player.ChatYell(args[0], ParseInt(args[1]));
+                        else if (args.Length == 1) _player.ChatYell(args[0]);
+                        break;
+                    case "emotemsg":
+                        if (args.Length >= 2) _player.ChatEmote(args[0], ParseInt(args[1]));
+                        else if (args.Length == 1) _player.ChatEmote(args[0]);
+                        break;
+                    case "equipitem":
+                        if (args.Length >= 1) _player.EquipItem(ParseSerial(args[0]));
+                        break;
+                    case "equipwand":
+                        // Stub
+                        break;
+                    case "togglemounted":
+                        if (_player.IsOnMount)
+                        {
+                            var mount = _player.Mount;
+                            if (mount != null)
+                            {
+                                _lastMount = mount.Serial;
+                                _aliases["mount"] = _lastMount;
+                            }
+                            _items.UseItem(_player.Serial); // Dismount
+                        }
+                        else
+                        {
+                            if (_lastMount == 0 && _aliases.TryGetValue("mount", out uint m)) _lastMount = m;
+                            if (_lastMount != 0) _items.UseItem(_lastMount);
+                        }
+                        break;
+                    case "togglehands":
+                        if (args.Length > 0)
+                        {
+                            string hand = args[0].ToLower();
+                            if (hand == "left")
+                            {
+                                var item = _player.FindLayer(0x02); // LeftHand
+                                if (item != null) { _toggleLeftSave = item.Serial; _player.UnEquipItemByLayer("LeftHand"); }
+                                else if (_toggleLeftSave != 0) _player.EquipItem(_toggleLeftSave);
+                            }
+                            else if (hand == "right")
+                            {
+                                var item = _player.FindLayer(0x01); // RightHand
+                                if (item != null) { _toggleRightSave = item.Serial; _player.UnEquipItemByLayer("RightHand"); }
+                                else if (_toggleRightSave != 0) _player.EquipItem(_toggleRightSave);
+                            }
+                        }
+                        break;
+                    case "clearhands":
+                        if (args.Length > 0)
+                        {
+                            string what = args[0].ToLower();
+                            if (what == "both" || what == "left") _player.UnEquipItemByLayer("LeftHand");
+                            if (what == "both" || what == "right") _player.UnEquipItemByLayer("RightHand");
+                        }
+                        else
+                        {
+                            _player.UnEquipItemByLayer("LeftHand");
+                            _player.UnEquipItemByLayer("RightHand");
+                        }
+                        break;
+                    case "addfriend":
+                        if (args.Length > 0) _friends.AddFriend(ParseSerial(args[0]), "Added via script");
+                        break;
+                    case "removefriend":
+                        if (args.Length > 0) _friends.RemoveFriend(ParseSerial(args[0]));
+                        break;
+                    case "toggleautoloot":
+                        if (_autoLootApi.Status()) _autoLootApi.Stop(); else _autoLootApi.Start();
+                        break;
+                    case "togglescavenger":
+                        if (_scavengerApi.Status()) _scavengerApi.Stop(); else _scavengerApi.Start();
+                        break;
+                    case "promptalias":
+                        if (args.Length > 0)
+                        {
+                            string aliasName = args[0].ToLower();
+                            _player.HeadMsg($"Click target for alias '{args[0]}' (5s)");
+                            // Poll LastTarget for up to 5 seconds to detect when user clicks a target
+                            uint prevTarget = (uint)_targetApi.GetLast();
+                            long paDeadline = Environment.TickCount64 + 5000;
+                            while (Environment.TickCount64 < paDeadline)
+                            {
+                                _cancel.ThrowIfCancelled();
+                                uint cur = (uint)_targetApi.GetLast();
+                                if (cur != 0 && cur != prevTarget) { _aliases[aliasName] = cur; break; }
+                                System.Threading.Thread.Sleep(50);
+                            }
+                        }
+                        break;
+                    case "playmacro":
+                        if (args.Length > 0) _macros.Play(args[0]);
+                        break;
+                    case "virtue":
+                        if (args.Length > 0) _player.InvokeVirtue(args[0]);
+                        break;
+                    case "rename":
+                        if (args.Length >= 2) _misc.PetRename(ParseSerial(args[0]), args[1]);
+                        break;
+                    case "feed":
+                        if (args.Length >= 2)
+                        {
+                            uint target = ParseSerial(args[0]);
+                            int graphic = ParseInt(args[1]);
+                            int color = args.Length > 2 ? ParseInt(args[2]) : -1;
+                            int amount = args.Length > 3 ? ParseInt(args[3]) : 1;
+                            var food = _items.FindByID(graphic, color, _player.Backpack?.Serial ?? 0, -1);
+                            if (food != null)
+                            {
+                                if (target == _player.Serial) _items.UseItem(food.Serial);
+                                else _items.Move(food.Serial, target, amount);
+                            }
+                        }
+                        break;
+                    case "clickobject":
+                        if (args.Length > 0) _items.Click(ParseSerial(args[0]));
+                        break;
+                    case "dressconfig":
+                        if (args.Length > 0) _dressApi.ChangeList(args[0]);
+                        break;
+                    case "paperdoll":
+                        _player.OpenPaperDoll();
+                        break;
+                    case "helpbutton":
+                        _player.QuestButton(); // As fallback
+                        break;
+                    case "guildbutton":
+                        _player.GuildButton();
+                        break;
+                    case "ping":
+                        _player.HeadMsg("Ping sent to server...");
+                        // For now just resync or something similar
+                        break;
+                    case "where":
+                        _player.HeadMsg($"X: {_player.X}, Y: {_player.Y}, Z: {_player.Z}, Map: {_player.MapId}");
+                        break;
+                    case "snapshot":
+                        _misc.CaptureNow();
+                        break;
+                    case "messagebox":
+                        if (args.Length >= 2) _player.HeadMsg($"[{args[0]}] {args[1]}");
+                        else if (args.Length == 1) _player.HeadMsg(args[0]);
+                        break;
+                    case "shownames":
+                        // Stub for now, requires interop integration
+                        break;
+                    case "hotkeys":
+                        if (args.Length > 0)
+                        {
+                            if (args[0] == "on") _hotkeyApi.SetStatus("Master", true); else _hotkeyApi.SetStatus("Master", false);
+                        }
+                        break;
+                    case "counter":
+                        // Stub
                         break;
                     case "replay":
                         _currentLineIndex = -1;
@@ -493,6 +983,9 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             expr = expr.ToLower().Trim();
             if (string.IsNullOrEmpty(expr)) return false;
 
+            if (expr == "true") return true;
+            if (expr == "false") return false;
+
             // Supporto NOT (!)
             if (expr.StartsWith("not ") || expr.StartsWith("! "))
             {
@@ -521,7 +1014,33 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
 
             // Comandi di ricerca/query
             if (expr.StartsWith("findtype ")) return HandleFindType(expr);
+            if (expr.StartsWith("findobject "))
+            {
+                uint fo = ParseSerial(expr.Substring(11).Trim());
+                if (_world.FindEntity(fo) != null) { _aliases["found"] = fo; return true; }
+                return false;
+            }
+            if (expr.StartsWith("findlayer "))
+            {
+                var parts = expr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 2)
+                {
+                    uint container = parts.Length > 2 ? ParseSerial(parts[2]) : _player.Serial;
+                    var item = _world.Items.FirstOrDefault(i => i.Container == container && i.Layer == (byte)ParseInt(parts[1]));
+                    if (item != null) { _aliases["found"] = item.Serial; return true; }
+                }
+                return false;
+            }
             if (expr.StartsWith("counttype ")) return HandleCountType(expr);
+            if (expr.StartsWith("counttypeground "))
+            {
+                var parts = expr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length < 2) return false;
+                int g = ParseInt(parts[1]);
+                int c = parts.Length > 2 ? ParseInt(parts[2]) : -1;
+                int r = parts.Length > 3 ? ParseInt(parts[3]) : 18;
+                return _world.Items.Count(i => i.ContainerSerial == 0 && i.Graphic == g && (c == -1 || i.Hue == c) && i.DistanceTo(_world.Player) <= r) > 0;
+            }
             if (expr.StartsWith("injournal ")) return _journal.InJournal(expr.Substring(10).Trim('\'', '"'));
             if (expr.StartsWith("injournalline ")) return _journal.InJournal(expr.Substring(14).Trim('\'', '"'));
             if (expr.StartsWith("gumpexists "))
@@ -559,9 +1078,31 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             if (expr.StartsWith("inrange "))
             {
                 var parts = expr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length >= 3) return _misc.Distance(_player.X, _player.Y, (int)ParseSerial(parts[1]), (int)ParseSerial(parts[2])) <= ParseInt(parts[2]);
-                if (parts.Length == 2) return _misc.Distance(_player.X, _player.Y, (int)ParseSerial(parts[1]), (int)ParseSerial(parts[1])) <= 2;
+                if (parts.Length >= 3) return _player.DistanceTo(ParseSerial(parts[1])) <= ParseInt(parts[2]);
+                if (parts.Length == 2) return _player.DistanceTo(ParseSerial(parts[1])) <= 2;
             }
+            if (expr.StartsWith("property "))
+            {
+                var parts = expr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 3)
+                {
+                    uint s = ParseSerial(parts[1]);
+                    string p = string.Join(" ", parts.Skip(2)).Trim('\'', '"');
+                    var item = _world.FindEntity(s);
+                    return item?.OPL?.Properties.Any(prop => prop.Arguments.Contains(p, StringComparison.OrdinalIgnoreCase)) ?? false;
+                }
+                return false;
+            }
+            if (expr.StartsWith("infriendlist ")) return _friends.IsFriend(ParseSerial(expr.Substring(13).Trim()));
+            if (expr.StartsWith("inregion ")) return _player.Area().Contains(expr.Substring(9).Trim('\'', '"'), StringComparison.OrdinalIgnoreCase);
+
+            // Notorietà
+            if (expr.StartsWith("criminal ")) return _mobiles.FindBySerial(ParseSerial(expr.Substring(9).Trim()))?.Notoriety == 4;
+            if (expr.StartsWith("enemy ")) return _mobiles.FindBySerial(ParseSerial(expr.Substring(6).Trim()))?.Notoriety == 5;
+            if (expr.StartsWith("friend ")) return _mobiles.FindBySerial(ParseSerial(expr.Substring(7).Trim()))?.Notoriety == 1;
+            if (expr.StartsWith("gray ")) { var n = _mobiles.FindBySerial(ParseSerial(expr.Substring(5).Trim()))?.Notoriety; return n == 3 || n == 4; }
+            if (expr.StartsWith("innocent ")) return _mobiles.FindBySerial(ParseSerial(expr.Substring(9).Trim()))?.Notoriety == 1;
+            if (expr.StartsWith("murderer ")) return _mobiles.FindBySerial(ParseSerial(expr.Substring(9).Trim()))?.Notoriety == 6;
 
             // Proprietà booleane
             switch (expr)
@@ -571,12 +1112,12 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                 case "hidden":    return _player.IsHidden;
                 case "mounted":   return _player.IsOnMount;
                 case "warmode":   return _player.WarMode;
-                case "paralyzed": return false; 
-                case "blessed":   return false;
+                case "paralyzed": return _player.Paralized; 
                 case "yellowhits": return _player.IsYellowHits;
                 case "hasgump":   return _misc.WaitForGumpAny(50);
-                case "waitingfortarget": return false;
+                case "waitingfortarget": return _targetApi.HasTarget();
                 case "inparty":   return _player.InParty;
+                case "flying":    return _world.Player?.Flying ?? false;
             }
 
             return false;
@@ -628,6 +1169,36 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             if (long.TryParse(term, out long val)) return val;
             if (term.StartsWith("0x") && long.TryParse(term.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out long hexVal)) return hexVal;
 
+            if (term.StartsWith("skill ") || term.StartsWith("skillvalue "))
+            {
+                string sname = term.Substring(term.IndexOf(' ') + 1).Trim('\'', '"');
+                return (long)(_skillsApi.GetValue(sname) * 10);
+            }
+            if (term.StartsWith("skillbase "))
+            {
+                string sname = term.Substring(10).Trim('\'', '"');
+                return (long)(_skillsApi.GetBase(sname) * 10);
+            }
+            if (term.StartsWith("skillstate "))
+            {
+                string sname = term.Substring(11).Trim('\'', '"');
+                return _skillsApi.GetLock(sname).ToLowerInvariant() switch
+                {
+                    "up"     => 1,
+                    "down"   => 0,
+                    "locked" => 2,
+                    _        => -1
+                };
+            }
+            if (term.StartsWith("amount ")) return _items.FindBySerial(ParseSerial(term.Substring(7).Trim()))?.Amount ?? 0;
+            if (term.StartsWith("graphic ")) return _items.FindBySerial(ParseSerial(term.Substring(8).Trim()))?.Graphic ?? 0;
+            if (term.StartsWith("color ")) return _items.FindBySerial(ParseSerial(term.Substring(6).Trim()))?.Hue ?? 0;
+            if (term.StartsWith("durability "))
+            {
+                var item = _items.FindBySerial(ParseSerial(term.Substring(11).Trim()));
+                return item?.GetPropValue("Durability") ?? 0;
+            }
+
             return term switch
             {
                 "hits"         => _player.Hits,
@@ -653,9 +1224,29 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                 "fame"         => _player.Fame,
                 "karma"        => _player.Karma,
                 "luck"         => _player.Luck,
+                "physical"     => _player.AR,
+                "fire"         => _player.FireResist,
+                "cold"         => _player.ColdResist,
+                "poison"       => _player.PoisonResist,
+                "energy"       => _player.EnergyResist,
                 "x"            => _player.X,
                 "y"            => _player.Y,
                 "z"            => _player.Z,
+                "direction"    => _player.DirectionNum,
+                "directionname" => _player.DirectionNum & 0x07,
+                // Direction string literals — for comparisons like: directionname == north
+                "north"        => 0,
+                "northeast"    => 1,
+                "east"         => 2,
+                "southeast"    => 3,
+                "south"        => 4,
+                "southwest"    => 5,
+                "west"         => 6,
+                "northwest"    => 7,
+                // skillstate string literals — for comparisons like: skillstate Magery == up
+                "up"           => 1,
+                "down"         => 0,
+                "locked"       => 2,
                 "random"       => _rng.Next(0, 100),
                 _ => ParseSerial(term)
             };

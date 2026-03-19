@@ -12,7 +12,8 @@ using TMRazorImproved.Shared.Models;
 namespace TMRazorImproved.UI.ViewModels
 {
     public partial class InspectorViewModel : ViewModelBase,
-        CommunityToolkit.Mvvm.Messaging.IRecipient<TMRazorImproved.Shared.Messages.NavigateToInspectorMessage>
+        CommunityToolkit.Mvvm.Messaging.IRecipient<TMRazorImproved.Shared.Messages.NavigateToInspectorMessage>,
+        CommunityToolkit.Mvvm.Messaging.IRecipient<TMRazorImproved.Shared.Messages.GumpResponseLogMessage>
     {
         private readonly ITargetingService _targetingService;
         private readonly IWorldService _worldService;
@@ -63,6 +64,8 @@ namespace TMRazorImproved.UI.ViewModels
 
         public ObservableCollection<UOGump> OpenGumps { get; } = new();
 
+        public ObservableCollection<string> GumpResponseHistory { get; } = new();
+
         public string InspectedLayer => (InspectedEntity is Item item) ? item.Layer.ToString() : "N/A";
         public string InspectedContainer => (InspectedEntity is Item item2) ? $"0x{item2.Container:X8}" : "N/A";
         public string InspectedAmount => (InspectedEntity is Item item3) ? item3.Amount.ToString() : "N/A";
@@ -88,6 +91,7 @@ namespace TMRazorImproved.UI.ViewModels
             EnableThreadSafeCollection(RecentSerials, new object());
             EnableThreadSafeCollection(GumpControls, new object());
             EnableThreadSafeCollection(OpenGumps, new object());
+            EnableThreadSafeCollection(GumpResponseHistory, new object());
 
             // Inizializza posizione iniziale
             UpdatePlayerPosition();
@@ -131,6 +135,12 @@ namespace TMRazorImproved.UI.ViewModels
                 }
                 StatusMessage = string.Format(_languageService.GetString("Inspector.Status.GumpListUpdated"), OpenGumps.Count);
             });
+        }
+
+        [RelayCommand]
+        private void ClearGumpHistory()
+        {
+            GumpResponseHistory.Clear();
         }
 
         [RelayCommand]
@@ -270,6 +280,22 @@ namespace TMRazorImproved.UI.ViewModels
                 var ent = _worldService.FindEntity(serial);
                 if (ent != null) InspectedEntity = ent;
             }
+        }
+
+        public void Receive(TMRazorImproved.Shared.Messages.GumpResponseLogMessage message)
+        {
+            var (serial, gumpId, buttonId, switches, textEntries) = message.Value;
+
+            string log = $"[{DateTime.Now:HH:mm:ss}] Gump 0x{gumpId:X8} - Button: {buttonId}";
+            if (switches.Count > 0)
+                log += $" | Switches: {string.Join(", ", switches)}";
+            if (textEntries.Count > 0)
+                log += $" | Texts: {string.Join(", ", textEntries.Select(kv => $"{kv.Key}='{kv.Value}'"))}";
+
+            RunOnUIThread(() => {
+                GumpResponseHistory.Insert(0, log);
+                if (GumpResponseHistory.Count > 50) GumpResponseHistory.RemoveAt(50);
+            });
         }
 
         private void OnTargetReceived(TMRazorImproved.Shared.Models.TargetInfo info)

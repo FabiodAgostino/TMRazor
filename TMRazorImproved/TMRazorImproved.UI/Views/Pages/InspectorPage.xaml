@@ -253,6 +253,43 @@
                     </ui:Card>
                 </Grid>
             </TabItem>
+
+            <!-- GUMP HISTORY TAB -->
+            <TabItem Header="{loc:Loc Inspector.Tab.GumpHistory}">
+                <Grid Margin="0,12,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <ui:Card Grid.Row="0" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <ui:TextBlock Text="{loc:Loc Inspector.GumpHistory.Title}" FontWeight="SemiBold" />
+                                <ui:TextBlock Text="Ultimi 50 eventi di risposta ai gump" Appearance="Secondary" FontSize="12"/>
+                            </StackPanel>
+                            <ui:Button Grid.Column="1" Content="{loc:Loc Inspector.GumpHistory.Clear}" Icon="Delete24" Command="{Binding ClearGumpHistoryCommand}" Appearance="Secondary" />
+                        </Grid>
+                    </ui:Card>
+
+                    <ui:Card Grid.Row="1" Padding="0">
+                        <ListBox ItemsSource="{Binding GumpResponseHistory}"
+                                 Background="Transparent" BorderThickness="0"
+                                 VirtualizingStackPanel.IsVirtualizing="True"
+                                 VirtualizingStackPanel.VirtualizationMode="Recycling">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <ui:TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="12" Margin="4,2"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </ui:Card>
+                </Grid>
+            </TabItem>
         </TabControl>
 
         <ui:InfoBar Grid.Row="2" Margin="0,12,0,0" Title="Status" Message="{Binding StatusMessage}" IsOpen="True" Severity="Informational" />

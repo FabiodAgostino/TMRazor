@@ -161,7 +161,13 @@ del _make_tracer_, _sys_
         private readonly IBandageHealService _bandageHeal;
         private readonly IDressService _dress;
         private readonly IRestockService _restock;
+        private readonly IVendorService _vendor;
         private readonly ISoundService _sound;
+        private readonly IMacrosService _macros;
+        private readonly IPathFindingService _pathfinding;
+        private readonly ICounterService _counter;
+        private readonly IDPSMeterService _dpsMeter;
+        private readonly IPacketLoggerService _packetLogger;
 
         public ScriptingService(
             IWorldService world,
@@ -179,7 +185,13 @@ del _make_tracer_, _sys_
             IBandageHealService bandageHeal,
             IDressService dress,
             IRestockService restock,
+            IVendorService vendor,
             ISoundService sound,
+            IMacrosService macros,
+            IPathFindingService pathfinding,
+            ICounterService counter,
+            IDPSMeterService dpsMeter,
+            IPacketLoggerService packetLogger,
             IMessenger messenger,
             ILogger<ScriptingService> logger,
             ILoggerFactory loggerFactory)
@@ -199,7 +211,13 @@ del _make_tracer_, _sys_
             _bandageHeal = bandageHeal;
             _dress = dress;
             _restock = restock;
+            _vendor = vendor;
             _sound = sound;
+            _macros = macros;
+            _pathfinding = pathfinding;
+            _counter = counter;
+            _dpsMeter = dpsMeter;
+            _packetLogger = packetLogger;
             _messenger = messenger;
             _logger = logger;
             _loggerFactory = loggerFactory;
@@ -453,6 +471,10 @@ del _make_tracer_, _sys_
             scope.SetVariable("Restock",     new RestockApi(_restock, cancelCtrl));
             scope.SetVariable("Organizer",   new OrganizerApi(_organizer, cancelCtrl));
             scope.SetVariable("BandageHeal", new BandageHealApi(_bandageHeal, cancelCtrl));
+            scope.SetVariable("PathFinding",  new PathFindingApi(_pathfinding, _world, _packetService, cancelCtrl));
+            scope.SetVariable("Counter",      new CounterApi(_counter, cancelCtrl));
+            scope.SetVariable("DPSMeter",     new DPSMeterApi(_dpsMeter, cancelCtrl));
+            scope.SetVariable("PacketLogger", new PacketLoggerApi(_packetLogger, cancelCtrl));
 
             engine.Execute(TracePreamble, scope);
 
@@ -499,6 +521,7 @@ del _make_tracer_, _sys_
             var organizerApi = new OrganizerApi(_organizer, cancelCtrl);
             var bandageHealApi = new BandageHealApi(_bandageHeal, cancelCtrl);
             var hotkeyApi = new HotkeyApi(_hotkeyService, _config, cancelCtrl);
+            var vendorApi = new VendorApi(_vendor, cancelCtrl);
 
             var interpreter = new UOSteamInterpreter(
                 miscApi,
@@ -516,6 +539,10 @@ del _make_tracer_, _sys_
                 organizerApi,
                 bandageHealApi,
                 hotkeyApi,
+                vendorApi,
+                _friendsService,
+                _macros,
+                _world,
                 cancelCtrl,
                 line => OutputReceived?.Invoke(line));
             interpreter.Execute(code);
@@ -556,7 +583,11 @@ del _make_tracer_, _sys_
                 Scavenger   = new ScavengerApi(_scavenger, cancelCtrl),
                 Restock     = new RestockApi(_restock, cancelCtrl),
                 Organizer   = new OrganizerApi(_organizer, cancelCtrl),
-                BandageHeal = new BandageHealApi(_bandageHeal, cancelCtrl),
+                BandageHeal  = new BandageHealApi(_bandageHeal, cancelCtrl),
+                PathFinding   = new PathFindingApi(_pathfinding, _world, _packetService, cancelCtrl),
+                Counter       = new CounterApi(_counter, cancelCtrl),
+                DPSMeter      = new DPSMeterApi(_dpsMeter, cancelCtrl),
+                PacketLogger  = new PacketLoggerApi(_packetLogger, cancelCtrl),
                 // Espone il token direttamente agli script per cancellazione cooperativa:
                 // ScriptToken.ThrowIfCancellationRequested() in qualsiasi loop dello script.
                 ScriptToken = cts.Token

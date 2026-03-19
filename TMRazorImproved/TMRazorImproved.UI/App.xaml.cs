@@ -97,6 +97,8 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<IPacketLoggerService, PacketLoggerService>();
                 services.AddSingleton<IScriptRecorderService, ScriptRecorderService>();
                 services.AddSingleton<IProtoControlService, ProtoControlService>();
+                services.AddSingleton<ICommandService, CommandService>();
+                services.AddSingleton<IShardService, ShardService>();
 
                 // Handlers (Singleton)
                 services.AddSingleton<WorldPacketHandler>();
@@ -111,6 +113,7 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<PacketLoggerViewModel>();
                 services.AddTransient<SecureTradeViewModel>();
                 services.AddTransient<GalleryViewModel>();
+                services.AddTransient<MediaViewModel>();
                 services.AddSingleton<PlayerStatusViewModel>();
                 services.AddSingleton<ScriptingViewModel>();
                 services.AddSingleton<MacrosViewModel>();
@@ -149,7 +152,9 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<PacketLoggerPage>();  // mantiene la lista pacchetti
                 services.AddTransient<SecureTradePage>();
                 services.AddTransient<GalleryPage>();
-                services.AddSingleton<ScriptingPage>();     // mantiene contenuto editor
+                services.AddTransient<MediaPage>();
+                services.AddSingleton<ScriptingPage>();
+     // mantiene contenuto editor
                 services.AddSingleton<MacrosPage>();        // mantiene selezione macro
                 services.AddTransient<FiltersPage>();
                 services.AddTransient<SoundPage>();
@@ -208,6 +213,7 @@ namespace TMRazorImproved.UI
                 _host.Services.GetRequiredService<FriendsHandler>();
                 _host.Services.GetRequiredService<ITitleBarService>().Start();
                 _host.Services.GetRequiredService<IHotkeyService>().Start();
+                _host.Services.GetRequiredService<ICommandService>().Start();
                 
                 // Avvia gli agenti per attivare i loro loop di background
                 _host.Services.GetRequiredService<IAutoLootService>().Start();
@@ -257,6 +263,7 @@ namespace TMRazorImproved.UI
             search.RegisterItem(new SearchItem("Packet Logger", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(PacketLoggerPage))), "Network traffic monitor", "\uE945"));
             search.RegisterItem(new SearchItem("Secure Trade", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(SecureTradePage))), "Secure trade monitor", "\uE815"));
             search.RegisterItem(new SearchItem("Gallery", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(GalleryPage))), "Screenshots and videos", "\uE114"));
+            search.RegisterItem(new SearchItem("Media Settings", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(MediaPage))), "Configure screenshot and video settings", "\uE713"));
             search.RegisterItem(new SearchItem("General", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(GeneralPage))), "General settings", "\uE713"));
             search.RegisterItem(new SearchItem("Options", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(OptionsPage))), "Global options", "\uE713"));
             search.RegisterItem(new SearchItem("Scripting", SearchCategory.Page, new RelayCommand(() => nav.Navigate(typeof(ScriptingPage))), "Python and UOSteam editor", "\uE943"));

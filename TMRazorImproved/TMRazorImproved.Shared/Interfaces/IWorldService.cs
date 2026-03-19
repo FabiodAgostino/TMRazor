@@ -13,6 +13,8 @@ namespace TMRazorImproved.Shared.Interfaces
         UOGump? CurrentGump { get; }
         System.Collections.Concurrent.ConcurrentDictionary<uint, UOGump> OpenGumps { get; }
         bool IsCasting { get; set; }
+        byte CurrentLight { get; set; }
+        byte CurrentSeason { get; set; }
 
         /// <summary>Serial dell'ultimo contenitore aperto (aggiornato da 0x3C).</summary>
         uint LastOpenedContainer { get; }

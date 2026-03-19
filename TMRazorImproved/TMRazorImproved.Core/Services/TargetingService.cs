@@ -7,6 +7,7 @@ using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
 using TMRazorImproved.Shared.Models.Config;
 using TMRazorImproved.Shared.Enums;
+using TMRazorImproved.Core.Utilities;
 
 namespace TMRazorImproved.Core.Services
 {
@@ -22,6 +23,22 @@ namespace TMRazorImproved.Core.Services
         // BUG-P1-01 FIX: _lastTarget e _hasPrompt acceduti da packet thread e UI thread →
         // devono essere volatile per garantire visibilità cross-thread senza lock overhead.
         private volatile uint _lastTarget;
+
+        // 039-A: Tipi di target separati per harm/bene/ground
+        private volatile uint _lastHarmTarget;
+        private volatile uint _lastBeneTarget;
+        private ushort _lastGroundX;
+        private ushort _lastGroundY;
+        private volatile sbyte _lastGroundZ;
+
+        // 039-B: Tipo di cursore persistente (non viene azzerato da ClearTargetCursor)
+        // per permettere a HandleTargetResponse di categorizzare il target
+        private volatile byte _lastActiveCursorType;
+
+        // 039-C: Coda azione differita — un'azione in attesa del prossimo cursore
+        private Action? _deferredTargetAction;
+        private readonly object _deferredLock = new();
+
         // _targetQueue e _queueIndex: modificati da hotkey callbacks (qualsiasi thread) →
         // accessi protetti da _queueLock.
         private List<uint> _targetQueue = new();
@@ -31,22 +48,42 @@ namespace TMRazorImproved.Core.Services
         private volatile bool _hasTargetCursor;
         private volatile uint _pendingCursorId;
         private volatile byte _pendingCursorType;
-        // FIX P1-02: tracking serial/promptId dal pacchetto 0x9A S2C
+        // FIX P1-02: tracking serial/promptId dal pacchetto 0x9A/0xC2 S2C
         private volatile uint _pendingPromptSerial;
         private volatile uint _pendingPromptId;
+        private volatile uint _pendingPromptType;
+        private volatile bool _pendingPromptIsUnicode;
 
         public uint LastTarget
         {
-            get => _lastTarget;   // volatile read
-            set => _lastTarget = value;  // volatile write
+            get => _lastTarget;
+            set => _lastTarget = value;
         }
 
-        public bool HasPrompt => _hasPrompt;  // volatile read
+        // 039-A: proprietà per i target tipizzati
+        public uint LastHarmTarget
+        {
+            get => _lastHarmTarget;
+            set => _lastHarmTarget = value;
+        }
+
+        public uint LastBeneTarget
+        {
+            get => _lastBeneTarget;
+            set => _lastBeneTarget = value;
+        }
+
+        public ushort LastGroundX => _lastGroundX;
+        public ushort LastGroundY => _lastGroundY;
+        public sbyte LastGroundZ => _lastGroundZ;
+
+        public bool HasPrompt => _hasPrompt;
         public bool HasTargetCursor => _hasTargetCursor;
         public uint PendingCursorId => _pendingCursorId;
         public byte PendingCursorType => _pendingCursorType;
         public uint PendingPromptSerial => _pendingPromptSerial;
         public uint PendingPromptId => _pendingPromptId;
+        public bool PendingPromptIsUnicode => _pendingPromptIsUnicode;
 
         public event Action<uint>? TargetCursorRequested;
         public event Action<TargetInfo>? TargetReceived;
@@ -74,12 +111,15 @@ namespace TMRazorImproved.Core.Services
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x6C, HandleTargetResponse);
             // FIX P1-02: tracking serial/promptId dal pacchetto 0x9A S2C (ASCII Prompt)
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0x9A, HandlePromptFromServer);
+            // TASK-011: Unicode Prompt (0xC2 S2C)
+            _packetService.RegisterViewer(PacketPath.ServerToClient, 0xC2, HandleUnicodePromptFromServer);
 
             // Registrazione Hotkeys
             hotkeyService.RegisterAction("Target Next", () => TargetNext());
             hotkeyService.RegisterAction("Target Closest", () => TargetClosest());
             hotkeyService.RegisterAction("Target Self", () => TargetSelf());
-            hotkeyService.RegisterAction("Last Target", () => { if (_lastTarget != 0) SendTarget(_lastTarget); });
+            // 039-B/C: usa DoLastTarget per smart targeting + deferred queue
+            hotkeyService.RegisterAction("Last Target", () => DoLastTarget());
             hotkeyService.RegisterAction("Clear Target", () => Clear());
         }
 
@@ -92,9 +132,20 @@ namespace TMRazorImproved.Core.Services
             uint cursorId = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(2));
             _pendingCursorId = cursorId;
             _pendingCursorType = data[6];
+            // 039-B: salva tipo cursore in campo persistente (non viene azzerato da ClearTargetCursor)
+            _lastActiveCursorType = data[6];
             _hasTargetCursor = true;
             _logger.LogDebug("Target Cursor Received from Server: cursorId=0x{CursorId:X}, type={CursorType}", cursorId, _pendingCursorType);
             TargetCursorRequested?.Invoke(cursorId);
+
+            // 039-C: esegui azione differita se presente
+            Action? deferred;
+            lock (_deferredLock)
+            {
+                deferred = _deferredTargetAction;
+                _deferredTargetAction = null;
+            }
+            deferred?.Invoke();
         }
 
         private void HandlePromptFromServer(byte[] data)
@@ -104,7 +155,22 @@ namespace TMRazorImproved.Core.Services
 
             _pendingPromptSerial = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(3));
             _pendingPromptId = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(7));
-            _logger.LogDebug("Prompt Received from Server: serial=0x{Serial:X} promptId=0x{PromptId:X}", _pendingPromptSerial, _pendingPromptId);
+            _pendingPromptType = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(11));
+            _pendingPromptIsUnicode = false;
+            _logger.LogDebug("ASCII Prompt Received: serial=0x{Serial:X} promptId=0x{PromptId:X}", _pendingPromptSerial, _pendingPromptId);
+            SetPrompt(true);
+        }
+
+        private void HandleUnicodePromptFromServer(byte[] data)
+        {
+            // Pacchetto 0xC2 S2C: cmd(1) len(2) serial(4) promptId(4) type(4)
+            if (data.Length < 15) return;
+
+            _pendingPromptSerial = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(3));
+            _pendingPromptId = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(7));
+            _pendingPromptType = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(11));
+            _pendingPromptIsUnicode = true;
+            _logger.LogDebug("Unicode Prompt Received: serial=0x{Serial:X} promptId=0x{PromptId:X}", _pendingPromptSerial, _pendingPromptId);
             SetPrompt(true);
         }
 
@@ -119,15 +185,35 @@ namespace TMRazorImproved.Core.Services
 
             if (action == 0)
             {
-                if (serial != 0) _lastTarget = serial;
-                
+                ushort x = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(11));
+                ushort y = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(13));
+                sbyte z = (sbyte)data[15];
+                ushort graphic = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(16));
+
+                if (serial != 0)
+                {
+                    // 039-A: aggiorna _lastTarget sempre + harm/bene in base al tipo cursore
+                    _lastTarget = serial;
+                    if (_lastActiveCursorType == 0x01)
+                        _lastHarmTarget = serial;
+                    else if (_lastActiveCursorType == 0x02)
+                        _lastBeneTarget = serial;
+                }
+                else
+                {
+                    // 039-A: target a terra (locazione)
+                    _lastGroundX = x;
+                    _lastGroundY = y;
+                    _lastGroundZ = z;
+                }
+
                 var info = new TargetInfo
                 {
                     Serial = serial,
-                    X = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(11)),
-                    Y = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(13)),
-                    Z = (sbyte)data[15],
-                    Graphic = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(16))
+                    X = x,
+                    Y = y,
+                    Z = z,
+                    Graphic = graphic
                 };
 
                 _logger.LogDebug("Target Response Received: Serial=0x{Serial:X} X={X} Y={Y} Z={Z} Graphic={Graphic}", serial, info.X, info.Y, info.Z, info.Graphic);
@@ -206,11 +292,82 @@ namespace TMRazorImproved.Core.Services
 
         public void TargetSelf()
         {
-            if (_worldService.Player != null)
+            if (_worldService.Player == null) return;
+
+            if (!_hasTargetCursor)
             {
-                SendTarget(_worldService.Player.Serial);
-                _logger.LogDebug("Target Self");
+                // 039-C: cursor non attivo → accoda per quando arriverà
+                lock (_deferredLock)
+                    _deferredTargetAction = () => TargetSelf();
+                _logger.LogDebug("Target Self queued (no cursor)");
+                return;
             }
+
+            SendTarget(_worldService.Player.Serial);
+            _logger.LogDebug("Target Self");
+        }
+
+        /// <summary>
+        /// 039-B/C: Smart Last Target — sceglie harm/bene/neutral in base al tipo di cursore attivo.
+        /// Se il cursore non è attivo, accoda l'azione per il prossimo cursore.
+        /// </summary>
+        public void DoLastTarget()
+        {
+            if (!_hasTargetCursor)
+            {
+                // 039-C: cursor non attivo → accoda per quando arriverà
+                lock (_deferredLock)
+                    _deferredTargetAction = () => DoLastTarget();
+                _logger.LogDebug("Last Target queued (no cursor)");
+                return;
+            }
+
+            var config = _configService.CurrentProfile?.Targeting;
+
+            // 039-B: seleziona il target appropriato in base al tipo di cursore
+            uint target = _lastTarget;
+            if (config?.SmartLastTarget == true)
+            {
+                if (_pendingCursorType == 0x01 && _lastHarmTarget != 0)
+                    target = _lastHarmTarget;
+                else if (_pendingCursorType == 0x02 && _lastBeneTarget != 0)
+                    target = _lastBeneTarget;
+            }
+
+            if (target == 0)
+            {
+                _logger.LogDebug("Last Target: no target set");
+                return;
+            }
+
+            // 039-E: range check configurabile
+            if (config?.RangeCheckEnabled == true)
+            {
+                var mobile = _worldService.Mobiles.FirstOrDefault(m => m.Serial == target);
+                if (mobile != null)
+                {
+                    int distance = GetDistanceToPlayer(mobile);
+                    if (distance > config.MaxRange)
+                    {
+                        _logger.LogDebug("Last Target out of range ({Distance} > {Max})", distance, config.MaxRange);
+                        return;
+                    }
+                }
+            }
+
+            // 039-D: blocca heal su target avvelenato
+            if (_pendingCursorType == 0x02 && config?.BlockHealPoisoned == true)
+            {
+                var mobile = _worldService.Mobiles.FirstOrDefault(m => m.Serial == target);
+                if (mobile?.IsPoisoned == true)
+                {
+                    _logger.LogDebug("Blocked healing poisoned target 0x{Serial:X}", target);
+                    return;
+                }
+            }
+
+            _logger.LogDebug("Last Target: 0x{Serial:X} (cursorType={Type})", target, _pendingCursorType);
+            SendTarget(target);
         }
 
         public void Clear()
@@ -305,21 +462,23 @@ namespace TMRazorImproved.Core.Services
 
         public void SendPrompt(string text)
         {
-            // Pacchetto 0x9A C2S (ASCII Prompt Response): cmd(1) len(2) serial(4) promptId(4) type(4) text(var ASCII null-term)
-            // FIX P1-02: usa serial e promptId tracciati dal 0x9A S2C ricevuto in HandlePromptFromServer
-            byte[] textBytes = System.Text.Encoding.ASCII.GetBytes(text);
-            byte[] packet = new byte[15 + textBytes.Length + 1];
+            if (_pendingPromptSerial == 0) return;
 
-            packet[0] = 0x9A;
-            BinaryPrimitives.WriteUInt16BigEndian(packet.AsSpan(1), (ushort)packet.Length);
-            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(3), _pendingPromptSerial);
-            BinaryPrimitives.WriteUInt32BigEndian(packet.AsSpan(7), _pendingPromptId);
-            // type(4) a [11..14] = 0 (normal text response — already 0 from new byte[])
-            textBytes.CopyTo(packet, 15);
-            packet[packet.Length - 1] = 0x00; // Null terminator
+            byte[] packet;
+            if (_pendingPromptIsUnicode)
+            {
+                // Pacchetto 0xC2 C2S (Unicode Prompt Response)
+                packet = PacketBuilder.UnicodePromptResponse(_pendingPromptSerial, _pendingPromptId, _pendingPromptType, text);
+            }
+            else
+            {
+                // Pacchetto 0x9A C2S (ASCII Prompt Response)
+                packet = PacketBuilder.PromptResponse(_pendingPromptSerial, _pendingPromptId, _pendingPromptType, text);
+            }
 
             _pendingPromptSerial = 0;
             _pendingPromptId = 0;
+            _pendingPromptType = 0;
 
             _packetService.SendToServer(packet);
             SetPrompt(false);

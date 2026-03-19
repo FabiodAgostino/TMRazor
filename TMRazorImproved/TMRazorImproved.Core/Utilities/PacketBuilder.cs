@@ -44,18 +44,24 @@ namespace TMRazorImproved.Core.Utilities
         /// <summary>
         /// Drop Request 0x08 (SA format, 15 byte): deposita un item in un container.
         /// x/y/z = 0xFFFF/0xFFFF/0 = posizione casuale all'interno del container.
-        /// FIX P1-04: layout esplicito SA — byte[10]=grid (0=slot casuale/nessuna preferenza).
-        /// Layout: cmd(1) serial(4) x(2) y(2) z(1) grid(1) container(4).
         /// </summary>
         public static byte[] DropToContainer(uint serial, uint containerSerial, byte grid = 0)
+        {
+            return DropToContainer(serial, containerSerial, 0xFFFF, 0xFFFF, 0, grid);
+        }
+
+        /// <summary>
+        /// Drop Request 0x08: deposita un item in un container in una posizione specifica.
+        /// </summary>
+        public static byte[] DropToContainer(uint serial, uint containerSerial, ushort x, ushort y, byte z = 0, byte grid = 0)
         {
             byte[] pkt = new byte[15];
             pkt[0] = 0x08;
             BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(1), serial);
-            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(5), 0xFFFF); // X (random)
-            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(7), 0xFFFF); // Y (random)
-            pkt[9]  = 0;                                                   // Z
-            pkt[10] = grid;                                                // Grid slot (SA)
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(5), x);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(7), y);
+            pkt[9] = z;
+            pkt[10] = grid;
             BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(11), containerSerial);
             return pkt;
         }
@@ -65,15 +71,7 @@ namespace TMRazorImproved.Core.Utilities
         /// </summary>
         public static byte[] DropToWorld(uint serial, ushort x, ushort y, short z)
         {
-            byte[] pkt = new byte[15];
-            pkt[0] = 0x08;
-            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(1), serial);
-            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(5), x);
-            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(7), y);
-            pkt[9] = (byte)z;
-            pkt[10] = 0; // grid
-            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(11), 0); // Container = 0 (World)
-            return pkt;
+            return DropToContainer(serial, 0, x, y, (byte)z, 0);
         }
 
         /// <summary>
@@ -284,6 +282,107 @@ namespace TMRazorImproved.Core.Utilities
         }
 
         // -------------------------------------------------------------------------
+        // Old Menu (0x7D) — pre-context-menu UO menus
+        // -------------------------------------------------------------------------
+
+        /// <summary>
+        /// Menu Response C→S 0x7D: risponde a un menu classico UO (0x7C S→C).
+        /// <paramref name="index"/> è 1-based (0 = chiude il menu).
+        /// Layout: cmd(1) serial(4) menuId(2) index(2) graphic(2) hue(2) = 13 bytes.
+        /// </summary>
+        public static byte[] MenuResponse(uint serial, ushort menuId, ushort index, ushort graphic, ushort hue)
+        {
+            byte[] pkt = new byte[13];
+            pkt[0] = 0x7D;
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(1), serial);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(5), menuId);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(7), index);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(9), graphic);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(11), hue);
+            return pkt;
+        }
+
+        // -------------------------------------------------------------------------
+        // Query String (0xAC)
+        // -------------------------------------------------------------------------
+
+        /// <summary>
+        /// String Query Response C→S 0xAC: risponde a una richiesta di input testuale (0xAB S→C).
+        /// </summary>
+        public static byte[] StringQueryResponse(uint serial, byte type, byte index, bool ok, string response)
+        {
+            response ??= string.Empty;
+            byte[] respBytes = Encoding.ASCII.GetBytes(response);
+            
+            // Layout: cmd(1) len(2) serial(4) type(1) index(1) ok(1) respLen+1(2) respNull(N+1)
+            int pktLen = 1 + 2 + 4 + 1 + 1 + 1 + 2 + respBytes.Length + 1;
+            byte[] pkt = new byte[pktLen];
+            
+            pkt[0] = 0xAC;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), (ushort)pktLen);
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(3), serial);
+            pkt[7] = type;
+            pkt[8] = index;
+            pkt[9] = (byte)(ok ? 1 : 0);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(10), (ushort)(respBytes.Length + 1));
+            Array.Copy(respBytes, 0, pkt, 12, respBytes.Length);
+            // Null terminator at the end is already 0
+            
+            return pkt;
+        }
+
+        /// <summary>
+        /// Unicode Prompt Response C→S 0xC2: risponde a un prompt Unicode (0xC2 S→C).
+        /// </summary>
+        public static byte[] UnicodePromptResponse(uint serial, uint promptId, uint type, string text, string lang = "ENU")
+        {
+            text ??= string.Empty;
+            byte[] textBytes = Encoding.Unicode.GetBytes(text);
+            
+            // Layout: cmd(1) len(2) serial(4) promptId(4) type(4) lang(4) text(N unicode null-term)
+            int pktLen = 1 + 2 + 4 + 4 + 4 + 4 + textBytes.Length + 2;
+            byte[] pkt = new byte[pktLen];
+            
+            pkt[0] = 0xC2;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), (ushort)pktLen);
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(3), serial);
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(7), promptId);
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(11), type);
+            
+            byte[] langBytes = Encoding.ASCII.GetBytes(lang.PadRight(4, '\0').Substring(0, 4));
+            Array.Copy(langBytes, 0, pkt, 15, 4);
+            
+            Array.Copy(textBytes, 0, pkt, 19, textBytes.Length);
+            // Null terminator (2 bytes) already 0
+            
+            return pkt;
+        }
+
+        /// <summary>
+        /// ASCII Prompt Response C→S 0x9A: risponde a un prompt ASCII (0x9A S→C).
+        /// </summary>
+        public static byte[] PromptResponse(uint serial, uint promptId, uint type, string text)
+        {
+            text ??= string.Empty;
+            byte[] textBytes = Encoding.ASCII.GetBytes(text);
+            
+            // Layout: cmd(1) len(2) serial(4) promptId(4) type(4) text(N ascii null-term)
+            int pktLen = 1 + 2 + 4 + 4 + 4 + textBytes.Length + 1;
+            byte[] pkt = new byte[pktLen];
+            
+            pkt[0] = 0x9A;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), (ushort)pktLen);
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(3), serial);
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(7), promptId);
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(11), type);
+            
+            Array.Copy(textBytes, 0, pkt, 15, textBytes.Length);
+            // Null terminator already 0
+            
+            return pkt;
+        }
+
+        // -------------------------------------------------------------------------
         // Gump
         // -------------------------------------------------------------------------
 
@@ -404,6 +503,24 @@ namespace TMRazorImproved.Core.Utilities
             BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(10), x);
             BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(12), y);
             pkt[14] = (byte)z; // Note: layout variant, usually includes dir at end but 0x20 is simple
+            return pkt;
+        }
+
+        // -------------------------------------------------------------------------
+        // PathFind (0x38) — pathfinding client-side
+        // -------------------------------------------------------------------------
+
+        /// <summary>
+        /// PathFind 0x38 (S→C): informa il client di navigare verso le coordinate indicate.
+        /// Layout: cmd(1) x(2) y(2) z(2) = 7 bytes.
+        /// </summary>
+        public static byte[] PathFind(int x, int y, int z)
+        {
+            byte[] pkt = new byte[7];
+            pkt[0] = 0x38;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), (ushort)x);
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(3), (ushort)y);
+            BinaryPrimitives.WriteInt16BigEndian(pkt.AsSpan(5), (short)z);
             return pkt;
         }
     }

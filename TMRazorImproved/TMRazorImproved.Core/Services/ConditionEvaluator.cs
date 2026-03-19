@@ -78,8 +78,13 @@ namespace TMRazorImproved.Core.Services
                 case "HIDDEN":     return player?.IsHidden    ?? false;
                 case "WARMODE":    return player?.WarMode     ?? false;
                 case "DEAD":       return player?.Hits == 0;
+                case "ALIVE":
+                case "ISALIVE":    return player != null && !player.IsGhost && player.Hits > 0;
                 case "PARALYZED": return player?.Paralyzed   ?? false;
                 case "FLYING":    return player?.Flying      ?? false;
+                case "MOUNTED":    return player != null && _world.Items.Any(i => i.Container == player.Serial && i.Layer == 0x19);
+                case "RIGHTHANDEQUIPPED": return player != null && _world.Items.Any(i => i.Container == player.Serial && i.Layer == 0x01);
+                case "LEFTHANDEQUIPPED":  return player != null && _world.Items.Any(i => i.Container == player.Serial && i.Layer == 0x02);
                 case "YELLOWHITS": return player?.IsYellowHits ?? false;
                 case "TARGETEXISTS":
                     // Controlla se c'è un cursore target attivo
@@ -120,7 +125,7 @@ namespace TMRazorImproved.Core.Services
                 // ── Find ─────────────────────────────────────────────────────────
                 case "FIND":
                 {
-                    // FIND <graphic> [<range>]
+                    // FIND <graphic> [<range>] [<container>]
                     if (tokens.Length < 2) return false;
                     if (!int.TryParse(tokens[1], System.Globalization.NumberStyles.Any, null, out int findGraphic))
                     {
@@ -130,13 +135,28 @@ namespace TMRazorImproved.Core.Services
                         else return false;
                     }
                     int findRange = tokens.Length >= 3 && int.TryParse(tokens[2], out int fr) ? fr : 18;
+                    uint container = tokens.Length >= 4 ? (uint)Convert.ToInt32(tokens[3], 16) : 0;
 
                     // Cerca item o mobile con quel graphic nel range
                     bool foundItem = _world.Items.Any(i =>
-                        i.Graphic == findGraphic && IsInRange(i, player, findRange));
-                    bool foundMobile = _world.Mobiles.Any(m =>
+                        i.Graphic == findGraphic && (container == 0 || i.ContainerSerial == container) && IsInRange(i, player, findRange));
+                    bool foundMobile = container == 0 && _world.Mobiles.Any(m =>
                         m.Graphic == findGraphic && IsInRange(m, player, findRange));
                     return foundItem || foundMobile;
+                }
+
+                // ── InRangeType ──────────────────────────────────────────────────
+                case "INRANGETYPE":
+                {
+                    // INRANGETYPE ITEM/MOBILE <graphic> <range>
+                    if (tokens.Length < 4) return false;
+                    string type = tokens[1].ToUpperInvariant();
+                    int g = tokens[2].StartsWith("0x") ? Convert.ToInt32(tokens[2], 16) : int.Parse(tokens[2]);
+                    int r = int.Parse(tokens[3]);
+
+                    if (type == "ITEM") return _world.Items.Any(i => i.Graphic == g && IsInRange(i, player, r));
+                    if (type == "MOBILE") return _world.Mobiles.Any(m => m.Graphic == g && IsInRange(m, player, r));
+                    return false;
                 }
 
                 // ── Count ────────────────────────────────────────────────────────

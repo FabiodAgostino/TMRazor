@@ -6,16 +6,16 @@ using TMRazorImproved.Shared.Interfaces.Adapters;
 namespace TMRazorImproved.Core.Services.Adapters
 {
     /// <summary>
-    /// Adapter per client OSI (client.exe ufficiale EA).
-    /// Usa iniezione Crypt.dll via Loader.dll (solo x86).
+    /// Adapter per TmClient e ClassicUO (approccio plugin).
     /// La ricezione pacchetti è gestita da PacketService tramite polling della shared memory.
+    /// Questo adapter gestisce la connessione e il ciclo di vita del processo.
     /// </summary>
-    public class OsiClientAdapter : IClientAdapter
+    public class TmClientAdapter : IClientAdapter
     {
         private readonly IClientInteropService _interop;
         private int _connectedPid;
 
-        public OsiClientAdapter(IClientInteropService interop)
+        public TmClientAdapter(IClientInteropService interop)
         {
             _interop = interop;
         }
@@ -23,20 +23,19 @@ namespace TMRazorImproved.Core.Services.Adapters
         public bool Connect(int processId)
         {
             _connectedPid = processId;
-            System.Diagnostics.Trace.WriteLine($"[OsiClientAdapter] Connected to PID {processId}");
+            System.Diagnostics.Trace.WriteLine($"[TmClientAdapter] Connected to PID {processId}");
             return processId > 0;
         }
 
         public void Disconnect()
         {
-            if (_connectedPid > 0)
-                _interop.Shutdown(false);
-            System.Diagnostics.Trace.WriteLine($"[OsiClientAdapter] Disconnected from PID {_connectedPid}");
+            System.Diagnostics.Trace.WriteLine($"[TmClientAdapter] Disconnecting from PID {_connectedPid}");
             _connectedPid = 0;
         }
 
         /// <summary>
-        /// La ricezione pacchetti è gestita da PacketService tramite polling shared memory (Crypt.dll).
+        /// La ricezione pacchetti è gestita da PacketService direttamente via shared memory.
+        /// Questo metodo non è utilizzato per client plugin-based.
         /// </summary>
         public byte[] ReceivePacket(PacketPath direction) => Array.Empty<byte>();
 

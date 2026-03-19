@@ -37,7 +37,11 @@
                         <ui:NavigationViewItem Content="{loc:Loc Nav.SecureTrade}" TargetPageType="{x:Type pages:SecureTradePage}" Icon="ArrowSwap24" />
                     </ui:NavigationViewItem.MenuItems>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="{loc:Loc Nav.Gallery}"   TargetPageType="{x:Type pages:GalleryPage}" Icon="Collections24" />
+                <ui:NavigationViewItem Content="{loc:Loc Nav.Gallery}"   TargetPageType="{x:Type pages:GalleryPage}" Icon="Collections24">
+                    <ui:NavigationViewItem.MenuItems>
+                        <ui:NavigationViewItem Content="{loc:Loc Nav.MediaSettings}" TargetPageType="{x:Type pages:MediaPage}" Icon="Settings24" />
+                    </ui:NavigationViewItem.MenuItems>
+                </ui:NavigationViewItem>
                 <ui:NavigationViewItem Content="{loc:Loc Nav.Scripting}" TargetPageType="{x:Type pages:ScriptingPage}" Icon="Code24" />
                 
                 <ui:NavigationViewItem Content="{loc:Loc Nav.Agents}" Icon="PersonCall24">

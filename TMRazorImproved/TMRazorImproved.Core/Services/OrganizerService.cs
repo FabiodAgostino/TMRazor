@@ -66,32 +66,57 @@ namespace TMRazorImproved.Core.Services
 
             _logger.LogInformation("Organizer started. Source: 0x{Source:X}, Dest: 0x{Dest:X}", config.Source, config.Destination);
 
-            // Troviamo gli item da spostare nel WorldService
-            // Filtriamo per quelli che hanno come container il source e il cui graphic è nella lista (se la lista non è vuota)
-            var itemsToMove = _worldService.Items
+            var sourceItems = _worldService.Items
                 .Where(i => i.Container == config.Source)
-                .Where(i => config.ItemList.Count == 0 || config.ItemList.Any(li => li.IsEnabled && li.Graphic == (int)i.Graphic))
                 .ToList();
 
-            if (itemsToMove.Count == 0)
+            if (sourceItems.Count == 0)
             {
-                _logger.LogInformation("Organizer: No items found to move.");
+                _logger.LogInformation("Organizer: No items found in source container.");
                 OnComplete?.Invoke();
                 return;
             }
 
-            _logger.LogDebug("Found {Count} items to organize", itemsToMove.Count);
-
-            foreach (var item in itemsToMove)
+            // Se la ItemList è vuota, sposta tutto (nessun filtro, nessun limite di quantità)
+            if (config.ItemList.Count == 0)
             {
-                if (token.IsCancellationRequested) break;
+                foreach (var item in sourceItems)
+                {
+                    if (token.IsCancellationRequested) break;
+                    _logger.LogTrace("Moving item 0x{Serial:X} (Graphic: 0x{Graphic:X})", item.Serial, item.Graphic);
+                    await MoveItemAsync(item.Serial, item.Amount, config.Destination);
+                    await Task.Delay(Math.Max(100, config.Delay), token);
+                }
+            }
+            else
+            {
+                // Per ogni entry configurata, rispetta il limite Amount (-1 = tutto)
+                foreach (var configItem in config.ItemList.Where(li => li.IsEnabled))
+                {
+                    if (token.IsCancellationRequested) break;
 
-                _logger.LogTrace("Moving item 0x{Serial:X} (Graphic: 0x{Graphic:X})", item.Serial, item.Graphic);
-                
-                await MoveItemAsync(item.Serial, item.Amount, config.Destination);
+                    // remaining = quante unità totali ancora da spostare per questo tipo
+                    int remaining = configItem.Amount == -1 ? int.MaxValue : configItem.Amount;
 
-                // Delay tra uno spostamento e l'altro (tipico di Razor)
-                await Task.Delay(Math.Max(100, config.Delay), token);
+                    var matching = sourceItems
+                        .Where(i => i.Graphic == (uint)configItem.Graphic
+                            && (configItem.Color == -1 || i.Hue == configItem.Color))
+                        .ToList();
+
+                    foreach (var item in matching)
+                    {
+                        if (token.IsCancellationRequested || remaining <= 0) break;
+
+                        ushort toMove = (ushort)Math.Min(item.Amount, remaining);
+                        _logger.LogTrace(
+                            "Moving item 0x{Serial:X} (Graphic: 0x{Graphic:X}) amount {ToMove}/{Total} (remaining cap: {Remaining})",
+                            item.Serial, item.Graphic, toMove, item.Amount, remaining);
+
+                        await MoveItemAsync(item.Serial, toMove, config.Destination);
+                        remaining -= toMove;
+                        await Task.Delay(Math.Max(100, config.Delay), token);
+                    }
+                }
             }
 
             _logger.LogInformation("Organizer completed.");

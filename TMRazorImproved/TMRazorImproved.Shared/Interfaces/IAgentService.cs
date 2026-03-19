@@ -42,6 +42,10 @@ namespace TMRazorImproved.Shared.Interfaces
     {
         void ExecuteBuy(uint vendorSerial, System.Collections.Generic.List<(uint Serial, ushort Amount)> items);
         void ExecuteSell(uint vendorSerial, System.Collections.Generic.List<(uint Serial, ushort Amount)> items);
+        void SetBuyList(string listName);
+        void SetSellList(string listName);
+        void ClearBuyList();
+        void ClearSellList();
     }
 
     public interface IRestockService : IAgentService

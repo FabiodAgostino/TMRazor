@@ -34,6 +34,10 @@ namespace TMRazorImproved.Core.Services.Scripting
         public RestockApi Restock { get; set; } = null!;
         public OrganizerApi Organizer { get; set; } = null!;
         public BandageHealApi BandageHeal { get; set; } = null!;
+        public PathFindingApi PathFinding { get; set; } = null!;
+        public CounterApi Counter { get; set; } = null!;
+        public DPSMeterApi DPSMeter { get; set; } = null!;
+        public PacketLoggerApi PacketLogger { get; set; } = null!;
 
         /// <summary>
         /// Token di cancellazione per lo script corrente.

@@ -20,7 +20,8 @@ namespace TMRazorImproved.Core.Services
         private readonly ILogger<VideoCaptureService> _logger;
         private readonly IClientInteropService _clientInterop;
         private readonly IWorldService _worldService;
-        private string _videoPath;
+        private readonly IConfigService _config;
+        private string _videoPath = string.Empty;
         
         private AviWriter? _writer;
         private IAviVideoStream? _stream;
@@ -29,20 +30,36 @@ namespace TMRazorImproved.Core.Services
 
         public bool IsRecording => _cts != null;
 
-        public VideoCaptureService(ILogger<VideoCaptureService> logger, IClientInteropService clientInterop, IWorldService worldService)
+        public VideoCaptureService(ILogger<VideoCaptureService> logger, IClientInteropService clientInterop, IWorldService worldService, IConfigService config)
         {
             _logger = logger;
             _clientInterop = clientInterop;
             _worldService = worldService;
-            _videoPath = Path.Combine(AppContext.BaseDirectory, "Videos");
+            _config = config;
+
+            UpdatePath();
+        }
+
+        private void UpdatePath()
+        {
+            _videoPath = _config.CurrentProfile.Media.VideoPath;
+            if (string.IsNullOrEmpty(_videoPath))
+            {
+                _videoPath = Path.Combine(AppContext.BaseDirectory, "Videos");
+            }
 
             if (!Directory.Exists(_videoPath))
                 Directory.CreateDirectory(_videoPath);
         }
 
-        public async Task<bool> StartAsync(int fps = 15)
+        public async Task<bool> StartAsync(int fps = 0)
         {
             if (IsRecording) return false;
+
+            if (fps == 0) fps = _config.CurrentProfile.Media.VideoFps;
+            if (fps <= 0) fps = 15;
+
+            UpdatePath();
 
             IntPtr hWnd = _clientInterop.GetWindowHandle();
             if (hWnd == IntPtr.Zero)

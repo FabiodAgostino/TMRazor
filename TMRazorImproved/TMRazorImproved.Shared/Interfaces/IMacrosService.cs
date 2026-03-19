@@ -20,5 +20,7 @@ namespace TMRazorImproved.Shared.Interfaces
         void Delete(string name);
         void Rename(string oldName, string newName);
         List<MacroStep> GetSteps(string name);
+        void SetAlias(string name, uint serial);
+        void RemoveAlias(string name);
     }
 }

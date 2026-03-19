@@ -212,6 +212,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void UseItem(uint serial) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.DoubleClick(serial)); }
         public virtual void Click(uint serial) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.SingleClick(serial)); }
         public virtual void Move(uint serial, uint targetContainer, int amount = 1) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount)); _packet.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer)); }
+        public virtual void Move(uint serial, uint targetContainer, int amount, int x, int y) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount)); _packet.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer, (ushort)x, (ushort)y)); }
 
         public virtual bool ContainerExists(uint serial) { _cancel.ThrowIfCancelled(); return _world.FindItem(serial) != null || _world.Items.Any(i => i.ContainerSerial == serial); }
         public virtual List<ScriptItem> GetItems(uint containerSerial) { _cancel.ThrowIfCancelled(); return Wrap(_world.Items.Where(i => i.ContainerSerial == containerSerial)); }
@@ -247,6 +248,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual List<ScriptItem> FilterByContainer(uint containerSerial) { _cancel.ThrowIfCancelled(); return Wrap(_world.Items.Where(i => i.ContainerSerial == containerSerial)); }
         public virtual void Lift(uint serial, int amount = 1) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount)); }
         public virtual void Drop(uint serial, uint targetContainer, int amount = 1) => Move(serial, targetContainer, amount);
+        public virtual void Drop(uint serial, uint targetContainer, int amount, int x, int y) => Move(serial, targetContainer, amount, x, y);
         public virtual int ContainerCount(uint containerSerial) { _cancel.ThrowIfCancelled(); return _world.Items.Count(i => i.ContainerSerial == containerSerial); }
 
         public virtual List<ScriptItem> ApplyFilter(int graphic = -1, int hue = -1, uint container = 0, int range = -1)
@@ -327,7 +329,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void IgnoreTypes(List<int> graphics) { _cancel.ThrowIfCancelled(); if (graphics == null) return; foreach (var g in graphics) if (!_ignoreList.Contains(g)) _ignoreList.Add(g); }
         public virtual bool IsChildOf(uint childSerial, uint parentSerial) { _cancel.ThrowIfCancelled(); var child = _world.FindItem(childSerial); if (child == null) return false; if (child.ContainerSerial == parentSerial) return true; if (child.ContainerSerial == 0) return false; return IsChildOf(child.ContainerSerial, parentSerial); }
         public virtual void Message(uint serial, int hue, string message) { /* Implementazione 0xAE */ }
-        public virtual void MoveOnGround(uint serial, int x, int y, int z) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.LiftItem(serial, 1)); _packet.SendToServer(PacketBuilder.DropToWorld(serial, (ushort)x, (ushort)y, (short)z)); }
+        public virtual void MoveOnGround(uint serial, int x, int y, int z) => MoveOnGround(serial, x, y, z, 1);
+        public virtual void MoveOnGround(uint serial, int x, int y, int z, int amount) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount)); _packet.SendToServer(PacketBuilder.DropToWorld(serial, (ushort)x, (ushort)y, (short)z)); }
         public virtual void OpenAt(uint serial, int x, int y) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.DoubleClick(serial)); }
         public virtual void OpenContainerAt(uint serial, int x, int y) => OpenAt(serial, x, y);
         public virtual void SetColor(uint serial, int color) { _cancel.ThrowIfCancelled(); var item = _world.FindItem(serial); if (item != null) item.Hue = (ushort)color; }

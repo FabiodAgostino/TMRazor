@@ -3543,7 +3543,16 @@ print('HP:', Player.Hits, '/', Player.HitsMax)</value>
     <value>Gump Inspector</value>
   </data>
   <data name="Inspector.Tab.MapInspector" xml:space="preserve">
-    <value>Map Inspector</value>
+    <value>Ispettore Mappa</value>
+  </data>
+  <data name="Inspector.Tab.GumpHistory" xml:space="preserve">
+    <value>Storico Gump</value>
+  </data>
+  <data name="Inspector.GumpHistory.Title" xml:space="preserve">
+    <value>Storico Risposte Gump</value>
+  </data>
+  <data name="Inspector.GumpHistory.Clear" xml:space="preserve">
+    <value>Pulisci Storico</value>
   </data>
   <data name="Inspector.GumpList.Title" xml:space="preserve">
     <value>Gump List Manager</value>
@@ -4177,5 +4186,47 @@ print('HP:', Player.Hits, '/', Player.HitsMax)</value>
   </data>
   <data name="Agents.Friends.GuildName" xml:space="preserve">
     <value>Nome gilda...</value>
+  </data>
+  <data name="Media.Title" xml:space="preserve">
+    <value>Media &amp; Screenshot</value>
+  </data>
+  <data name="Media.Screenshots" xml:space="preserve">
+    <value>Impostazioni Screenshot</value>
+  </data>
+  <data name="Media.Video" xml:space="preserve">
+    <value>Registrazione Video</value>
+  </data>
+  <data name="Media.OutputDirectory" xml:space="preserve">
+    <value>Cartella di Output</value>
+  </data>
+  <data name="Media.Browse" xml:space="preserve">
+    <value>Sfoglia</value>
+  </data>
+  <data name="Media.Format" xml:space="preserve">
+    <value>Formato</value>
+  </data>
+  <data name="Media.Quality" xml:space="preserve">
+    <value>Qualità (Solo JPG)</value>
+  </data>
+  <data name="Media.AutoScreenshot" xml:space="preserve">
+    <value>Screenshot automatico alla morte</value>
+  </data>
+  <data name="Media.TakeScreenshot" xml:space="preserve">
+    <value>Cattura Screenshot Ora</value>
+  </data>
+  <data name="Media.Fps" xml:space="preserve">
+    <value>Frame Per Secondo (FPS)</value>
+  </data>
+  <data name="Media.Codec" xml:space="preserve">
+    <value>Codec</value>
+  </data>
+  <data name="Media.PerfNote" xml:space="preserve">
+    <value>La registrazione video non compressa può generare file molto grandi e impattare sulle prestazioni.</value>
+  </data>
+  <data name="Media.ScreenshotTaken" xml:space="preserve">
+    <value>Screenshot acquisito con successo.</value>
+  </data>
+  <data name="Nav.MediaSettings" xml:space="preserve">
+    <value>Impostazioni Media</value>
   </data>
 </root>

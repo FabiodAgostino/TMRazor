@@ -15,6 +15,7 @@ namespace TMRazorImproved.Shared.Interfaces
         void StartTrade(uint targetSerial);
         void AcceptTrade(uint tradeSerial);
         void CancelTrade(uint tradeSerial);
+        void Offer(uint tradeSerial, uint gold, uint platinum);
         TradeData? GetTrade(uint tradeSerial);
     }
 }

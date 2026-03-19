@@ -66,7 +66,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void ChangeList(string friendlist)
         {
             _cancel.ThrowIfCancelled();
-            // Stub per compatibilità
+            _friends.SwitchList(friendlist);
         }
 
         public virtual List<int> GetList(string friendlist)

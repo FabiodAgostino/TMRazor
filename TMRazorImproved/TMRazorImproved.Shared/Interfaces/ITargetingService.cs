@@ -6,6 +6,14 @@ namespace TMRazorImproved.Shared.Interfaces
     public interface ITargetingService
     {
         uint LastTarget { get; set; }
+
+        // 039-A: Target per tipo di cursore (harm/bene/ground)
+        uint LastHarmTarget { get; set; }
+        uint LastBeneTarget { get; set; }
+        ushort LastGroundX { get; }
+        ushort LastGroundY { get; }
+        sbyte LastGroundZ { get; }
+
         bool HasPrompt { get; }
 
         // true quando il server ha inviato 0x6C S2C e si aspetta ancora una risposta
@@ -28,6 +36,9 @@ namespace TMRazorImproved.Shared.Interfaces
         void TargetSelf();
         void Clear();
 
+        // 039-B/C: Smart Last Target con queue quando il cursore non è attivo
+        void DoLastTarget();
+
         // Metodi per l'invio fisico dei pacchetti di targeting
         void SendTarget(uint serial);
         void SendTarget(uint serial, ushort x, ushort y, sbyte z, ushort graphic);
@@ -38,6 +49,7 @@ namespace TMRazorImproved.Shared.Interfaces
         // FIX P1-02: serial e promptId tracciati dal pacchetto 0x9A S2C
         uint PendingPromptSerial { get; }
         uint PendingPromptId { get; }
+        bool PendingPromptIsUnicode { get; }
         void SendPrompt(string text);
         void SetPrompt(bool hasPrompt);
 

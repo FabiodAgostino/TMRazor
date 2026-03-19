@@ -1,0 +1,107 @@
+<Page x:Class="TMRazorImproved.UI.Views.Pages.MediaPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:loc="clr-namespace:TMRazorImproved.UI.Views"
+      xmlns:vm="clr-namespace:TMRazorImproved.UI.ViewModels"
+      mc:Ignorable="d" 
+      d:DesignHeight="1000" d:DesignWidth="800"
+      Title="{loc:Loc Nav.MediaSettings}"
+      d:DataContext="{d:DesignInstance vm:MediaViewModel, IsDesignTimeCreatable=False}">
+
+    <ScrollViewer Margin="32">
+        <StackPanel>
+            <ui:TextBlock Text="{loc:Loc Media.Title}" FontSize="28" FontWeight="Bold" Margin="0,0,0,24"/>
+
+            <!-- Screenshots Card -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel>
+                    <ui:TextBlock Text="{loc:Loc Media.Screenshots}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+
+                    <StackPanel Margin="0,0,0,12">
+                        <ui:TextBlock Text="{loc:Loc Media.OutputDirectory}" Appearance="Secondary" Margin="0,0,0,4"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBox Text="{Binding ScreenshotPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                        PlaceholderText="Default Path: ./Screenshots"/>
+                            <ui:Button Grid.Column="1" Content="{loc:Loc Media.Browse}" 
+                                       Icon="{ui:SymbolIcon FolderOpen24}"
+                                       Command="{Binding BrowseScreenshotPathCommand}"
+                                       VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <UniformGrid Columns="2" Margin="0,0,0,12">
+                        <StackPanel Margin="0,0,8,0">
+                            <ui:TextBlock Text="{loc:Loc Media.Format}" Appearance="Secondary" Margin="0,0,0,4"/>
+                            <ComboBox ItemsSource="{Binding Formats}"
+                                      SelectedItem="{Binding ScreenshotFormat, Mode=TwoWay}"
+                                      HorizontalAlignment="Stretch"/>
+                        </StackPanel>
+                        <StackPanel Margin="8,0,0,0">
+                            <ui:TextBlock Text="{loc:Loc Media.Quality}" Appearance="Secondary" Margin="0,0,0,4"/>
+                            <ui:NumberBox Value="{Binding ScreenshotQuality, Mode=TwoWay}" 
+                                          Minimum="10" Maximum="100" SpinButtonPlacementMode="Inline"/>
+                        </StackPanel>
+                    </UniformGrid>
+
+                    <ui:ToggleSwitch Content="{loc:Loc Media.AutoScreenshot}" 
+                                     IsChecked="{Binding AutoScreenshotOnDeath, Mode=TwoWay}"
+                                     Margin="0,0,0,12"/>
+
+                    <ui:Button Content="{loc:Loc Media.TakeScreenshot}" 
+                               Icon="{ui:SymbolIcon Camera24}"
+                               Command="{Binding TakeScreenshotAsyncCommand}"
+                               Appearance="Primary" HorizontalAlignment="Left"/>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- Video Recording Card -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel>
+                    <ui:TextBlock Text="{loc:Loc Media.Video}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+
+                    <StackPanel Margin="0,0,0,12">
+                        <ui:TextBlock Text="{loc:Loc Media.OutputDirectory}" Appearance="Secondary" Margin="0,0,0,4"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBox Text="{Binding VideoPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                        PlaceholderText="Default Path: ./Videos"/>
+                            <ui:Button Grid.Column="1" Content="{loc:Loc Media.Browse}" 
+                                       Icon="{ui:SymbolIcon FolderOpen24}"
+                                       Command="{Binding BrowseVideoPathCommand}"
+                                       VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        </Grid>
+                    </StackPanel>
+
+
+                    <UniformGrid Columns="2" Margin="0,0,0,12">
+                        <StackPanel Margin="0,0,8,0">
+                            <ui:TextBlock Text="{loc:Loc Media.Fps}" Appearance="Secondary" Margin="0,0,0,4"/>
+                            <ui:NumberBox Value="{Binding VideoFps, Mode=TwoWay}" 
+                                          Minimum="5" Maximum="60" SpinButtonPlacementMode="Inline"/>
+                        </StackPanel>
+                        <StackPanel Margin="8,0,0,0">
+                            <ui:TextBlock Text="{loc:Loc Media.Codec}" Appearance="Secondary" Margin="0,0,0,4"/>
+                            <ComboBox ItemsSource="{Binding Codecs}"
+                                      SelectedItem="{Binding VideoCodec, Mode=TwoWay}"
+                                      HorizontalAlignment="Stretch"/>
+                        </StackPanel>
+                    </UniformGrid>
+                    
+                    <ui:InfoBar IsOpen="True" IsClosable="False" Severity="Warning"
+                                Title="Note"
+                                Message="{loc:Loc Media.PerfNote}"/>
+                </StackPanel>
+            </ui:Card>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

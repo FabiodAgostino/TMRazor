@@ -751,23 +751,102 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         }
 
         // ------------------------------------------------------------------
-        // Old Menu stubs (pre-context-menu UO menus)
+        // Old Menu (pre-context-menu UO menus, pacchetto 0x7C/0x7D)
         // ------------------------------------------------------------------
 
-        public virtual bool HasMenu()        { _cancel.ThrowIfCancelled(); return false; }
-        public virtual void CloseMenu()      { _cancel.ThrowIfCancelled(); }
-        public virtual bool MenuContain(string text) { _cancel.ThrowIfCancelled(); return false; }
-        public virtual string GetMenuTitle() { _cancel.ThrowIfCancelled(); return string.Empty; }
-        public virtual bool WaitForMenu(int delay) { _cancel.ThrowIfCancelled(); return false; }
-        public virtual void MenuResponse(string text) { _cancel.ThrowIfCancelled(); }
+        /// <summary>Ritorna true se c'è un menu classico UO aperto (0x7C ricevuto dal server).</summary>
+        public virtual bool HasMenu()
+        {
+            _cancel.ThrowIfCancelled();
+            return MenuStore.HasMenu();
+        }
+
+        /// <summary>Chiude il menu corrente (pulisce lo store locale; non invia nulla al server).</summary>
+        public virtual void CloseMenu()
+        {
+            _cancel.ThrowIfCancelled();
+            MenuStore.Clear();
+        }
+
+        /// <summary>Ritorna true se uno degli item del menu corrente contiene <paramref name="text"/> (case-insensitive).</summary>
+        public virtual bool MenuContain(string text)
+        {
+            _cancel.ThrowIfCancelled();
+            var menu = MenuStore.Get();
+            if (menu == null) return false;
+            return menu.Items.Any(i => i.Name.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
+        /// <summary>Ritorna il titolo del menu corrente, oppure stringa vuota se nessun menu è aperto.</summary>
+        public virtual string GetMenuTitle()
+        {
+            _cancel.ThrowIfCancelled();
+            return MenuStore.Get()?.Title ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Attende fino a <paramref name="delay"/> ms che il server invii un menu (0x7C).
+        /// Ritorna true se il menu arriva, false in caso di timeout.
+        /// </summary>
+        public virtual bool WaitForMenu(int delay)
+        {
+            _cancel.ThrowIfCancelled();
+            return MenuStore.WaitForMenu(delay);
+        }
+
+        /// <summary>
+        /// Risponde al menu corrente selezionando la prima voce che contiene <paramref name="text"/> (case-insensitive).
+        /// Invia il pacchetto 0x7D al server. Non fa nulla se il menu non è aperto o la voce non esiste.
+        /// </summary>
+        public virtual void MenuResponse(string text)
+        {
+            _cancel.ThrowIfCancelled();
+            var menu = MenuStore.Get();
+            if (menu == null) return;
+
+            var item = menu.Items.FirstOrDefault(i =>
+                i.Name.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0);
+            if (item == null) return;
+
+            var pkt = PacketBuilder.MenuResponse(menu.Serial, menu.MenuId,
+                (ushort)item.Index, item.Graphic, item.Hue);
+            _packetService.SendToServer(pkt);
+            MenuStore.Clear();
+        }
 
         // ------------------------------------------------------------------
-        // Query String stubs
+        // Query String (0xAB/0xAC)
         // ------------------------------------------------------------------
 
-        public virtual bool HasQueryString() { _cancel.ThrowIfCancelled(); return false; }
-        public virtual bool WaitForQueryString(int delay) { _cancel.ThrowIfCancelled(); return false; }
-        public virtual void QueryStringResponse(bool okcancel, string response) { _cancel.ThrowIfCancelled(); }
+        /// <summary>Ritorna true se il server ha richiesto input testuale (0xAB).</summary>
+        public virtual bool HasQueryString()
+        {
+            _cancel.ThrowIfCancelled();
+            return StringQueryStore.HasQuery();
+        }
+
+        /// <summary>Attende fino a <paramref name="delay"/> ms che il server invii una Query String (0xAB).</summary>
+        public virtual bool WaitForQueryString(int delay)
+        {
+            _cancel.ThrowIfCancelled();
+            return StringQueryStore.WaitForQuery(delay);
+        }
+
+        /// <summary>
+        /// Risponde alla Query String corrente inviando il pacchetto 0xAC al server.
+        /// </summary>
+        /// <param name="ok">True per pulsante OK, false per Cancel.</param>
+        /// <param name="response">Il testo della risposta.</param>
+        public virtual void QueryStringResponse(bool ok, string response)
+        {
+            _cancel.ThrowIfCancelled();
+            var query = StringQueryStore.Get();
+            if (query == null) return;
+
+            var pkt = PacketBuilder.StringQueryResponse(query.Serial, query.QueryType, (byte)query.QueryId, ok, response);
+            _packetService.SendToServer(pkt);
+            StringQueryStore.Clear();
+        }
 
         // ------------------------------------------------------------------
         // Script control

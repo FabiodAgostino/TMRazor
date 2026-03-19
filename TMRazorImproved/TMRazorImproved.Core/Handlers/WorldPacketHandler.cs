@@ -127,7 +127,6 @@ namespace TMRazorImproved.Core.Handlers
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xAD, HandleEncodedUnicodeSpeech);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xAF, HandleDeathAnimation);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xC1, HandleLocalizedMessage);
-            _packetService.RegisterViewer(PacketPath.ServerToClient, 0xC2, HandleUnicodePromptReceived);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xCC, HandleLocalizedMessageAffix);
 
             // ── Mobiles ──────────────────────────────────────────────────────────────────
@@ -1671,16 +1670,69 @@ namespace TMRazorImproved.Core.Handlers
         private void HandleGumpResponse(byte[] data)
         {
             // 0xB1 C2S: il client risponde al gump, che si chiude nella maggior parte dei casi
-            uint closedGumpId = _worldService.CurrentGump?.GumpId ?? 0;
+            // Layout: cmd(1) len(2) serial(4) gumpId(4) buttonId(4) switchCount(4) switches... textCount(4) texts...
+            if (data.Length < 19) return;
+
+            var reader = new UOBufferReader(data);
+            reader.ReadByte(); // 0xB1
+            reader.ReadUInt16(); // len
+            uint serial = reader.ReadUInt32();
+            uint gumpId = reader.ReadUInt32();
+            int buttonId = reader.ReadInt32();
+
+            var switches = new List<int>();
+            int switchCount = reader.ReadInt32();
+            for (int i = 0; i < switchCount && reader.Remaining >= 4; i++)
+            {
+                switches.Add(reader.ReadInt32());
+            }
+
+            var textEntries = new Dictionary<int, string>();
+            int textCount = reader.ReadInt32();
+            for (int i = 0; i < textCount && reader.Remaining >= 4; i++)
+            {
+                int id = reader.ReadUInt16();
+                int len = reader.ReadUInt16();
+                if (reader.Remaining >= len * 2)
+                {
+                    string text = reader.ReadUnicodeString(len);
+                    textEntries[id] = text;
+                }
+            }
+
             _worldService.RemoveGump();
-            _messenger.Send(new GumpClosedMessage(closedGumpId));
+            _messenger.Send(new GumpClosedMessage(gumpId));
+            _messenger.Send(new GumpResponseLogMessage(serial, gumpId, buttonId, switches, textEntries));
         }
 
         private void HandleOpenMenu(byte[] data)
         {
-            // 0x7C: cmd(1) len(2) serial(4) menuId(2) name[30] count(1) [...]
-            // Menu stile classico (pre-context menu) — solo tracking del serial
-            if (data.Length < 9) return;
+            // 0x7C layout: cmd(1) len(2) serial(4) menuId(2) title[30] count(1)
+            //   per ogni item: graphic(2) hue(2) nameLen(1) name[nameLen]
+            // Minimo: 1+2+4+2+30+1 = 40 bytes
+            if (data.Length < 40) return;
+
+            var reader = new UOBufferReader(data);
+            reader.ReadByte();                           // cmd 0x7C
+            reader.ReadUInt16();                         // len
+            uint   serial = reader.ReadUInt32();
+            ushort menuId = reader.ReadUInt16();
+            string title  = reader.ReadString(30);
+            int    count  = reader.ReadByte();
+
+            var items = new List<UOMenuItem>(count);
+            for (int i = 0; i < count && reader.Remaining >= 5; i++)
+            {
+                ushort graphic = reader.ReadUInt16();
+                ushort hue     = reader.ReadUInt16();
+                int    nameLen = reader.ReadByte();
+                string name    = nameLen > 0 && reader.Remaining >= nameLen
+                    ? reader.ReadString(nameLen)
+                    : string.Empty;
+                items.Add(new UOMenuItem(i + 1, graphic, hue, name));
+            }
+
+            MenuStore.Set(new UOMenu(serial, menuId, title, items));
         }
 
         #endregion
@@ -1986,14 +2038,6 @@ namespace TMRazorImproved.Core.Handlers
             _journalService.AddEntry(new JournalEntry(text, name, serial, hue));
         }
 
-        private void HandleUnicodePromptReceived(byte[] data)
-        {
-            // 0xC2 S2C: cmd(1) serial(4) id(4) type(4) — il server richiede input testuale
-            // Non journalizzato: è un prompt di sistema che il giocatore deve rispondere
-            if (data.Length < 13) return;
-            // Il client gestisce la UI del prompt; noi teniamo solo traccia
-        }
-
         private void HandleLocalizedMessageAffix(byte[] data)
         {
             // 0xCC: cmd(1) len(2) serial(4) body(2) type(1) hue(2) font(2) cliloc(4) flags(1) name[30]
@@ -2131,13 +2175,18 @@ namespace TMRazorImproved.Core.Handlers
         private void HandlePersonalLightLevel(byte[] data)
         {
             // 0x4E: cmd(1) serial(4) level(1) — luce locale del personaggio
-            // Filtrato da PacketService se FilterLight è attivo
+            if (data.Length < 6) return;
+            uint serial = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(1));
+            byte level = data[5];
+            if (_worldService.Player != null && serial == _worldService.Player.Serial)
+                _worldService.CurrentLight = level;
         }
 
         private void HandleGlobalLightLevel(byte[] data)
         {
             // 0x4F: cmd(1) level(1) — luce globale del mondo
-            // Filtrato da PacketService se FilterLight è attivo
+            if (data.Length < 2) return;
+            _worldService.CurrentLight = data[1];
         }
 
         #endregion
@@ -2349,6 +2398,7 @@ namespace TMRazorImproved.Core.Handlers
             byte queryType = reader.ReadByte();
             int queryId = reader.ReadByte();
 
+            StringQueryStore.Set(new UOStringQuery(serial, queryId, queryType));
             _messenger.Send(new StringQueryMessage(serial, queryId, queryType));
         }
 

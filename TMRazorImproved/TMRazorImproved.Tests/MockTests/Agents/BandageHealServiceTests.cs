@@ -27,6 +27,11 @@ namespace TMRazorImproved.Tests.MockTests.Agents
             _worldServiceMock.Setup(w => w.Player).Returns(_player);
             _worldServiceMock.Setup(w => w.FindMobile(_player.Serial)).Returns(_player);
             
+            var backpack = new Item(0x1111) { Graphic = 0x0E75 }; // Backpack
+            _player.Backpack = backpack;
+            var bandage = new Item(0x2222) { Graphic = 0x0E21, Container = backpack.Serial };
+            _worldServiceMock.Setup(w => w.Items).Returns(new List<Item> { backpack, bandage });
+            
             _profile.BandageHeal.BandageSerial = 0x44444444;
             _profile.BandageHeal.HpStart = 80;
             _profile.BandageHeal.CustomDelay = 100; // Fast delay for testing

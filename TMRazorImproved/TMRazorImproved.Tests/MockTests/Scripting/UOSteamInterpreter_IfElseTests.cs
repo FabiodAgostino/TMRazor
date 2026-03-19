@@ -46,9 +46,11 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
             var organizerApi = new OrganizerApi(new Mock<IOrganizerService>().Object, _cancel);
             var bandageHealApi = new BandageHealApi(new Mock<IBandageHealService>().Object, _cancel);
             var hotkeyApi = new HotkeyApi(new Mock<IHotkeyService>().Object, configMock.Object, _cancel);
+            var vendorApi = new VendorApi(new Mock<IVendorService>().Object, _cancel);
 
-            return new UOSteamInterpreter(misc, playerApi, items, mobiles, journal, targetApi, skillsApi, gumpsApi, 
-                autoLootApi, dressApi, scavengerApi, restockApi, organizerApi, bandageHealApi, hotkeyApi,
+            return new UOSteamInterpreter(misc, playerApi, items, mobiles, journal, targetApi, skillsApi, gumpsApi,
+                autoLootApi, dressApi, scavengerApi, restockApi, organizerApi, bandageHealApi, hotkeyApi, vendorApi,
+                _friendsMock.Object, new Mock<IMacrosService>().Object, _worldMock.Object,
                 _cancel, s => _outputLog.Add(s));
         }
 
@@ -56,7 +58,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         public void Execute_IfElseIf_ShouldExecuteCorrectBranch()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null!, null!, null!);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null!, null!, null!, null!);
             playerMock.Setup(p => p.Hits).Returns(30);
             var interpreter = CreateInterpreter(playerMock.Object);
             
@@ -82,7 +84,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         public void Execute_IfTrueElseIf_ShouldOnlyExecuteFirstBranch()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null!, null!, null!);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null!, null!, null!, null!);
             playerMock.Setup(p => p.Hits).Returns(50);
             var interpreter = CreateInterpreter(playerMock.Object);
             
@@ -105,7 +107,7 @@ namespace TMRazorImproved.Tests.MockTests.Scripting
         public void Execute_NestedIf_ShouldWorkCorrectly()
         {
             // Arrange
-            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null!, null!, null!);
+            var playerMock = new Mock<PlayerApi>(_worldMock.Object, _packetMock.Object, _targetingMock.Object, _skillsMock.Object, _cancel, null!, null!, null!, null!);
             playerMock.Setup(p => p.Hits).Returns(50);
             playerMock.Setup(p => p.Mana).Returns(20);
             var interpreter = CreateInterpreter(playerMock.Object);

@@ -1,7 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TMRazorImproved.Shared.Interfaces;
+using TMRazorImproved.Shared.Interfaces.Adapters;
 using TMRazorImproved.Shared.Enums;
+using TMRazorImproved.Shared.Models.Config;
 using TMRazorImproved.UI.Utilities;
 using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.Messaging;
@@ -57,6 +59,9 @@ namespace TMRazorImproved.UI.ViewModels
         }
 
         [ObservableProperty]
+        private bool _osiEncryption;
+
+        [ObservableProperty]
         private bool _allowMultiClient;
 
         partial void OnAllowMultiClientChanged(bool value)
@@ -96,6 +101,14 @@ namespace TMRazorImproved.UI.ViewModels
         private Views.Windows.DPSMeterWindow? _dpsMeter;
 
         private readonly ISkillsService _skillsService;
+        private readonly IShardService _shardService;
+        private readonly IClientAdapterFactory _adapterFactory;
+
+        // Shard management
+        public ObservableCollection<ShardEntry> Shards { get; } = new();
+
+        [ObservableProperty]
+        private ShardEntry? _selectedShard;
 
         public GeneralViewModel(
             IConfigService configService,
@@ -103,6 +116,8 @@ namespace TMRazorImproved.UI.ViewModels
             IClientInteropService clientInterop,
             IPacketService packetService,
             ISkillsService skillsService,
+            IShardService shardService,
+            IClientAdapterFactory adapterFactory,
             IContentDialogService dialogService,
             ISnackbarService snackbarService,
             IUOModService uoModService,
@@ -114,6 +129,8 @@ namespace TMRazorImproved.UI.ViewModels
             _clientInterop = clientInterop;
             _packetService = packetService;
             _skillsService = skillsService;
+            _shardService = shardService;
+            _adapterFactory = adapterFactory;
             _dialogService = dialogService;
             _snackbarService = snackbarService;
             _uoModService = uoModService;
@@ -146,6 +163,8 @@ namespace TMRazorImproved.UI.ViewModels
             CheckProcessStatus();
 
             _messenger.Register<ShardChangedMessage>(this);
+
+            LoadShards();
         }
 
         public void Receive(ShardChangedMessage message)
@@ -344,7 +363,7 @@ namespace TMRazorImproved.UI.ViewModels
             }
 
             StatusMessage = LanguageHelper.Status.Launching;
-            
+
             // Salviamo le impostazioni prima di lanciare
             _configService.Global.ClientPath = ClientPath;
             _configService.Global.DataPath = DataPath;
@@ -354,27 +373,32 @@ namespace TMRazorImproved.UI.ViewModels
             _configService.Global.RemoveStaminaCheck = RemoveStaminaCheck;
             _configService.Save();
 
+            // Determine client type: use the selected shard's StartType, or auto-detect from path
+            var clientType = SelectedShard?.StartType ?? DetectClientTypeFromPath(ClientPath);
+            _adapterFactory.SetActiveType(clientType);
+
             try
             {
-                // Get MainWindow handle (necessario per InstallLibrary)
+                // Get MainWindow handle (necessario per InstallLibrary) — must be on UI thread
                 var mainWindow = System.Windows.Application.Current.MainWindow;
                 if (mainWindow == null) { _logger.LogError("MainWindow is NULL."); return; }
                 IntPtr windowHandle = new System.Windows.Interop.WindowInteropHelper(mainWindow).Handle;
                 System.Diagnostics.Trace.WriteLine($"[Launch] MainWindow Handle: 0x{windowHandle.ToInt64():X}");
 
-                // Calcola le flag (features)
                 int flags = 0;
                 if (NegotiateFeatures) flags |= 0x04;
-                if (PatchEncryption) flags |= 0x08;
+                // PatchEncryption (0x08): disabilita encryption client (free shard)
+                // OsiEncryption e PatchEncryption sono mutualmente esclusivi
+                if (PatchEncryption && !OsiEncryption) flags |= 0x08;
 
                 string clientDir = System.IO.Path.GetDirectoryName(ClientPath) ?? "";
+                string appDir = System.AppContext.BaseDirectory;
 
-                // CASO 1: il gioco è già in esecuzione — non deployare il plugin (DLL locked dal processo)
+                // CASO 1: il gioco è già in esecuzione
                 uint runningPid = _clientInterop.FindRunningGameProcess(clientDir);
 
-                // Deploy TMRazorPlugin.dll only when launching a new client instance.
-                // If the game is already running, the plugin is already loaded and the DLL is locked.
-                if (runningPid == 0)
+                // Deploy plugin solo per TmClient/ClassicUO (non per OSI che usa Loader.dll)
+                if (runningPid == 0 && clientType != ClientStartType.OSI)
                     DeployPlugin(clientDir);
 
                 await Task.Run(() =>
@@ -388,37 +412,47 @@ namespace TMRazorImproved.UI.ViewModels
                     }
                     else
                     {
-                        // CASO 2: il gioco non è in esecuzione.
-                        // Usa Process.Start direttamente: Loader.dll inietta nel launcher (sbagliato)
-                        // se TmClient.exe è un launcher che spawna il vero client.
-                        // L'iniezione di Crypt.dll avviene comunque dopo via SetWindowsHookEx.
-                        _clientInterop.PrepareForLaunch(); // snapshot PID prima del lancio
-                        System.Diagnostics.Trace.WriteLine($"[Launch] Starting client via Process.Start: {ClientPath}");
-                        var proc = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ClientPath)
+                        switch (clientType)
                         {
-                            WorkingDirectory = clientDir,
-                            UseShellExecute = true
-                        });
-                        uint launcherPid = (uint)(proc?.Id ?? 0);
-                        System.Diagnostics.Trace.WriteLine($"[Launch] Process started. PID: {launcherPid}");
+                            case ClientStartType.OSI:
+                                // x86 only: Loader.dll lancia il client e inietta Crypt.dll contestualmente
+                                string cryptPath = System.IO.Path.Combine(appDir, "Crypt.dll");
+                                System.Diagnostics.Trace.WriteLine($"[Launch] OSI mode: launching via Loader.dll + Crypt.dll");
+                                gamePid = (int)_clientInterop.LaunchClient(ClientPath, cryptPath);
+                                _clientInterop.WaitForWindow((uint)gamePid);
+                                System.Diagnostics.Trace.WriteLine($"[Launch] OSI PID: {gamePid}");
+                                break;
 
-                        _clientInterop.WaitForWindow(launcherPid);
-                        gamePid = _clientInterop.GetUOProcessId();
-                        if (gamePid == 0) gamePid = (int)launcherPid;
-                        System.Diagnostics.Trace.WriteLine($"[Launch] Game PID after wait: {gamePid} (launcher was {launcherPid})");
+                            case ClientStartType.ClassicUO:
+                            case ClientStartType.TmClient:
+                            default:
+                                // Plugin-based: Process.Start + attendi finestra
+                                _clientInterop.PrepareForLaunch();
+                                System.Diagnostics.Trace.WriteLine($"[Launch] Plugin mode: starting {clientType} via Process.Start: {ClientPath}");
+                                var proc = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ClientPath)
+                                {
+                                    WorkingDirectory = clientDir,
+                                    UseShellExecute = true
+                                });
+                                uint launcherPid = (uint)(proc?.Id ?? 0);
+                                System.Diagnostics.Trace.WriteLine($"[Launch] Process started. PID: {launcherPid}");
+
+                                _clientInterop.WaitForWindow(launcherPid);
+                                gamePid = _clientInterop.GetUOProcessId();
+                                if (gamePid == 0) gamePid = (int)launcherPid;
+                                System.Diagnostics.Trace.WriteLine($"[Launch] Game PID after wait: {gamePid} (launcher was {launcherPid})");
+                                break;
+                        }
                     }
 
                     System.Diagnostics.Trace.WriteLine($"[Launch] Installing shared memory for game PID: {gamePid}");
                     _clientInterop.InstallLibrary(windowHandle, gamePid, flags);
-                    // Signal PacketService that Crypt.dll is ready: enables packet processing
-                    // and resets any buffer state from premature timer ticks.
                     _packetService.NotifyCryptReady();
                     System.Diagnostics.Trace.WriteLine($"[Launch] Shared memory ready (PID: {gamePid})");
-                    _logger.LogInformation("Shared memory ready (PID: {Pid})", gamePid);
+                    _logger.LogInformation("Client ready ({Type}, PID: {Pid})", clientType, gamePid);
 
-                    // InstallLibrary apre la shared memory creata da TMRazorPlugin.dll (già caricata
-                    // da TmClient) e popola PacketTable in modo che GetPacketLength funzioni.
-                    // I WH hook non funzionano su TmClient (x64) ma non sono più necessari.
+                    // Notify the active adapter of the connected PID
+                    _adapterFactory.GetActiveAdapter().Connect(gamePid);
 
                     if (gamePid != 0)
                     {
@@ -433,6 +467,18 @@ namespace TMRazorImproved.UI.ViewModels
             {
                 StatusMessage = $"Errore avvio: {ex.Message}";
             }
+        }
+
+        /// <summary>
+        /// Rileva il tipo di client dall'eseguibile quando nessuno shard è selezionato.
+        /// </summary>
+        private static ClientStartType DetectClientTypeFromPath(string clientPath)
+        {
+            if (string.IsNullOrEmpty(clientPath)) return ClientStartType.TmClient;
+            string name = System.IO.Path.GetFileNameWithoutExtension(clientPath).ToLowerInvariant();
+            if (name == "client") return ClientStartType.OSI;
+            if (name.Contains("tmclient")) return ClientStartType.TmClient;
+            return ClientStartType.ClassicUO;
         }
 
         /// <summary>
@@ -555,6 +601,169 @@ namespace TMRazorImproved.UI.ViewModels
         {
             var win = new Views.Windows.ChangelogWindow();
             win.Show();
+        }
+
+        // ── Shard Management ────────────────────────────────────────────────
+
+        private void LoadShards()
+        {
+            Shards.Clear();
+            foreach (var s in _shardService.GetAll())
+                Shards.Add(s);
+            SelectedShard = Shards.FirstOrDefault(s => s.IsSelected) ?? Shards.FirstOrDefault();
+        }
+
+        partial void OnSelectedShardChanged(ShardEntry? value)
+        {
+            if (value == null) return;
+            // Auto-populate client fields from shard
+            ClientPath = value.ClientPath;
+            DataPath = value.DataFolder;
+            ServerAddress = value.Host;
+            ServerPort = value.Port;
+            PatchEncryption = value.PatchEncryption;
+            OsiEncryption = value.OSIEncryption;
+        }
+
+        [RelayCommand]
+        private async Task AddShard()
+        {
+            var entry = new ShardEntry { Name = "New Shard" };
+            var edited = await ShowShardDialog(entry, isNew: true);
+            if (edited == null) return;
+
+            try
+            {
+                _shardService.Add(edited);
+                Shards.Add(edited);
+                SelectedShard = edited;
+                _snackbarService.Show("Shard Added", $"'{edited.Name}' added successfully.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
+            }
+            catch (Exception ex)
+            {
+                _snackbarService.Show("Error", ex.Message, Wpf.Ui.Controls.ControlAppearance.Danger, null, TimeSpan.FromSeconds(3));
+            }
+        }
+
+        [RelayCommand]
+        private async Task EditShard()
+        {
+            if (SelectedShard == null) return;
+
+            // Clone for editing
+            var clone = new ShardEntry
+            {
+                Name = SelectedShard.Name,
+                Host = SelectedShard.Host,
+                Port = SelectedShard.Port,
+                ClientPath = SelectedShard.ClientPath,
+                DataFolder = SelectedShard.DataFolder,
+                PatchEncryption = SelectedShard.PatchEncryption,
+                OSIEncryption = SelectedShard.OSIEncryption,
+                StartType = SelectedShard.StartType
+            };
+
+            string originalName = SelectedShard.Name;
+            var edited = await ShowShardDialog(clone, isNew: false);
+            if (edited == null) return;
+
+            try
+            {
+                _shardService.Update(originalName, edited);
+                LoadShards();
+                SelectedShard = Shards.FirstOrDefault(s => s.Name == edited.Name);
+                _snackbarService.Show("Shard Updated", $"'{edited.Name}' updated.", Wpf.Ui.Controls.ControlAppearance.Info, null, TimeSpan.FromSeconds(3));
+            }
+            catch (Exception ex)
+            {
+                _snackbarService.Show("Error", ex.Message, Wpf.Ui.Controls.ControlAppearance.Danger, null, TimeSpan.FromSeconds(3));
+            }
+        }
+
+        [RelayCommand]
+        private void DeleteShard()
+        {
+            if (SelectedShard == null) return;
+            string name = SelectedShard.Name;
+            _shardService.Delete(name);
+            Shards.Remove(SelectedShard);
+            SelectedShard = Shards.FirstOrDefault();
+            _snackbarService.Show("Shard Deleted", $"'{name}' removed.", Wpf.Ui.Controls.ControlAppearance.Caution, null, TimeSpan.FromSeconds(3));
+        }
+
+        [RelayCommand]
+        private void SelectShard()
+        {
+            if (SelectedShard == null) return;
+            _shardService.Select(SelectedShard.Name);
+            // Refresh IsSelected flags in the observable collection
+            foreach (var s in Shards)
+                s.IsSelected = s.Name == SelectedShard.Name;
+            OnSelectedShardChanged(SelectedShard);
+            _snackbarService.Show("Shard Selected", $"Active shard: '{SelectedShard.Name}'.", Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(3));
+        }
+
+        private async Task<ShardEntry?> ShowShardDialog(ShardEntry entry, bool isNew)
+        {
+            // Build a simple form panel
+            var nameBox = new Wpf.Ui.Controls.TextBox { Text = entry.Name, PlaceholderText = "Shard name", Margin = new System.Windows.Thickness(0, 0, 0, 8) };
+            var hostBox = new Wpf.Ui.Controls.TextBox { Text = entry.Host, PlaceholderText = "Host (e.g. 127.0.0.1)", Margin = new System.Windows.Thickness(0, 0, 0, 8) };
+            var portBox = new Wpf.Ui.Controls.TextBox { Text = entry.Port.ToString(), PlaceholderText = "Port", Margin = new System.Windows.Thickness(0, 0, 0, 8) };
+            var clientBox = new Wpf.Ui.Controls.TextBox { Text = entry.ClientPath, PlaceholderText = "Client path (e.g. C:\\TmClient\\TmClient.exe)", Margin = new System.Windows.Thickness(0, 0, 0, 8) };
+            var dataBox = new Wpf.Ui.Controls.TextBox { Text = entry.DataFolder, PlaceholderText = "UO data folder", Margin = new System.Windows.Thickness(0, 0, 0, 8) };
+
+            var startTypeCombo = new System.Windows.Controls.ComboBox
+            {
+                ItemsSource = System.Enum.GetValues(typeof(ClientStartType)),
+                SelectedItem = entry.StartType,
+                Margin = new System.Windows.Thickness(0, 0, 0, 8)
+            };
+
+            var patchEncToggle = new System.Windows.Controls.CheckBox { Content = "Patch Encryption", IsChecked = entry.PatchEncryption, Margin = new System.Windows.Thickness(0, 0, 0, 4) };
+            var osiEncToggle = new System.Windows.Controls.CheckBox { Content = "OSI Encryption", IsChecked = entry.OSIEncryption };
+
+            var panel = new System.Windows.Controls.StackPanel { Margin = new System.Windows.Thickness(0, 8, 0, 0) };
+            panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Name:" });
+            panel.Children.Add(nameBox);
+            panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Host:" });
+            panel.Children.Add(hostBox);
+            panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Port:" });
+            panel.Children.Add(portBox);
+            panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Client executable:" });
+            panel.Children.Add(clientBox);
+            panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Data folder:" });
+            panel.Children.Add(dataBox);
+            panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Client type:" });
+            panel.Children.Add(startTypeCombo);
+            panel.Children.Add(patchEncToggle);
+            panel.Children.Add(osiEncToggle);
+
+            var dialog = new Wpf.Ui.Controls.ContentDialog(_dialogService.GetDialogHost())
+            {
+                Title = isNew ? "Add Shard" : $"Edit Shard: {entry.Name}",
+                Content = new System.Windows.Controls.ScrollViewer { Content = panel, MaxHeight = 420 },
+                PrimaryButtonText = isNew ? "Add" : "Save",
+                CloseButtonText = "Cancel",
+                DefaultButton = Wpf.Ui.Controls.ContentDialogButton.Primary
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result != Wpf.Ui.Controls.ContentDialogResult.Primary) return null;
+
+            if (!int.TryParse(portBox.Text, out int port)) port = 2593;
+
+            return new ShardEntry
+            {
+                Name = nameBox.Text.Trim(),
+                Host = hostBox.Text.Trim(),
+                Port = port,
+                ClientPath = clientBox.Text.Trim(),
+                DataFolder = dataBox.Text.Trim(),
+                StartType = startTypeCombo.SelectedItem is ClientStartType ct ? ct : ClientStartType.TmClient,
+                PatchEncryption = patchEncToggle.IsChecked == true,
+                OSIEncryption = osiEncToggle.IsChecked == true,
+                IsSelected = entry.IsSelected
+            };
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TMRazorImproved.Shared.Interfaces;
+using TMRazorImproved.Shared.Messages;
 
 namespace TMRazorImproved.Shared.Models.Config
 {
@@ -58,6 +59,11 @@ namespace TMRazorImproved.Shared.Models.Config
         public bool FilterDrake { get; set; }
         public bool FilterDaemon { get; set; }
         public bool FilterVetRewardGump { get; set; }
+        
+        public ushort FilterDragonGraphic { get; set; } = 0x0033;
+        public ushort FilterDrakeGraphic { get; set; } = 0x0033;
+        public ushort FilterDaemonGraphic { get; set; } = 0x0033;
+        public List<OverheadMessageType> FilteredMessageTypes { get; set; } = new();
         
         // Advanced Filters
         public bool HighlightFlags { get; set; }
@@ -151,6 +157,22 @@ namespace TMRazorImproved.Shared.Models.Config
         public bool UoModGlobalSound { get; set; }
         public bool UoModViewRange { get; set; }
         public int UoModViewRangeValue { get; set; } = 30;
+
+        // DragDrop timing (ms)
+        public int DragDropLiftDelayMs { get; set; } = 50;
+        public int DragDropDropDelayMs { get; set; } = 150;
+
+        public MediaConfig Media { get; set; } = new();
+    }
+
+    public class MediaConfig
+    {
+        public string ScreenshotPath { get; set; } = string.Empty;
+        public string VideoPath { get; set; } = string.Empty;
+        public string ScreenshotFormat { get; set; } = "JPG"; // JPG, PNG
+        public int ScreenshotQuality { get; set; } = 90;
+        public int VideoFps { get; set; } = 15;
+        public string VideoCodec { get; set; } = "Uncompressed";
     }
 
     public class TargetHPConfig
@@ -334,6 +356,16 @@ namespace TMRazorImproved.Shared.Models.Config
         public int Range { get; set; } = 12;
         public bool TargetInnocents { get; set; } = false;
         public bool TargetFriends { get; set; } = false;
+
+        // 039-B: Smart Last Target — usa harm/bene/neutral separati in base al tipo di cursore
+        public bool SmartLastTarget { get; set; } = true;
+
+        // 039-D: Blocca healing su target avvelenato
+        public bool BlockHealPoisoned { get; set; } = false;
+
+        // 039-E: Range check configurabile prima di inviare last target
+        public bool RangeCheckEnabled { get; set; } = false;
+        public int MaxRange { get; set; } = 12;
     }
 
     public enum TargetPriority

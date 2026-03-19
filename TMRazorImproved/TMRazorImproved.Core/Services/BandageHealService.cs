@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -53,8 +54,17 @@ namespace TMRazorImproved.Core.Services
                 var config = profile.BandageHeal;
                 var player = _worldService.Player;
 
-                if (player != null && config.BandageSerial != 0)
+                if (player != null)
                 {
+                    // 006-A: cerca la bandage nel backpack per ItemID invece di usare serial fisso
+                    var bandage = FindBandage(player, config);
+                    if (bandage == null)
+                    {
+                        _logger.LogTrace("BandageHeal: no bandage found in backpack");
+                        await Task.Delay(500, token);
+                        continue;
+                    }
+
                     // HiddenStop
                     if (config.HiddenStop && player.IsHidden)
                     {
@@ -76,6 +86,13 @@ namespace TMRazorImproved.Core.Services
                         continue;
                     }
 
+                    // 006-B: se TimeWithBuff è attivo, aspetta che il buff "Healing" non sia più presente
+                    if (config.TimeWithBuff && IsBandagingActive(player))
+                    {
+                        await Task.Delay(200, token);
+                        continue;
+                    }
+
                     // Determina il target
                     uint targetSerial = GetTargetSerial(config, player);
                     var target = _worldService.FindMobile(targetSerial);
@@ -89,7 +106,7 @@ namespace TMRazorImproved.Core.Services
                         // Validazione condizioni
                         if (isMortal && !config.HealMortal) { await Task.Delay(200, token); continue; }
                         if (isPoisoned && !config.HealPoison) { await Task.Delay(200, token); continue; }
-                        
+
                         bool needsHeal = hpPercent <= config.HpStart;
                         if (needsHeal || (isPoisoned && config.PoisonPriority))
                         {
@@ -100,10 +117,10 @@ namespace TMRazorImproved.Core.Services
                                 continue;
                             }
 
-                            _logger.LogDebug("Heal triggered on {0:X}. Hits: {1}%, Poisoned: {2}, Mortal: {3}", 
+                            _logger.LogDebug("Heal triggered on {0:X}. Hits: {1}%, Poisoned: {2}, Mortal: {3}",
                                 targetSerial, hpPercent, isPoisoned, isMortal);
 
-                            _packetService.SendToServer(PacketBuilder.DoubleClick(config.BandageSerial));
+                            _packetService.SendToServer(PacketBuilder.DoubleClick(bandage.Serial));
                             await Task.Delay(150, token);
                             // FIX P0-01: usa il cursorId pendente dal server (0x6C S2C) come richiesto dal protocollo UO.
                             // CursorId=0 causava il rifiuto silenzioso del target da parte del server.
@@ -118,6 +135,33 @@ namespace TMRazorImproved.Core.Services
                 }
 
                 await Task.Delay(200, token);
+            }
+        }
+
+        private const ushort BandageGraphic = 0x0E21;
+
+        /// <summary>Cerca la bandage nel backpack del giocatore per ItemID.</summary>
+        private Item? FindBandage(Mobile player, BandageHealConfig config)
+        {
+            uint backpackSerial = player.Backpack?.Serial ?? 0;
+            if (backpackSerial == 0) return null;
+
+            ushort targetGraphic = config.UseCustomBandage && config.CustomBandageID > 0
+                ? (ushort)config.CustomBandageID
+                : BandageGraphic;
+
+            return _worldService.Items.FirstOrDefault(i =>
+                i.Container == backpackSerial &&
+                i.Graphic == targetGraphic &&
+                (config.UseCustomBandage == false || config.CustomBandageColor == -1 || config.CustomBandageColor == 0 || i.Hue == config.CustomBandageColor));
+        }
+
+        /// <summary>Verifica se il bandaging è ancora in corso controllando il buff "Healing".</summary>
+        private static bool IsBandagingActive(Mobile player)
+        {
+            lock (player.ActiveBuffs)
+            {
+                return player.ActiveBuffs.ContainsKey("Healing");
             }
         }
 

@@ -14,14 +14,26 @@ namespace TMRazorImproved.Core.Services
         private readonly ILogger<ScreenCaptureService> _logger;
         private readonly IClientInteropService _clientInterop;
         private readonly IWorldService _worldService;
-        private string _capturePath;
+        private readonly IConfigService _config;
+        private string _capturePath = string.Empty;
 
-        public ScreenCaptureService(ILogger<ScreenCaptureService> logger, IClientInteropService clientInterop, IWorldService worldService)
+        public ScreenCaptureService(ILogger<ScreenCaptureService> logger, IClientInteropService clientInterop, IWorldService worldService, IConfigService config)
         {
             _logger = logger;
             _clientInterop = clientInterop;
             _worldService = worldService;
-            _capturePath = Path.Combine(AppContext.BaseDirectory, "Screenshots");
+            _config = config;
+
+            UpdatePath();
+        }
+
+        private void UpdatePath()
+        {
+            _capturePath = _config.CurrentProfile.Media.ScreenshotPath;
+            if (string.IsNullOrEmpty(_capturePath))
+            {
+                _capturePath = Path.Combine(AppContext.BaseDirectory, "Screenshots");
+            }
 
             if (!Directory.Exists(_capturePath))
                 Directory.CreateDirectory(_capturePath);
@@ -34,10 +46,15 @@ namespace TMRazorImproved.Core.Services
                 Directory.CreateDirectory(_capturePath);
         }
 
-        public string GetCapturePath() => _capturePath;
+        public string GetCapturePath()
+        {
+            UpdatePath();
+            return _capturePath;
+        }
 
         public Task<string> CaptureAsync()
         {
+            UpdatePath();
             return Task.Run(() =>
             {
                 IntPtr hWnd = _clientInterop.GetWindowHandle();
@@ -50,7 +67,9 @@ namespace TMRazorImproved.Core.Services
                 try
                 {
                     string playerName = _worldService.Player?.Name ?? "Unknown";
-                    string fileName = $"{playerName}_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.jpg";
+                    string format = _config.CurrentProfile.Media.ScreenshotFormat.ToUpper();
+                    string extension = format == "PNG" ? "png" : "jpg";
+                    string fileName = $"{playerName}_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.{extension}";
                     string fullPath = Path.Combine(_capturePath, fileName);
 
                     // Usa PrintWindow via P/Invoke per catturare la finestra UO
@@ -78,8 +97,17 @@ namespace TMRazorImproved.Core.Services
                         BitmapSizeOptions.FromEmptyOptions());
                     DeleteObject(hBmp);
 
-                    // Salva come JPEG usando WPF encoder
-                    var encoder = new JpegBitmapEncoder { QualityLevel = 90 };
+                    // Salva usando l'encoder appropriato
+                    BitmapEncoder encoder;
+                    if (format == "PNG")
+                    {
+                        encoder = new PngBitmapEncoder();
+                    }
+                    else
+                    {
+                        encoder = new JpegBitmapEncoder { QualityLevel = _config.CurrentProfile.Media.ScreenshotQuality };
+                    }
+
                     encoder.Frames.Add(BitmapFrame.Create(bmpSrc));
                     using (var stream = new FileStream(fullPath, FileMode.Create))
                     {

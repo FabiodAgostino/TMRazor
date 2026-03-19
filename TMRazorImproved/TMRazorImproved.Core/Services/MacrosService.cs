@@ -409,10 +409,35 @@ namespace TMRazorImproved.Core.Services
                         _packetService.SendToServer(PacketBuilder.UseSkill(skillId));
                     break;
 
+                case "SETABILITY":
+                {
+                    int ability = args?.ToLowerInvariant() switch
+                    {
+                        "primary" => 1,
+                        "secondary" => 2,
+                        "clear" => 0,
+                        _ => int.TryParse(args, out int n) ? n : 0
+                    };
+                    uint serial = _worldService.Player?.Serial ?? 0;
+                    if (serial != 0)
+                    {
+                        byte[] pkt = new byte[9];
+                        pkt[0] = 0xD7;
+                        pkt[1] = 0x00; pkt[2] = 0x09;
+                        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(3), serial);
+                        pkt[7] = 0x00; pkt[8] = (byte)ability;
+                        _packetService.SendToServer(pkt);
+                    }
+                    break;
+                }
+
                 case "ATTACK":
-                    if (uint.TryParse(args, out uint atkSerial))
+                {
+                    uint atkSerial = ResolveAttackTarget(args);
+                    if (atkSerial != 0)
                         _packetService.SendToServer(PacketBuilder.Attack(atkSerial));
                     break;
+                }
 
                 // FIX BUG-P2-03: attende il vero S2C 0x6C dal server
                 case "WAITFORTARGET":
@@ -782,6 +807,31 @@ namespace TMRazorImproved.Core.Services
                     _organizerService?.Start();
                     break;
 
+                // ── TASK-010 — Menu classici UO (0x7C/0x7D) ──────────────────────────────────
+                case "WAITFORMENU":
+                {
+                    int wmTimeout = int.TryParse(args.Trim(), out int wmt) ? wmt : 5000;
+                    await Task.Run(() => MenuStore.WaitForMenu(wmTimeout), token);
+                    break;
+                }
+
+                case "MENURESPONSE":
+                {
+                    var menu = MenuStore.Get();
+                    if (menu == null) break;
+                    string menuSearch = args.Trim().Trim('"', '\'');
+                    var menuItem = menu.Items.FirstOrDefault(i =>
+                        i.Name.Contains(menuSearch, StringComparison.OrdinalIgnoreCase));
+                    if (menuItem != null)
+                    {
+                        _packetService.SendToServer(PacketBuilder.MenuResponse(
+                            menu.Serial, menu.MenuId,
+                            (ushort)menuItem.Index, menuItem.Graphic, menuItem.Hue));
+                        MenuStore.Clear();
+                    }
+                    break;
+                }
+
                 default:
                     _logger.LogWarning("Unknown macro action: {Action}", action);
                     break;
@@ -984,6 +1034,9 @@ namespace TMRazorImproved.Core.Services
             return steps;
         }
 
+        public void SetAlias(string name, uint serial) => _aliases[name] = serial;
+        public void RemoveAlias(string name) => _aliases.Remove(name);
+
         public void Delete(string name)
         {
             var path = Path.Combine(_macrosPath, $"{name}.macro");
@@ -996,6 +1049,78 @@ namespace TMRazorImproved.Core.Services
                 else DoRemove();
             }
         }
+
+        /// <summary>
+        /// Risolve l'argomento del comando ATTACK in un serial da attaccare.
+        /// Sintassi supportate:
+        ///   ATTACK nearest [notoriety]    — mobile più vicino, filtro notoriety opzionale
+        ///   ATTACK farthest [notoriety]   — mobile più lontano
+        ///   ATTACK bytype 0xXXXX          — mobile con quel graphic ID
+        ///   ATTACK 0xXXXXXXXX             — serial diretto
+        /// Notoriety valori: enemy(4), criminal(3), gray(3), innocent(1), murderer(6)
+        /// </summary>
+        private uint ResolveAttackTarget(string args)
+        {
+            if (string.IsNullOrWhiteSpace(args)) return 0;
+
+            var player = _worldService.Player;
+            if (player == null) return 0;
+
+            var parts = args.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            string mode = parts[0].ToUpperInvariant();
+
+            if (mode == "NEAREST" || mode == "FARTHEST")
+            {
+                byte? notorietyFilter = parts.Length > 1 ? ParseNotoriety(parts[1]) : null;
+
+                var candidates = _worldService.Mobiles
+                    .Where(m => m.Serial != player.Serial && !m.IsGhost)
+                    .Where(m => notorietyFilter == null || m.Notoriety == notorietyFilter.Value);
+
+                Mobile? chosen = mode == "NEAREST"
+                    ? candidates.OrderBy(m => m.DistanceTo(player)).FirstOrDefault()
+                    : candidates.OrderByDescending(m => m.DistanceTo(player)).FirstOrDefault();
+
+                return chosen?.Serial ?? 0;
+            }
+
+            if (mode == "BYTYPE" && parts.Length > 1)
+            {
+                // Supporta sia "0x0190" che il numero decimale
+                ushort graphic = parts[1].StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+                    ? Convert.ToUInt16(parts[1], 16)
+                    : ushort.TryParse(parts[1], out ushort g) ? g : (ushort)0;
+
+                if (graphic == 0) return 0;
+
+                return _worldService.Mobiles
+                    .Where(m => m.Graphic == graphic && !m.IsGhost)
+                    .OrderBy(m => m.DistanceTo(player))
+                    .FirstOrDefault()?.Serial ?? 0;
+            }
+
+            // Fallback: serial diretto (hex o decimale)
+            if (args.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            {
+                if (uint.TryParse(args[2..], System.Globalization.NumberStyles.HexNumber, null, out uint hexSerial))
+                    return hexSerial;
+            }
+
+            uint.TryParse(args, out uint serial);
+            return serial;
+        }
+
+        private static byte? ParseNotoriety(string token) => token.ToLowerInvariant() switch
+        {
+            "innocent" => 1,
+            "friend"   => 2,
+            "gray"     => 3,
+            "criminal" => 3,
+            "enemy"    => 4,
+            "murderer" => 5,
+            "attackable" => 6,
+            _          => null
+        };
 
         public void Rename(string oldName, string newName)
         {

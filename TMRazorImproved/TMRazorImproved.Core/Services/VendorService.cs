@@ -155,6 +155,52 @@ namespace TMRazorImproved.Core.Services
             _logger.LogInformation("Sent Sell Response for vendor 0x{Vendor:X}, {Count} items.", vendorSerial, items.Count);
         }
 
+        public void SetBuyList(string listName)
+        {
+            var profile = _configService.CurrentProfile;
+            if (profile != null && !string.IsNullOrEmpty(listName))
+            {
+                profile.ActiveVendorList = listName;
+            }
+            var config = GetActiveConfig();
+            if (config != null)
+            {
+                config.BuyEnabled = true;
+            }
+        }
+
+        public void SetSellList(string listName)
+        {
+            var profile = _configService.CurrentProfile;
+            if (profile != null && !string.IsNullOrEmpty(listName))
+            {
+                profile.ActiveVendorList = listName;
+            }
+            var config = GetActiveConfig();
+            if (config != null)
+            {
+                config.SellEnabled = true;
+            }
+        }
+
+        public void ClearBuyList()
+        {
+            var config = GetActiveConfig();
+            if (config != null)
+            {
+                config.BuyList.Clear();
+            }
+        }
+
+        public void ClearSellList()
+        {
+            var config = GetActiveConfig();
+            if (config != null)
+            {
+                config.SellList.Clear();
+            }
+        }
+
         protected override async System.Threading.Tasks.Task AgentLoopAsync(System.Threading.CancellationToken token)
         {
             await System.Threading.Tasks.Task.Delay(-1, token);

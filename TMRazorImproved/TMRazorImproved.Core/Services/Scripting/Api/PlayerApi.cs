@@ -374,9 +374,12 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
 
         public virtual void Chat(string message, int hue = 0) => SendSpeech(message, 0x00, hue == 0 ? 0x0034 : hue);
         public virtual void ChatSay(string message, int hue = 0x0451) => SendSpeech(message, 0x00, hue);
-        public virtual void ChatWhisper(string message)  => SendSpeech(message, 0x02, 0x3B2);
-        public virtual void ChatYell(string message)     => SendSpeech(message, 0x04, 0x021);
-        public virtual void ChatEmote(string message)    => SendSpeech(message, 0x03, 0x024);
+        public virtual void ChatWhisper(string message)  => ChatWhisper(message, 0x3B2);
+        public virtual void ChatWhisper(string message, int hue) => SendSpeech(message, 0x02, hue);
+        public virtual void ChatYell(string message)     => ChatYell(message, 0x021);
+        public virtual void ChatYell(string message, int hue) => SendSpeech(message, 0x04, hue);
+        public virtual void ChatEmote(string message)    => ChatEmote(message, 0x024);
+        public virtual void ChatEmote(string message, int hue) => SendSpeech(message, 0x03, hue);
         public virtual void ChatGuild(string message)    => SendSpeech(message, 0x0D, 0x044);
         public virtual void ChatAlliance(string message) => SendSpeech(message, 0x0E, 0x057);
         public virtual void ChatChannel(string message)  => SendSpeech(message, 0x0C, 0x034);

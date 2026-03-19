@@ -70,8 +70,11 @@ namespace TMRazorImproved.Tests.MockTests.Agents
             _profile.AutoLootLists[0].Container = 0x44444444;
             _profile.AutoLootLists[0].ItemList.Add(new LootItem(0x0EED, -1, "Gold")); // Gold
 
-            var items = new List<Item> { new Item(0x11111111) { Graphic = 0x0EED, Amount = 100 } };
+            var lootItem = new Item(0x11111111) { Graphic = 0x0EED, Amount = 100 };
+            var items = new List<Item> { lootItem };
             var message = new ContainerContentMessage(0x22222222, items);
+
+            _worldServiceMock.Setup(w => w.FindItem(0x11111111)).Returns(lootItem);
 
             service.Start();
 

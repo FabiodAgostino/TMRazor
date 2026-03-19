@@ -1,12 +1,16 @@
 using System;
+using System.Buffers.Binary;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using TMRazorImproved.Core.Utilities;
 using TMRazorImproved.Shared.Interfaces;
+using TMRazorImproved.Shared.Models;
 using TMRazorImproved.Shared.Models.Config;
 using TMRazorImproved.Shared.Enums;
 
@@ -38,9 +42,162 @@ namespace TMRazorImproved.Core.Services
         {
             if (_hookTask != null && !_hookTask.IsCompleted) return;
 
+            RegisterAllSystemActions();
+
             _cts = new CancellationTokenSource();
             _hookTask = Task.Run(() => HookLoop(_cts.Token), _cts.Token);
             _logger.LogInformation("Global Hotkey service starting");
+        }
+
+        // -----------------------------------------------------------------------
+        // 040: Registrazione azioni di sistema
+        // -----------------------------------------------------------------------
+
+        private T Resolve<T>() => (T)_serviceProvider.GetService(typeof(T))!;
+
+        private void RegisterAllSystemActions()
+        {
+            var ps  = Resolve<IPacketService>();
+            var ws  = Resolve<IWorldService>();
+            var ts  = Resolve<ITargetingService>();
+            var ds  = Resolve<IDressService>();
+            var autoLoot  = Resolve<IAutoLootService>();
+            var scavenger = Resolve<IScavengerService>();
+            var organizer = Resolve<IOrganizerService>();
+            var bandage   = Resolve<IBandageHealService>();
+            var restock   = Resolve<IRestockService>();
+
+            // 040-A: Spell per nome (tutte le scuole via loop)
+            foreach (var spell in SpellDefinitions.All)
+            {
+                int id   = spell.ID;
+                string sn = spell.Name;
+                RegisterAction($"Spell:{sn}", () => ps.SendToServer(PacketBuilder.CastSpell(id)));
+            }
+
+            // 040-B: Weapon Abilities (primary / secondary / clear)
+            RegisterAction("Ability:Primary",   () => SendToggleAbility(ps, ws, 0x01));
+            RegisterAction("Ability:Secondary", () => SendToggleAbility(ps, ws, 0x02));
+            RegisterAction("Ability:Clear",     () => SendToggleAbility(ps, ws, 0x00));
+
+            // 040-C: Attack
+            RegisterAction("Attack:Nearest", () =>
+            {
+                ts.TargetClosest();
+                if (ts.LastTarget != 0)
+                    ps.SendToServer(PacketBuilder.Attack(ts.LastTarget));
+            });
+            RegisterAction("Attack:Last", () =>
+            {
+                if (ts.LastTarget != 0)
+                    ps.SendToServer(PacketBuilder.Attack(ts.LastTarget));
+            });
+
+            // 040-D: Bandage (doppio click + target accodato)
+            RegisterAction("Bandage:Self", () => UseBandage(ps, ws, ts, isSelf: true));
+            RegisterAction("Bandage:Last", () => UseBandage(ps, ws, ts, isSelf: false));
+
+            // 040-E: Pozioni — cerca nel backpack per graphic e fa double-click
+            (string name, ushort graphic)[] potions =
+            {
+                ("Heal",      0x0F0C), ("Cure",      0x0F07), ("Refresh",    0x0F0B),
+                ("Agility",   0x0F08), ("Strength",  0x0F09), ("Explosion",  0x0F0D),
+                ("Poison",    0x0F0A), ("NightSight", 0x0F06),
+            };
+            foreach (var (name, graphic) in potions)
+            {
+                ushort g = graphic;
+                RegisterAction($"Potion:{name}", () => UseItemFromBackpack(ps, ws, g));
+            }
+
+            // 040-F: Toggle Agenti
+            RegisterAction("Agent:AutoLoot",  () => ToggleAgent(autoLoot));
+            RegisterAction("Agent:Scavenger", () => ToggleAgent(scavenger));
+            RegisterAction("Agent:Organizer", () => ToggleAgent(organizer));
+            RegisterAction("Agent:Bandage",   () => ToggleAgent(bandage));
+            RegisterAction("Agent:Restock",   () => ToggleAgent(restock));
+
+            // 040-G: Dress / Undress / Mani
+            RegisterAction("Dress:Active",   () => ds.DressUp());
+            RegisterAction("Undress:Active", () => ds.Undress());
+            RegisterAction("Hands:Clear",    () => ClearHands(ps, ws));
+
+            // 040-I: Master Toggle (abilita/disabilita tutti gli hotkey)
+            RegisterAction("Hotkey:Toggle", () => { IsEnabled = !IsEnabled; });
+
+            _logger.LogDebug("System hotkey actions registered ({Count} actions)", _registeredActions.Count);
+        }
+
+        // -----------------------------------------------------------------------
+        // Helper methods
+        // -----------------------------------------------------------------------
+
+        /// <summary>040-B: Toggle weapon ability (0x01=primary, 0x02=secondary, 0x00=clear).</summary>
+        private static void SendToggleAbility(IPacketService ps, IWorldService ws, byte abilityIndex)
+        {
+            byte[] pkt = new byte[9];
+            pkt[0] = 0xD7;
+            pkt[1] = 0x00; pkt[2] = 0x09;
+            BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(3), ws.Player?.Serial ?? 0);
+            pkt[7] = 0x00; pkt[8] = abilityIndex;
+            ps.SendToServer(pkt);
+        }
+
+        /// <summary>040-D: Usa una bandage dal backpack e accoda il target.</summary>
+        private static void UseBandage(IPacketService ps, IWorldService ws, ITargetingService ts, bool isSelf)
+        {
+            const ushort BandageGraphic = 0x0E21;
+            var player = ws.Player;
+            if (player?.Backpack == null) return;
+            var bandage = ws.Items.FirstOrDefault(i => i.Container == player.Backpack.Serial && i.Graphic == BandageGraphic);
+            if (bandage == null) return;
+            ps.SendToServer(PacketBuilder.DoubleClick(bandage.Serial));
+            // Accoda il target: verrà eseguito quando arriva il cursor 0x6C dal server
+            if (isSelf)
+                ts.TargetSelf();
+            else
+                ts.DoLastTarget();
+        }
+
+        /// <summary>040-E: Cerca un item per graphic nel backpack e fa double-click.</summary>
+        private static void UseItemFromBackpack(IPacketService ps, IWorldService ws, ushort graphic)
+        {
+            var player = ws.Player;
+            if (player?.Backpack == null) return;
+            var item = ws.Items.FirstOrDefault(i => i.Container == player.Backpack.Serial && i.Graphic == graphic);
+            if (item == null) return;
+            ps.SendToServer(PacketBuilder.DoubleClick(item.Serial));
+        }
+
+        /// <summary>040-F: Toggle start/stop di un agente.</summary>
+        private static void ToggleAgent(IAgentService agent)
+        {
+            if (agent.IsRunning)
+                _ = agent.StopAsync();
+            else
+                agent.Start();
+        }
+
+        /// <summary>040-G: Rimuove gli item equipaggiati nelle mani (layer 0x01/0x02) e li mette nel backpack.</summary>
+        private static void ClearHands(IPacketService ps, IWorldService ws)
+        {
+            var player = ws.Player;
+            if (player?.Backpack == null) return;
+            var handItems = ws.Items
+                .Where(i => i.Container == player.Serial && (i.Layer == 0x01 || i.Layer == 0x02))
+                .ToList();
+            if (handItems.Count == 0) return;
+
+            _ = Task.Run(async () =>
+            {
+                foreach (var item in handItems)
+                {
+                    ps.SendToServer(PacketBuilder.LiftItem(item.Serial));
+                    await Task.Delay(150);
+                    ps.SendToServer(PacketBuilder.DropToContainer(item.Serial, player.Backpack.Serial));
+                    await Task.Delay(150);
+                }
+            });
         }
 
         public async Task StopAsync()

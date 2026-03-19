@@ -216,4 +216,11 @@ namespace TMRazorImproved.Shared.Messages
     {
         public NavigateToInspectorMessage(object target) : base(target) { }
     }
+
+    /// <summary>Inviato quando il client risponde a un gump (0xB1 C2S). Usato per l'Inspector log.</summary>
+    public class GumpResponseLogMessage : ValueChangedMessage<(uint GumpSerial, uint GumpId, int ButtonId, List<int> Switches, Dictionary<int, string> TextEntries)>
+    {
+        public GumpResponseLogMessage(uint gumpSerial, uint gumpId, int buttonId, List<int> switches, Dictionary<int, string> textEntries)
+            : base((gumpSerial, gumpId, buttonId, switches, textEntries)) { }
+    }
 }

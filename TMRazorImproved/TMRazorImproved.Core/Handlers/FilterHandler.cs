@@ -65,7 +65,23 @@ namespace TMRazorImproved.Core.Handlers
                     RefreshStaffItems();
                 else if (m.PropertyName == nameof(UserProfile.FilterStaffNpcs))
                     RefreshStaffNpcs();
+                else if (m.PropertyName == nameof(UserProfile.FilterLight))
+                    RefreshLight();
             });
+        }
+
+        private void RefreshLight()
+        {
+            if (_configService.CurrentProfile.FilterLight)
+            {
+                // Forza massima luminosità inviando 0x4F 0x00 al client
+                _packetService.SendToClient(new byte[] { 0x4F, 0x00 });
+            }
+            else
+            {
+                // Ripristina luminosità originale dal WorldService
+                _packetService.SendToClient(new byte[] { 0x4F, _worldService.CurrentLight });
+            }
         }
 
         private void RegisterFilters()
@@ -210,15 +226,40 @@ namespace TMRazorImproved.Core.Handlers
         private ushort GetReplacementGraphic(ushort originalBody)
         {
             var profile = _configService.CurrentProfile;
-            if (profile.FilterDragon && _dragonGraphics.TryGetValue(originalBody, out ushort dragonRep)) return dragonRep;
-            if (profile.FilterDrake && _drakeGraphics.TryGetValue(originalBody, out ushort drakeRep)) return drakeRep;
-            if (profile.FilterDaemon && _daemonGraphics.TryGetValue(originalBody, out ushort daemonRep)) return daemonRep;
+
+            // User custom filters (from GraphFilters page)
+            foreach (var filter in profile.GraphFilters)
+            {
+                if (filter.Enabled && filter.RealID == originalBody)
+                    return filter.NewID;
+            }
+
+            if (profile.FilterDragon && _dragonGraphics.ContainsKey(originalBody)) return profile.FilterDragonGraphic;
+            if (profile.FilterDrake && _drakeGraphics.ContainsKey(originalBody)) return profile.FilterDrakeGraphic;
+            if (profile.FilterDaemon && _daemonGraphics.ContainsKey(originalBody)) return profile.FilterDaemonGraphic;
             return originalBody;
         }
 
         private bool FilterMessageContent(byte[] data, bool isUnicode)
         {
             var profile = _configService.CurrentProfile;
+
+            // Estraiamo il tipo di messaggio per il filtraggio granulare
+            OverheadMessageType msgType;
+            if (isUnicode)
+            {
+                if (data.Length < 10) return true;
+                msgType = (OverheadMessageType)data[9];
+            }
+            else
+            {
+                if (data.Length < 4) return true;
+                msgType = (OverheadMessageType)data[3];
+            }
+
+            // Filtro per tipo di messaggio (configurabile)
+            if (profile.FilteredMessageTypes.Contains(msgType)) return false;
+
             if (!profile.FilterPoison && !profile.FilterKarmaFame && !profile.FilterSnoop) return true;
 
             string text;

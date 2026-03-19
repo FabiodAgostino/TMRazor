@@ -52,6 +52,38 @@
                 </StackPanel>
             </ui:Card>
 
+            <!-- Shard Management Card -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel>
+                    <ui:TextBlock Text="Shard Management" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12"/>
+
+                    <DataGrid ItemsSource="{Binding Shards}"
+                              SelectedItem="{Binding SelectedShard, Mode=TwoWay}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              IsReadOnly="True"
+                              Height="150"
+                              Margin="0,0,0,12"
+                              GridLinesVisibility="Horizontal">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Name"      Binding="{Binding Name}"      Width="*"/>
+                            <DataGridTextColumn Header="Host"      Binding="{Binding Host}"      Width="140"/>
+                            <DataGridTextColumn Header="Port"      Binding="{Binding Port}"      Width="60"/>
+                            <DataGridTextColumn Header="Type"      Binding="{Binding StartType}" Width="90"/>
+                            <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsSelected}" Width="60"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Orientation="Horizontal">
+                        <ui:Button Content="Add"    Icon="{ui:SymbolIcon Add24}"    Command="{Binding AddShardCommand}"    Margin="0,0,8,0"/>
+                        <ui:Button Content="Edit"   Icon="{ui:SymbolIcon Edit24}"   Command="{Binding EditShardCommand}"   Margin="0,0,8,0"/>
+                        <ui:Button Content="Delete" Icon="{ui:SymbolIcon Delete24}" Command="{Binding DeleteShardCommand}" Appearance="Secondary" Margin="0,0,8,0"/>
+                        <ui:Button Content="Set Active" Icon="{ui:SymbolIcon Checkmark24}" Command="{Binding SelectShardCommand}" Appearance="Success"/>
+                    </StackPanel>
+                </StackPanel>
+            </ui:Card>
+
             <!-- Client Configuration Card -->
             <ui:Card Margin="0,0,0,16">
                 <StackPanel>

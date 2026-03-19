@@ -83,6 +83,39 @@ namespace TMRazorImproved.Core.Services
             if (removed) TradeClosed?.Invoke(tradeSerial);
         }
 
+        public void Offer(uint tradeSerial, uint gold, uint platinum)
+        {
+            _logger.LogInformation("Offering {Gold} gold and {Platinum} platinum in trade {Serial}", gold, platinum, tradeSerial);
+            byte[] pkt = new byte[17];
+            pkt[0] = 0x6F;
+            pkt[1] = (byte)(pkt.Length >> 8);
+            pkt[2] = (byte)pkt.Length;
+            pkt[3] = 0x03; // Action: MoneyUpdate
+            pkt[4] = (byte)(tradeSerial >> 24);
+            pkt[5] = (byte)(tradeSerial >> 16);
+            pkt[6] = (byte)(tradeSerial >> 8);
+            pkt[7] = (byte)tradeSerial;
+            pkt[8] = (byte)(gold >> 24);
+            pkt[9] = (byte)(gold >> 16);
+            pkt[10] = (byte)(gold >> 8);
+            pkt[11] = (byte)gold;
+            pkt[12] = (byte)(platinum >> 24);
+            pkt[13] = (byte)(platinum >> 16);
+            pkt[14] = (byte)(platinum >> 8);
+            pkt[15] = (byte)platinum;
+            pkt[16] = 0x00;
+            _packetService.SendToServer(pkt);
+
+            lock (_tradesLock)
+            {
+                if (_trades.TryGetValue(tradeSerial, out var trade))
+                {
+                    trade.GoldMe = gold;
+                    trade.PlatinumMe = platinum;
+                }
+            }
+        }
+
         public void Receive(TradeMessage message)
         {
             var (action, serial, data) = message.Value;
