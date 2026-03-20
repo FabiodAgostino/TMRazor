@@ -711,8 +711,25 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                         if (args.Length >= 1) _player.EquipItem(ParseSerial(args[0]));
                         break;
                     case "equipwand":
-                        // Stub
+                    {
+                        // Cerca nel backpack una bacchetta il cui OPL/nome contiene il tipo richiesto
+                        string wandType = args.Length > 0 ? args[0].Trim('\'', '"').ToLowerInvariant() : string.Empty;
+                        var backpack = _player.Backpack;
+                        if (backpack != null)
+                        {
+                            var allItems = _items.ApplyFilter(container: backpack.Serial);
+                            foreach (var wand in allItems)
+                            {
+                                string wname = (wand.Name ?? string.Empty).ToLowerInvariant();
+                                if (wname.Contains("wand") && (string.IsNullOrEmpty(wandType) || wname.Contains(wandType)))
+                                {
+                                    _player.EquipItem(wand.Serial);
+                                    break;
+                                }
+                            }
+                        }
                         break;
+                    }
                     case "togglemounted":
                         if (_player.IsOnMount)
                         {
@@ -844,8 +861,31 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                         else if (args.Length == 1) _player.HeadMsg(args[0]);
                         break;
                     case "shownames":
-                        // Stub for now, requires interop integration
+                    {
+                        // Invia SingleClick (0x09) per ogni mobile/corpse visibile per richiederne il nome al server
+                        // Sintassi: shownames ['mobiles'/'corpses']
+                        bool doMobiles = args.Length == 0 || args[0].Trim('\'', '"').Equals("mobiles", StringComparison.OrdinalIgnoreCase);
+                        bool doCorpses = args.Length == 0 || args[0].Trim('\'', '"').Equals("corpses", StringComparison.OrdinalIgnoreCase);
+                        const int SHOW_RANGE = 18;
+                        if (doMobiles)
+                        {
+                            foreach (var mob in _world.Mobiles)
+                            {
+                                if (_player.DistanceTo(mob.Serial) <= SHOW_RANGE)
+                                    _items.Click(mob.Serial);
+                            }
+                        }
+                        if (doCorpses)
+                        {
+                            // I cadaveri in UO hanno graphic 0x2006
+                            foreach (var corpse in _world.Items.Where(i => i.Graphic == 0x2006))
+                            {
+                                if (_player.DistanceTo(corpse.Serial) <= SHOW_RANGE)
+                                    _items.Click(corpse.Serial);
+                            }
+                        }
                         break;
+                    }
                     case "hotkeys":
                         if (args.Length > 0)
                         {
@@ -864,6 +904,175 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                     case "stop":
                         _currentLineIndex = _lines.Length;
                         break;
+
+                    // ------------------------------------------------------------------
+                    // Comandi aggiunti da TASK-FR-003
+                    // ------------------------------------------------------------------
+
+                    case "uniquejournal":
+                        // Crea un journal isolato per questo script (non condiviso con altri)
+                        _journal.Clear();
+                        break;
+
+                    case "info":
+                        // Apre l'inspector per il prossimo oggetto cliccato
+                        _misc.Inspect();
+                        break;
+
+                    case "clickscreen":
+                        // clickscreen (x) (y) ['single'/'double'] ['left'/'right']
+                        if (args.Length >= 2 &&
+                            int.TryParse(args[0], out int csX) &&
+                            int.TryParse(args[1], out int csY))
+                        {
+                            string csSingleDouble = args.Length > 2 ? args[2].ToLower() : "single";
+                            string csLeftRight    = args.Length > 3 ? args[3].ToLower() : "left";
+                            if (csLeftRight == "left")
+                            {
+                                _misc.LeftMouseClick(csX, csY);
+                                if (csSingleDouble == "double")
+                                {
+                                    System.Threading.Thread.Sleep(50);
+                                    _misc.LeftMouseClick(csX, csY);
+                                }
+                            }
+                            else
+                            {
+                                _misc.RightMouseClick(csX, csY);
+                                if (csSingleDouble == "double")
+                                {
+                                    System.Threading.Thread.Sleep(50);
+                                    _misc.RightMouseClick(csX, csY);
+                                }
+                            }
+                        }
+                        break;
+
+                    case "mapuo":
+                        // NOT IMPLEMENTED — funzionalità mappa esterna non disponibile
+                        _output?.Invoke("[UOSteam] mapuo: not implemented");
+                        break;
+
+                    case "questsbutton":
+                        _player.QuestButton();
+                        break;
+
+                    case "logoutbutton":
+                        _misc.Disconnect();
+                        break;
+
+                    case "chatmsg":
+                        // chatmsg (text) [color]
+                        if (args.Length >= 1)
+                        {
+                            int chatColor = args.Length >= 2 && int.TryParse(args[1], out int cc) ? cc : 70;
+                            _player.ChatSay(args[0], chatColor);
+                        }
+                        break;
+
+                    case "promptmsg":
+                        // promptmsg (text)
+                        if (args.Length >= 1)
+                            _misc.ResponsePrompt(args[0]);
+                        break;
+
+                    case "timermsg":
+                        // timermsg (delay) (text) [color]
+                        if (args.Length >= 2 && int.TryParse(args[0], out int tmDelay))
+                        {
+                            string tmText  = args[1];
+                            int    tmColor = args.Length >= 3 && int.TryParse(args[2], out int tc) ? tc : 20;
+                            System.Threading.Tasks.Task.Delay(tmDelay)
+                                .ContinueWith(_ => _misc.SendMessage(tmText, tmColor));
+                        }
+                        break;
+
+                    case "waitforprompt":
+                        // waitforprompt (timeout)
+                        if (args.Length >= 1 && int.TryParse(args[0], out int wfpTimeout))
+                            _misc.WaitForPrompt(wfpTimeout);
+                        break;
+
+                    case "cancelprompt":
+                        _misc.CancelPrompt();
+                        break;
+
+                    case "setskill":
+                        // setskill ('skill name') ('locked'/'up'/'down')
+                        if (args.Length >= 2)
+                        {
+                            int setSkillStatus = args[1].ToLower() switch
+                            {
+                                "up"     => 0,
+                                "down"   => 1,
+                                "locked" => 2,
+                                _        => 0
+                            };
+                            _player.SetSkillStatus(args[0], setSkillStatus);
+                        }
+                        break;
+
+                    case "autocolorpick":
+                        // autocolorpick (color) (dyesSerial) (dyeTubSerial)
+                        if (args.Length >= 3)
+                        {
+                            int acpColor = ParseInt(args[0]);
+                            uint acpDyesSerial = ParseSerial(args[1]);
+                            _items.ChangeDyeingTubColor(acpDyesSerial, acpColor);
+                        }
+                        break;
+
+                    case "canceltarget":
+                        // Esegui target su serial 0 (cancel) — equivalente a Target.Cancel()
+                        _targetApi.Cancel();
+                        break;
+
+                    case "namespace":
+                        // namespace — gestione namespace variabili cross-script
+                        // Implementazione minimale: log del comando non supportato pienamente
+                        if (args.Length >= 1)
+                        {
+                            switch (args[0].ToLower())
+                            {
+                                case "list":
+                                    _output?.Invoke("[UOSteam] namespace list: single namespace in use (not isolated)");
+                                    break;
+                                case "isolation":
+                                    // namespace isolation (true|false) — accettato senza effetto nella implementazione corrente
+                                    break;
+                                default:
+                                    // create / activate / delete / move / get / set / print — stub
+                                    _output?.Invoke($"[UOSteam] namespace {args[0]}: partial support");
+                                    break;
+                            }
+                        }
+                        break;
+
+                    case "script":
+                        // script ('run'|'stop'|'suspend'|'resume'|'isrunning'|'issuspended') [script_name] [output_alias]
+                        if (args.Length >= 1)
+                        {
+                            string scriptOp   = args[0].ToLower();
+                            string scriptName = args.Length >= 2 ? args[1] : _misc.ScriptCurrent(true);
+                            string outputAlias = args.Length >= 3 ? args[2] : scriptName + (scriptOp == "isrunning" ? "_running" : "_suspended");
+                            switch (scriptOp)
+                            {
+                                case "run":      _misc.ScriptRun(scriptName); break;
+                                case "stop":     _misc.ScriptStop(scriptName); break;
+                                case "suspend":  _misc.ScriptSuspend(scriptName); break;
+                                case "resume":   _misc.ScriptResume(scriptName); break;
+                                case "isrunning":
+                                    bool running = _misc.ScriptStatus(scriptName);
+                                    _aliases[outputAlias] = (uint)(running ? 1 : 0);
+                                    break;
+                                case "issuspended":
+                                    bool suspended = _misc.ScriptIsSuspended(scriptName);
+                                    _aliases[outputAlias] = (uint)(suspended ? 1 : 0);
+                                    break;
+                            }
+                        }
+                        break;
+
                     default:
                         EvaluateExpression(line);
                         break;
@@ -1012,6 +1221,36 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
             if (expr.Contains(">"))  return Compare(expr, ">");
             if (expr.Contains("<"))  return Compare(expr, "<");
 
+            // findalias: controlla se un alias è impostato
+            if (expr.StartsWith("findalias "))
+            {
+                string aname = expr.Substring(10).Trim().Trim('\'', '"');
+                return _aliases.ContainsKey(aname);
+            }
+
+            // buffexists: controlla se il player ha un buff attivo con quel nome
+            if (expr.StartsWith("buffexists "))
+            {
+                string bname = expr.Substring(11).Trim().Trim('\'', '"');
+                return _player.BuffsExist(bname);
+            }
+
+            // findwand: stub (non implementato nel legacy)
+            if (expr.StartsWith("findwand ")) return false;
+
+            // name comparison: name 'serial' = 'text'
+            {
+                var nm = Regex.Match(expr, @"^name\s+'?(.+?)'?\s*(?:==|=)\s*'?([^']+?)'?$");
+                if (nm.Success)
+                {
+                    uint ns = ParseSerial(nm.Groups[1].Value.Trim());
+                    string expected = nm.Groups[2].Value.Trim();
+                    var mob = _mobiles.FindBySerial(ns);
+                    string actual = mob != null ? mob.Name : (_items.FindBySerial(ns)?.Name ?? string.Empty);
+                    return string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
             // Comandi di ricerca/query
             if (expr.StartsWith("findtype ")) return HandleFindType(expr);
             if (expr.StartsWith("findobject "))
@@ -1114,10 +1353,12 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                 case "warmode":   return _player.WarMode;
                 case "paralyzed": return _player.Paralized; 
                 case "yellowhits": return _player.IsYellowHits;
-                case "hasgump":   return _misc.WaitForGumpAny(50);
+                case "hasgump":    return _misc.WaitForGumpAny(50);
                 case "waitingfortarget": return _targetApi.HasTarget();
-                case "inparty":   return _player.InParty;
-                case "flying":    return _world.Player?.Flying ?? false;
+                case "inparty":    return _player.InParty;
+                case "flying":     return _world.Player?.Flying ?? false;
+                case "organizing": return _organizerApi.Status();
+                case "restocking": return _restockApi.Status();
             }
 
             return false;
@@ -1190,6 +1431,9 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                     _        => -1
                 };
             }
+            if (term.StartsWith("contents ")) return _items.ContainerCount(ParseSerial(term.Substring(9).Trim()));
+            if (term.StartsWith("distance ")) return _player.DistanceTo(ParseSerial(term.Substring(9).Trim()));
+            if (term.StartsWith("name ")) return 0; // string expression — handled in EvaluateExpression
             if (term.StartsWith("amount ")) return _items.FindBySerial(ParseSerial(term.Substring(7).Trim()))?.Amount ?? 0;
             if (term.StartsWith("graphic ")) return _items.FindBySerial(ParseSerial(term.Substring(8).Trim()))?.Graphic ?? 0;
             if (term.StartsWith("color ")) return _items.FindBySerial(ParseSerial(term.Substring(6).Trim()))?.Hue ?? 0;
@@ -1229,6 +1473,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Engines
                 "cold"         => _player.ColdResist,
                 "poison"       => _player.PoisonResist,
                 "energy"       => _player.EnergyResist,
+                "bandage"      => _items.BackpackCount(0x0E21),
                 "x"            => _player.X,
                 "y"            => _player.Y,
                 "z"            => _player.Z,

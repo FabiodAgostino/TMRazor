@@ -163,6 +163,21 @@ namespace TMRazorImproved.Shared.Models.Config
         public int DragDropDropDelayMs { get; set; } = 150;
 
         public MediaConfig Media { get; set; } = new();
+
+        // Script settings (autostart, loop mode per-script)
+        public List<ScriptConfig> Scripts { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Configurazione per uno script (nome file relativo alla ScriptsPath, flag autostart/loop).
+    /// </summary>
+    public class ScriptConfig
+    {
+        public string Name { get; set; } = string.Empty;
+        public bool AutoStart { get; set; }
+        public bool Loop { get; set; }
+        /// <summary>Se true, lo script C# viene pre-compilato all'avvio per ridurre la latenza della prima esecuzione.</summary>
+        public bool Preload { get; set; }
     }
 
     public class MediaConfig

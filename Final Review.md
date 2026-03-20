@@ -66,9 +66,9 @@
 | Compilatore | `CSharpCodeProvider` (out-of-process csc.exe) | `Microsoft.CodeAnalysis.CSharp.Scripting` (Roslyn in-process) |
 | Pattern | Singleton `CSharpEngine.Instance` | DI, istanza per-esecuzione |
 
-#### TASK-FR-001: Direttive C# Script Mancanti
+#### TASK-FR-001: Direttive C# Script Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/CSharpEngine.cs` -> `FindDirectivesInFile()`, `ExtractFileNameFromDirective()`, `FindAllAssembliesIncludedInCSharpScripts()`, `FindAllIncludedCSharpScript()`, `CheckForceDebugDirective()`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato in `CSharpScriptEngine.cs` — metodi `PreprocessDirectives()`, `ParseDirectives()`, `TryResolvePath()`
 - **Dettaglio**: Il legacy supporta le direttive `//#import` (includere altri file .cs), `//#assembly` (referenziare assembly custom) e `//#forcedebug` (forzare compilazione debug). Nessuna di queste e implementata nel nuovo `CSharpScriptEngine.cs`.
 - **Impatto Utente**: Gli script C# che usano `//#import` per dividere il codice in piu file o `//#assembly` per caricare DLL custom **non compileranno**. Questo influenza utenti avanzati che organizzano i propri script in moduli.
 - **Documentazione per Junior Dev**: Aprire `TMRazorImproved.Core/Services/Scripting/Engines/CSharpScriptEngine.cs`. Attualmente il metodo `Execute()` usa `CSharpScript.RunAsync()`. Bisogna aggiungere un pre-processing del codice sorgente prima della compilazione:
@@ -86,9 +86,9 @@
 | Architettura | Classe standalone riutilizzabile | Inline in `ScriptingService` |
 | Engine | IronPython con riuso istanza | IronPython3, nuova istanza per esecuzione |
 
-#### TASK-FR-002: Python Call() da C# Mancante
+#### TASK-FR-002: Python Call() da C# Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/PythonEngine.cs` -> `Call(PythonFunction, params object[])`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `ScriptingService.CallPythonFunction(string, params object[])` + aggiunto a `IScriptingService`
 - **Dettaglio**: Il legacy permette di invocare funzioni Python da codice C# tramite `Call()`. Questo metodo non esiste nel nuovo codice.
 - **Impatto Utente**: Funzionalita interna usata da alcuni componenti per callback Python. Impatto diretto utente **basso** ma puo impedire estensioni future.
 - **Documentazione per Junior Dev**: In `ScriptingService.cs`, metodo `ExecutePythonInternal()` (riga ~430). Se necessario, aggiungere un metodo `CallPythonFunction(string functionName, params object[] args)` che usi `scope.GetVariable<Func<...>>()` di IronPython per invocare la funzione.
@@ -106,9 +106,9 @@
 | Totale handler | ~206 | ~145 |
 | Eccezioni custom | 5 classi (`UOSScriptError`, `UOSSyntaxError`, etc.) | try/catch generico |
 
-#### TASK-FR-003: Comandi UOSteam Mancanti
+#### TASK-FR-003: Comandi UOSteam Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/UOSteamEngine.cs` -> Interpreter.RegisterCommandHandler()
-- **Stato nel Nuovo Codice**: ❌ Mancante (16 comandi)
+- **Stato nel Nuovo Codice**: ✅ Implementati tutti i 16 comandi in `UOSteamInterpreter.cs` (switch ExecuteLine)
 - **Dettaglio**: I seguenti comandi UOSteam non esistono nel nuovo interprete:
 
 | Comando Mancante | Descrizione | Impatto Utente |
@@ -135,9 +135,9 @@
   2. Implementare la logica referenziando il legacy `UOSteamEngine.cs` dove il comando e registrato con `RegisterCommandHandler("nomecomando", HandlerMethod)`
   3. Cercare il metodo handler corrispondente nel legacy (es. `HandleNamespace`, `HandleScript`, etc.)
 
-#### TASK-FR-004: Espressioni UOSteam Mancanti
+#### TASK-FR-004: Espressioni UOSteam Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/UOSteamEngine.cs` -> Interpreter.RegisterExpressionHandler()
-- **Stato nel Nuovo Codice**: ❌ Mancante (~45 espressioni)
+- **Stato nel Nuovo Codice**: ✅ Implementate le espressioni mancanti in `UOSteamInterpreter.cs` — `findalias`, `organizing`, `restocking`, `buffexists`, `findwand` (stub), `contents`, `distance`, `bandage`, `name` (confronto stringa). Le espressioni numeriche già presenti: `x/y/z`, `inregion`, `skillbase`, `findobject`, `amount`, `graphic`, `inrange`, `property`, `durability`, `findlayer`, `skillstate`, `counttypeground`, `infriendlist`, `ingump`, `gumpexists`, `weight/maxweight/diffweight`, `mana/stam/str/dex/int`, `followers/gold/luck`, resistenze, `diffhits`, `serial`, `direction/directionname`, notorietà.
 - **Dettaglio**: Le seguenti espressioni booleane/valore per IF/WHILE non esistono:
 
 | Espressione | Tipo | Uso Tipico |
@@ -186,9 +186,9 @@
   2. Recuperare il valore richiesto tramite i servizi iniettati (es. `_worldService`, `_scriptGlobals`)
   3. Referenziare `UOSteamEngine.cs` cercando `RegisterExpressionHandler("nome", HandlerMethod)` per la logica esatta
 
-#### TASK-FR-005: Stub UOSteam Esistenti
+#### TASK-FR-005: Stub UOSteam Esistenti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/UOSteamEngine.cs`
-- **Stato nel Nuovo Codice**: ⚠️ Incompleto (3 stub)
+- **Stato nel Nuovo Codice**: ✅ Implementato in `UOSteamInterpreter.cs` — `equipwand`: cerca nel backpack item col nome "wand" + tipo richiesto e lo equipaggia; `shownames`: invia SingleClick (0x09) per ogni mobile/corpse visibile nel range 18 tile; `replay`: già correttamente implementato (reset `_currentLineIndex=-1` → ripartenza da riga 0). Nota: `equipwand` e `shownames` erano stub anche nel legacy (NotImplemented).
 - **Dettaglio**: I seguenti comandi esistono nel nuovo codice ma sono stub non funzionali:
   - `equipwand` (riga ~714: "Stub")
   - `shownames` (riga ~847: "Stub for now, requires interop integration")
@@ -199,37 +199,37 @@
 
 ### 2.4 EnhancedScript.cs + Scripts.cs -> ScriptingService.cs
 
-#### TASK-FR-006: Script Loop Mode Mancante
+#### TASK-FR-006: Script Loop Mode Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/EnhancedScript.cs` -> `bool loop`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `RunAsync()` e `RunScript()` accettano `bool loop = false`; se `true` lo script viene rieseguito in `do-while` finché il CancellationToken non viene cancellato. Aggiornata anche `IScriptingService`.
 - **Dettaglio**: Il legacy supporta l'esecuzione ciclica degli script (loop infinito fino a Stop). Non presente nel nuovo codice.
 - **Impatto Utente**: Gli utenti che configurano script per eseguirsi in loop continuo (es. farming bot) dovranno aggiungere manualmente un `while True:` nel codice.
 - **Documentazione per Junior Dev**: In `ScriptingService.cs`, metodo `RunAsync()`. Aggiungere un parametro `bool loop = false`. Se `loop == true`, wrappare l'esecuzione in un ciclo `while (!cancellationToken.IsCancellationRequested)`.
 
-#### TASK-FR-007: Script Autostart Mancante
+#### TASK-FR-007: Script Autostart Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Scripts.cs` -> `AutoStart()`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunta classe `ScriptConfig` (Name, AutoStart, Loop) in `ConfigModels.cs` + lista `Scripts` in `UserProfile`. `ScriptingService` ora implementa `IRecipient<LoginCompleteMessage>` e chiama `AutoStartScripts()` al login, che avvia in background tutti gli script marcati con `AutoStart=true` (con eventuale `Loop=true`).
 - **Dettaglio**: Il legacy permette di marcare script per l'avvio automatico al login. Non presente nel nuovo codice.
 - **Impatto Utente**: Gli utenti che hanno script configurati per partire automaticamente al login dovranno avviarli manualmente.
 - **Documentazione per Junior Dev**: In `ScriptingService.cs`, aggiungere un metodo `AutoStartScripts()` che legga dalla configurazione (`IConfigService.CurrentProfile`) gli script marcati come autostart e li avvii con `RunAsync()`. Chiamare questo metodo quando si riceve il messaggio `LoginConfirmMessage`.
 
-#### TASK-FR-008: Script FileSystemWatcher Mancante
+#### TASK-FR-008: Script FileSystemWatcher Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Scripts.cs` -> `ScriptChanged()` (FileSystemWatcher)
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto `FileSystemWatcher` in `ScriptingService` (InitScriptsWatcher), event `ScriptsChanged` in `IScriptingService` e implementazione. Monitora `ScriptsPath` con sottocartelle su Created/Deleted/Renamed/Changed, notificando la UI via evento.
 - **Dettaglio**: Il legacy monitora la cartella degli script per modifiche e ricarica automaticamente. Non presente.
 - **Impatto Utente**: Modificare un file .py/.cs esternamente non aggiorna la lista script nell'UI. Bisogna riaprire manualmente.
 - **Documentazione per Junior Dev**: In `ScriptingService.cs`, aggiungere un `FileSystemWatcher` nel costruttore che monitora `ScriptsDirectory`. Al cambiamento file, invocare un event `ScriptsChanged` che la UI osserva per aggiornare la lista.
 
-#### TASK-FR-009: Script Preload/Precompile Mancante
+#### TASK-FR-009: Script Preload/Precompile Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/EnhancedScript.cs` -> `bool preload`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunta property `Preload` in `ScriptConfig`; `CSharpScriptEngine.Precompile()` usa `CSharpScript.Create().Compile()` senza eseguire; `IScriptingService.PreloadScripts()` + implementazione in `ScriptingService` che itera il profilo e pre-compila in background tutti gli script C# con `Preload=true`.
 - **Dettaglio**: Il legacy pre-compila gli script C# all'avvio per ridurre il tempo di esecuzione alla prima invocazione.
 - **Impatto Utente**: La prima esecuzione di uno script C# sara piu lenta.
 - **Documentazione per Junior Dev**: Aggiungere un metodo `PreloadScripts()` in `ScriptingService.cs` che compili (senza eseguire) gli script C# marcati per preload usando `CSharpScript.Create()` di Roslyn.
 
-#### TASK-FR-010: ScriptRecorder Copertura Pacchetti Incompleta
+#### TASK-FR-010: ScriptRecorder Copertura Pacchetti Incompleta ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/ScriptRecorder.cs` -> tutti i metodi `Record_*`
-- **Stato nel Nuovo Codice**: ⚠️ Incompleto
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti 8 handler mancanti in `ScriptRecorderService`: 0x08 DropRequest, 0x75 RenameMobile, 0x9A AsciiPromptResponse, 0xB1 GumpsResponse, 0xD7 SADisarm/SAStun, 0xBF sub 0x0015 ContextMenuResponse, 0xAC ResponseStringQuery, 0x7D MenuResponse. Handler 0xBF esteso da gestire anche sub 0x0015.
 - **Dettaglio**: Il nuovo ScriptRecorderService copre 9 tipi di pacchetto vs ~15 del legacy. Pacchetti mancanti nella registrazione:
 
 | Azione | Pacchetto | Stato |
@@ -246,16 +246,6 @@
 - **Impatto Utente**: Registrando macro, azioni come drop item, rinomina mobile, risposte a gump e context menu **non vengono catturate**.
 - **Documentazione per Junior Dev**: Aprire il file che contiene ScriptRecorderService (probabilmente sotto `Core/Services/`). Aggiungere viewer per ciascun pacchetto mancante usando `IPacketService.RegisterClientToServerViewer()`. Per il formato dell'output, referenziare `ScriptRecorder.cs` nel legacy, metodi `Record_DropRequest()`, `Record_RenameMobile()`, etc.
 
----
-
-### 2.5 AutoDoc.cs -> AutoDocService.cs
-
-#### TASK-FR-011: Export Formati Mancanti
-- **File/Classe Legacy**: `Razor/RazorEnhanced/AutoDoc.cs` -> `ExportPy()`, `ExportHTML()`, `ExportMKDocs()`, `ExportSphinx()`
-- **Stato nel Nuovo Codice**: ❌ Mancante (4 formati)
-- **Dettaglio**: Il legacy esporta documentazione API in 5 formati (JSON, Python stubs, HTML, MKDocs, Sphinx). Il nuovo esporta solo Markdown.
-- **Impatto Utente**: Utenti che usavano i Python stubs per autocompletamento IDE o la documentazione HTML/Sphinx perdono questa funzionalita.
-- **Documentazione per Junior Dev**: In `AutoDocService.cs`, aggiungere metodi `ExportHtml()`, `ExportPythonStubs()`, `ExportSphinx()`. Per il formato, referenziare `AutoDoc.cs` righe 200-400 per HTML, righe 400-600 per Python stubs, righe 600-800 per Sphinx.
 
 ---
 

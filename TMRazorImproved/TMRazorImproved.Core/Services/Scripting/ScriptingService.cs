@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using TMRazorImproved.Core.Services.Scripting.Api;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Enums;
+using TMRazorImproved.Shared.Messages;
+using System.IO;
 
 namespace TMRazorImproved.Core.Services.Scripting
 {
@@ -72,7 +74,7 @@ namespace TMRazorImproved.Core.Services.Scripting
     ///
     /// ===========================================================================
     /// </summary>
-    public sealed class ScriptingService : IScriptingService, IDisposable
+    public sealed class ScriptingService : IScriptingService, IRecipient<LoginCompleteMessage>, IDisposable
     {
         // Numero di statement Python tra un check IsCancelled e l'altro nel trace handler.
         // Valore 50: latenza max ~50×line_time (< 1ms per macro tipiche UO).
@@ -145,15 +147,23 @@ del _make_tracer_, _sys_
         // volatile per visibilità cross-thread senza lock.
         private volatile Thread? _scriptThread;
 
+        // Engine e scope IronPython attivi durante l'esecuzione di uno script Python.
+        // Usati da CallPythonFunction per richiamare funzioni Python da C#.
+        private volatile Microsoft.Scripting.Hosting.ScriptEngine? _activePythonEngine;
+        private volatile Microsoft.Scripting.Hosting.ScriptScope? _activePythonScope;
+
         // Un solo script alla volta
         private readonly SemaphoreSlim _executionLock = new(1, 1);
 
         public bool IsRunning => _isRunning;
         public string? CurrentScriptName => _currentScriptName;
 
+        public event Action<string?>? ScriptsChanged;
         public event Action<string>? OutputReceived;
         public event Action<string>? ErrorReceived;
         public event Action<ScriptCompletionInfo>? ScriptCompleted;
+
+        private FileSystemWatcher? _scriptsWatcher;
 
         private readonly IAutoLootService _autoLoot;
         private readonly IScavengerService _scavenger;
@@ -224,6 +234,33 @@ del _make_tracer_, _sys_
             _messenger = messenger;
             _logger = logger;
             _loggerFactory = loggerFactory;
+
+            messenger.RegisterAll(this);
+            InitScriptsWatcher(_config.Global.ScriptsPath);
+        }
+
+        private void InitScriptsWatcher(string? path)
+        {
+            _scriptsWatcher?.Dispose();
+            _scriptsWatcher = null;
+
+            if (string.IsNullOrWhiteSpace(path) || !System.IO.Directory.Exists(path)) return;
+
+            var w = new FileSystemWatcher(path)
+            {
+                IncludeSubdirectories = true,
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite,
+                Filter = "*.*",
+                EnableRaisingEvents = true
+            };
+
+            w.Created += (_, e) => ScriptsChanged?.Invoke(e.FullPath);
+            w.Deleted += (_, e) => ScriptsChanged?.Invoke(e.FullPath);
+            w.Renamed += (_, e) => ScriptsChanged?.Invoke(e.FullPath);
+            w.Changed += (_, e) => ScriptsChanged?.Invoke(e.FullPath);
+
+            _scriptsWatcher = w;
+            _logger.LogDebug("FileSystemWatcher attivo su: {Path}", path);
         }
 
         public IEnumerable<string> GetLoadedScripts()
@@ -236,7 +273,7 @@ del _make_tracer_, _sys_
                 .Select(f => System.IO.Path.GetFileName(f));
         }
 
-        public async Task RunScript(string name)
+        public async Task RunScript(string name, bool loop = false)
         {
             var dir = _config.Global.ScriptsPath;
             if (string.IsNullOrEmpty(dir) || !System.IO.Directory.Exists(dir)) return;
@@ -249,7 +286,7 @@ del _make_tracer_, _sys_
             var lang = path.EndsWith(".py") ? ScriptLanguage.Python :
                        path.EndsWith(".uos") ? ScriptLanguage.UOSteam : ScriptLanguage.CSharp;
 
-            await RunAsync(code, lang, name);
+            await RunAsync(code, lang, name, default, loop);
         }
 
         public IEnumerable<string> ValidateScript(string code, ScriptLanguage language)
@@ -287,9 +324,10 @@ del _make_tracer_, _sys_
         // Esecuzione pubblica
         // ------------------------------------------------------------------
 
-        public async Task RunAsync(string code, ScriptLanguage language = ScriptLanguage.Python, 
+        public async Task RunAsync(string code, ScriptLanguage language = ScriptLanguage.Python,
                                    string scriptName = "unnamed",
-                                   CancellationToken externalToken = default)
+                                   CancellationToken externalToken = default,
+                                   bool loop = false)
         {
             // Rifiuta se uno script è già in esecuzione (non-blocking check)
             if (!await _executionLock.WaitAsync(0))
@@ -301,7 +339,7 @@ del _make_tracer_, _sys_
                 return;
             }
 
-            _logger.LogInformation("Starting script: {ScriptName} [{Language}]", scriptName, language);
+            _logger.LogInformation("Starting script: {ScriptName} [{Language}] loop={Loop}", scriptName, language, loop);
 
             // Crea un CTS combinato: può essere cancellato dall'esterno o da StopAsync()
             var cts = CancellationTokenSource.CreateLinkedTokenSource(externalToken);
@@ -313,22 +351,27 @@ del _make_tracer_, _sys_
 
             try
             {
-                await Task.Run(() => 
+                await Task.Run(() =>
                 {
-                    switch (language)
+                    do
                     {
-                        case ScriptLanguage.Python:
-                            ExecutePythonInternal(code, scriptName, cts);
-                            break;
-                        case ScriptLanguage.UOSteam:
-                            ExecuteUOSteamInternal(code, scriptName, cts);
-                            break;
-                        case ScriptLanguage.CSharp:
-                            ExecuteCSharpInternal(code, scriptName, cts);
-                            break;
-                        default:
-                            throw new NotSupportedException($"Linguaggio {language} non supportato.");
+                        cts.Token.ThrowIfCancellationRequested();
+                        switch (language)
+                        {
+                            case ScriptLanguage.Python:
+                                ExecutePythonInternal(code, scriptName, cts);
+                                break;
+                            case ScriptLanguage.UOSteam:
+                                ExecuteUOSteamInternal(code, scriptName, cts);
+                                break;
+                            case ScriptLanguage.CSharp:
+                                ExecuteCSharpInternal(code, scriptName, cts);
+                                break;
+                            default:
+                                throw new NotSupportedException($"Linguaggio {language} non supportato.");
+                        }
                     }
+                    while (loop && !cts.Token.IsCancellationRequested);
                 }, externalToken);
 
                 _logger.LogInformation("Script '{ScriptName}' completed successfully in {Duration}", scriptName, DateTime.UtcNow - start);
@@ -424,6 +467,87 @@ del _make_tracer_, _sys_
         }
 
         // ------------------------------------------------------------------
+        // Autostart (triggered on LoginCompleteMessage)
+        // ------------------------------------------------------------------
+
+        /// <summary>Riceve il messaggio di login completato e avvia gli script marcati come autostart.</summary>
+        public void Receive(LoginCompleteMessage message) => AutoStartScripts();
+
+        /// <summary>
+        /// Avvia tutti gli script nel profilo corrente marcati con AutoStart = true.
+        /// Se lo script ha anche Loop = true, viene eseguito in ciclo continuo.
+        /// </summary>
+        public void AutoStartScripts()
+        {
+            var scripts = _config.CurrentProfile.Scripts;
+            if (scripts == null || scripts.Count == 0) return;
+
+            foreach (var cfg in scripts)
+            {
+                if (!cfg.AutoStart || string.IsNullOrWhiteSpace(cfg.Name)) continue;
+
+                _logger.LogInformation("AutoStart: avvio script '{Name}' (loop={Loop})", cfg.Name, cfg.Loop);
+                // Fire-and-forget: ogni script gira in background indipendentemente
+                _ = Task.Run(() => RunScript(cfg.Name, cfg.Loop));
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // Preload (warm-up compilazione Roslyn per script C# marcati Preload=true)
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Pre-compila in background tutti gli script C# marcati con Preload=true nel profilo corrente.
+        /// Non esegue gli script; serve solo a riscaldare il JIT Roslyn per la prima esecuzione.
+        /// </summary>
+        public async Task PreloadScripts()
+        {
+            var scripts = _config.CurrentProfile.Scripts;
+            if (scripts == null || scripts.Count == 0) return;
+
+            var dir = _config.Global.ScriptsPath;
+            if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) return;
+
+            var engine = new CSharpScriptEngine(
+                line => _logger.LogDebug("[Preload] {Line}", line),
+                line => _logger.LogWarning("[Preload] {Line}", line));
+
+            foreach (var cfg in scripts)
+            {
+                if (!cfg.Preload || string.IsNullOrWhiteSpace(cfg.Name)) continue;
+                if (!cfg.Name.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)) continue;
+
+                var files = Directory.GetFiles(dir, cfg.Name, SearchOption.AllDirectories);
+                if (files.Length == 0)
+                {
+                    _logger.LogWarning("[Preload] Script '{Name}' non trovato in {Dir}", cfg.Name, dir);
+                    continue;
+                }
+
+                var path = files[0];
+                _logger.LogInformation("[Preload] Pre-compilazione: {Name}", cfg.Name);
+
+                await Task.Run(() =>
+                {
+                    try
+                    {
+                        var code = File.ReadAllText(path);
+                        var scriptDir = Path.GetDirectoryName(path);
+                        var error = engine.Precompile(code, scriptDir);
+                        if (error != null)
+                            _logger.LogWarning("[Preload] Errori in '{Name}': {Error}", cfg.Name, error);
+                        else
+                            _logger.LogInformation("[Preload] '{Name}' compilato con successo.", cfg.Name);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "[Preload] Fallita pre-compilazione di '{Name}'", cfg.Name);
+                    }
+                });
+            }
+        }
+
+        // ------------------------------------------------------------------
         // Esecuzione Python (IronPython)
         // ------------------------------------------------------------------
 
@@ -481,6 +605,10 @@ del _make_tracer_, _sys_
 
             engine.Execute(TracePreamble, scope);
 
+            // Esponi engine/scope per CallPythonFunction (callback C# -> Python)
+            _activePythonEngine = engine;
+            _activePythonScope  = scope;
+
             try
             {
                 engine.Execute(code, scope);
@@ -491,6 +619,8 @@ del _make_tracer_, _sys_
             }
             finally
             {
+                _activePythonEngine = null;
+                _activePythonScope  = null;
                 _scriptThread = null;
                 try { engine.Execute(TraceCleanup, scope); } catch { }
                 // FIX BUG-C02: dispose esplicito del runtime IronPython per evitare memory leak
@@ -600,9 +730,15 @@ del _make_tracer_, _sys_
                 line => OutputReceived?.Invoke(line),
                 line => ErrorReceived?.Invoke(line));
 
+            // Usa la ScriptsPath come directory base per la risoluzione di //#import e //#assembly.
+            // Se scriptName è un percorso assoluto, usa la sua directory.
+            var scriptDir = System.IO.Path.IsPathRooted(scriptName) && System.IO.File.Exists(scriptName)
+                ? System.IO.Path.GetDirectoryName(scriptName)
+                : (_config?.Global?.ScriptsPath ?? System.IO.Directory.GetCurrentDirectory());
+
             try
             {
-                engine.Execute(code, globals);
+                engine.Execute(code, globals, scriptDir);
             }
             finally
             {
@@ -614,6 +750,26 @@ del _make_tracer_, _sys_
         // Helpers
         // ------------------------------------------------------------------
 
+        /// <inheritdoc/>
+        public object? CallPythonFunction(string functionName, params object[] args)
+        {
+            var engine = _activePythonEngine;
+            var scope  = _activePythonScope;
+            if (engine == null || scope == null) return null;
+
+            try
+            {
+                if (!scope.ContainsVariable(functionName)) return null;
+                var func = scope.GetVariable(functionName);
+                return engine.Operations.Invoke(func, args);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "CallPythonFunction('{FunctionName}') failed.", functionName);
+                return null;
+            }
+        }
+
         private static string FormatException(Exception ex)
         {
             // Le eccezioni IronPython contengono spesso informazioni Python nella Message
@@ -624,6 +780,7 @@ del _make_tracer_, _sys_
         {
             _activeCts?.Cancel();
             _executionLock.Dispose();
+            _scriptsWatcher?.Dispose();
         }
     }
 }
