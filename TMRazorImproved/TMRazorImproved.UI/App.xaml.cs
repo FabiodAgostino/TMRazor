@@ -99,6 +99,7 @@ namespace TMRazorImproved.UI
                 services.AddSingleton<IProtoControlService, ProtoControlService>();
                 services.AddSingleton<ICommandService, CommandService>();
                 services.AddSingleton<IShardService, ShardService>();
+                services.AddSingleton<IMultiService, MultiService>();
 
                 // Handlers (Singleton)
                 services.AddSingleton<WorldPacketHandler>();

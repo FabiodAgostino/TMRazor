@@ -19,4 +19,19 @@ namespace TMRazorImproved.Shared.Messages
     {
         public StartPingRequestMessage(int count) : base(count) { }
     }
+
+    /// <summary>
+    /// Inviato quando il login server reindirizza il client al game server (pacchetto 0x8C).
+    /// Contiene IP, porta e chiave di cifratura per la nuova connessione.
+    /// Per i client OSI, la chiave è il seed per la cifratura del game server.
+    /// </summary>
+    public class RelayServerMessage : ValueChangedMessage<(string Ip, ushort Port, uint EncryptionKey)>
+    {
+        public RelayServerMessage(string ip, ushort port, uint encryptionKey)
+            : base((ip, port, encryptionKey)) { }
+
+        public string Ip => Value.Ip;
+        public ushort Port => Value.Port;
+        public uint EncryptionKey => Value.EncryptionKey;
+    }
 }

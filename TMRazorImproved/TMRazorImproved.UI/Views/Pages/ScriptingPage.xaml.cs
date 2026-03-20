@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Xml;
 using TMRazorImproved.UI.ViewModels;
 using TMRazorImproved.UI.Utilities;
+using TMRazorImproved.UI.Views.Windows;
 
 namespace TMRazorImproved.UI.Views.Pages
 {
@@ -178,6 +179,12 @@ namespace TMRazorImproved.UI.Views.Pages
         // ------------------------------------------------------------------
         // Output Window Copy Support
         // ------------------------------------------------------------------
+        private void OpenApiReference_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new ApiReferenceWindow { Owner = Window.GetWindow(this) };
+            win.Show();
+        }
+
         private void LogListBox_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.C && Keyboard.Modifiers.HasFlag(ModifierKeys.Control))

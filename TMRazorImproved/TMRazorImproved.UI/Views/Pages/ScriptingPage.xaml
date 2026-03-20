@@ -91,7 +91,17 @@
                                Appearance="Danger"
                                Command="{Binding StopScriptCommand}"
                                Padding="16,6"
+                               Margin="0,0,8,0"
                                ToolTip="{loc:Loc Scripting.Stop.ToolTip}"/>
+
+                    <Border Width="1" Background="{DynamicResource ControlBorderColorBrush}"
+                            Margin="0,4,8,4"/>
+
+                    <ui:Button Content="📖 API"
+                               Appearance="Secondary"
+                               Padding="12,6"
+                               ToolTip="Apri il riferimento API di scripting"
+                               Click="OpenApiReference_Click"/>
                 </StackPanel>
             </Grid>
         </ui:Card>

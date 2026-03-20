@@ -1,19 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TMRazorImproved.Shared.Interfaces;
 using Ultima;
 
 namespace TMRazorImproved.Core.Services.Scripting.Api
 {
     public record StaticTile(int X, int Y, int Z, int Graphic, int Hue);
 
+    /// <summary>Provides script access to static map tiles and land data read from UO .mul/.uop files via UltimaSDK.</summary>
     public class StaticsApi
     {
         private readonly ScriptCancellationController _cancel;
+        private readonly IMultiService? _multiService;
 
-        public StaticsApi(ScriptCancellationController cancel)
+        public StaticsApi(ScriptCancellationController cancel, IMultiService? multiService = null)
         {
             _cancel = cancel;
+            _multiService = multiService;
         }
 
         public class TileInfo
@@ -39,6 +43,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             }
         }
 
+        /// <summary>Returns the graphic ID of the topmost static tile at the given map coordinates.</summary>
         public virtual int GetStaticsGraphic(int x, int y, int map)
         {
             _cancel.ThrowIfCancelled();
@@ -191,11 +196,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             };
         }
 
+        /// <summary>
+        /// Returns true if the tile (x, y) falls within the bounding box of any multi structure (house or boat)
+        /// currently tracked in the game world. Requires <see cref="IMultiService"/> to be injected.
+        /// </summary>
         public virtual bool CheckDeedHouse(int x, int y)
         {
             _cancel.ThrowIfCancelled();
-            // Senza accesso al World di TMRazor, per ora ritorno false, ma implementato per evitare stub
-            return false;
+            return _multiService?.CheckDeedHouse(x, y) ?? false;
         }
 
         private static Ultima.Map? GetUltimaMap(int mapId) => mapId switch

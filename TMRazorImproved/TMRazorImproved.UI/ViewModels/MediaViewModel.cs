@@ -22,6 +22,7 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty] private int _videoFps;
         [ObservableProperty] private string _videoCodec;
         [ObservableProperty] private bool _autoScreenshotOnDeath;
+        [ObservableProperty] private bool _isRecording;
 
         public List<string> Formats { get; } = new() { "JPG", "PNG" };
         public List<string> Codecs { get; } = new() { "Uncompressed" };
@@ -79,6 +80,24 @@ namespace TMRazorImproved.UI.ViewModels
             {
                 StatusText = _language.GetString("Media.ScreenshotTaken");
             }
+        }
+
+        [RelayCommand]
+        private async Task StartRecordingAsync()
+        {
+            bool started = await _videoCapture.StartAsync(VideoFps);
+            IsRecording = _videoCapture.IsRecording;
+            StatusText = started
+                ? _language.GetString("Media.RecordingStarted")
+                : _language.GetString("Media.RecordingFailed");
+        }
+
+        [RelayCommand]
+        private async Task StopRecordingAsync()
+        {
+            await _videoCapture.StopAsync();
+            IsRecording = false;
+            StatusText = _language.GetString("Media.RecordingStopped");
         }
     }
 }

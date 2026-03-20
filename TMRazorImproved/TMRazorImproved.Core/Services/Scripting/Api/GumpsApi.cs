@@ -11,6 +11,7 @@ using System.Linq;
 
 namespace TMRazorImproved.Core.Services.Scripting.Api
 {
+    /// <summary>Provides script access to open game windows (gumps): detect, read text/strings, respond to buttons, and close gumps.</summary>
     public class GumpsApi
     {
         private readonly IWorldService _world;
@@ -52,8 +53,10 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             public List<string> stringList = new();
         }
 
+        /// <summary>Returns <c>true</c> if any gump is currently open.</summary>
         public virtual bool HasGump() => _world.CurrentGump != null;
 
+        /// <summary>Returns <c>true</c> if a gump with the given ID is currently open.</summary>
         public virtual bool HasGump(uint gumpId)
         {
             _cancel.ThrowIfCancelled();
@@ -61,10 +64,13 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return _world.OpenGumps.Values.Any(g => g.GumpId == gumpId);
         }
 
+        /// <summary>Returns the gump ID of the currently focused gump, or 0 if none is open.</summary>
         public virtual uint CurrentGump() => _world.CurrentGump?.GumpId ?? 0;
 
+        /// <summary>Alias for <see cref="CurrentGump()"/>.</summary>
         public virtual uint CurrentID() => CurrentGump();
 
+        /// <summary>Sends a button click response to the current gump.</summary>
         public virtual void SendAction(int buttonId, int[]? switches = null)
         {
             _cancel.ThrowIfCancelled();
@@ -96,8 +102,10 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _world.RemoveGump(gump.Serial);
         }
 
+        /// <summary>Closes the current gump by sending button 0 (cancel).</summary>
         public virtual void Close() => SendAction(0);
 
+        /// <summary>Closes the gump with the specified ID.</summary>
         public virtual void Close(uint gumpId)
         {
             _cancel.ThrowIfCancelled();
@@ -109,6 +117,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             }
         }
 
+        /// <summary>Returns the raw data for the gump with the given ID, or <c>null</c> if not found.</summary>
         public virtual GumpData? GetGumpData(uint gumpId)
         {
             _cancel.ThrowIfCancelled();
@@ -125,6 +134,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return null;
         }
 
+        /// <summary>Blocks until a gump with the given ID appears, or the timeout (ms) expires. Returns <c>true</c> if the gump appeared.</summary>
         public virtual bool WaitForGump(uint gumpId, int timeoutMs = 5000)
         {
             if (gumpId == 0)
@@ -211,6 +221,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             }
         }
 
+        /// <summary>Returns the number of text strings in the current gump.</summary>
         public virtual int GetLineCount()
         {
             _cancel.ThrowIfCancelled();

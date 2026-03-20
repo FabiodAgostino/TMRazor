@@ -174,11 +174,20 @@ namespace TMRazorImproved.Core.Services
                 try
                 {
                     string directionStr = GetDirectionString(path);
-                    _writer.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: {directionStr} 0x{data[0]:X2} (Length: {data.Length})");
-                    
-                    // TODO: Implement Template parsing if needed
-                    // For now, just hex dump
-                    _writer.WriteLine(FormatHexDump(data));
+
+                    if (_templates.TryGetValue(data[0], out var template))
+                    {
+                        _writer.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: {directionStr} 0x{data[0]:X2} ({template.Name}) (Length: {data.Length})");
+                        _writer.WriteLine(FormatTemplate(data, template));
+                        if (template.ShowHexDump)
+                            _writer.WriteLine(FormatHexDump(data));
+                    }
+                    else
+                    {
+                        _writer.WriteLine($"{DateTime.Now:HH:mm:ss.ffff}: {directionStr} 0x{data[0]:X2} (Length: {data.Length})");
+                        _writer.WriteLine(FormatHexDump(data));
+                    }
+
                     _writer.WriteLine();
                 }
                 catch (Exception ex)
@@ -186,6 +195,110 @@ namespace TMRazorImproved.Core.Services
                     _logger.LogError(ex, "Error writing packet to log file");
                 }
             }
+        }
+
+        private string FormatTemplate(byte[] data, PacketTemplate template)
+        {
+            var sb = new StringBuilder();
+            int pos = 0;
+            FormatFields(data, ref pos, template.Fields, sb, "  ");
+            return sb.ToString();
+        }
+
+        private void FormatFields(byte[] data, ref int pos, List<FieldTemplate> fields, StringBuilder sb, string indent)
+        {
+            foreach (var field in fields)
+            {
+                if (pos >= data.Length) break;
+
+                int len = field.Length;
+                if (len <= 0) len = data.Length - pos; // consume rest
+
+                // Clamp to available data
+                len = Math.Min(len, data.Length - pos);
+
+                string value = FormatField(data, ref pos, field, len);
+                sb.AppendLine($"{indent}{field.Name}: {value}");
+
+                // Handle nested sub-packet or repeat fields
+                if (field.Fields?.Count > 0 && field.Type == FieldType.GUMP)
+                    FormatFields(data, ref pos, field.Fields, sb, indent + "  ");
+            }
+        }
+
+        private string FormatField(byte[] data, ref int pos, FieldTemplate field, int len)
+        {
+            string result;
+            switch (field.Type)
+            {
+                case FieldType.PACKETID:
+                case FieldType.HEX:
+                    result = "0x" + BitConverter.ToString(data, pos, len).Replace("-", "");
+                    pos += len;
+                    break;
+
+                case FieldType.UINT:
+                case FieldType.SERIAL:
+                case FieldType.MODELID:
+                    uint uval = ReadUIntBE(data, pos, len);
+                    result = len <= 2 ? uval.ToString() : $"0x{uval:X8} ({uval})";
+                    pos += len;
+                    break;
+
+                case FieldType.INT:
+                    int ival = (int)ReadUIntBE(data, pos, len);
+                    result = ival.ToString();
+                    pos += len;
+                    break;
+
+                case FieldType.BOOL:
+                    result = data[pos] != 0 ? "true" : "false";
+                    pos += len;
+                    break;
+
+                case FieldType.ASCII:
+                case FieldType.STRING:
+                case FieldType.TEXT:
+                    // null-terminated or fixed length ASCII
+                    int end = pos;
+                    while (end < pos + len && end < data.Length && data[end] != 0) end++;
+                    result = Encoding.ASCII.GetString(data, pos, end - pos);
+                    pos += len;
+                    break;
+
+                case FieldType.UNICODE:
+                    int uend = pos;
+                    while (uend + 1 < pos + len && uend + 1 < data.Length && (data[uend] != 0 || data[uend + 1] != 0)) uend += 2;
+                    result = Encoding.BigEndianUnicode.GetString(data, pos, uend - pos);
+                    pos += len;
+                    break;
+
+                case FieldType.CLILOC:
+                    uint cliloc = ReadUIntBE(data, pos, 4);
+                    result = $"#{cliloc}";
+                    pos += len;
+                    break;
+
+                case FieldType.OFFSET:
+                    pos += len;
+                    result = $"(skipped {len} bytes)";
+                    break;
+
+                case FieldType.DUMP:
+                default:
+                    result = BitConverter.ToString(data, pos, len).Replace("-", " ");
+                    pos += len;
+                    break;
+            }
+            return result;
+        }
+
+        private static uint ReadUIntBE(byte[] data, int pos, int len)
+        {
+            uint val = 0;
+            for (int i = 0; i < len && pos + i < data.Length; i++)
+                val = (val << 8) | data[pos + i];
+            return val;
         }
 
         private string GetDirectionString(PacketPath path)

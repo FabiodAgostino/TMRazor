@@ -168,6 +168,7 @@ del _make_tracer_, _sys_
         private readonly ICounterService _counter;
         private readonly IDPSMeterService _dpsMeter;
         private readonly IPacketLoggerService _packetLogger;
+        private readonly IMultiService _multiService;
 
         public ScriptingService(
             IWorldService world,
@@ -192,6 +193,7 @@ del _make_tracer_, _sys_
             ICounterService counter,
             IDPSMeterService dpsMeter,
             IPacketLoggerService packetLogger,
+            IMultiService multiService,
             IMessenger messenger,
             ILogger<ScriptingService> logger,
             ILoggerFactory loggerFactory)
@@ -218,6 +220,7 @@ del _make_tracer_, _sys_
             _counter = counter;
             _dpsMeter = dpsMeter;
             _packetLogger = packetLogger;
+            _multiService = multiService;
             _messenger = messenger;
             _logger = logger;
             _loggerFactory = loggerFactory;
@@ -436,7 +439,7 @@ del _make_tracer_, _sys_
             var stderr = new ScriptOutputWriter(line => ErrorReceived?.Invoke(line));
 
             var cancelCtrl = new ScriptCancellationController(cts.Token);
-            var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService);
+            var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService, hotkeyService: _hotkeyService);
 
             scope.SetVariable("__stdout__",        stdout);
             scope.SetVariable("__stderr__",        stderr);
@@ -446,7 +449,7 @@ del _make_tracer_, _sys_
             scope.SetVariable("Misc",              miscApi);
             var itemsApi = new ItemsApi(_world, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
             var mobilesApi = new MobilesApi(_world, _friendsService, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
-            var staticsApi = new StaticsApi(cancelCtrl);
+            var staticsApi = new StaticsApi(cancelCtrl, _multiService);
             
             scope.SetVariable("Items",   itemsApi);
             scope.SetVariable("Mobiles", mobilesApi);
@@ -506,7 +509,7 @@ del _make_tracer_, _sys_
             _scriptThread = Thread.CurrentThread;
 
             var cancelCtrl = new ScriptCancellationController(cts.Token);
-            var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService);
+            var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService, hotkeyService: _hotkeyService);
             var itemsApi   = new ItemsApi(_world, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
             var mobilesApi = new MobilesApi(_world, _friendsService, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
             var playerApi  = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _interopService, logger: _loggerFactory.CreateLogger<PlayerApi>(), config: _config);
@@ -557,10 +560,10 @@ del _make_tracer_, _sys_
             _logger.LogDebug("Starting Roslyn C# script execution: {ScriptName}", scriptName);
 
             var cancelCtrl = new ScriptCancellationController(cts.Token);
-            var misc = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService);
+            var misc = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService, hotkeyService: _hotkeyService);
             var itemsApi = new ItemsApi(_world, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
             var mobilesApi = new MobilesApi(_world, _friendsService, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
-            var staticsApi = new StaticsApi(cancelCtrl);
+            var staticsApi = new StaticsApi(cancelCtrl, _multiService);
             var globals = new ScriptGlobals
             {
                 Player      = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _interopService, logger: _loggerFactory.CreateLogger<PlayerApi>()),

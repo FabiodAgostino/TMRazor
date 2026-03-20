@@ -21,6 +21,7 @@ namespace TMRazorImproved.Tests.MockTests.Networking
         private readonly Mock<IConfigService> _configServiceMock = new();
         private readonly Mock<IScreenCaptureService> _screenCaptureMock = new();
         private readonly Mock<ITargetingService> _targetingServiceMock = new();
+        private readonly Mock<IMultiService> _multiServiceMock = new();
         private readonly Mock<IMessenger> _messengerMock = new();
         private readonly WorldPacketHandler _handler;
 
@@ -35,6 +36,7 @@ namespace TMRazorImproved.Tests.MockTests.Networking
                 _configServiceMock.Object,
                 _screenCaptureMock.Object,
                 _targetingServiceMock.Object,
+                _multiServiceMock.Object,
                 _messengerMock.Object);
         }
 

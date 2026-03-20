@@ -41,6 +41,7 @@ namespace TMRazorImproved.Tests.Integration
                 new Mock<ICounterService>().Object,
                 new Mock<IDPSMeterService>().Object,
                 new Mock<IPacketLoggerService>().Object,
+                new Mock<IMultiService>().Object,
                 WeakReferenceMessenger.Default,
                 logger,
                 new NullLoggerFactory()
@@ -148,6 +149,7 @@ namespace TMRazorImproved.Tests.Integration
                 new Mock<ICounterService>().Object,
                 new Mock<IDPSMeterService>().Object,
                 new Mock<IPacketLoggerService>().Object,
+                new Mock<IMultiService>().Object,
                 WeakReferenceMessenger.Default,
                 logger,
                 new NullLoggerFactory()

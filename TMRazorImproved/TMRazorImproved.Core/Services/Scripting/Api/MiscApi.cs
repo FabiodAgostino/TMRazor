@@ -8,18 +8,12 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using TMRazorImproved.Core.Utilities;
+using TMRazorImproved.Core.Services.Scripting;
 using TMRazorImproved.Shared.Interfaces;
 
 namespace TMRazorImproved.Core.Services.Scripting.Api
 {
-    /// <summary>
-    /// API esposta agli script Python come variabile <c>Misc</c>.
-    /// Contiene funzioni di utilità: pause, output, timing, file I/O, context menu, script control, ecc.
-    ///
-    /// Pause() usa uno sleep chunked (10ms slice) per permettere la cancellazione
-    /// anche durante attese lunghe da script (il sys.settrace non si attiva
-    /// mentre l'esecuzione è bloccata in codice .NET nativo).
-    /// </summary>
+    /// <summary>Provides general-purpose script utilities: pause, output, timing, file I/O, context menus, sound, mouse, script control, shared values, and named lists.</summary>
     public class MiscApi
     {
         private readonly IWorldService        _world;
@@ -30,6 +24,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         private readonly ISoundService?       _sound;
         private readonly IScreenCaptureService? _capture;
         private readonly IConfigService?      _config;
+        private readonly IHotkeyService?      _hotkeyService;
         private readonly ScriptCancellationController _cancel;
         private readonly Action<string>?      _outputCallback;
 
@@ -49,7 +44,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             IScriptingService? scripting   = null,
             ISoundService? sound           = null,
             IScreenCaptureService? capture = null,
-            IConfigService? config         = null)
+            IConfigService? config         = null,
+            IHotkeyService? hotkeyService  = null)
         {
             _world          = world;
             _packetService  = packetService;
@@ -59,6 +55,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _sound          = sound;
             _capture        = capture;
             _config         = config;
+            _hotkeyService  = hotkeyService;
             _cancel         = cancel;
             _outputCallback = outputCallback;
         }
@@ -67,31 +64,48 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         // Inner helper classes
         // ------------------------------------------------------------------
 
+        /// <summary>Represents a 2D screen or map coordinate with X and Y components.</summary>
         public class Point
         {
+            /// <summary>Horizontal coordinate.</summary>
             public int X { get; set; }
+            /// <summary>Vertical coordinate.</summary>
             public int Y { get; set; }
             public Point() { }
             public Point(int x, int y) { X = x; Y = y; }
         }
 
+        /// <summary>Represents a rectangular region defined by position and size.</summary>
         public class Rectangle
         {
+            /// <summary>Left edge X coordinate.</summary>
             public int X      { get; set; }
+            /// <summary>Top edge Y coordinate.</summary>
             public int Y      { get; set; }
+            /// <summary>Width of the rectangle in pixels.</summary>
             public int Width  { get; set; }
+            /// <summary>Height of the rectangle in pixels.</summary>
             public int Height { get; set; }
         }
 
+        /// <summary>Holds map pin and region data for a map item received from the server.</summary>
         public class MapInfo
         {
+            /// <summary>Serial of the map item.</summary>
             public uint   Serial    { get; set; }
+            /// <summary>X coordinate of the map pin.</summary>
             public int    PinX      { get; set; }
+            /// <summary>Y coordinate of the map pin.</summary>
             public int    PinY      { get; set; }
+            /// <summary>X coordinate of the map region origin.</summary>
             public int    MapOriginX { get; set; }
+            /// <summary>Y coordinate of the map region origin.</summary>
             public int    MapOriginY { get; set; }
+            /// <summary>X coordinate of the map region end.</summary>
             public int    MapEndX   { get; set; }
+            /// <summary>Y coordinate of the map region end.</summary>
             public int    MapEndY   { get; set; }
+            /// <summary>Facet (map) index.</summary>
             public ushort Facet     { get; set; }
         }
 
@@ -99,12 +113,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         // Mouse
         // ------------------------------------------------------------------
 
+        /// <summary>Returns the current mouse cursor position as a <see cref="Point"/>.</summary>
         public virtual Point MouseLocation()
         {
             var (x, y) = _interop.GetMousePosition();
             return new Point { X = x, Y = y };
         }
 
+        /// <summary>Moves the mouse cursor to the specified screen coordinates.</summary>
         public virtual void MouseMove(int x, int y)
         {
             _interop.SetMousePosition(x, y);
@@ -940,7 +956,17 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual MapInfo GetMapInfo(uint serial)
         {
             _cancel.ThrowIfCancelled();
-            return new MapInfo { Serial = serial };
+            var data = MapDataStore.Get(serial);
+            if (data == null) return new MapInfo { Serial = serial };
+            return new MapInfo
+            {
+                Serial     = data.Serial,
+                MapOriginX = data.MapOriginX,
+                MapOriginY = data.MapOriginY,
+                MapEndX    = data.MapEndX,
+                MapEndY    = data.MapEndY,
+                Facet      = data.Facet,
+            };
         }
 
         // ------------------------------------------------------------------
@@ -1188,7 +1214,10 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void ExportPythonAPI(string? path = null, bool pretty = true)
         {
             _cancel.ThrowIfCancelled();
-            _outputCallback?.Invoke("ExportPythonAPI is not fully implemented in TMRazor Improved.");
+            var outputPath = path ?? Path.Combine(CurrentScriptDirectory(), "API_Reference.md");
+            var docService = new AutoDocService();
+            docService.ExportAsync(outputPath).GetAwaiter().GetResult();
+            _outputCallback?.Invoke($"API documentation exported to: {outputPath}");
         }
 
         public virtual Point GetContPosition()
@@ -1207,7 +1236,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual object? LastHotKey()
         {
             _cancel.ThrowIfCancelled();
-            return null;
+            return _hotkeyService?.LastActionName;
         }
 
         public virtual void NextContPosition(int x, int y)

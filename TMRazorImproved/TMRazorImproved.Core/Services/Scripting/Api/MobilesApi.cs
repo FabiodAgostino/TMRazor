@@ -10,10 +10,7 @@ using TMRazorImproved.Shared.Models;
 
 namespace TMRazorImproved.Core.Services.Scripting.Api
 {
-    /// <summary>
-    /// API esposta agli script Python come variabile <c>Mobiles</c>.
-    /// Tutte le proprietà sono <c>public virtual</c> per compatibilità con il binder DLR di IronPython.
-    /// </summary>
+    /// <summary>Provides script access to all mobiles (players and NPCs) in the world: find, filter, query stats, classify, and interact.</summary>
     public class MobilesApi
     {
         private readonly IWorldService _world;
@@ -43,7 +40,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         private List<ScriptMobile> Wrap(IEnumerable<Mobile> mobiles) => mobiles.Select(m => new ScriptMobile(m, _world, _packet, _targeting)).ToList();
         private ScriptItem? WrapItem(Item? i) => i == null ? null : new ScriptItem(i, _world, _packet, _targeting);
 
-        /// <summary>Cerca un mobile per serial. Ritorna None se non trovato.</summary>
+        /// <summary>Finds a mobile by its unique serial number. Returns <c>null</c> if not found.</summary>
         public virtual ScriptMobile? FindBySerial(uint serial)
         {
             _cancel.ThrowIfCancelled();
@@ -52,13 +49,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return Wrap(result);
         }
 
+        /// <summary>Finds the first mobile with the given body graphic ID. Returns <c>null</c> if not found.</summary>
         public virtual ScriptMobile? FindByID(int graphic)
         {
             _cancel.ThrowIfCancelled();
             return Wrap(_world.Mobiles.FirstOrDefault(m => m.Graphic == graphic));
         }
 
-        /// <summary>Ritorna tutti i mobile con il graphic specificato entro il range dal giocatore.</summary>
+        /// <summary>Returns all mobiles with the given body graphic, optionally limited to a tile range from the player.</summary>
         public virtual List<ScriptMobile> FindAllByID(int graphic, int range = -1)
         {
             _cancel.ThrowIfCancelled();
@@ -68,6 +66,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 .Where(m => range == -1 || (player != null && m.DistanceTo(player) <= range)));
         }
 
+        /// <summary>Returns the tile distance from the player to the mobile with the given serial, or 999 if not found.</summary>
         public virtual int GetDistance(uint serial)
         {
             _cancel.ThrowIfCancelled();
@@ -77,10 +76,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return m.DistanceTo(p);
         }
 
-        /// <summary>
-        /// Ritorna la lista di tutti i mobile visibili nel range specificato
-        /// rispetto alla posizione del giocatore.
-        /// </summary>
+        /// <summary>Returns all mobiles within the specified tile range of the player, excluding the player itself.</summary>
         public virtual List<ScriptMobile> FindInRange(int range)
         {
             _cancel.ThrowIfCancelled();
@@ -91,7 +87,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 .Where(m => m.Serial != player.Serial && m.DistanceTo(player) <= range));
         }
 
-        /// <summary>Ritorna il mobile più vicino al giocatore (escluso il giocatore stesso).</summary>
+        /// <summary>Returns the closest mobile to the player, excluding the player themselves.</summary>
         public virtual ScriptMobile? FindNearest()
         {
             _cancel.ThrowIfCancelled();
@@ -104,7 +100,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 .FirstOrDefault());
         }
 
-        /// <summary>Ritorna il nemico più vicino (Notoriety: 3, 4, 5, 6).</summary>
+        /// <summary>Returns the nearest hostile mobile (notoriety 3–6: gray, criminal, enemy, red).</summary>
         public virtual ScriptMobile? FindNearestEnemy()
         {
             _cancel.ThrowIfCancelled();
@@ -117,7 +113,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 .FirstOrDefault());
         }
 
-        /// <summary>Ritorna il mobile amico più vicino (in lista amici o Notoriety: 1, 2).</summary>
+        /// <summary>Returns the nearest friendly mobile (in the friend list, or notoriety 1–2: blue or green).</summary>
         public virtual ScriptMobile? FindNearestFriend()
         {
             _cancel.ThrowIfCancelled();
@@ -130,7 +126,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 .FirstOrDefault());
         }
 
-        /// <summary>Filtra i mobile per graphic ID (body).</summary>
+        /// <summary>Returns all mobiles whose body graphic matches the given value.</summary>
         public virtual List<ScriptMobile> FilterByBody(int body)
         {
             _cancel.ThrowIfCancelled();
@@ -138,7 +134,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         }
 
 
-        /// <summary>Controlla se un mobile esiste e non è morto.</summary>
+        /// <summary>Returns true if the mobile with the given serial exists and has HP greater than 0.</summary>
         public virtual bool IsAlive(uint serial)
         {
             _cancel.ThrowIfCancelled();
@@ -146,7 +142,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return m != null && m.Hits > 0;
         }
 
-        /// <summary>Controlla se un mobile è morto (Hits <= 0 o non trovato).</summary>
+        /// <summary>Returns true if the mobile with the given serial has HP of 0 or is not found in the world.</summary>
         public virtual bool IsDead(uint serial)
         {
             _cancel.ThrowIfCancelled();
@@ -155,14 +151,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return m.Hits <= 0;
         }
 
-        /// <summary>Controlla se il mobile è nella lista amici.</summary>
+        /// <summary>Returns true if the mobile with the given serial is in the active friend list.</summary>
         public virtual bool IsFriend(uint serial)
         {
             _cancel.ThrowIfCancelled();
             return _friends.IsFriend(serial);
         }
 
-        /// <summary>Ritorna la percentuale di HP (0-100).</summary>
+        /// <summary>Returns the current HP of the mobile as a percentage (0–100), or 0 if not found.</summary>
         public virtual int GetHealthPercent(uint serial)
         {
             _cancel.ThrowIfCancelled();
@@ -171,12 +167,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return (int)((m.Hits * 100.0) / m.HitsMax);
         }
 
+        /// <summary>Returns all mobiles with the given notoriety value (1=blue, 2=green, 3=gray, 4=criminal, 5=enemy, 6=red, 7=invited).</summary>
         public virtual List<ScriptMobile> FilterByNotoriety(int notoriety)
         {
             _cancel.ThrowIfCancelled();
             return Wrap(_world.Mobiles.Where(m => m.Notoriety == notoriety));
         }
 
+        /// <summary>Returns all mobiles whose tile distance from the player falls within [minRange, maxRange].</summary>
         public virtual List<ScriptMobile> FilterByDistance(int minRange, int maxRange)
         {
             _cancel.ThrowIfCancelled();
@@ -193,70 +191,70 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         // Proprietà individuali da serial
         // ------------------------------------------------------------------
 
-        /// <summary>Ritorna il nome del mobile, stringa vuota se non trovato.</summary>
+        /// <summary>Returns the name of the mobile with the given serial, or empty string if not found.</summary>
         public virtual string GetName(uint serial)
         {
             _cancel.ThrowIfCancelled();
             return _world.FindMobile(serial)?.Name ?? string.Empty;
         }
 
-        /// <summary>Ritorna il Graphic (body) del mobile, 0 se non trovato.</summary>
+        /// <summary>Returns the body graphic ID of the mobile with the given serial, or 0 if not found.</summary>
         public virtual int GetGraphic(uint serial)
         {
             _cancel.ThrowIfCancelled();
             return _world.FindMobile(serial)?.Graphic ?? 0;
         }
 
-        /// <summary>Ritorna il Hue del mobile, 0 se non trovato.</summary>
+        /// <summary>Returns the hue color of the mobile with the given serial, or 0 if not found.</summary>
         public virtual int GetHue(uint serial)
         {
             _cancel.ThrowIfCancelled();
             return _world.FindMobile(serial)?.Hue ?? 0;
         }
 
-        /// <summary>Ritorna il Notoriety del mobile (1=blue, 3=gray, 4=criminal, 5=enemy, 6=red, 7=invited).</summary>
+        /// <summary>Returns the notoriety value of the mobile (1=blue, 2=green, 3=gray, 4=criminal, 5=enemy, 6=red, 7=invited), or 0 if not found.</summary>
         public virtual int GetNotoriety(uint serial)
         {
             _cancel.ThrowIfCancelled();
             return _world.FindMobile(serial)?.Notoriety ?? 0;
         }
 
-        /// <summary>True se il mobile è in war mode.</summary>
+        /// <summary>Returns true if the mobile is currently in war mode.</summary>
         public virtual bool IsWarMode(uint serial)
         {
             _cancel.ThrowIfCancelled();
             return _world.FindMobile(serial)?.WarMode ?? false;
         }
 
-        /// <summary>True se il mobile è avvelenato.</summary>
+        /// <summary>Returns true if the mobile is currently poisoned.</summary>
         public virtual bool IsPoisoned(uint serial)
         {
             _cancel.ThrowIfCancelled();
             return _world.FindMobile(serial)?.IsPoisoned ?? false;
         }
 
-        /// <summary>True se il mobile è nascosto.</summary>
+        /// <summary>Returns true if the mobile is currently hidden (invisible).</summary>
         public virtual bool IsHidden(uint serial)
         {
             _cancel.ThrowIfCancelled();
             return _world.FindMobile(serial)?.IsHidden ?? false;
         }
 
-        /// <summary>True se il mobile è nel party del player.</summary>
+        /// <summary>Returns true if the mobile with the given serial is a member of the player's party.</summary>
         public virtual bool IsParty(uint serial)
         {
             _cancel.ThrowIfCancelled();
             return _world.IsPartyMember(serial);
         }
 
-        /// <summary>Ritorna la mana del mobile, 0 se non noto.</summary>
+        /// <summary>Returns the current mana of the mobile with the given serial, or 0 if not known.</summary>
         public virtual int GetMana(uint serial)
         {
             _cancel.ThrowIfCancelled();
             return _world.FindMobile(serial)?.Mana ?? 0;
         }
 
-        /// <summary>Ritorna la mana del mobile come percentuale (0-100), 0 se non noto.</summary>
+        /// <summary>Returns the current mana of the mobile as a percentage (0–100), or 0 if not known.</summary>
         public virtual int GetManaPercent(uint serial)
         {
             _cancel.ThrowIfCancelled();
@@ -265,14 +263,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return (int)((double)m.Mana / m.ManaMax * 100);
         }
 
-        /// <summary>Ritorna la stamina del mobile, 0 se non nota.</summary>
+        /// <summary>Returns the current stamina of the mobile with the given serial, or 0 if not known.</summary>
         public virtual int GetStam(uint serial)
         {
             _cancel.ThrowIfCancelled();
             return _world.FindMobile(serial)?.Stam ?? 0;
         }
 
-        /// <summary>Ritorna la stamina del mobile come percentuale (0-100), 0 se non nota.</summary>
+        /// <summary>Returns the current stamina of the mobile as a percentage (0–100), or 0 if not known.</summary>
         public virtual int GetStamPercent(uint serial)
         {
             _cancel.ThrowIfCancelled();
@@ -281,21 +279,21 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return (int)((double)m.Stam / m.StamMax * 100);
         }
 
-        /// <summary>Ritorna la X corrente del mobile.</summary>
+        /// <summary>Returns the current X map coordinate of the mobile with the given serial.</summary>
         public virtual int GetX(uint serial)
         {
             _cancel.ThrowIfCancelled();
             return _world.FindMobile(serial)?.X ?? 0;
         }
 
-        /// <summary>Ritorna la Y corrente del mobile.</summary>
+        /// <summary>Returns the current Y map coordinate of the mobile with the given serial.</summary>
         public virtual int GetY(uint serial)
         {
             _cancel.ThrowIfCancelled();
             return _world.FindMobile(serial)?.Y ?? 0;
         }
 
-        /// <summary>Ritorna la Z corrente del mobile.</summary>
+        /// <summary>Returns the current Z altitude of the mobile with the given serial.</summary>
         public virtual int GetZ(uint serial)
         {
             _cancel.ThrowIfCancelled();
@@ -306,10 +304,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         // Classificazione per body
         // ------------------------------------------------------------------
 
-        /// <summary>
-        /// True se il mobile ha un body umano (0x190=Male, 0x191=Female).
-        /// Copre anche race variant bodies (Gargoyle 0x029A/0x029B, Elf 0x025D/0x025E).
-        /// </summary>
+        /// <summary>Returns true if the mobile has a human or humanoid body (Human, Elf, or Gargoyle race graphics).</summary>
         public virtual bool IsHuman(uint serial)
         {
             _cancel.ThrowIfCancelled();
@@ -320,7 +315,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                                or 0x029A or 0x029B; // Gargoyle
         }
 
-        /// <summary>True se il mobile non è umano e non è un NPC (graphic > 0x3E9, conv).</summary>
+        /// <summary>Returns true if the mobile is a monster (non-humanoid body graphic outside the human and NPC range).</summary>
         public virtual bool IsMonster(uint serial)
         {
             _cancel.ThrowIfCancelled();
@@ -330,7 +325,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return !IsHuman(serial) && m.Graphic >= 0x0190 + 0x200;
         }
 
-        /// <summary>True se il body rientra nel range NPC umanoide (1-0x18F).</summary>
+        /// <summary>Returns true if the mobile has a humanoid NPC body graphic (body IDs 1–0x18F, non-player).</summary>
         public virtual bool IsNPC(uint serial)
         {
             _cancel.ThrowIfCancelled();
@@ -343,9 +338,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         // Filter multipli
         // ------------------------------------------------------------------
 
-        /// <summary>
-        /// Filtra i mobile nel mondo corrente utilizzando un oggetto Filter.
-        /// </summary>
+        /// <summary>Returns all mobiles matching all criteria defined in the given <see cref="MobilesFilter"/> object.</summary>
         public virtual List<ScriptMobile> ApplyFilter(MobilesFilter filter)
         {
             _cancel.ThrowIfCancelled();
@@ -389,10 +382,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             }));
         }
 
-        /// <summary>
-        /// Filtra i mobile nel mondo corrente per criteri multipli combinati.
-        /// I parametri a -1/null/0 vengono ignorati (nessun filtro applicato).
-        /// </summary>
+        /// <summary>Returns all mobiles matching the given graphic, notoriety, range, and alive/enemy flags. Parameters set to -1 or false are ignored.</summary>
         public virtual List<ScriptMobile> ApplyFilter(
             int graphic = -1,
             int notoriety = -1,
@@ -418,28 +408,33 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         // Migration Compatibility Methods
         // ------------------------------------------------------------------
 
+        /// <summary>Sends a single-click packet for the mobile with the given serial, requesting its name.</summary>
         public virtual void SingleClick(uint serial)
         {
             _cancel.ThrowIfCancelled();
             _packet.SendToServer(PacketBuilder.SingleClick(serial));
         }
-        
+
+        /// <summary>Sends a single-click packet for the given mobile object.</summary>
         public virtual void SingleClick(Mobile mob)
         {
             if (mob != null) SingleClick(mob.Serial);
         }
 
+        /// <summary>Double-clicks (uses) the mobile with the given serial.</summary>
         public virtual void UseMobile(uint serial)
         {
             _cancel.ThrowIfCancelled();
             _packet.SendToServer(PacketBuilder.DoubleClick(serial));
         }
 
+        /// <summary>Double-clicks (uses) the given mobile object.</summary>
         public virtual void UseMobile(Mobile mob)
         {
             if (mob != null) UseMobile(mob.Serial);
         }
 
+        /// <summary>Sends an overhead speech message from the mobile with the given serial to the client (packet 0xAE).</summary>
         public virtual void Message(uint serial, int hue, string message, bool wait = true)
         {
             _cancel.ThrowIfCancelled();
@@ -464,11 +459,13 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _packet.SendToClient(packet);
         }
 
+        /// <summary>Sends an overhead speech message from the given mobile object to the client.</summary>
         public virtual void Message(Mobile mob, int hue, string message, bool wait = true)
         {
             if (mob != null) Message(mob.Serial, hue, message, wait);
         }
-        
+
+        /// <summary>Requests the context menu for the mobile and returns the response code of the entry matching <paramref name="name"/>, or -1 if not found.</summary>
         public virtual int ContextExist(uint serial, string name, bool showContext = false)
         {
             _cancel.ThrowIfCancelled();
@@ -488,18 +485,21 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return match != null ? match.Response : -1;
         }
 
+        /// <summary>Requests the context menu for the given mobile object and returns the response code of the named entry, or -1 if not found.</summary>
         public virtual int ContextExist(Mobile mob, string name, bool showContext = false)
         {
             if (mob == null) return -1;
             return ContextExist(mob.Serial, name, showContext);
         }
 
+        /// <summary>Returns the tile distance from the player to the mobile with the given serial. Alias for <see cref="GetDistance"/>.</summary>
         public virtual int DistanceTo(uint serial)
         {
             _cancel.ThrowIfCancelled();
             return GetDistance(serial);
         }
 
+        /// <summary>Finds a mobile matching the given body, notoriety list, max range, and selection strategy (nearest, farthest, weakest, strongest, random).</summary>
         public virtual ScriptMobile? FindMobile(int graphic, List<byte> notoriety, int rangemax, string selector, bool highlight)
         {
             _cancel.ThrowIfCancelled();
@@ -521,6 +521,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return Wrap(result);
         }
 
+        /// <summary>Finds a mobile matching any of the given body graphics, notoriety list, max range, and selection strategy.</summary>
         public virtual ScriptMobile? FindMobile(List<int> graphics, List<byte> notoriety, int rangemax, string selector, bool highlight)
         {
             _cancel.ThrowIfCancelled();
@@ -542,6 +543,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return Wrap(result);
         }
 
+        /// <summary>Selects a single mobile from the enumerable using the specified strategy (nearest, farthest, weakest, strongest, random).</summary>
         public virtual ScriptMobile? Select(IEnumerable<Mobile> mobiles, string selector)
         {
             return Wrap(SelectInternal(mobiles, selector));
@@ -567,6 +569,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             };
         }
 
+        /// <summary>Returns the item equipped by the specified mobile on the named layer (e.g. "LeftHand", "Helm"), or null if not found.</summary>
         public virtual ScriptItem? GetItemOnLayer(uint serial, string layerName)
         {
             _cancel.ThrowIfCancelled();
@@ -574,6 +577,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return WrapItem(_world.Items.FirstOrDefault(i => i.Container == serial && i.Layer == (byte)layer));
         }
 
+        /// <summary>Returns all OPL property argument strings for the mobile with the given serial.</summary>
         public virtual List<string> GetPropStringList(uint serial)
         {
             _cancel.ThrowIfCancelled();
@@ -581,13 +585,15 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             if (m?.OPL == null) return new List<string>();
             return m.OPL.Properties.Select(p => p.Arguments).ToList();
         }
-        
+
+        /// <summary>Returns all OPL property argument strings for the given mobile object.</summary>
         public virtual List<string> GetPropStringList(Mobile mob)
         {
             if (mob == null) return new List<string>();
             return GetPropStringList(mob.Serial);
         }
 
+        /// <summary>Returns the OPL property argument string at the given zero-based index for the mobile with the given serial.</summary>
         public virtual string GetPropStringByIndex(uint serial, int index)
         {
             _cancel.ThrowIfCancelled();
@@ -597,12 +603,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return index >= 0 && index < props.Count ? props[index].Arguments : string.Empty;
         }
 
+        /// <summary>Returns the OPL property argument string at the given zero-based index for the given mobile object.</summary>
         public virtual string GetPropStringByIndex(Mobile mob, int index)
         {
             if (mob == null) return string.Empty;
             return GetPropStringByIndex(mob.Serial, index);
         }
 
+        /// <summary>Returns the numeric value of the named property from the mobile's OPL, parsing the first integer or float found.</summary>
         public virtual float GetPropValue(uint serial, string name)
         {
             _cancel.ThrowIfCancelled();
@@ -619,12 +627,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return 0;
         }
 
+        /// <summary>Returns the numeric value of the named property from the given mobile object's OPL.</summary>
         public virtual float GetPropValue(Mobile mob, string name)
         {
             if (mob == null) return 0;
             return GetPropValue(mob.Serial, name);
         }
 
+        /// <summary>Requests the OPL properties for the mobile with the given serial if not yet received. Returns true if the mobile exists.</summary>
         public virtual bool WaitForProps(uint serial, int delay)
         {
             _cancel.ThrowIfCancelled();
@@ -640,12 +650,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return true;
         }
 
+        /// <summary>Requests OPL properties for the given mobile object if not yet received. Returns true if the mobile is valid.</summary>
         public virtual bool WaitForProps(Mobile m, int delay)
         {
             if (m == null) return false;
             return WaitForProps(m.Serial, delay);
         }
 
+        /// <summary>Requests the status bar data for the mobile with the given serial if not yet received. Returns true if the mobile exists.</summary>
         public virtual bool WaitForStats(uint serial, int delay)
         {
             _cancel.ThrowIfCancelled();
@@ -659,12 +671,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return true;
         }
 
+        /// <summary>Requests the status bar data for the given mobile object if not yet received. Returns true if the mobile is valid.</summary>
         public virtual bool WaitForStats(Mobile m, int delay)
         {
             if (m == null) return false;
             return WaitForStats(m.Serial, delay);
         }
 
+        /// <summary>Sends a status request packet (0xB8) to retrieve karma/fame info for the mobile with the given serial.</summary>
         public virtual bool UpdateKarma(uint serial)
         {
             _cancel.ThrowIfCancelled();
@@ -676,52 +690,80 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             return true;
         }
 
+        /// <summary>Sends a status request packet for the given mobile object to retrieve karma/fame info.</summary>
         public virtual bool UpdateKarma(Mobile mob)
         {
             if (mob == null) return false;
             return UpdateKarma(mob.Serial);
         }
 
+        /// <summary>Holds the last known tracking information for a mobile (serial, position, timestamp).</summary>
         public class TrackingInfo
         {
+            /// <summary>X coordinate of the tracked mobile.</summary>
             public ushort x { get; set; }
+            /// <summary>Y coordinate of the tracked mobile.</summary>
             public ushort y { get; set; }
+            /// <summary>Serial of the tracked mobile.</summary>
             public uint serial { get; set; }
+            /// <summary>Timestamp of the last tracking update.</summary>
             public DateTime lastUpdate { get; set; }
         }
 
+        /// <summary>Returns the last known tracking information received from the server. Returns a default empty record if none available.</summary>
+        /// <remarks>⚠️ Stub: returns placeholder value.</remarks>
         public virtual TrackingInfo GetTrackingInfo()
         {
             _cancel.ThrowIfCancelled();
             return new TrackingInfo();
         }
 
+        /// <summary>Creates and returns a new empty <see cref="MobilesFilter"/> instance for building mobile search criteria.</summary>
         public virtual MobilesFilter Filter() => new MobilesFilter();
 
+        /// <summary>Defines filter criteria used with <see cref="ApplyFilter(MobilesFilter)"/> to query mobiles by multiple properties.</summary>
         public class MobilesFilter
         {
+            /// <summary>When false, the filter is skipped and ApplyFilter returns an empty list.</summary>
             public bool Enabled { get; set; } = true;
+            /// <summary>List of specific serials to match. Empty means no restriction.</summary>
             public List<int> Serials { get; set; } = new();
+            /// <summary>Partial name to match (case-insensitive). Empty string disables name filtering.</summary>
             public string Name { get; set; } = string.Empty;
+            /// <summary>List of body graphic IDs to match. Empty means no restriction.</summary>
             public List<int> Bodies { get; set; } = new();
+            /// <summary>Alias for <see cref="Bodies"/>.</summary>
             public List<int> Graphics { get => Bodies; set => Bodies = value; }
+            /// <summary>List of hue values to match. Empty means no restriction.</summary>
             public List<int> Hues { get; set; } = new();
+            /// <summary>Minimum tile distance from the player. -1 disables.</summary>
             public int RangeMin { get; set; } = -1;
+            /// <summary>Maximum tile distance from the player. -1 disables.</summary>
             public int RangeMax { get; set; } = -1;
+            /// <summary>List of notoriety values to match. Empty means no restriction.</summary>
             public List<byte> Notorieties { get; set; } = new();
+            /// <summary>1 = only human-bodied mobiles, -1 = only non-human, 0 = no restriction.</summary>
             public int IsHuman { get; set; } = 0;
+            /// <summary>1 = only ghost bodies, -1 = only non-ghost, 0 = no restriction.</summary>
             public int IsGhost { get; set; } = 0;
+            /// <summary>1 = only allies (notoriety 1–2), -1 = exclude allies, 0 = no restriction.</summary>
             public int IsAlly { get; set; } = 0;
+            /// <summary>1 = only enemies (notoriety 3–6), -1 = exclude enemies, 0 = no restriction.</summary>
             public int IsEnemy { get; set; } = 0;
+            /// <summary>1 = only neutral (notoriety 3), -1 = exclude neutral, 0 = no restriction.</summary>
             public int IsNeutral { get; set; } = 0;
+            /// <summary>When true, excludes dead mobiles (HP = 0).</summary>
             public bool OnlyAlive { get; set; } = false;
+            /// <summary>When true, excludes non-hostile mobiles (notoriety 1–2).</summary>
             public bool OnlyEnemy { get; set; } = false;
         }
 
+        /// <summary>Returns a pre-populated <see cref="MobilesFilter"/> for the named targeting preset. Returns an empty filter if unrecognized.</summary>
+        /// <remarks>⚠️ Stub: returns placeholder value.</remarks>
         public virtual MobilesFilter GetTargetingFilter(string target_name)
         {
             _cancel.ThrowIfCancelled();
-            return new MobilesFilter(); 
+            return new MobilesFilter();
         }
     }
 }

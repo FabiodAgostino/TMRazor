@@ -4,6 +4,7 @@ using TMRazorImproved.Shared.Interfaces;
 namespace TMRazorImproved.Core.Services.Scripting.Api
 {
     // FIX BUG-P2-02: FiltersApi ora delega ai filtri reali del profilo tramite IConfigService
+    /// <summary>Enables and disables visual/audio filters: light, sound, weather, death animation, and others.</summary>
     public class FiltersApi
     {
         private readonly IConfigService _config;
@@ -16,7 +17,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         }
 
         // TMRazor Legacy Properties
-        public virtual int AutoRemountEDelay 
+        /// <summary>Gets or sets the delay (in ms) before the AutoRemount agent tries to remount after being dismounted.</summary>
+        public virtual int AutoRemountEDelay
         { 
             get 
             {
@@ -31,7 +33,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             }
         }
 
-        public virtual int AutoRemountSerial 
+        /// <summary>Gets or sets the serial of the mount used by the AutoRemount agent.</summary>
+        public virtual int AutoRemountSerial
         { 
             get 
             {
@@ -54,6 +57,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             public int ColorNew { get; set; }
         }
 
+        /// <summary>Enables a filter by name. Valid names: light, weather, sound, death, poison, snoop, bardmusic, footsteps, karmafame, season.</summary>
         public virtual void Enable(string name)
         {
             _cancel.ThrowIfCancelled();
@@ -62,6 +66,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             SetFilter(p, name, true);
         }
 
+        /// <summary>Disables a filter by name. See <see cref="Enable"/> for valid names.</summary>
         public virtual void Disable(string name)
         {
             _cancel.ThrowIfCancelled();
@@ -70,6 +75,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             SetFilter(p, name, false);
         }
 
+        /// <summary>Returns <c>true</c> if the specified filter is currently enabled.</summary>
         public virtual bool IsEnabled(string name)
         {
             _cancel.ThrowIfCancelled();

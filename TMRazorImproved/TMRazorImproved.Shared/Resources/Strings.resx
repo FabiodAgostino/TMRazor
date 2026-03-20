@@ -3374,6 +3374,21 @@ print('HP:', Player.Hits, '/', Player.HitsMax)</value>
   <data name="Media.ScreenshotTaken" xml:space="preserve">
     <value>Screenshot captured successfully.</value>
   </data>
+  <data name="Media.StartRecording" xml:space="preserve">
+    <value>Start Recording</value>
+  </data>
+  <data name="Media.StopRecording" xml:space="preserve">
+    <value>Stop Recording</value>
+  </data>
+  <data name="Media.RecordingStarted" xml:space="preserve">
+    <value>Video recording started.</value>
+  </data>
+  <data name="Media.RecordingStopped" xml:space="preserve">
+    <value>Video recording stopped.</value>
+  </data>
+  <data name="Media.RecordingFailed" xml:space="preserve">
+    <value>Failed to start video recording.</value>
+  </data>
   <data name="Nav.MediaSettings" xml:space="preserve">
     <value>Media Settings</value>
   </data>

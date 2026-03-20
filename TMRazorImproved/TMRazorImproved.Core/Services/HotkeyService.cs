@@ -27,8 +27,10 @@ namespace TMRazorImproved.Core.Services
         private Task? _hookTask;
         private IntPtr _hookId = IntPtr.Zero;
         private NativeMethods.LowLevelKeyboardProc? _proc;
+        private volatile string? _lastActionName;
 
         public bool IsEnabled { get; set; } = true;
+        public string? LastActionName => _lastActionName;
 
         public HotkeyService(IConfigService configService, IServiceProvider serviceProvider, ILogger<HotkeyService> logger)
         {
@@ -291,6 +293,7 @@ namespace TMRazorImproved.Core.Services
 
         private void ExecuteAction(string actionName)
         {
+            _lastActionName = actionName;
             if (_registeredActions.TryGetValue(actionName, out var action))
             {
                 _logger.LogDebug("Executing hotkey action: {ActionName}", actionName);

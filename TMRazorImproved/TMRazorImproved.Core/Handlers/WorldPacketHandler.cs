@@ -27,6 +27,7 @@ namespace TMRazorImproved.Core.Handlers
         private readonly IConfigService _configService;
         private readonly IScreenCaptureService _screenCapture;
         private readonly ITargetingService _targetingService;
+        private readonly IMultiService _multiService;
         private readonly IMessenger _messenger;
 
         private readonly ConcurrentDictionary<byte, long> _sentPings = new();
@@ -41,6 +42,7 @@ namespace TMRazorImproved.Core.Handlers
             IConfigService configService,
             IScreenCaptureService screenCapture,
             ITargetingService targetingService,
+            IMultiService multiService,
             IMessenger messenger)
         {
             _packetService = packetService;
@@ -51,6 +53,7 @@ namespace TMRazorImproved.Core.Handlers
             _configService = configService;
             _screenCapture = screenCapture;
             _targetingService = targetingService;
+            _multiService = multiService;
             _messenger = messenger;
             _messenger.RegisterAll(this);
 
@@ -285,15 +288,30 @@ namespace TMRazorImproved.Core.Handlers
 
         private void HandleRelayServer(byte[] data)
         {
-            // 0x8C: ip(4) port(2) key(4) — il server reindirizza, azzeriamo il mondo
-            if (data.Length >= 7)
+            // 0x8C: cmd(1) ip(4) port(2) key(4) — totale 11 byte
+            // Il login server reindirizza il client al game server.
+            // La chiave è il seed di cifratura per la nuova connessione (rilevante per OSI).
+            if (data.Length < 11)
             {
-                string ip = $"{data[1]}.{data[2]}.{data[3]}.{data[4]}";
-                ushort port = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(5));
-                _configService.SetCurrentShard($"{ip}:{port}");
+                Trace.WriteLine($"[WorldHandler] 0x8C RelayServer — pacchetto troppo corto ({data.Length} byte)");
+                return;
             }
 
-            System.Diagnostics.Trace.WriteLine("[WorldHandler] 0x8C RelayServer — world cleared");
+            string ip = $"{data[1]}.{data[2]}.{data[3]}.{data[4]}";
+            ushort port = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(5));
+            uint encryptionKey = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(7));
+
+            _configService.SetCurrentShard($"{ip}:{port}");
+
+            // Notifica tutti i servizi interessati (es. adapter OSI per re-inizializzare cifratura)
+            _messenger.Send(new RelayServerMessage(ip, port, encryptionKey));
+
+            // Log visibile nel journal per diagnostica
+            _journalService.AddEntry(new JournalEntry(
+                $"[Relay] → {ip}:{port} (key: 0x{encryptionKey:X8})", "System", 0, 0x3B2));
+
+            Trace.WriteLine($"[WorldHandler] 0x8C RelayServer → {ip}:{port} key=0x{encryptionKey:X8}");
+            _multiService.Clear();
             _worldService.Clear();
         }
 
@@ -954,6 +972,10 @@ namespace TMRazorImproved.Core.Handlers
                 return false;
             }
 
+            // Track multi structures (houses/boats) — graphic bit 0x4000 indicates a multi
+            if ((itemId & 0x4000) != 0)
+                _multiService.AddMulti(serial, x, y, itemId);
+
             _messenger.Send(new WorldItemMessage(item));
             return true;
         }
@@ -1028,6 +1050,10 @@ namespace TMRazorImproved.Core.Handlers
                 return false;
             }
 
+            // Track multi structures (houses/boats) — artDataId == 0x02 sets bit 0x4000
+            if ((itemId & 0x4000) != 0)
+                _multiService.AddMulti(serial, x, y, itemId);
+
             _messenger.Send(new WorldItemMessage(item));
             return true;
         }
@@ -1040,6 +1066,7 @@ namespace TMRazorImproved.Core.Handlers
             reader.ReadByte(); // 0x1D
             uint serial = reader.ReadUInt32();
 
+            _multiService.RemoveMulti(serial);
             _worldService.RemoveMobile(serial);
             _worldService.RemoveItem(serial);
         }
@@ -2197,9 +2224,21 @@ namespace TMRazorImproved.Core.Handlers
 
         private void HandleMapDisplay(byte[] data)
         {
-            // 0x90 / 0xF5: cmd(1) serial(4) itemID(2) x1(2) y1(2) x2(2) y2(2) width(2) height(2) [facet(2)?]
-            // Aggiornamento mappa/cartografia — solo tracking
-            if (data.Length < 15) return;
+            // 0x90: cmd(1) serial(4) itemID(2) x1(2) y1(2) x2(2) y2(2) width(2) height(2) [facet(2)?]
+            if (data.Length < 19) return;
+            var r = new UOBufferReader(data);
+            r.ReadByte();                           // 0x90
+            uint   serial   = r.ReadUInt32();
+            ushort itemId   = r.ReadUInt16();
+            int    originX  = r.ReadUInt16();
+            int    originY  = r.ReadUInt16();
+            int    endX     = r.ReadUInt16();
+            int    endY     = r.ReadUInt16();
+            int    width    = r.ReadUInt16();
+            int    height   = r.ReadUInt16();
+            ushort facet    = data.Length >= 21 ? r.ReadUInt16() : (ushort)0;
+
+            MapDataStore.Set(new MapItemData(serial, itemId, originX, originY, endX, endY, width, height, facet));
         }
 
         private void HandleServerChange(byte[] data)
@@ -2450,6 +2489,7 @@ namespace TMRazorImproved.Core.Handlers
         private void HandleDeleteCharacter(byte[] data)
         {
             // 0x83: il server conferma la cancellazione di un personaggio. Azzeriamo il mondo.
+            _multiService.Clear();
             _worldService.Clear();
         }
 
