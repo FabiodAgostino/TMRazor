@@ -58,6 +58,13 @@ namespace TMRazorImproved.Core.Services
             while (_entries.TryDequeue(out _)) { }
         }
 
+        public void RemoveWhere(Func<JournalEntry, bool> predicate)
+        {
+            var kept = _entries.Where(e => !predicate(e)).ToList();
+            while (_entries.TryDequeue(out _)) { }
+            foreach (var e in kept) _entries.Enqueue(e);
+        }
+
         public bool Contains(string text)
         {
             return _entries.Any(e => e.Text.Contains(text, StringComparison.OrdinalIgnoreCase));

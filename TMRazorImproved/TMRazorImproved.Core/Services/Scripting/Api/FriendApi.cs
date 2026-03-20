@@ -135,5 +135,12 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             _friends.AddFriend(serial, newName); // AddFriend aggiorna se già esiste
         }
+
+        #region int-serial overloads — RazorEnhanced compatibility (TASK-FR-012)
+        public virtual bool IsFriend(int serial) => IsFriend((uint)serial);
+        public virtual void Add(int serial) => Add((uint)serial);
+        public virtual void Remove(int serial) => Remove((uint)serial);
+        public virtual void Rename(int serial, string newName) => Rename((uint)serial, newName);
+        #endregion
     }
 }

@@ -21,11 +21,12 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         private readonly ScriptCancellationController _cancel;
         private readonly ILogger<ItemsApi>? _logger;
         private readonly IMessenger _messenger;
+        private readonly IWeaponService? _weaponService;
 
         private static readonly List<int> _ignoreList = new();
 
         public ItemsApi(IWorldService world, IPacketService packet, ITargetingService targeting, ScriptCancellationController cancel,
-            ILogger<ItemsApi>? logger = null, IMessenger? messenger = null)
+            ILogger<ItemsApi>? logger = null, IMessenger? messenger = null, IWeaponService? weaponService = null)
         {
             _world = world;
             _packet = packet;
@@ -33,6 +34,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel = cancel;
             _logger = logger;
             _messenger = messenger ?? WeakReferenceMessenger.Default;
+            _weaponService = weaponService;
         }
 
         private ScriptItem? Wrap(Item? item) => item == null ? null : new ScriptItem(item, _world, _packet, _targeting);
@@ -307,6 +309,38 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         /// <summary>Returns the number of items directly inside the specified container.</summary>
         public virtual int ContainerCount(uint containerSerial) { _cancel.ThrowIfCancelled(); return _world.Items.Count(i => i.ContainerSerial == containerSerial); }
 
+        // FR-021: ContainerCount con filtro per graphic e hue (legacy semantics)
+        /// <summary>
+        /// Counts items matching the given graphic and hue inside a container, optionally recursive (FR-021).
+        /// </summary>
+        /// <param name="containerSerial">Container to search in.</param>
+        /// <param name="itemid">Graphic ID to match (-1 = any).</param>
+        /// <param name="color">Hue to match (-1 = any).</param>
+        /// <param name="recursive">If true, searches nested containers too.</param>
+        public virtual int ContainerCount(uint containerSerial, int itemid, int color = -1, bool recursive = true)
+        {
+            _cancel.ThrowIfCancelled();
+            return CountInContainer(containerSerial, itemid, color, recursive);
+        }
+
+        private int CountInContainer(uint containerSerial, int itemid, int color, bool recursive)
+        {
+            int count = 0;
+            foreach (var item in _world.Items.Where(i => i.ContainerSerial == containerSerial))
+            {
+                if ((itemid < 0 || item.Graphic == (ushort)itemid) && (color < 0 || item.Hue == (ushort)color))
+                    count++;
+                if (recursive && item.IsContainer)
+                    count += CountInContainer(item.Serial, itemid, color, true);
+            }
+            return count;
+        }
+
+        // FR-021 int overload
+        /// <summary>Counts items matching the given graphic and hue inside a container, optionally recursive.</summary>
+        public virtual int ContainerCount(int containerSerial, int itemid, int color = -1, bool recursive = true)
+            => ContainerCount((uint)containerSerial, itemid, color, recursive);
+
         /// <summary>Returns all items matching the optional graphic, hue, container, and range filters.</summary>
         public virtual List<ScriptItem> ApplyFilter(int graphic = -1, int hue = -1, uint container = 0, int range = -1)
         {
@@ -461,5 +495,140 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             /// <summary>Serial to exclude from results. -1 disables exclusion.</summary>
             public int ExcludeSerial { get; set; } = -1;
         }
+
+        // FR-018: Select(List<ScriptItem>, string selector) — selects best item from a list
+        /// <summary>
+        /// Selects and returns the best item from the list using the given selector strategy.
+        /// Selectors: Nearest, Farthest, Less (min amount), Most (max amount), Lightest (min weight), Heaviest (max weight), Random.
+        /// </summary>
+        public virtual ScriptItem? Select(IEnumerable<ScriptItem> items, string selector)
+        {
+            _cancel.ThrowIfCancelled();
+            var list = items?.ToList();
+            if (list == null || list.Count == 0) return null;
+            var player = _world.Player;
+            int Dist(ScriptItem i) => player == null ? 0 : Math.Max(Math.Abs(i.X - player.X), Math.Abs(i.Y - player.Y));
+            return selector.ToLowerInvariant() switch
+            {
+                "nearest"   => list.OrderBy(Dist).First(),
+                "farthest"  => list.OrderByDescending(Dist).First(),
+                "less"      => list.OrderBy(i => i.Amount).First(),
+                "most"      => list.OrderByDescending(i => i.Amount).First(),
+                "lightest"  => list.OrderBy(i => i.Weight).First(),
+                "heaviest"  => list.OrderByDescending(i => i.Weight).First(),
+                "random"    => list[new Random().Next(list.Count)],
+                _           => list.OrderBy(Dist).First()
+            };
+        }
+
+        /// <summary>Selects the best item from a Python/dynamic list using the given selector strategy (FR-018).</summary>
+        public virtual ScriptItem? Select(System.Collections.IList items, string selector)
+        {
+            _cancel.ThrowIfCancelled();
+            if (items == null) return null;
+            var typed = items.Cast<ScriptItem>().ToList();
+            // Call implementation directly to avoid ambiguity with IEnumerable<ScriptItem> overload
+            return Select((IEnumerable<ScriptItem>)typed, selector);
+        }
+
+        // FR-020: GetWeaponAbility — returns (primary, secondary) from WeaponInfo
+        /// <summary>
+        /// Returns a tuple-like object with Primary and Secondary ability names for the given item graphic.
+        /// Requires weapons.json data to be loaded (FR-020).
+        /// </summary>
+        public virtual (string Primary, string Secondary) GetWeaponAbility(int itemId)
+        {
+            _cancel.ThrowIfCancelled();
+            if (_weaponService != null)
+            {
+                var info = _weaponService.GetWeaponInfo((ushort)itemId);
+                if (info != null) return (info.Primary, info.Secondary);
+            }
+            return (string.Empty, string.Empty);
+        }
+
+        // FR-019: GetImage — returns a Bitmap of the item art with optional hue applied (mirrors legacy Item.GetImage)
+        /// <summary>
+        /// Returns a <see cref="Ultima.Data.Bitmap"/> of the static art for <paramref name="itemID"/> with the
+        /// specified <paramref name="hue"/> applied.  When <paramref name="hue"/> is 0 the unmodified cached bitmap
+        /// is returned.  Returns <c>null</c> if the art cannot be loaded.
+        /// </summary>
+        public virtual Ultima.Data.Bitmap? GetImage(int itemID, int hue = 0)
+        {
+            try
+            {
+                Ultima.Data.Bitmap? bitmapOriginal = Ultima.Art.GetStatic(itemID);
+                if (bitmapOriginal == null) return null;
+
+                if (hue <= 0) return bitmapOriginal;
+
+                // Clone so the cached original is not modified
+                Ultima.Data.Bitmap bitmapCopy = new(bitmapOriginal);
+                bool onlyGray = (hue & 0x8000) != 0;
+                int hueIndex = (hue & 0x3FFF) - 1;
+                Ultima.Hues.GetHue(hueIndex).ApplyTo(bitmapCopy, onlyGray);
+                return bitmapCopy;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "Items.GetImage() failed for itemID={ItemID} hue={Hue}", itemID, hue);
+                return null;
+            }
+        }
+
+        #region int-serial overloads — RazorEnhanced compatibility (TASK-FR-012)
+        public virtual ScriptItem? FindBySerial(int serial) => FindBySerial((uint)serial);
+        public virtual ScriptItem? FindByID(int graphic, int hue, int container, int range) => FindByID(graphic, hue, (uint)container, range);
+        public virtual ScriptItem? FindByID(int graphic, int hue, int container, bool recurse) => FindByID(graphic, hue, (uint)container, recurse);
+        public virtual List<ScriptItem> FindAllByID(int graphic, int hue, int container, bool recurse = true) => FindAllByID(graphic, hue, (uint)container, recurse);
+        public virtual ScriptItem? FindByID(System.Collections.IEnumerable graphics, int hue, int container, bool recurse = true) => FindByID(graphics, hue, (uint)container, recurse);
+        public virtual List<ScriptItem> FindAllByID(System.Collections.IEnumerable graphics, int hue, int container, bool recurse = true) => FindAllByID(graphics, hue, (uint)container, recurse);
+        public virtual bool WaitForContents(int serial, int timeout = 5000) => WaitForContents((uint)serial, timeout);
+        public virtual bool WaitForID(int graphic, int hue, int container, int timeout = 5000) => WaitForID(graphic, hue, (uint)container, timeout);
+        public virtual void UseItem(int serial) => UseItem((uint)serial);
+        public virtual void Click(int serial) => Click((uint)serial);
+        public virtual void Move(int serial, int targetContainer, int amount = 1) => Move((uint)serial, (uint)targetContainer, amount);
+        public virtual void Move(int serial, int targetContainer, int amount, int x, int y) => Move((uint)serial, (uint)targetContainer, amount, x, y);
+        public virtual void Lift(int serial, int amount = 1) => Lift((uint)serial, amount);
+        public virtual void Drop(int serial, int targetContainer, int amount = 1) => Drop((uint)serial, (uint)targetContainer, amount);
+        public virtual void Drop(int serial, int targetContainer, int amount, int x, int y) => Drop((uint)serial, (uint)targetContainer, amount, x, y);
+        public virtual int ContainerCount(int containerSerial) => ContainerCount((uint)containerSerial);
+        public virtual List<ScriptItem> GetItems(int containerSerial) => GetItems((uint)containerSerial);
+        public virtual bool IsInContainer(int serial, int containerSerial) => IsInContainer((uint)serial, (uint)containerSerial);
+        public virtual uint GetContainer(int serial) => GetContainer((uint)serial);
+        public virtual List<ScriptItem> FilterByContainer(int containerSerial) => FilterByContainer((uint)containerSerial);
+        public virtual void Hide(int serial) => Hide((uint)serial);
+        public virtual void Close(int serial) => Close((uint)serial);
+        public virtual List<string> GetPropStringList(int serial) => GetPropStringList((uint)serial);
+        public virtual string GetPropStringByIndex(int serial, int index) => GetPropStringByIndex((uint)serial, index);
+        public virtual string GetPropValueString(int serial, string name) => GetPropValueString((uint)serial, name);
+        public virtual string GetPropString(int serial, string name) => GetPropString((uint)serial, name);
+        public virtual int GetPropValue(int serial, string name) => GetPropValue((uint)serial, name);
+        public virtual bool Exists(int serial) => Exists((uint)serial);
+        public virtual string GetName(int serial) => GetName((uint)serial);
+        public virtual int GetAmount(int serial) => GetAmount((uint)serial);
+        public virtual bool IsOnGround(int serial) => IsOnGround((uint)serial);
+        public virtual int GetGraphic(int serial) => GetGraphic((uint)serial);
+        public virtual int GetHue(int serial) => GetHue((uint)serial);
+        public virtual int GetLayer(int serial) => GetLayer((uint)serial);
+        public virtual Point3D GetWorldPosition(int serial) => GetWorldPosition((uint)serial);
+        public virtual void SingleClick(int serial) => SingleClick((uint)serial);
+        public virtual void SetColor(int serial, int color) => SetColor((uint)serial, color);
+        public virtual void Color(int serial, int color) => Color((uint)serial, color);
+        public virtual void ChangeDyeingTubColor(int serial, int color) => ChangeDyeingTubColor((uint)serial, color);
+        public virtual void OpenAt(int serial, int x, int y) => OpenAt((uint)serial, x, y);
+        public virtual void OpenContainerAt(int serial, int x, int y) => OpenContainerAt((uint)serial, x, y);
+        public virtual void DropItemGroundSelf(int serial, int amount = 1) => DropItemGroundSelf((uint)serial, amount);
+        public virtual void DropFromHand(int serial) => DropFromHand((uint)serial);
+        public virtual void MoveOnGround(int serial, int x, int y, int z) => MoveOnGround((uint)serial, x, y, z);
+        public virtual void MoveOnGround(int serial, int x, int y, int z, int amount) => MoveOnGround((uint)serial, x, y, z, amount);
+        public virtual void Message(int serial, int hue, string message) => Message((uint)serial, hue, message);
+        public virtual int ContextExist(int serial, string name) => ContextExist((uint)serial, name);
+        public virtual bool ContainerExists(int serial) => ContainerExists((uint)serial);
+        public virtual int DistanceTo(int serial1, int serial2) => DistanceTo((uint)serial1, (uint)serial2);
+        public virtual List<string> GetProperties(int serial) => GetProperties((uint)serial);
+        public virtual bool IsChildOf(int childSerial, int parentSerial) => IsChildOf((uint)childSerial, (uint)parentSerial);
+        public virtual void Select(int serial) => Select((uint)serial);
+        #endregion
     }
 }

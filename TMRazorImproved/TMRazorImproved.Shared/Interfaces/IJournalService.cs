@@ -12,6 +12,7 @@ namespace TMRazorImproved.Shared.Interfaces
         bool Contains(string text);
         JournalEntry? GetLast();
         
+        void RemoveWhere(Func<JournalEntry, bool> predicate);
         void AddFilter(string text);
         void RemoveFilter(string text);
         IEnumerable<string> GetFilters();

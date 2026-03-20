@@ -21,6 +21,8 @@ namespace TMRazorImproved.Core.Services
         private readonly ILogger<DressService> _logger;
         
         private readonly ConcurrentQueue<ActionTask> _actionQueue = new();
+        // FR-041: track whether current op is dress (true) or undress (false)
+        private volatile bool _isDressingNow;
 
         private record ActionTask(uint Serial, byte Layer, bool IsDress);
 
@@ -81,6 +83,17 @@ namespace TMRazorImproved.Core.Services
             var list = _configService.CurrentProfile.DressLists.FirstOrDefault(l => l.Name == listName);
             if (list == null) return;
 
+            _isDressingNow = true;
+
+            // FR-040: UO3D batch equip — send a single EquipItemMacro packet if Use3D is enabled
+            if (list.Use3D && list.LayerItems.Count > 0)
+            {
+                var serials = list.LayerItems.Values.ToList();
+                _packetService.SendToServer(PacketBuilder.EquipItemMacro(serials));
+                _logger.LogDebug("Dress (UO3D): sent EquipItemMacro for {Count} items", serials.Count);
+                return;
+            }
+
             foreach (var kvp in list.LayerItems)
             {
                 _actionQueue.Enqueue(new ActionTask(kvp.Value, kvp.Key, true));
@@ -94,6 +107,17 @@ namespace TMRazorImproved.Core.Services
             var list = _configService.CurrentProfile.DressLists.FirstOrDefault(l => l.Name == listName);
             if (list == null) return;
 
+            _isDressingNow = false;
+
+            // FR-040: UO3D batch undress — send a single UnEquipItemMacro packet if Use3D is enabled
+            if (list.Use3D && list.LayerItems.Count > 0)
+            {
+                var layers = list.LayerItems.Keys.ToList();
+                _packetService.SendToServer(PacketBuilder.UnEquipItemMacro(layers));
+                _logger.LogDebug("Undress (UO3D): sent UnEquipItemMacro for {Count} layers", layers.Count);
+                return;
+            }
+
             foreach (var kvp in list.LayerItems)
             {
                 _actionQueue.Enqueue(new ActionTask(kvp.Value, kvp.Key, false));
@@ -101,6 +125,38 @@ namespace TMRazorImproved.Core.Services
 
             if (!IsRunning) Start();
         }
+
+        // FR-039: captures current player equipment into the active dress list
+        public void ReadPlayerDress()
+        {
+            var player = _worldService.Player;
+            if (player == null)
+            {
+                _logger.LogWarning("ReadPlayerDress: player not logged in");
+                return;
+            }
+
+            var config = GetActiveConfig();
+            if (config == null) return;
+
+            config.LayerItems.Clear();
+
+            // layers 1..0x1A cover all equip slots; skip layer 0 (unequipped/on ground)
+            var equippedItems = _worldService.Items
+                .Where(i => i.Container == player.Serial && i.Layer > 0 && i.Layer <= 0x1A);
+
+            foreach (var item in equippedItems)
+            {
+                config.LayerItems[item.Layer] = item.Serial;
+            }
+
+            _logger.LogInformation("ReadPlayerDress: captured {Count} items into list '{List}'",
+                config.LayerItems.Count, config.Name);
+        }
+
+        // FR-041: separate dress/undress status tracking
+        public bool DressStatus() => IsRunning && _isDressingNow;
+        public bool UnDressStatus() => IsRunning && !_isDressingNow;
 
         protected override async Task AgentLoopAsync(CancellationToken token)
         {

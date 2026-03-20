@@ -542,6 +542,16 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void ChatAlliance(string message) => SendSpeech(message, 0x0E, 0x057);
         /// <summary>Sends a message to the current UO chat channel.</summary>
         public virtual void ChatChannel(string message)  => SendSpeech(message, 0x0C, 0x034);
+
+        // FR-016: Chat overloads with integer cliloc message ID — resolve to string form for compatibility
+        /// <summary>Sends a chat emote using a cliloc message ID and hue (legacy overload).</summary>
+        public virtual void ChatEmote(int color, int msgId) => ChatEmote(msgId.ToString(), color);
+        /// <summary>Sends a chat whisper using a cliloc message ID and hue (legacy overload).</summary>
+        public virtual void ChatWhisper(int color, int msgId) => ChatWhisper(msgId.ToString(), color);
+        /// <summary>Sends a chat yell using a cliloc message ID and hue (legacy overload).</summary>
+        public virtual void ChatYell(int color, int msgId) => ChatYell(msgId.ToString(), color);
+        /// <summary>Sends a chat channel message using a cliloc message ID (legacy overload).</summary>
+        public virtual void ChatChannel(int msgId) => ChatChannel(msgId.ToString());
         /// <summary>Alias for <see cref="ChatSay"/> — sends a normal public speech message.</summary>
         public virtual void MapSay(string message)       => ChatSay(message);
 
@@ -644,10 +654,12 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         }
 
         /// <summary>Accepts a party invitation from the given serial (or the pending invite if serial is 0).</summary>
-        public virtual void PartyAccept(uint fromSerial = 0)
+        // FR-017: PartyAccept returns bool (legacy compatibility)
+        public virtual bool PartyAccept(uint fromSerial = 0)
         {
             _cancel.ThrowIfCancelled();
             _packet.SendToServer(new byte[] { 0xBF, 0x00, 0x0A, 0x00, 0x06, 0x02, (byte)(fromSerial >> 24), (byte)(fromSerial >> 16), (byte)(fromSerial >> 8), (byte)fromSerial });
+            return true;
         }
 
         /// <summary>Removes the player from the current party by sending a leave packet.</summary>
@@ -659,23 +671,31 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
 
         /// <summary>Sends a run movement request in the specified direction (includes the run flag in the direction byte).</summary>
         /// <param name="direction">Direction name (e.g., "North", "East", "South", "West").</param>
-        public virtual void Run(string direction)
+        /// <returns>True if direction was valid and packet sent (FR-017 legacy compatibility).</returns>
+        public virtual bool Run(string direction)
         {
             _cancel.ThrowIfCancelled();
             if (Enum.TryParse<TMRazorImproved.Shared.Enums.Direction>(direction, true, out var dir))
             {
                 byte d = (byte)((byte)dir | (byte)TMRazorImproved.Shared.Enums.Direction.Running);
                 _packet.SendToServer(new byte[] { 0x02, d, 0x00 });
+                return true;
             }
+            return false;
         }
 
         /// <summary>Sends a walk movement request one tile in the specified direction.</summary>
         /// <param name="direction">Direction name (e.g., "North", "East", "South", "West").</param>
-        public virtual void Walk(string direction)
+        /// <returns>True if direction was valid and packet sent (FR-017 legacy compatibility).</returns>
+        public virtual bool Walk(string direction)
         {
             _cancel.ThrowIfCancelled();
             if (Enum.TryParse<TMRazorImproved.Shared.Enums.Direction>(direction, true, out var dir))
+            {
                 _packet.SendToServer(new byte[] { 0x02, (byte)dir, 0x00 });
+                return true;
+            }
+            return false;
         }
 
         /// <summary>Turns the player character to face the given direction without moving.</summary>
@@ -785,6 +805,92 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             if (val != 0) _packet.SendToServer(new byte[] { 0xBF, 0x00, 0x05, 0x00, val });
         }
 
+        // Static counter for Next/Previous selectors (shared across calls, legacy-compatible)
+        private static int _attackTypeLastIdx = -1;
+
+        /// <summary>
+        /// Finds a mobile matching the given graphic within range and attacks it using the specified selector strategy.
+        /// Selector values: Nearest, Farthest, Weakest, Strongest, Random, Next, Previous.
+        /// </summary>
+        /// <param name="graphic">Mobile body graphic (0 = any).</param>
+        /// <param name="rangemax">Maximum tile range from player.</param>
+        /// <param name="selector">Selection strategy: Nearest, Farthest, Weakest, Strongest, Random, Next, Previous.</param>
+        /// <param name="color">List of allowed hues; null or empty = any hue.</param>
+        /// <param name="notoriety">List of allowed notoriety bytes (1-6); null or empty = any.</param>
+        /// <returns>True if a target was found and attacked.</returns>
+        public virtual bool AttackType(int graphic, int rangemax, string selector, List<int>? color = null, List<byte>? notoriety = null)
+        {
+            _cancel.ThrowIfCancelled();
+            var player = _world.Player;
+            if (player == null) return false;
+
+            var candidates = _world.Mobiles
+                .Where(m => m.Serial != player.Serial)
+                .Where(m => graphic <= 0 || m.Graphic == (ushort)graphic)
+                .Where(m => color == null || color.Count == 0 || color.Contains((int)m.Hue))
+                .Where(m => notoriety == null || notoriety.Count == 0 || notoriety.Contains(m.Notoriety))
+                .Where(m => m.DistanceTo(player) <= rangemax)
+                .ToList();
+
+            if (candidates.Count == 0) return false;
+
+            Mobile? target = ApplyMobileSelector(candidates, selector, player);
+            if (target == null) return false;
+
+            _targeting.LastTarget = target.Serial;
+            Attack(target.Serial);
+            return true;
+        }
+
+        /// <summary>
+        /// Finds a mobile matching any of the given graphics within range and attacks it using the specified selector strategy.
+        /// </summary>
+        /// <param name="graphics">List of mobile body graphics (empty = any).</param>
+        /// <param name="rangemax">Maximum tile range from player.</param>
+        /// <param name="selector">Selection strategy: Nearest, Farthest, Weakest, Strongest, Random, Next, Previous.</param>
+        /// <param name="color">List of allowed hues; null or empty = any hue.</param>
+        /// <param name="notoriety">List of allowed notoriety bytes (1-6); null or empty = any.</param>
+        /// <returns>True if a target was found and attacked.</returns>
+        public virtual bool AttackType(List<int> graphics, int rangemax, string selector, List<int>? color = null, List<byte>? notoriety = null)
+        {
+            _cancel.ThrowIfCancelled();
+            var player = _world.Player;
+            if (player == null) return false;
+
+            var candidates = _world.Mobiles
+                .Where(m => m.Serial != player.Serial)
+                .Where(m => graphics == null || graphics.Count == 0 || graphics.Contains((int)m.Graphic))
+                .Where(m => color == null || color.Count == 0 || color.Contains((int)m.Hue))
+                .Where(m => notoriety == null || notoriety.Count == 0 || notoriety.Contains(m.Notoriety))
+                .Where(m => m.DistanceTo(player) <= rangemax)
+                .ToList();
+
+            if (candidates.Count == 0) return false;
+
+            Mobile? target = ApplyMobileSelector(candidates, selector, player);
+            if (target == null) return false;
+
+            _targeting.LastTarget = target.Serial;
+            Attack(target.Serial);
+            return true;
+        }
+
+        private Mobile? ApplyMobileSelector(List<Mobile> candidates, string selector, Mobile player)
+        {
+            if (candidates.Count == 0) return null;
+            return selector.ToLowerInvariant() switch
+            {
+                "nearest"   => candidates.OrderBy(m => m.DistanceTo(player)).First(),
+                "farthest"  => candidates.OrderByDescending(m => m.DistanceTo(player)).First(),
+                "weakest"   => candidates.OrderBy(m => m.Hits).First(),
+                "strongest" => candidates.OrderByDescending(m => m.Hits).First(),
+                "random"    => candidates[new Random().Next(candidates.Count)],
+                "next"      => candidates[(_attackTypeLastIdx = (_attackTypeLastIdx + 1) % candidates.Count)],
+                "previous"  => candidates[(_attackTypeLastIdx = (_attackTypeLastIdx - 1 + candidates.Count) % candidates.Count)],
+                _           => candidates.OrderBy(m => m.DistanceTo(player)).First()
+            };
+        }
+
         /// <summary>Sends the "equip last weapon" command (packet 0xBF sub 0x16) to re-equip the previously held weapon.</summary>
         public virtual void EquipLastWeapon()
         {
@@ -814,7 +920,33 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         }
 
         /// <summary>Clears the internal corpse tracking list. No-op in current implementation.</summary>
-        public virtual void ClearCorpseList() { _cancel.ThrowIfCancelled(); }
+        // FR-015: Corpse tracking — populated by WorldPacketHandler on 0x2C (death) or by manual add
+        private static readonly System.Collections.Generic.HashSet<uint> _corpseSerials = new();
+
+        /// <summary>
+        /// Set of serials of corpse items tracked since the last ClearCorpseList() call.
+        /// Also includes any corpse items (graphic 0x2006) currently visible in the world near the player.
+        /// </summary>
+        public virtual System.Collections.Generic.IReadOnlyCollection<uint> Corpses
+        {
+            get
+            {
+                _cancel.ThrowIfCancelled();
+                // Merge manually tracked serials with world corpse items (graphic 0x2006)
+                var worldCorpses = _world.Items
+                    .Where(i => i.Graphic == 0x2006)
+                    .Select(i => i.Serial);
+                var result = new System.Collections.Generic.HashSet<uint>(_corpseSerials);
+                foreach (var s in worldCorpses) result.Add(s);
+                return result;
+            }
+        }
+
+        /// <summary>Adds a serial to the tracked corpse list (called internally when a mobile death is detected).</summary>
+        public static void TrackCorpse(uint serial) => _corpseSerials.Add(serial);
+
+        /// <summary>Clears the internal corpse tracking list.</summary>
+        public virtual void ClearCorpseList() { _cancel.ThrowIfCancelled(); _corpseSerials.Clear(); }
 
         /// <summary>Equips a list of items by their serials, one by one (UO3D-style bulk equip).</summary>
         /// <param name="serials">List of item serials to equip.</param>
@@ -1154,5 +1286,19 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             }
             return 0;
         }
+
+        #region int-serial overloads — RazorEnhanced compatibility (TASK-FR-012)
+        public virtual int DistanceTo(int serial) => DistanceTo((uint)serial);
+        public virtual bool InRange(int serial, int range) => InRange((uint)serial, range);
+        public virtual bool InRangeMobile(int serial, int range) => InRangeMobile((uint)serial, range);
+        public virtual bool InRangeItem(int serial, int range) => InRangeItem((uint)serial, range);
+        public virtual void Attack(int serial) => Attack((uint)serial);
+        public virtual void KickMember(int serial) => KickMember((uint)serial);
+        public virtual void SetStaticMount(int serial) => SetStaticMount((uint)serial);
+        public virtual void Bandage(int targetSerial) => Bandage((uint)targetSerial);
+        public virtual void OpenContainer(int serial) => OpenContainer((uint)serial);
+        public virtual void EquipItem(int serial) => EquipItem((uint)serial);
+        public virtual void UseSkill(string skillName, int targetSerial) => UseSkill(skillName, (uint)targetSerial);
+        #endregion
     }
 }

@@ -123,6 +123,51 @@ namespace TMRazorImproved.Core.Services
             OnComplete?.Invoke();
         }
 
+        // FR-042: one-shot organizer pass with explicit source/dest/delay
+        public void RunOnce(string listName, uint sourceSerial, uint destSerial, int delayMs)
+        {
+            var profile = _configService.CurrentProfile;
+            var config = profile?.OrganizerLists.FirstOrDefault(l => l.Name == listName);
+            if (config == null)
+            {
+                _logger.LogWarning("Organizer.RunOnce: list '{Name}' not found", listName);
+                return;
+            }
+
+            uint src = sourceSerial != 0 ? sourceSerial : config.Source;
+            uint dst = destSerial != 0 ? destSerial : config.Destination;
+            int delay = delayMs > 0 ? delayMs : Math.Max(100, config.Delay);
+
+            _ = Task.Run(async () =>
+            {
+                var sourceItems = _worldService.GetItemsInContainer(src).ToList();
+                if (config.ItemList.Count == 0)
+                {
+                    foreach (var item in sourceItems)
+                    {
+                        await MoveItemAsync(item.Serial, item.Amount, dst);
+                        await Task.Delay(delay);
+                    }
+                }
+                else
+                {
+                    foreach (var ci in config.ItemList.Where(li => li.IsEnabled))
+                    {
+                        int remaining = ci.Amount == -1 ? int.MaxValue : ci.Amount;
+                        foreach (var item in sourceItems.Where(i => i.Graphic == (uint)ci.Graphic && (ci.Color == -1 || i.Hue == ci.Color)))
+                        {
+                            if (remaining <= 0) break;
+                            ushort toMove = (ushort)Math.Min(item.Amount, remaining);
+                            await MoveItemAsync(item.Serial, toMove, dst);
+                            remaining -= toMove;
+                            await Task.Delay(delay);
+                        }
+                    }
+                }
+                OnComplete?.Invoke();
+            });
+        }
+
         private async Task<bool> MoveItemAsync(uint serial, ushort amount, uint targetContainer)
         {
             return await _dragDropCoordinator.RequestDragDrop(serial, targetContainer, amount);

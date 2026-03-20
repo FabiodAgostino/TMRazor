@@ -253,9 +253,9 @@
 
 ### NOTA CRITICA: Cambio Tipo Seriale `int` -> `uint`
 
-#### TASK-FR-012: Breaking Change Pervasivo int -> uint
+#### TASK-FR-012: Breaking Change Pervasivo int -> uint ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: TUTTE le API in `Razor/RazorEnhanced/`
-- **Stato nel Nuovo Codice**: ⛔ Discrepanza Strutturale
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti overload `int` per tutti i metodi serial-taking in ItemsApi, MobilesApi, PlayerApi, TargetApi, SpellsApi, MiscApi, FriendApi, JournalApi, SoundApi via `#region int-serial overloads` (opzione 1 consigliata). Build Core: 0 errori.
 - **Dettaglio**: TUTTE le API nel nuovo codice usano `uint` per i seriali dove il legacy usava `int`. Questo e un cambio pervasivo che influenza OGNI API.
 - **Impatto Utente**: **CRITICO** - Script Python possono funzionare grazie al typing dinamico, ma script C# con `int serial` non compileranno. Confronti come `serial == -1` o `serial == 0` potrebbero comportarsi diversamente.
 - **Documentazione per Junior Dev**: Due opzioni:
@@ -264,9 +264,9 @@
 
 ### NOTA CRITICA: Cambio Namespace Gumps -> Gump
 
-#### TASK-FR-013: Breaking Change Namespace Gumps
+#### TASK-FR-013: Breaking Change Namespace Gumps ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Gumps.cs` (nome classe: `Gumps`)
-- **Stato nel Nuovo Codice**: ⛔ Discrepanza Strutturale (nome classe: `Gump` singolare)
+- **Stato nel Nuovo Codice**: ✅ Implementato — `ScriptGlobals.cs` riga 20: `public GumpsApi Gumps { get => Gump; set => Gump = value; }` — alias bidirezionale già presente. Per Python, lo scope IronPython riceve `Gumps` tramite ScriptGlobals. Build verificata.
 - **Dettaglio**: Ogni script che chiama `Gumps.HasGump()`, `Gumps.SendGump()`, etc. fallira con `NameError: name 'Gumps' is not defined`.
 - **Impatto Utente**: **TUTTI** gli script che usano l'API Gumps non funzioneranno.
 - **Documentazione per Junior Dev**: In `ScriptGlobals.cs` o nel setup dello scope Python, aggiungere un alias: `scope.SetVariable("Gumps", scope.GetVariable("Gump"))`. Per C#, creare una classe wrapper `public static class Gumps` che delega a `Gump`.
@@ -282,30 +282,30 @@
 
 **Metodi presenti**: TrackingArrow, Area, Zone, ToggleAlwaysRun, DistanceTo, InRange/InRangeMobile/InRangeItem, GetSkillValue, GetRealSkillValue, GetSkillCap, GetSkillStatus, SetSkillStatus, GetStatStatus, SetStatStatus, BuffsExist, GetBuffInfo, BuffTime, SpellIsEnabled, Buffs, BuffsInfo, UnEquipItemByLayer, EquipItem, EquipUO3D, UnEquipUO3D, GetItemOnLayer, ChatSay/ChatWhisper/ChatYell/ChatEmote/ChatChannel/ChatParty, PartyInvite, PartyAccept, LeaveParty, KickMember, PartyCanLoot, SetWarMode, Attack, AttackLast, InvokeVirtue, Run, Walk, PathFindTo, Fly, HeadMessage, OpenPaperDoll, QuestButton, GuildButton, EquipLastWeapon, WeaponPrimarySA/SecondarySA/ClearSA/DisarmSA/StunSA, SumAttribute, GetPropStringList, GetPropStringByIndex, GetPropValue, ClearCorpseList, SetStaticMount.
 
-#### TASK-FR-014: Player.AttackType() Overload Complessi Mancanti
+#### TASK-FR-014: Player.AttackType() Overload Complessi Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Player.cs` -> `AttackType(int graphic, int rangemax, string selector, ...)`
-- **Stato nel Nuovo Codice**: ⚠️ Incompleto
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti `AttackType(int graphic, int rangemax, string selector, List<int>? color, List<byte>? notoriety)` e `AttackType(List<int> graphics, ...)` in `PlayerApi.cs`. Selectors: Nearest/Farthest/Weakest/Strongest/Random/Next/Previous. Helper privato `ApplyMobileSelector()`. Build: 0 errori.
 - **Dettaglio**: Il legacy ha overload complessi di `AttackType` che trovano e attaccano mobile per graphic/color/notorieta con selettori (Nearest/Farthest/Weakest/Strongest/Random). Il nuovo ha solo `AttackType(string type)` per "disarm"/"grapple".
 - **Impatto Utente**: Script di combattimento che usano `Player.AttackType(0x00EC, 10, "Nearest")` per attaccare il nemico piu vicino di un certo tipo **non funzioneranno**.
 - **Documentazione per Junior Dev**: In `PlayerApi.cs`, aggiungere overload `AttackType(int graphic, int rangemax, string selector, int color = -1, int notoriety = -1)`. La logica deve: 1) Usare `_worldService` per ottenere i mobile nel range, 2) Filtrare per graphic/color/notoriety, 3) Applicare il selettore (Nearest = min distanza, etc.), 4) Chiamare `Attack(serial)` sul risultato. Referenziare `Player.cs` legacy per i selettori (cerca `AttackType`).
 
-#### TASK-FR-015: Player.Corpses Property Mancante
+#### TASK-FR-015: Player.Corpses Property Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Player.cs` -> `Corpses` (HashSet)
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `Corpses` property in `PlayerApi.cs` restituisce merge di `_corpseSerials` (HashSet statico) + corpse items in world (graphic 0x2006). `TrackCorpse(uint)` statico per hook WorldPacketHandler. `ClearCorpseList()` ora svuota il set.
 - **Dettaglio**: La proprieta `Corpses` traccia i seriali dei cadaveri uccisi dal player. Non presente nel nuovo.
 - **Impatto Utente**: Script di looting che usano `Player.Corpses` per iterare i cadaveri recenti non funzioneranno.
 - **Documentazione per Junior Dev**: Aggiungere `HashSet<uint> CorpseSerials` nel modello `Mobile` (UOEntity.cs) e una proprieta `Corpses` in `PlayerApi.cs` che la espone. Popolarla in `WorldPacketHandler` quando si riceve un pacchetto di morte (0x2C).
 
-#### TASK-FR-016: Player Chat Overload Interi Mancanti
+#### TASK-FR-016: Player Chat Overload Interi Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Player.cs` -> `ChatEmote(int color, int msg)`, `ChatWhisper(int color, int msg)`, `ChatYell(int color, int msg)`, `ChatChannel(int msg)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti overload `ChatEmote(int,int)`, `ChatWhisper(int,int)`, `ChatYell(int,int)`, `ChatChannel(int)` in `PlayerApi.cs`. Usano msgId.ToString() come testo (cliloc resolution stub).
 - **Dettaglio**: Overload che accettano ID messaggio intero (da cliloc) invece di stringa. Solo le versioni stringa esistono.
 - **Impatto Utente**: Script che usano ID messaggio localizzato per le chat non funzioneranno. Impatto **basso** (pochi script usano questa variante).
 - **Documentazione per Junior Dev**: In `PlayerApi.cs`, aggiungere overload come `ChatEmote(int color, int msgId)` che risolvono il cliloc ID in stringa e chiamano la versione stringa.
 
-#### TASK-FR-017: Differenze Tipo Ritorno in Player API
+#### TASK-FR-017: Differenze Tipo Ritorno in Player API ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Player.cs`
-- **Stato nel Nuovo Codice**: ⚠️ Incompleto
+- **Stato nel Nuovo Codice**: ✅ Implementato — `Run()` e `Walk()` ora ritornano `bool` (true se direzione valida e pacchetto inviato); `PartyAccept()` ritorna `bool true`. Build: 0 errori.
 - **Dettaglio**: Alcune signature hanno tipi ritorno diversi:
   - `PartyAccept` ritorna `bool` nel legacy, `void` nel nuovo
   - `Run`/`Walk` ritornano `bool` nel legacy, `void` nel nuovo
@@ -321,30 +321,30 @@
 
 **Metodi presenti**: FindBySerial, FindByID (overload multipli), FindAllByID, WaitForContents, UseItem, UseItemByID, Move (overload multipli), MoveOnGround, Lift, SingleClick, GetPropStringList, GetPropStringByIndex, GetPropValue, GetPropValueString, WaitForProps, Message, Hide, Close, OpenAt/OpenContainerAt, ContainerCount, BackpackCount, ApplyFilter, SetColor/Color, ChangeDyeingTubColor, DropItemGroundSelf, DropFromHand, FindByName, ContextExist, IgnoreTypes.
 
-#### TASK-FR-018: Items.Select() con Selettore Mancante
+#### TASK-FR-018: Items.Select() con Selettore Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Item.cs` -> `Select(List<Item> items, string selector)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `Select(IEnumerable<ScriptItem>, string)` e `Select(IList, string)` in `ItemsApi.cs`. Selectors: Nearest/Farthest/Less/Most/Lightest/Heaviest/Random.
 - **Dettaglio**: Il legacy ha `Select(List<Item>, string)` dove selector puo essere "Nearest"/"Farthest"/"Less"/"Most"/"Lightest"/"Heaviest". Il nuovo ha solo `Select(uint serial)` che e una cosa diversa.
 - **Impatto Utente**: Script che filtrano liste di item per prossimita/peso/quantita non funzioneranno.
 - **Documentazione per Junior Dev**: In `ItemsApi.cs`, aggiungere un metodo `Select(List<dynamic> items, string selector)` che ordina la lista secondo il criterio e ritorna il primo elemento. Referenziare `Item.cs` legacy, metodo `Select()`.
 
-#### TASK-FR-019: Items.GetImage() Mancante
+#### TASK-FR-019: Items.GetImage() Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Item.cs` -> `GetImage(int itemID, int hue)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `GetImage(int itemID, int hue = 0)` in `ItemsApi.cs` usa `Ultima.Art.GetStatic()` + `Ultima.Hues.GetHue().ApplyTo()`. Ritorna `Ultima.Data.Bitmap?` (tipo nativo SDK, non `System.Drawing.Bitmap`). Il clone della bitmap è necessario per non modificare la cache dell'SDK.
 - **Dettaglio**: Ritorna un `Bitmap` dell'immagine dell'item con hue applicato. Usa UltimaSDK.
 - **Impatto Utente**: Script che mostrano immagini item in gump custom non funzioneranno.
 - **Documentazione per Junior Dev**: In `ItemsApi.cs`, aggiungere `GetImage(int itemID, int hue)`. Servira un riferimento a UltimaSDK o un equivalente per caricare l'art statica. In WPF, ritornare un `BitmapImage` invece di `System.Drawing.Bitmap`.
 
-#### TASK-FR-020: Items.GetWeaponAbility() Mancante
+#### TASK-FR-020: Items.GetWeaponAbility() Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Item.cs` -> `GetWeaponAbility(int itemId)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `GetWeaponAbility(int itemId)` in `ItemsApi.cs` delega a `IWeaponService.GetWeaponInfo()` (iniettato come param opzionale nel ctor). Ritorna `(string Primary, string Secondary)` tuple. Graceful null-check se weaponService non iniettato.
 - **Dettaglio**: Ritorna una tupla `(string primary, string secondary)` con i nomi delle abilita arma. Usa dati da `weapons.json`.
 - **Impatto Utente**: Script che controllano l'abilita dell'arma equipaggiata non funzioneranno.
 - **Documentazione per Junior Dev**: Aggiungere in `ItemsApi.cs` un metodo che delega a `IWeaponService.GetAbilities(itemId)`. Il `WeaponService` dovrebbe gia avere queste info (verificare `WeaponInfo` model).
 
-#### TASK-FR-021: Items.ContainerCount() Semantica Diversa
+#### TASK-FR-021: Items.ContainerCount() Semantica Diversa ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Item.cs` -> `ContainerCount(Item container, int itemid, int color, bool recursive)`
-- **Stato nel Nuovo Codice**: ⛔ Discrepanza Strutturale
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto overload `ContainerCount(uint containerSerial, int itemid, int color = -1, bool recursive = true)` con `CountInContainer` ricorsiva. Overload int aggiunto. L'originale `ContainerCount(uint)` (conta tutti) resta invariato.
 - **Dettaglio**: Il legacy conta item specifici (per ID e colore) in un container. Il nuovo `ContainerCount(uint containerSerial)` conta TUTTI gli item nel container, senza filtro per tipo.
 - **Impatto Utente**: Script che usano `Items.ContainerCount(backpack, 0x0EED, 0, true)` per contare gold in backpack riceveranno il conteggio TOTALE di tutti gli item.
 - **Documentazione per Junior Dev**: In `ItemsApi.cs`, aggiungere un overload `ContainerCount(uint containerSerial, int itemid, int color = -1, bool recursive = true)` che filtra per graphic e hue prima di contare.
@@ -376,9 +376,9 @@
 **Legacy**: `Razor/RazorEnhanced/Spells.cs` (~58KB)
 **Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/SpellsApi.cs`
 
-#### TASK-FR-022: Spell School-Specific Targeted Overloads Mancanti
+#### TASK-FR-022: Spell School-Specific Targeted Overloads Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Spells.cs` -> `CastMagery(string, uint target, bool wait)`, `CastNecro(string, uint target, bool wait)`, etc.
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti overload `(string name, uint target, bool wait)` per tutte le cerchie (Magery/Necro/Chivalry/Bushido/Ninjitsu/Spellweaving/Mysticism/Mastery/Cleric/Druid) + versioni `int target` per FR-012.
 - **Dettaglio**: Il legacy ha overload per ogni scuola di magia che accettano un target serial e flag wait. Nel nuovo, `CastMagery(string name)` delega solo a `Cast(name)` senza target.
 - **Impatto Utente**: **ALTO** - Script come `Spells.CastMagery("Greater Heal", Player.Serial)` falliranno con wrong argument count. Questo e uno dei pattern piu comuni negli script.
 - **Documentazione per Junior Dev**: In `SpellsApi.cs`, aggiungere overload per ogni metodo school-specific:
@@ -390,9 +390,9 @@
   ```
   Ripetere per: CastNecro, CastChivalry, CastBushido, CastNinjitsu, CastSpellweaving, CastMysticism, CastMastery, CastCleric, CastDruid.
 
-#### TASK-FR-023: CastLastSpell Targeted Overload Mancante
+#### TASK-FR-023: CastLastSpell Targeted Overload Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Spells.cs` -> `CastLastSpell(uint target)`, `CastLastSpell(Mobile m)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `CastLastSpell(uint target)` e `CastLastSpell(int target)` aggiunti nel region int-serial overloads di `SpellsApi.cs`.
 - **Dettaglio**: Overload che lanciano l'ultimo spell su un target specifico.
 - **Impatto Utente**: Script che usano `Spells.CastLastSpell(target.Serial)` non funzioneranno.
 - **Documentazione per Junior Dev**: In `SpellsApi.cs`, aggiungere `CastLastSpell(uint target)` che chiama `Cast(GetLastSpell(), target)`.
@@ -404,9 +404,9 @@
 **Legacy**: `Razor/RazorEnhanced/Target.cs`
 **Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/TargetApi.cs`
 
-#### TASK-FR-024: TargetExecute 3-Parametri Ground Target Mancante
+#### TASK-FR-024: TargetExecute 3-Parametri Ground Target Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Target.cs` -> `TargetExecute(int x, int y, int z)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `TargetExecute(int x, int y, int z)` in `TargetApi.cs` delega a `TargetExecute(x, y, z, 0)` (graphic=0 = terreno puro).
 - **Dettaglio**: Overload per target su coordinate ground senza StaticID. Il nuovo ha solo la versione a 4 parametri `(x, y, z, graphic)`.
 - **Impatto Utente**: Script che targetano il terreno con `Target.TargetExecute(x, y, z)` non funzioneranno.
 - **Documentazione per Junior Dev**: In `TargetApi.cs`, aggiungere overload `TargetExecute(int x, int y, int z)` che chiama la versione a 4 parametri con `graphic: 0`.
@@ -418,16 +418,16 @@
 **Legacy**: `Razor/RazorEnhanced/Journal.cs`
 **Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/JournalApi.cs`
 
-#### TASK-FR-025: Journal.Clear(string) Overload Mancante
+#### TASK-FR-025: Journal.Clear(string) Overload Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Journal.cs` -> `Clear(string toBeRemoved)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `Clear(string toBeRemoved)` in `JournalApi.cs` chiama `_journal.RemoveWhere(...)`. Aggiunto `RemoveWhere(Func<JournalEntry, bool>)` all'interfaccia `IJournalService` e a `JournalService` (drena e riempie la `ConcurrentQueue` filtrando le entry matchate).
 - **Dettaglio**: Overload che rimuove solo le entry contenenti una stringa specifica.
 - **Impatto Utente**: Script che puliscono selettivamente il journal non funzioneranno.
 - **Documentazione per Junior Dev**: In `JournalApi.cs`, aggiungere `Clear(string text)` che filtra `_journalService.Entries` rimuovendo quelle contenenti `text`.
 
-#### TASK-FR-026: Journal.GetJournalEntry con Timestamp Mancante
+#### TASK-FR-026: Journal.GetJournalEntry con Timestamp Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Journal.cs` -> `GetJournalEntry(double afterTimestamp)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `GetJournalEntry(double afterTimestamp)` in `JournalApi.cs` filtra le entry con `e.Timestamp > DateTime.FromOADate(afterTimestamp)` e ritorna `List<string>`. `JournalEntry.Timestamp` (DateTime.Now) già esistente nel modello.
 - **Dettaglio**: Permette di ottenere entry journal dopo un certo timestamp.
 - **Impatto Utente**: Script che monitorano il journal dall'ultimo check non funzioneranno.
 - **Documentazione per Junior Dev**: In `JournalApi.cs`, aggiungere `GetJournalEntry(double afterTimestamp)` che filtra per `DateTime.FromOADate(afterTimestamp)`.
@@ -448,9 +448,9 @@
 **Legacy**: `Razor/RazorEnhanced/Sound.cs`
 **Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/SoundApi.cs`
 
-#### TASK-FR-027: Sound Filtering API Mancante
+#### TASK-FR-027: Sound Filtering API Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Sound.cs` -> `AddFilter()`, `RemoveFilter()`, `WaitForSound()`, `LastSoundMatch()`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `AddFilter(string name, List<int> soundIds)`, `RemoveFilter(string name)`, `WaitForSound(List<int> soundIds, int timeout=-1)`, `LastSoundMatch()` aggiunti a `SoundApi.cs`. Usa viewer su pacchetto 0x54 (S2C) registrato lazily via `IPacketService`. Stato statico thread-safe con `lock(_syncRoot)` + `ManualResetEvent` per `WaitForSound`. `IPacketService` ora passato al ctor di SoundApi (opzionale) e propagato da `ScriptingService`.
 - **Dettaglio**: Il legacy permette di aggiungere filtri sonori per nome/ID, rimuoverli, attendere suoni specifici e ottenere l'ultimo suono matchato. Il nuovo `SoundApi` ha solo metodi di riproduzione (PlaySoundEffect, PlayMusic, etc.), nessun metodo di filtraggio.
 - **Impatto Utente**: Script che usano `Sound.WaitForSound()` per reagire a suoni nel gioco (es. suono di morte, suono di scoperta) non funzioneranno.
 - **Documentazione per Junior Dev**: In `SoundApi.cs`, aggiungere:
@@ -463,9 +463,9 @@
 
 ### 3.10 Trade API (COMPLETAMENTE ASSENTE)
 
-#### TASK-FR-028: Trade API Completamente Mancante
+#### TASK-FR-028: Trade API Completamente Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Trade.cs`
-- **Stato nel Nuovo Codice**: ❌ Completamente Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — creato `TradeApi.cs` in `Services/Scripting/Api/`. Metodi: `TradeList()→List<TradeData>`, `Accept(uint tradeId, bool accept=true)`, `Accept(bool)`, `Cancel(uint tradeId)`, `Cancel()`, `Offer(uint tradeId, int gold, int platinum)`, `Offer(int gold, int platinum)` + overload `int` serial per FR-012. `ISecureTradeService` aggiunto al costruttore di `ScriptingService`. `Trade` registrato in `ScriptGlobals` e in entrambi i percorsi di istanziazione (Python scope + C# globals).
 - **Dettaglio**: L'intero modulo Trade API non ha controparte nelle API di scripting. Nel legacy:
   - `Trade.TradeList()` - ritorna lista trade attivi
   - `Trade.Accept()` - accetta un trade
@@ -483,9 +483,9 @@
 
 ### 3.11 CUO API (COMPLETAMENTE ASSENTE)
 
-#### TASK-FR-029: CUO API Completamente Mancante
+#### TASK-FR-029: CUO API Completamente Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/CUO.cs`
-- **Stato nel Nuovo Codice**: ❌ Completamente Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — creato `CuoApi.cs` in `Services/Scripting/Api/`. Metodi implementati via packet/interop: `OpenContainerAt` (usa `IClientInteropService.NextContPosition` + double-click 0x06), `CloseGump` (invia S2C 0xBF/0x0004). `FollowMobile`/`FollowOff`/`Following` (tracking interno serial). Tutti gli altri metodi (LoadMarkers, GoToMarker, FreeView, CloseTMap, ProfilePropertySet, GetSetting, PlayMacro, SetGumpOpenLocation, MoveGump, OpenMobileHealthBar, CloseMobileHealthBar, etc.) sono stub che loggano un warning — richiedono accesso in-process a ClassicUO non disponibile nell'architettura out-of-process di TMRazorImproved. `CUO` registrato in ScriptGlobals e in entrambi i percorsi di istanziazione.
 - **Dettaglio**: L'intero modulo di integrazione ClassicUO non ha controparte. Metodi legacy:
   - `CUO.LoadMarkers()`, `CUO.GoToMarker()` - gestione marker mappa
   - `CUO.FreeView()`, `CUO.CloseTMap()` - vista mappa
@@ -530,23 +530,23 @@
 
 **Metodi presenti**: Start, Stop, Status (IsRunning), ChangeList.
 
-#### TASK-FR-030: AutoLoot.RunOnce() Mancante
+#### TASK-FR-030: AutoLoot.RunOnce() Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/AutoLoot.cs` -> `RunOnce(string listName, int msDelay, Items.Filter filter)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `AutoLootService.RunOnce(string, int)` esegue un Task.Run one-shot che drena la lootQueue corrente usando la config della lista nominata. Esposto in `AutoLootApi.RunOnce(string, int msDelay=600)`.
 - **Dettaglio**: Esecuzione singola dell'autoloot su un container specifico con filtro custom.
 - **Impatto Utente**: Script che lanciano il loot manualmente su container specifici non funzioneranno.
 - **Documentazione per Junior Dev**: In `AutoLootService.cs`, aggiungere metodo `RunOnce(string listName, int msDelay)` che esegue un singolo ciclo di scansione e si ferma. Referenziare `AutoLoot.cs` legacy metodo `RunOnce`.
 
-#### TASK-FR-031: AutoLoot.SetNoOpenCorpse() Mancante
+#### TASK-FR-031: AutoLoot.SetNoOpenCorpse() Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/AutoLoot.cs` -> `SetNoOpenCorpse(bool)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `AutoLootService.SetNoOpenCorpse(bool)` toglie/imposta `AutoLootConfig.NoOpenCorpse` della lista attiva e ritorna il valore precedente. Esposto in `AutoLootApi.SetNoOpenCorpse(bool)`.
 - **Dettaglio**: Disabilita l'apertura automatica dei cadaveri (solo loot da container gia aperti).
 - **Impatto Utente**: Script che configurano il loot silenzioso non funzioneranno.
 - **Documentazione per Junior Dev**: Aggiungere configurazione in `AutoLootConfig` e esporre via `AgentApis.cs`.
 
-#### TASK-FR-032: AutoLoot.GetList() / GetLootBag() / ResetIgnore() Mancanti
+#### TASK-FR-032: AutoLoot.GetList() / GetLootBag() / ResetIgnore() Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/AutoLoot.cs`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `GetList(string)` ritorna `AutoLootConfig.ItemList` della lista nominata; `GetLootBag()` verifica il container configurato (fallback al backpack); `ResetIgnore()` svuota `_processedSerials` e `_lootQueue`. Tutti esposti in `AutoLootApi` e in `IAutoLootService`.
 - **Dettaglio**:
   - `GetList(string name, bool filter)` - ritorna lista item con filtro opzionale
   - `GetLootBag()` - ritorna seriale del contenitore loot
@@ -554,9 +554,9 @@
 - **Impatto Utente**: Script che interagiscono programmaticamente con le liste di loot non funzioneranno.
 - **Documentazione per Junior Dev**: In `AgentApis.cs` o `AutoLootService.cs`, esporre questi metodi. `ResetIgnore` deve fare `_processedSerials.Clear()`.
 
-#### TASK-FR-033: AutoLoot Shared Loot Container Detection Mancante
+#### TASK-FR-033: AutoLoot Shared Loot Container Detection Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/AutoLoot.cs` -> logica shared loot
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `IsCorpse(uint)` in `AutoLootService` ora controlla anche container NON-corpse che si trovano entro 3 tile da un corpse (graphic 0x2006) tramite `_worldService.Items`. Questo copre UO Dreams Instanced Loot e OSI shared containers.
 - **Dettaglio**: Il legacy rileva container di loot condiviso (UO Dreams Instanced Loot, OSI shared containers). Il nuovo non ha questa logica.
 - **Impatto Utente**: Su shard che usano container condivisi, il loot automatico potrebbe non rilevare correttamente i cadaveri.
 - **Documentazione per Junior Dev**: In `AutoLootService.cs`, aggiungere logica per rilevare container condivisi controllando il graphic del container e la distanza dal cadavere.
@@ -568,37 +568,37 @@
 **Legacy**: `Razor/RazorEnhanced/BandageHeal.cs`
 **Nuovo**: `TMRazorImproved.Core/Services/BandageHealService.cs`
 
-#### TASK-FR-034: BandageHeal FriendOrSelf Mode Mancante
+#### TASK-FR-034: BandageHeal FriendOrSelf Mode Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/BandageHeal.cs` -> modalita "FriendOrSelf"
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto `"FriendOrSelf"` case in `GetTargetSerial()` di `BandageHealService`. `GetFriendOrSelfTarget()` trova il friend più debole (HP%), lo confronta con player e cura chi ha meno HP%. Anche `GetNearestFriend` refactored in `GetWeakestFriend` (ordine per HP%).
 - **Dettaglio**: Il legacy ha 4 modalita: Self, Target, Friend, FriendOrSelf. La modalita FriendOrSelf confronta gli HP del player e del friend piu debole e cura quello con meno vita. Il nuovo ha Self, Last, Friend ma non FriendOrSelf.
 - **Impatto Utente**: Utenti che usano la modalita di cura automatica friend-or-self perderanno questa funzionalita.
 - **Documentazione per Junior Dev**: In `BandageHealService.cs`, aggiungere un case "FriendOrSelf" che: 1) Cerca il friend con meno HP, 2) Confronta con HP del player, 3) Cura il piu debole.
 
-#### TASK-FR-035: BandageHeal Text-Based Healing Mancante
+#### TASK-FR-035: BandageHeal Text-Based Healing Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/BandageHeal.cs` -> `SelfHealUseText`, `ChatSay`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — in `AgentLoopAsync` aggiunto branch `if (config.SendTextMsg)`: per self invia `UnicodeSpeech(TextMsgSelf)`, per target invia `UnicodeSpeech(TextMsgTarget)` + wait + TargetObject. Config `SendTextMsg`/`TextMsgSelf`/`TextMsgTarget` già presenti in `BandageHealConfig`.
 - **Dettaglio**: Il legacy supporta la cura tramite comando testuale (es. `[bandageself]`) invece che tramite double-click su bende.
 - **Impatto Utente**: Su shard custom che usano comandi testuali per le bende, la cura automatica non funzionera.
 - **Documentazione per Junior Dev**: In `BandageHealService.cs`, aggiungere supporto per config `UseTextHeal` e `TextHealCommand` che invia un messaggio chat invece di usare l'item benda.
 
-#### TASK-FR-036: BandageHeal Countdown Display Mancante
+#### TASK-FR-036: BandageHeal Countdown Display Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/BandageHeal.cs` -> `ShowCount(Mobile)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `ShowCountdownAsync(target, totalMs, token)` invia overhead unicode (0xAE) al client con il numero di secondi trascorsi ogni secondo, per la durata del bandage. Attivato quando `config.ShowCountdown == true`.
 - **Dettaglio**: Il legacy mostra un countdown overhead sopra il target durante la cura. Non presente nel nuovo.
 - **Impatto Utente**: L'utente non vedra il timer visivo di cura sopra il target. Feature di usabilita perduta.
 - **Documentazione per Junior Dev**: In `BandageHealService.cs`, dopo aver avviato la cura, calcolare il delay (basato su DEX) e inviare messaggi overhead periodici tramite `IPacketService.SendToClient()` (pacchetto 0x1C) decrementando il timer.
 
-#### TASK-FR-037: BandageHeal Formula DEX Diversa
+#### TASK-FR-037: BandageHeal Formula DEX Diversa ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/BandageHeal.cs`
-- **Stato nel Nuovo Codice**: ⛔ Discrepanza Strutturale
+- **Stato nel Nuovo Codice**: ✅ Implementato — `CalculateBandageDelay` ora usa `(11 - (dex - dex % 10) / 20) * 1000` (formula legacy esatta, min 100ms).
 - **Dettaglio**: Legacy formula: `(11 - (Dex - Dex%10)/20) * 1000`. Nuova formula: `max(3000, 8000 - (dex/20)*1000)`. La nuova formula e piu generosa ad alta DEX.
 - **Impatto Utente**: Il timing della cura sara leggermente diverso, potrebbe causare sovrappopolamento di bende ad alta DEX.
 - **Documentazione per Junior Dev**: In `BandageHealService.cs`, sostituire la formula attuale con quella legacy: `int delay = (11 - (dex - dex % 10) / 20) * 1000;`. Referenziare `BandageHeal.cs` legacy per la formula esatta.
 
-#### TASK-FR-038: BandageHeal Mortal Strike Detection Diversa
+#### TASK-FR-038: BandageHeal Mortal Strike Detection Diversa ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/BandageHeal.cs` -> check `BuffIcon.MortalStrike`
-- **Stato nel Nuovo Codice**: ⛔ Discrepanza Strutturale
+- **Stato nel Nuovo Codice**: ✅ Implementato — in `AgentLoopAsync` aggiunto `isMortalByBuff` che controlla `player.ActiveBuffs.ContainsKey("Mortal Strike")` solo per target self. `isMortal = target.IsYellowHits || isMortalByBuff`.
 - **Dettaglio**: Legacy controlla `World.Player.Buffs.ContainsKey(BuffIcon.MortalStrike)`. Nuovo controlla `IsYellowHits` (check basato su hue). Sono metodi di rilevamento diversi.
 - **Impatto Utente**: Mortal Strike potrebbe non essere rilevato correttamente in tutti i casi con il check hue-based.
 - **Documentazione per Junior Dev**: In `BandageHealService.cs`, aggiungere un check buff-based: `player.ActiveBuffs.ContainsKey("Mortal Strike")` oltre al check YellowHits esistente.
@@ -610,23 +610,23 @@
 **Legacy**: `Razor/RazorEnhanced/Dress.cs`
 **Nuovo**: `TMRazorImproved.Core/Services/DressService.cs`
 
-#### TASK-FR-039: Dress.ReadPlayerDress() Mancante
+#### TASK-FR-039: Dress.ReadPlayerDress() Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Dress.cs` -> `ReadPlayerDress()`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `DressService.ReadPlayerDress()` itera `_worldService.Items` dove `Container == player.Serial && Layer > 0 && Layer <= 0x1A`, resetta `LayerItems` della lista attiva e la ripopola. Esposto in `IDressService` e `DressApi`.
 - **Dettaglio**: Scansiona l'equipaggiamento corrente del player e lo salva come dress list.
 - **Impatto Utente**: L'utente non puo "catturare" il suo outfit corrente come template di dress.
 - **Documentazione per Junior Dev**: In `DressService.cs`, aggiungere metodo che itera `_worldService.GetPlayerEquipment()` e salva i serial/layer come nuova dress list nella config.
 
-#### TASK-FR-040: Dress UO3D EquipItemMacro Mancante
+#### TASK-FR-040: Dress UO3D EquipItemMacro Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Dress.cs` -> `DressUseUO3D`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `DressService.Dress()`/`Undress()` verificano `DressList.Use3D`; se true inviano `PacketBuilder.EquipItemMacro` (0xEC) / `PacketBuilder.UnEquipItemMacro` (0xED) in batch. Aggiunti i due metodi builder in `PacketBuilder.cs`.
 - **Dettaglio**: Il legacy supporta il pacchetto UO3D EquipItemMacro/UnEquipItemMacro per dress/undress piu veloce. Il nuovo usa solo LiftItem + WearItem tradizionale.
 - **Impatto Utente**: Dress piu lento su client che supportano UO3D.
 - **Documentazione per Junior Dev**: In `DressService.cs`, aggiungere opzione per inviare il pacchetto 0xEC (EquipItemMacro) quando disponibile. Referenziare `Dress.cs` legacy sezione `DressUseUO3D`.
 
-#### TASK-FR-041: Dress/Undress Status Separati Mancanti
+#### TASK-FR-041: Dress/Undress Status Separati Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Dress.cs` -> `DressStatus()`, `UnDressStatus()`
-- **Stato nel Nuovo Codice**: ⚠️ Incompleto
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto campo `_isDressingNow` (volatile bool); `DressStatus()` = `IsRunning && _isDressingNow`; `UnDressStatus()` = `IsRunning && !_isDressingNow`. Esposti in `IDressService` e `DressApi`.
 - **Dettaglio**: Legacy ha status separati per dress e undress (thread separati). Nuovo ha un singolo `IsRunning`.
 - **Impatto Utente**: Script che controllano `Dress.DressStatus()` e `Dress.UnDressStatus()` separatamente avranno solo un valore.
 - **Documentazione per Junior Dev**: Valutare se aggiungere `IsDressing` e `IsUndressing` separati, o se il singolo `IsRunning` e sufficiente con un campo aggiuntivo che indica l'operazione corrente.
@@ -635,46 +635,33 @@
 
 ### 4.4 Organizer
 
-#### TASK-FR-042: Organizer.RunOnce() Mancante
+#### TASK-FR-042: Organizer.RunOnce() Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Organizer.cs` -> `RunOnce(string, int, int, int)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Esecuzione singola con parametri source/dest/delay.
-- **Impatto Utente**: Script che lanciano l'organizer programmaticamente con parametri custom non funzioneranno.
-- **Documentazione per Junior Dev**: In `OrganizerService.cs`, aggiungere `RunOnce(string listName, uint sourceSerial, uint destSerial, int delayMs)`.
+- **Stato nel Nuovo Codice**: ✅ Implementato — `OrganizerService.RunOnce(string, uint, uint, int)` esegue un Task.Run one-shot che legge `GetItemsInContainer(src)`, applica filtri ItemList con color matching, sposta in `dst`. Esposto in `IOrganizerService` e `OrganizerApi`.
 
 ---
 
 ### 4.5 Restock
 
-#### TASK-FR-043: Restock.RunOnce() Mancante
+#### TASK-FR-043: Restock.RunOnce() Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Restock.cs` -> `RunOnce(string, int, int, int)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Impatto Utente**: Stesso problema dell'Organizer.
-- **Documentazione per Junior Dev**: In `RestockService.cs`, aggiungere `RunOnce()` come per l'Organizer.
+- **Stato nel Nuovo Codice**: ✅ Implementato — `RestockService.RunOnce(string, uint, uint, int)` esegue un Task.Run one-shot che calcola il delta backpack, poi muove gli item necessari. Esposto in `IRestockService` e `RestockApi`.
 
-#### TASK-FR-044: Restock Color Matching Mancante
+#### TASK-FR-044: Restock Color Matching Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Restock.cs` -> filtraggio per colore
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Il legacy filtra item per colore durante il restock. Il nuovo `RestockItem` non sembra avere campo colore.
-- **Impatto Utente**: Restock che richiede item di colore specifico raccogliera item di qualsiasi colore.
-- **Documentazione per Junior Dev**: Aggiungere campo `Color` a `RestockItem` model e usarlo nel filtro in `RestockService.cs`.
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto `(restockItem.Color == -1 || i.Hue == restockItem.Color)` sia nella query sorgente che nel conteggio backpack in `AgentLoopAsync` e `RunOnce`. `LootItem.Color` già presente nel model.
 
 ---
 
 ### 4.6 Scavenger
 
-#### TASK-FR-045: Scavenger.RunOnce() / GetScavengerBag() / ResetIgnore() Mancanti
+#### TASK-FR-045: Scavenger.RunOnce() / GetScavengerBag() / ResetIgnore() Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Scavenger.cs`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Stessi problemi di AutoLoot (RunOnce, GetBag, ResetIgnore).
-- **Documentazione per Junior Dev**: Stessa implementazione suggerita per AutoLoot (TASK-FR-030/032).
+- **Stato nel Nuovo Codice**: ✅ Implementato — `RunOnce()` drena la queue in un Task.Run; `GetScavengerBag()` verifica il container configurato (fallback backpack); `ResetIgnore()` svuota `_processedSerials` + queue. Esposti in `IScavengerService` e `ScavengerApi`.
 
-#### TASK-FR-046: Scavenger Locked-Down Items Detection Mancante
+#### TASK-FR-046: Scavenger Locked-Down Items Detection Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Scavenger.cs` -> check `GetPropValue("Locked Down")`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Il legacy controlla se un item e "Locked Down" prima di tentare di raccoglierlo. Il nuovo non ha questo check.
-- **Impatto Utente**: Lo scavenger tentera di raccogliere item fissi nelle case, generando errori.
-- **Documentazione per Junior Dev**: In `ScavengerService.cs`, prima di raccogliere un item, controllare `_worldService.GetEntity(serial)?.Properties?.Contains("Locked Down")`.
+- **Stato nel Nuovo Codice**: ✅ Implementato — in `AgentLoopAsync` e `RunOnce`, prima di spostare un item, si controlla `item.Properties.Any(p => p.Contains("Locked Down"))` e si fa skip se trovato.
 
 ---
 
@@ -683,43 +670,32 @@
 **Legacy**: `Razor/RazorEnhanced/Vendor.cs` (3 classi: Vendor, SellAgent, BuyAgent)
 **Nuovo**: `TMRazorImproved.Core/Services/VendorService.cs`
 
-#### TASK-FR-047: Vendor.Buy() Script API Mancante
+#### TASK-FR-047: Vendor.Buy() Script API Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Vendor.cs` -> `Buy(int vendorSerial, string itemName, int amount, int maxPrice)`, `Buy(int vendorSerial, int itemID, int amount, int maxPrice)`, `BuyList(int vendorSerial)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Il legacy permette di comprare item da vendor tramite script. Il nuovo e solo reattivo (auto-buy quando il vendor window appare), non ha API per l'acquisto programmato.
-- **Impatto Utente**: **ALTO** - Script di acquisto automatico da vendor non funzioneranno.
-- **Documentazione per Junior Dev**: In `AgentApis.cs` o creare `VendorApi.cs`, aggiungere metodi `Buy()` che: 1) Aprono il context menu sul vendor, 2) Attendono il vendor buy list (pacchetto 0x74), 3) Inviano pacchetto di acquisto. Referenziare `Vendor.cs` legacy metodo `Buy()`.
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti `Buy(uint, int, int, int)`, `Buy(uint, string, int, int)`, `BuyList(uint)` in `VendorService`. Usano `_worldService.LastOpenedContainer` + `_lastBuyItems` cache (popolata da 0x74). Esposti in `IVendorService` e `VendorApi`.
 
-#### TASK-FR-048: Vendor CompareName / CompleteAmount Mancanti
+#### TASK-FR-048: Vendor CompareName / CompleteAmount Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Vendor.cs` -> BuyAgent con `CompareName`, `CompleteAmount`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: `CompareName` confronta il nome dell'item prima di comprare. `CompleteAmount` controlla quanti ne ha gia nel backpack prima di comprare il delta.
-- **Impatto Utente**: L'agente comprera item sbagliati (senza name check) e quantita eccessive (senza backpack check).
-- **Documentazione per Junior Dev**: In `VendorService.cs`, nella logica di auto-buy, aggiungere:
-  1. Confronto nome item dal vendor list con nome nella config
-  2. Prima di inviare la quantita, controllare quanti item dello stesso tipo sono gia nel backpack e comprare solo il delta
+- **Stato nel Nuovo Codice**: ✅ Implementato — in `Receive(VendorBuyMessage)`: se `config.CompareName`, confronta `buyReq.Name` con `match.Name` (Contains); se `config.CompleteAmount`, sottrae il count già in backpack prima di inviare la quantità. `CompleteAmount` aggiunto a `VendorConfig`.
 
-#### TASK-FR-049: Vendor Max Price Filter Mancante
+#### TASK-FR-049: Vendor Max Price Filter Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Vendor.cs` -> SellAgent con max price
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Il legacy permette di impostare un prezzo massimo per gli acquisti.
-- **Impatto Utente**: L'agente potrebbe comprare item troppo costosi.
-- **Documentazione per Junior Dev**: Aggiungere campo `MaxPrice` a `VendorConfig` e controllarlo prima di inviare il pacchetto buy.
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto `MaxBuyPrice` (int, 0=no limit) a `VendorConfig`. In `Receive(VendorBuyMessage)` e `Buy()` script methods, la price viene verificata contro `_lastBuyItems` e l'item viene skippato se `price > MaxBuyPrice`.
 
 ---
 
 ### 4.8 DPSMeter
 
-#### TASK-FR-050: DPSMeter.Pause() Mancante
+#### TASK-FR-050: DPSMeter.Pause() Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/DPSMeter.cs` -> `Pause()`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `Pause()` aggiunto a `IDPSMeterService`, `DPSMeterService` e `DPSMeterApi`. Ferma il timer e accumula il tempo in `_totalTime`; `IsPaused` property esposta. `Start()` riprende la sessione se `IsPaused==true`. `CombatTime` aggiornato per non incrementare durante la pausa. Build Core: 0 errori.
 - **Dettaglio**: Pausa il conteggio DPS senza resettare i dati.
 - **Impatto Utente**: Non si puo mettere in pausa il DPS meter durante pause di combattimento.
 - **Documentazione per Junior Dev**: In `DPSMeterService.cs`, aggiungere `Pause()` che ferma il timer ma preserva `_totalDamage` e `_combatStartTime`.
 
-#### TASK-FR-051: DPSMeter.GetDamage(serial) Mancante
+#### TASK-FR-051: DPSMeter.GetDamage(serial) Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/DPSMeter.cs` -> `GetDamage(int serial)`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `GetDamage(uint serial)` aggiunto a `IDPSMeterService`, `DPSMeterService` (cerca in `_targetDamage`) e `DPSMeterApi` (con overload `int` per FR-012). Build Core: 0 errori.
 - **Dettaglio**: Ritorna il danno totale inflitto a/da un mobile specifico.
 - **Impatto Utente**: Script che monitorano il danno per target specifico non funzioneranno.
 - **Documentazione per Junior Dev**: In `DPSMeterService.cs`, il `TargetDamage` dictionary esiste. Esporre `GetDamage(uint serial)` che cerca nel dictionary.

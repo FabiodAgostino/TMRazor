@@ -17,6 +17,8 @@ namespace TMRazorImproved.Core.Services
         private readonly IWorldService _worldService;
         private readonly ILogger<VendorService> _logger;
         private readonly IMessenger _messenger;
+        // FR-047: cache of last vendor buy list (Price info from 0x74)
+        private IReadOnlyList<(uint Price, string Name)> _lastBuyItems = Array.Empty<(uint, string)>();
 
         public VendorService(
             IPacketService packetService, 
@@ -46,21 +48,21 @@ namespace TMRazorImproved.Core.Services
 
             _logger.LogInformation("Vendor Buy Menu detected for vendor 0x{VendorSerial:X}", message.Value.VendorSerial);
 
+            // FR-047: cache price info from 0x74 for BuyList() script API
+            _lastBuyItems = message.Value.Items;
+
             // FIX BUG-P1-03: Il server invia sempre 0x3C (container content) PRIMA di 0x74 (buy window).
-            // WorldService.LastOpenedContainer contiene il serial del container aperto più di recente,
-            // che corrisponde al contenitore buy del vendor. I suoi item (con Serial e Graphic reali)
-            // sono già stati aggiunti al WorldService dalla ContainerContentMessage.
             uint vendorContainerSerial = _worldService.LastOpenedContainer;
             if (vendorContainerSerial == 0)
             {
-                _logger.LogWarning("VendorBuy: LastOpenedContainer is 0, cannot determine vendor container serial. Buy aborted.");
+                _logger.LogWarning("VendorBuy: LastOpenedContainer is 0. Buy aborted.");
                 return;
             }
 
             var vendorItems = _worldService.GetItemsInContainer(vendorContainerSerial).ToList();
             if (vendorItems.Count == 0)
             {
-                _logger.LogWarning("VendorBuy: No items found in vendor container 0x{Container:X}", vendorContainerSerial);
+                _logger.LogWarning("VendorBuy: No items in vendor container 0x{Container:X}", vendorContainerSerial);
                 return;
             }
 
@@ -70,18 +72,53 @@ namespace TMRazorImproved.Core.Services
             {
                 if (!buyReq.IsEnabled) continue;
 
-                // Cerca per Graphic nell'inventario reale del vendor (con serial corretti da 0x3C)
                 var match = vendorItems.FirstOrDefault(i => i.Graphic == buyReq.Graphic);
-                if (match != null)
+                if (match == null)
                 {
-                    ushort qty = (ushort)Math.Min(buyReq.Amount > 0 ? buyReq.Amount : 1, match.Amount);
-                    toBuy.Add((match.Serial, qty));
-                    _logger.LogDebug("VendorBuy: queued 0x{Graphic:X} x{Amount} (serial 0x{Serial:X})", buyReq.Graphic, qty, match.Serial);
+                    _logger.LogDebug("VendorBuy: item 0x{Graphic:X} not in vendor inventory", buyReq.Graphic);
+                    continue;
                 }
-                else
+
+                // FR-048: CompareName — skip if item name doesn't match config
+                if (config.CompareName && !string.IsNullOrEmpty(buyReq.Name))
                 {
-                    _logger.LogDebug("VendorBuy: item 0x{Graphic:X} not found in vendor inventory", buyReq.Graphic);
+                    if (match.Name == null || !match.Name.Contains(buyReq.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogDebug("VendorBuy: name mismatch for 0x{Graphic:X}: '{Actual}' vs '{Expected}'",
+                            buyReq.Graphic, match.Name, buyReq.Name);
+                        continue;
+                    }
                 }
+
+                // FR-049: MaxBuyPrice — skip if unit price exceeds limit
+                if (config.MaxBuyPrice > 0)
+                {
+                    var priceEntry = _lastBuyItems.FirstOrDefault(p =>
+                        p.Name.Equals(match.Name ?? string.Empty, StringComparison.OrdinalIgnoreCase));
+                    if (priceEntry.Price > (uint)config.MaxBuyPrice)
+                    {
+                        _logger.LogDebug("VendorBuy: price {Price} exceeds MaxBuyPrice {Max} for 0x{Graphic:X}",
+                            priceEntry.Price, config.MaxBuyPrice, buyReq.Graphic);
+                        continue;
+                    }
+                }
+
+                int desiredQty = buyReq.Amount > 0 ? buyReq.Amount : 1;
+
+                // FR-048: CompleteAmount — deduct items already in backpack
+                if (config.CompleteAmount && _worldService.Player?.Backpack != null)
+                {
+                    int already = _worldService.GetItemsInContainer(_worldService.Player.Backpack.Serial)
+                        .Where(i => i.Graphic == buyReq.Graphic)
+                        .Sum(i => i.Amount);
+                    desiredQty = Math.Max(0, desiredQty - already);
+                }
+
+                if (desiredQty <= 0) continue;
+
+                ushort qty = (ushort)Math.Min(desiredQty, match.Amount);
+                toBuy.Add((match.Serial, qty));
+                _logger.LogDebug("VendorBuy: queued 0x{Graphic:X} x{Amount} (serial 0x{Serial:X})", buyReq.Graphic, qty, match.Serial);
             }
 
             if (toBuy.Count > 0)
@@ -153,6 +190,69 @@ namespace TMRazorImproved.Core.Services
             _packetService.SendToServer(data);
 
             _logger.LogInformation("Sent Sell Response for vendor 0x{Vendor:X}, {Count} items.", vendorSerial, items.Count);
+        }
+
+        // FR-047: script-driven buy by graphic ID
+        public void Buy(uint vendorSerial, int itemID, int amount, int maxPrice = 0)
+        {
+            var containerSerial = _worldService.LastOpenedContainer;
+            var match = _worldService.GetItemsInContainer(containerSerial)
+                .FirstOrDefault(i => i.Graphic == (ushort)itemID);
+            if (match == null)
+            {
+                _logger.LogWarning("Vendor.Buy: item 0x{ID:X} not in vendor container 0x{Container:X}", itemID, containerSerial);
+                return;
+            }
+            if (maxPrice > 0)
+            {
+                var priceEntry = _lastBuyItems.FirstOrDefault(p =>
+                    p.Name.Equals(match.Name ?? string.Empty, StringComparison.OrdinalIgnoreCase));
+                if (priceEntry.Price > (uint)maxPrice)
+                {
+                    _logger.LogDebug("Vendor.Buy: price {Price} > maxPrice {Max}", priceEntry.Price, maxPrice);
+                    return;
+                }
+            }
+            ushort qty = (ushort)Math.Min(amount > 0 ? amount : 1, match.Amount);
+            ExecuteBuy(vendorSerial, new List<(uint, ushort)> { (match.Serial, qty) });
+        }
+
+        // FR-047: script-driven buy by item name
+        public void Buy(uint vendorSerial, string itemName, int amount, int maxPrice = 0)
+        {
+            var containerSerial = _worldService.LastOpenedContainer;
+            var match = _worldService.GetItemsInContainer(containerSerial)
+                .FirstOrDefault(i => (i.Name ?? string.Empty).Contains(itemName, StringComparison.OrdinalIgnoreCase));
+            if (match == null)
+            {
+                _logger.LogWarning("Vendor.Buy: item '{Name}' not in vendor container 0x{Container:X}", itemName, containerSerial);
+                return;
+            }
+            if (maxPrice > 0)
+            {
+                var priceEntry = _lastBuyItems.FirstOrDefault(p =>
+                    p.Name.Contains(itemName, StringComparison.OrdinalIgnoreCase));
+                if (priceEntry.Price > (uint)maxPrice)
+                {
+                    _logger.LogDebug("Vendor.Buy: price {Price} > maxPrice {Max}", priceEntry.Price, maxPrice);
+                    return;
+                }
+            }
+            ushort qty = (ushort)Math.Min(amount > 0 ? amount : 1, match.Amount);
+            ExecuteBuy(vendorSerial, new List<(uint, ushort)> { (match.Serial, qty) });
+        }
+
+        // FR-047: returns the last-seen vendor items with price info
+        public List<(string Name, int Graphic, uint Price)> BuyList(uint vendorSerial)
+        {
+            var containerSerial = _worldService.LastOpenedContainer;
+            var containerItems = _worldService.GetItemsInContainer(containerSerial).ToList();
+            return containerItems.Select(i =>
+            {
+                var priceEntry = _lastBuyItems.FirstOrDefault(p =>
+                    p.Name.Equals(i.Name ?? string.Empty, StringComparison.OrdinalIgnoreCase));
+                return (i.Name ?? string.Empty, (int)i.Graphic, priceEntry.Price);
+            }).ToList();
         }
 
         public void SetBuyList(string listName)

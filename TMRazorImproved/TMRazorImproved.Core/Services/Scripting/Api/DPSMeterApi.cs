@@ -68,5 +68,32 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             _dps.Reset();
         }
+
+        /// <summary>True se il DPS meter è in pausa (dati preservati, timer fermo).</summary>
+        public virtual bool IsPaused()
+        {
+            _cancel.ThrowIfCancelled();
+            return _dps.IsPaused;
+        }
+
+        /// <summary>
+        /// Mette in pausa il DPS meter senza resettare i dati.
+        /// Chiamare Start() per riprendere.
+        /// </summary>
+        public virtual void Pause()
+        {
+            _cancel.ThrowIfCancelled();
+            _dps.Pause();
+        }
+
+        /// <summary>Ritorna il danno totale inflitto a un mobile specifico per serial.</summary>
+        public virtual long GetDamage(uint serial)
+        {
+            _cancel.ThrowIfCancelled();
+            return _dps.GetDamage(serial);
+        }
+
+        /// <summary>Overload int per compatibilità script C# legacy.</summary>
+        public virtual long GetDamage(int serial) => GetDamage((uint)serial);
     }
 }

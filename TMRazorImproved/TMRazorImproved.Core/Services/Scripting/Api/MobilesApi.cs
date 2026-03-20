@@ -765,5 +765,44 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             return new MobilesFilter();
         }
+
+        #region int-serial overloads — RazorEnhanced compatibility (TASK-FR-012)
+        public virtual ScriptMobile? FindBySerial(int serial) => FindBySerial((uint)serial);
+        public virtual int GetDistance(int serial) => GetDistance((uint)serial);
+        public virtual bool IsAlive(int serial) => IsAlive((uint)serial);
+        public virtual bool IsDead(int serial) => IsDead((uint)serial);
+        public virtual bool IsFriend(int serial) => IsFriend((uint)serial);
+        public virtual int GetHealthPercent(int serial) => GetHealthPercent((uint)serial);
+        public virtual string GetName(int serial) => GetName((uint)serial);
+        public virtual int GetGraphic(int serial) => GetGraphic((uint)serial);
+        public virtual int GetHue(int serial) => GetHue((uint)serial);
+        public virtual int GetNotoriety(int serial) => GetNotoriety((uint)serial);
+        public virtual bool IsWarMode(int serial) => IsWarMode((uint)serial);
+        public virtual bool IsPoisoned(int serial) => IsPoisoned((uint)serial);
+        public virtual bool IsHidden(int serial) => IsHidden((uint)serial);
+        public virtual bool IsParty(int serial) => IsParty((uint)serial);
+        public virtual int GetMana(int serial) => GetMana((uint)serial);
+        public virtual int GetManaPercent(int serial) => GetManaPercent((uint)serial);
+        public virtual int GetStam(int serial) => GetStam((uint)serial);
+        public virtual int GetStamPercent(int serial) => GetStamPercent((uint)serial);
+        public virtual int GetX(int serial) => GetX((uint)serial);
+        public virtual int GetY(int serial) => GetY((uint)serial);
+        public virtual int GetZ(int serial) => GetZ((uint)serial);
+        public virtual bool IsHuman(int serial) => IsHuman((uint)serial);
+        public virtual bool IsMonster(int serial) => IsMonster((uint)serial);
+        public virtual bool IsNPC(int serial) => IsNPC((uint)serial);
+        public virtual void SingleClick(int serial) => SingleClick((uint)serial);
+        public virtual void UseMobile(int serial) => UseMobile((uint)serial);
+        public virtual void Message(int serial, int hue, string message, bool wait = true) => Message((uint)serial, hue, message, wait);
+        public virtual int ContextExist(int serial, string name, bool showContext = false) => ContextExist((uint)serial, name, showContext);
+        public virtual int DistanceTo(int serial) => DistanceTo((uint)serial);
+        public virtual ScriptItem? GetItemOnLayer(int serial, string layerName) => GetItemOnLayer((uint)serial, layerName);
+        public virtual List<string> GetPropStringList(int serial) => GetPropStringList((uint)serial);
+        public virtual string GetPropStringByIndex(int serial, int index) => GetPropStringByIndex((uint)serial, index);
+        public virtual float GetPropValue(int serial, string name) => GetPropValue((uint)serial, name);
+        public virtual bool WaitForProps(int serial, int delay) => WaitForProps((uint)serial, delay);
+        public virtual bool WaitForStats(int serial, int delay) => WaitForStats((uint)serial, delay);
+        public virtual bool UpdateKarma(int serial) => UpdateKarma((uint)serial);
+        #endregion
     }
 }

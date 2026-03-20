@@ -353,6 +353,10 @@ namespace TMRazorImproved.Shared.Models.Config
         public uint SellBag { get; set; }
         public bool LogPurchases { get; set; }
         public bool CompareName { get; set; }
+        /// <summary>FR-048: buy only the delta needed to complete to the configured amount.</summary>
+        public bool CompleteAmount { get; set; }
+        /// <summary>FR-049: max price per unit; 0 = no limit.</summary>
+        public int MaxBuyPrice { get; set; }
         public int MaxSellAmount { get; set; } = 500;
         public List<LootItem> BuyList { get; set; } = new();
         public List<LootItem> SellList { get; set; } = new();

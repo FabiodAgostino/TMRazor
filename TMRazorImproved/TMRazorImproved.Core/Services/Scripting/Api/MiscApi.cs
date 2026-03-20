@@ -1250,5 +1250,23 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _cancel.ThrowIfCancelled();
             _interop.OpenPaperdoll();
         }
+
+        #region int-serial overloads — RazorEnhanced compatibility (TASK-FR-012)
+        public virtual bool IsItem(int serial) => IsItem((uint)serial);
+        public virtual bool IsMobile(int serial) => IsMobile((uint)serial);
+        public virtual void ContextMenu(int serial) => ContextMenu((uint)serial);
+        public virtual List<ContextMenuEntry> WaitForContext(int serial, int delay) => WaitForContext((uint)serial, delay);
+        public virtual void ContextReply(int serial, int responseNum) => ContextReply((uint)serial, responseNum);
+        public virtual void ContextReply(int serial, string menuName) => ContextReply((uint)serial, menuName);
+        public virtual bool UseContextMenu(int serial, string choice, int delay) => UseContextMenu((uint)serial, choice, delay);
+        public virtual void Ignore(int serial) => Ignore((uint)serial);
+        public virtual void UnIgnore(int serial) => UnIgnore((uint)serial);
+        public virtual bool IsIgnored(int serial) => IsIgnored((uint)serial);
+        public virtual void IgnoreObject(int serial) => IgnoreObject((uint)serial);
+        public virtual bool CheckIgnoreObject(int serial) => CheckIgnoreObject((uint)serial);
+        public virtual void UnIgnoreObject(int serial) => UnIgnoreObject((uint)serial);
+        public virtual void PetRename(int serial, string name) => PetRename((uint)serial, name);
+        public virtual MapInfo GetMapInfo(int serial) => GetMapInfo((uint)serial);
+        #endregion
     }
 }

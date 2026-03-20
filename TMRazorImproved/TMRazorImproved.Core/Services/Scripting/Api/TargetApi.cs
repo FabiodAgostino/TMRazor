@@ -110,6 +110,10 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _targeting.SendTarget(0, (ushort)x, (ushort)y, (sbyte)z, (ushort)graphic);
         }
 
+        // FR-024: 3-parameter ground target overload (graphic defaults to 0)
+        /// <summary>Targets a ground tile at the specified coordinates (no static graphic).</summary>
+        public virtual void TargetExecute(int x, int y, int z) => TargetExecute(x, y, z, 0);
+
         public virtual bool HasPrompt() => _targeting.HasPrompt;
 
         public virtual bool WaitForPrompt(int timeout = 5000)
@@ -529,6 +533,16 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
 
             return false;
         }
+
+        #region int-serial overloads — RazorEnhanced compatibility (TASK-FR-012)
+        public virtual void SetLastTarget(int serial) => SetLastTarget((uint)serial);
+        public virtual void TargetExecute(int serial) => TargetExecute((uint)serial);
+        public virtual void Target(int serial) => Target((uint)serial);
+        public virtual void SetLast(int serial, bool wait = true) => SetLast((uint)serial, wait);
+        public virtual void TargetExecuteRelative(int serial, int offset) => TargetExecuteRelative((uint)serial, offset);
+        public virtual void TargetResource(int item_serial, int resource_number) => TargetResource((uint)item_serial, resource_number);
+        public virtual void TargetResource(int item_serial, string resource_name) => TargetResource((uint)item_serial, resource_name);
+        #endregion
 
         public virtual bool WaitForTargetOrFizzle(int delay = 5000, bool noshow = false)
         {

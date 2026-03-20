@@ -114,6 +114,38 @@ namespace TMRazorImproved.Core.Utilities
         }
 
         /// <summary>
+        /// EquipItemMacro 0xEC — UO3D batch equip: equipaggia più item in un singolo pacchetto.
+        /// Format: cmd(1) len(2) count(1) serial0(4) ... serialN(4)
+        /// </summary>
+        public static byte[] EquipItemMacro(IList<uint> serials)
+        {
+            int pktLen = 1 + 2 + 1 + serials.Count * 4;
+            byte[] pkt = new byte[pktLen];
+            pkt[0] = 0xEC;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), (ushort)pktLen);
+            pkt[3] = (byte)serials.Count;
+            for (int i = 0; i < serials.Count; i++)
+                BinaryPrimitives.WriteUInt32BigEndian(pkt.AsSpan(4 + i * 4), serials[i]);
+            return pkt;
+        }
+
+        /// <summary>
+        /// UnEquipItemMacro 0xED — UO3D batch unequip: rimuove item da più layer in un singolo pacchetto.
+        /// Format: cmd(1) len(2) count(1) layer0(2) ... layerN(2)
+        /// </summary>
+        public static byte[] UnEquipItemMacro(IList<byte> layers)
+        {
+            int pktLen = 1 + 2 + 1 + layers.Count * 2;
+            byte[] pkt = new byte[pktLen];
+            pkt[0] = 0xED;
+            BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(1), (ushort)pktLen);
+            pkt[3] = (byte)layers.Count;
+            for (int i = 0; i < layers.Count; i++)
+                BinaryPrimitives.WriteUInt16BigEndian(pkt.AsSpan(4 + i * 2), layers[i]);
+            return pkt;
+        }
+
+        /// <summary>
         /// Request Profile 0xB8: richiede il profilo di un mobile (usato anche per forzare aggiornamento Fame/Karma).
         /// </summary>
         public static byte[] RequestProfile(uint serial)

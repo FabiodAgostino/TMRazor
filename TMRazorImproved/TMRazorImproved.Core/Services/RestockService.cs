@@ -88,17 +88,19 @@ namespace TMRazorImproved.Core.Services
             {
                 if (token.IsCancellationRequested) break;
 
-                // Calcola quanti ne abbiamo già nel backpack
+                // FR-044: include color filter in backpack check
                 int currentAmount = _worldService.GetItemsInContainer(destination)
-                    .Where(i => i.Graphic == restockItem.Graphic)
+                    .Where(i => i.Graphic == restockItem.Graphic
+                             && (restockItem.Color == -1 || i.Hue == restockItem.Color))
                     .Sum(i => i.Amount);
 
                 int needed = restockItem.Amount - currentAmount;
                 if (needed <= 0) continue;
 
-                // Cerca l'item nel sorgente
+                // FR-044: color matching — filter by Hue when Color != -1
                 var foundItems = _worldService.GetItemsInContainer(config.Source)
-                    .Where(i => i.Graphic == restockItem.Graphic)
+                    .Where(i => i.Graphic == restockItem.Graphic
+                             && (restockItem.Color == -1 || i.Hue == restockItem.Color))
                     .ToList();
 
                 foreach (var item in foundItems)
@@ -118,6 +120,50 @@ namespace TMRazorImproved.Core.Services
             _logger.LogInformation("Restock agent loop completed");
             OnComplete?.Invoke();
             await StopAsync();
+        }
+
+        // FR-043: one-shot restock pass with explicit source/dest/delay
+        public void RunOnce(string listName, uint sourceSerial, uint destSerial, int delayMs)
+        {
+            var profile = _configService.CurrentProfile;
+            var config = profile?.RestockLists.FirstOrDefault(l => l.Name == listName);
+            if (config == null)
+            {
+                _logger.LogWarning("Restock.RunOnce: list '{Name}' not found", listName);
+                return;
+            }
+
+            uint src = sourceSerial != 0 ? sourceSerial : config.Source;
+            uint dst = destSerial != 0 ? destSerial : config.Destination;
+            if (dst == 0 && _worldService.Player?.Backpack != null)
+                dst = _worldService.Player.Backpack.Serial;
+            int delay = delayMs > 0 ? delayMs : Math.Max(100, config.Delay);
+
+            _ = Task.Run(async () =>
+            {
+                foreach (var restockItem in config.ItemList)
+                {
+                    int currentAmount = _worldService.GetItemsInContainer(dst)
+                        .Where(i => i.Graphic == restockItem.Graphic
+                                 && (restockItem.Color == -1 || i.Hue == restockItem.Color))
+                        .Sum(i => i.Amount);
+
+                    int needed = restockItem.Amount - currentAmount;
+                    if (needed <= 0) continue;
+
+                    foreach (var item in _worldService.GetItemsInContainer(src)
+                        .Where(i => i.Graphic == restockItem.Graphic
+                                 && (restockItem.Color == -1 || i.Hue == restockItem.Color)))
+                    {
+                        if (needed <= 0) break;
+                        int toMove = Math.Min(item.Amount, needed);
+                        await MoveItemAsync(item.Serial, (ushort)toMove, dst);
+                        needed -= toMove;
+                        await Task.Delay(delay);
+                    }
+                }
+                OnComplete?.Invoke();
+            });
         }
 
         private async Task<bool> MoveItemAsync(uint serial, ushort amount, uint targetContainer)

@@ -13,9 +13,14 @@ namespace TMRazorImproved.Shared.Interfaces
 
         IReadOnlyDictionary<uint, long> TargetDamage { get; }
 
+        bool IsPaused { get; }
+
         void Start();
         void Stop();
+        void Pause();
         void Reset();
+
+        long GetDamage(uint serial);
 
         event Action? Updated;
     }

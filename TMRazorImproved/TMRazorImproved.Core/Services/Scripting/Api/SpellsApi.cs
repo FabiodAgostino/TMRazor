@@ -151,6 +151,29 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void CastCleric(string name) => Cast(name);
         public virtual void CastDruid(string name) => Cast(name);
 
+        // FR-022: school-specific targeted overloads — Spells.CastMagery("Greater Heal", Player.Serial)
+        public virtual void CastMagery(string name, uint target, bool wait = true) => Cast(name, target, wait);
+        public virtual void CastNecro(string name, uint target, bool wait = true) => Cast(name, target, wait);
+        public virtual void CastChivalry(string name, uint target, bool wait = true) => Cast(name, target, wait);
+        public virtual void CastBushido(string name, uint target, bool wait = true) => Cast(name, target, wait);
+        public virtual void CastNinjitsu(string name, uint target, bool wait = true) => Cast(name, target, wait);
+        public virtual void CastSpellweaving(string name, uint target, bool wait = true) => Cast(name, target, wait);
+        public virtual void CastMysticism(string name, uint target, bool wait = true) => Cast(name, target, wait);
+        public virtual void CastMastery(string name, uint target, bool wait = true) => Cast(name, target, wait);
+        public virtual void CastCleric(string name, uint target, bool wait = true) => Cast(name, target, wait);
+        public virtual void CastDruid(string name, uint target, bool wait = true) => Cast(name, target, wait);
+        // int overloads for the targeted variants (FR-012 + FR-022)
+        public virtual void CastMagery(string name, int target, bool wait = true) => Cast(name, (uint)target, wait);
+        public virtual void CastNecro(string name, int target, bool wait = true) => Cast(name, (uint)target, wait);
+        public virtual void CastChivalry(string name, int target, bool wait = true) => Cast(name, (uint)target, wait);
+        public virtual void CastBushido(string name, int target, bool wait = true) => Cast(name, (uint)target, wait);
+        public virtual void CastNinjitsu(string name, int target, bool wait = true) => Cast(name, (uint)target, wait);
+        public virtual void CastSpellweaving(string name, int target, bool wait = true) => Cast(name, (uint)target, wait);
+        public virtual void CastMysticism(string name, int target, bool wait = true) => Cast(name, (uint)target, wait);
+        public virtual void CastMastery(string name, int target, bool wait = true) => Cast(name, (uint)target, wait);
+        public virtual void CastCleric(string name, int target, bool wait = true) => Cast(name, (uint)target, wait);
+        public virtual void CastDruid(string name, int target, bool wait = true) => Cast(name, (uint)target, wait);
+
         public virtual void CastLastSpell()
         {
             _cancel.ThrowIfCancelled();
@@ -320,6 +343,12 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
                 Cast(spellId);
             }
         }
+
+        #region int-serial overloads — RazorEnhanced compatibility (TASK-FR-012)
+        public virtual void Cast(string name, int targetSerial, bool wait = true, int waitAfter = 0) => Cast(name, (uint)targetSerial, wait, waitAfter);
+        public virtual void CastLastSpell(int target) => Cast(GetLastSpell(), (uint)target);
+        public virtual void CastLastSpell(uint target) => Cast(GetLastSpell(), target);
+        #endregion
 
         /// <summary>
         /// Attende che il flag IsCasting diventi false (cast completato o interrotto),

@@ -89,6 +89,31 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _journal.Clear();
         }
 
+        // FR-025: Clear(string) — removes only entries containing the specified text
+        /// <summary>Removes all journal entries whose text contains <paramref name="toBeRemoved"/> (case-insensitive).</summary>
+        public virtual void Clear(string toBeRemoved)
+        {
+            _cancel.ThrowIfCancelled();
+            if (string.IsNullOrEmpty(toBeRemoved)) return;
+            _journal.RemoveWhere(e => e.Text.Contains(toBeRemoved, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // FR-026: GetJournalEntry(double afterTimestamp) — returns entries after an OLE Automation date timestamp
+        /// <summary>
+        /// Returns all journal entries recorded after the specified OLE Automation date
+        /// (as returned by <c>Misc.Timestamp()</c>).  Use this to poll the journal for new messages
+        /// since the last check: save the timestamp before the wait, then call this method afterwards.
+        /// </summary>
+        public virtual List<string> GetJournalEntry(double afterTimestamp)
+        {
+            _cancel.ThrowIfCancelled();
+            var cutoff = DateTime.FromOADate(afterTimestamp);
+            return _journal.Entries
+                .Where(e => e.Timestamp > cutoff)
+                .Select(e => e.Text)
+                .ToList();
+        }
+
         public virtual string? GetLast()
         {
             _cancel.ThrowIfCancelled();
@@ -315,10 +340,14 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual bool SearchByType(string text, string type)
         {
             _cancel.ThrowIfCancelled();
-            return _journal.Entries.Any(e => 
-                e.Name.Equals(type, StringComparison.OrdinalIgnoreCase) && 
+            return _journal.Entries.Any(e =>
+                e.Name.Equals(type, StringComparison.OrdinalIgnoreCase) &&
                 e.Text.Contains(text, StringComparison.OrdinalIgnoreCase));
         }
+
+        #region int-serial overloads — RazorEnhanced compatibility (TASK-FR-012)
+        public virtual bool InJournalBySerial(string text, int serial) => InJournalBySerial(text, (uint)serial);
+        #endregion
 
         public virtual bool WaitByName(string name, int delay)
         {

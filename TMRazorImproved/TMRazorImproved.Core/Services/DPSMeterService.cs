@@ -27,8 +27,9 @@ namespace TMRazorImproved.Core.Services
         public double CurrentDPS { get { lock (_statsLock) return _currentDPS; } }
         public double MaxDPS { get { lock (_statsLock) return _maxDPS; } }
         public long TotalDamage { get { lock (_statsLock) return _totalDamage; } }
-        public TimeSpan CombatTime => IsActive ? DateTime.Now - _startTime : _totalTime;
+        public TimeSpan CombatTime => (IsActive && !IsPaused) ? _totalTime + (DateTime.Now - _startTime) : _totalTime;
         public bool IsActive { get; private set; }
+        public bool IsPaused { get; private set; }
 
         public IReadOnlyDictionary<uint, long> TargetDamage
         {
@@ -50,6 +51,14 @@ namespace TMRazorImproved.Core.Services
 
         public void Start()
         {
+            if (IsPaused)
+            {
+                // Resume from pause
+                IsPaused = false;
+                _startTime = DateTime.Now;
+                _timer.Start();
+                return;
+            }
             if (IsActive) return;
             IsActive = true;
             _startTime = DateTime.Now;
@@ -60,6 +69,15 @@ namespace TMRazorImproved.Core.Services
         {
             if (!IsActive) return;
             IsActive = false;
+            IsPaused = false;
+            _timer.Stop();
+            _totalTime += DateTime.Now - _startTime;
+        }
+
+        public void Pause()
+        {
+            if (!IsActive || IsPaused) return;
+            IsPaused = true;
             _timer.Stop();
             _totalTime += DateTime.Now - _startTime;
         }
@@ -122,6 +140,14 @@ namespace TMRazorImproved.Core.Services
             }
             
             Updated?.Invoke();
+        }
+
+        public long GetDamage(uint serial)
+        {
+            lock (_targetDamage)
+            {
+                return _targetDamage.TryGetValue(serial, out long dmg) ? dmg : 0;
+            }
         }
 
         public void Dispose()

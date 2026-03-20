@@ -61,6 +61,72 @@ namespace TMRazorImproved.Core.Services
             }
         }
 
+        // FR-030: RunOnce — one-shot loot pass using the specified list
+        public void RunOnce(string listName, int msDelay)
+        {
+            var profile = _configService.CurrentProfile;
+            var config = profile?.AutoLootLists.FirstOrDefault(l => l.Name == listName);
+            if (config == null)
+            {
+                _logger.LogWarning("AutoLoot.RunOnce: list '{ListName}' not found", listName);
+                return;
+            }
+
+            _ = Task.Run(async () =>
+            {
+                uint targetContainer = config.Container;
+                if (targetContainer == 0 && _worldService.Player?.Backpack != null)
+                    targetContainer = _worldService.Player.Backpack.Serial;
+
+                if (targetContainer == 0) return;
+
+                while (_lootQueue.TryDequeue(out uint serial))
+                {
+                    var item = _worldService.FindItem(serial);
+                    ushort amount = item?.Amount ?? 1;
+                    await MoveItemAsync(serial, amount, targetContainer);
+                    await Task.Delay(Math.Max(100, msDelay));
+                }
+            });
+        }
+
+        // FR-031: SetNoOpenCorpse — temporarily toggle the NoOpenCorpse flag, returns old value
+        public bool SetNoOpenCorpse(bool noOpen)
+        {
+            var config = GetActiveConfig();
+            if (config == null) return false;
+            bool old = config.NoOpenCorpse;
+            config.NoOpenCorpse = noOpen;
+            return old;
+        }
+
+        // FR-032: GetList — returns the item list for the named AutoLoot config
+        public List<LootItem> GetList(string listName)
+        {
+            var profile = _configService.CurrentProfile;
+            var config = profile?.AutoLootLists.FirstOrDefault(l => l.Name == listName);
+            return config?.ItemList ?? new List<LootItem>();
+        }
+
+        // FR-032: GetLootBag — returns the serial of the active loot bag
+        public uint GetLootBag()
+        {
+            var config = GetActiveConfig();
+            if (config != null && config.Container != 0)
+            {
+                var bag = _worldService.FindItem(config.Container);
+                if (bag != null) return config.Container;
+            }
+            return _worldService.Player?.Backpack?.Serial ?? 0;
+        }
+
+        // FR-032: ResetIgnore — clears processed serials and pending loot queue
+        public void ResetIgnore()
+        {
+            _processedSerials.Clear();
+            while (_lootQueue.TryDequeue(out _)) { }
+        }
+
         // BUG-P1-04 FIX: return type non-nullable con possibile return null → CS8603
         private AutoLootConfig? GetActiveConfig()
         {
@@ -119,12 +185,21 @@ namespace TMRazorImproved.Core.Services
             }
         }
 
+        // FR-033: Detects direct corpses AND shared/instanced loot containers placed near a corpse
+        // (UO Dreams / OSI instanced loot: server places a container within 3 tiles of the corpse)
         private bool IsCorpse(uint serial)
         {
-            // In UO i serial dei corpse iniziano solitamente con 0x40000000 e hanno un range specifico
-            // o possiamo interpellare il WorldService per il tipo di oggetto
             var item = _worldService.FindItem(serial);
-            return item?.Graphic == 0x2006;
+            if (item == null) return false;
+
+            // Direct corpse (graphic 0x2006)
+            if (item.Graphic == 0x2006) return true;
+
+            // Shared loot container: any container within 3 tiles of a known corpse
+            return _worldService.Items.Any(i =>
+                i.Graphic == 0x2006 &&
+                Math.Abs(i.X - item.X) <= 3 &&
+                Math.Abs(i.Y - item.Y) <= 3);
         }
 
         protected override async Task AgentLoopAsync(CancellationToken token)

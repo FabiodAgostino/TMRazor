@@ -172,6 +172,7 @@ del _make_tracer_, _sys_
         private readonly IDressService _dress;
         private readonly IRestockService _restock;
         private readonly IVendorService _vendor;
+        private readonly ISecureTradeService _secureTrade;
         private readonly ISoundService _sound;
         private readonly IMacrosService _macros;
         private readonly IPathFindingService _pathfinding;
@@ -197,6 +198,7 @@ del _make_tracer_, _sys_
             IDressService dress,
             IRestockService restock,
             IVendorService vendor,
+            ISecureTradeService secureTrade,
             ISoundService sound,
             IMacrosService macros,
             IPathFindingService pathfinding,
@@ -224,6 +226,7 @@ del _make_tracer_, _sys_
             _dress = dress;
             _restock = restock;
             _vendor = vendor;
+            _secureTrade = secureTrade;
             _sound = sound;
             _macros = macros;
             _pathfinding = pathfinding;
@@ -588,9 +591,11 @@ del _make_tracer_, _sys_
             scope.SetVariable("Filters", new FiltersApi(_config, cancelCtrl));
             scope.SetVariable("Timer",   new TimerApi(cancelCtrl, miscApi));
             scope.SetVariable("SpecialMoves", new SpecialMovesApi(_world, _packetService, cancelCtrl));
-            scope.SetVariable("Sound", new SoundApi(_sound, _world, _targetingService, cancelCtrl));
+            scope.SetVariable("Sound", new SoundApi(_sound, _world, _targetingService, cancelCtrl, _packetService));
             scope.SetVariable("Hotkey", new HotkeyApi(_hotkeyService, _config, cancelCtrl));
-            
+            scope.SetVariable("Trade",  new TradeApi(_secureTrade, cancelCtrl));
+            scope.SetVariable("CUO",    new CuoApi(_packetService, _interopService, _world, cancelCtrl, _loggerFactory.CreateLogger<CuoApi>()));
+
             // Agents
             scope.SetVariable("AutoLoot",    new AutoLootApi(_autoLoot, cancelCtrl));
             scope.SetVariable("Dress",       new DressApi(_dress, cancelCtrl));
@@ -709,8 +714,10 @@ del _make_tracer_, _sys_
                 Filters     = new FiltersApi(_config, cancelCtrl),
                 Timer       = new TimerApi(cancelCtrl, misc),
                 SpecialMoves = new SpecialMovesApi(_world, _packetService, cancelCtrl),
-                Sound       = new SoundApi(_sound, _world, _targetingService, cancelCtrl),
+                Sound       = new SoundApi(_sound, _world, _targetingService, cancelCtrl, _packetService),
                 Hotkey      = new HotkeyApi(_hotkeyService, _config, cancelCtrl),
+                Trade       = new TradeApi(_secureTrade, cancelCtrl),
+                CUO         = new CuoApi(_packetService, _interopService, _world, cancelCtrl, _loggerFactory.CreateLogger<CuoApi>()),
                 AutoLoot    = new AutoLootApi(_autoLoot, cancelCtrl),
                 Dress       = new DressApi(_dress, cancelCtrl),
                 Scavenger   = new ScavengerApi(_scavenger, cancelCtrl),

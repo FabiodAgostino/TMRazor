@@ -28,6 +28,8 @@ namespace TMRazorImproved.Core.Services.Scripting
         public SpecialMovesApi SpecialMoves { get; set; } = null!;
         public SoundApi Sound { get; set; } = null!;
         public HotkeyApi Hotkey { get; set; } = null!;
+        public TradeApi Trade { get; set; } = null!;
+        public CuoApi CUO { get; set; } = null!;
         public AutoLootApi AutoLoot { get; set; } = null!;
         public DressApi Dress { get; set; } = null!;
         public ScavengerApi Scavenger { get; set; } = null!;

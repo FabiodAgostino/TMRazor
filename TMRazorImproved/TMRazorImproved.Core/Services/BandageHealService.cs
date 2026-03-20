@@ -100,7 +100,10 @@ namespace TMRazorImproved.Core.Services
                     if (target != null)
                     {
                         bool isPoisoned = target.IsPoisoned;
-                        bool isMortal = target.IsYellowHits;
+                        // FR-038: check MortalStrike via buff (buff-based) in addition to YellowHits (hue-based)
+                        bool isMortalByBuff = targetSerial == player.Serial &&
+                            player.ActiveBuffs.ContainsKey("Mortal Strike");
+                        bool isMortal = target.IsYellowHits || isMortalByBuff;
                         int hpPercent = (target.Hits * 100 / Math.Max(1, (int)target.HitsMax));
 
                         // Validazione condizioni
@@ -120,15 +123,35 @@ namespace TMRazorImproved.Core.Services
                             _logger.LogDebug("Heal triggered on {0:X}. Hits: {1}%, Poisoned: {2}, Mortal: {3}",
                                 targetSerial, hpPercent, isPoisoned, isMortal);
 
-                            _packetService.SendToServer(PacketBuilder.DoubleClick(bandage.Serial));
-                            await Task.Delay(150, token);
-                            // FIX P0-01: usa il cursorId pendente dal server (0x6C S2C) come richiesto dal protocollo UO.
-                            // CursorId=0 causava il rifiuto silenzioso del target da parte del server.
-                            uint cursorId = _targetingService.PendingCursorId;
-                            _targetingService.ClearTargetCursor();
-                            _packetService.SendToServer(PacketBuilder.TargetObject(targetSerial, cursorId));
+                            // FR-035: text-based healing (shard commands like [bandself)
+                            if (config.SendTextMsg)
+                            {
+                                string cmd = targetSerial == player.Serial ? config.TextMsgSelf : config.TextMsgTarget;
+                                _packetService.SendToServer(PacketBuilder.UnicodeSpeech(cmd));
+                                if (targetSerial != player.Serial)
+                                {
+                                    await Task.Delay(150, token);
+                                    uint cursorId = _targetingService.PendingCursorId;
+                                    _targetingService.ClearTargetCursor();
+                                    _packetService.SendToServer(PacketBuilder.TargetObject(targetSerial, cursorId));
+                                }
+                            }
+                            else
+                            {
+                                _packetService.SendToServer(PacketBuilder.DoubleClick(bandage.Serial));
+                                await Task.Delay(150, token);
+                                // FIX P0-01: usa il cursorId pendente dal server (0x6C S2C) come richiesto dal protocollo UO.
+                                uint cursorId = _targetingService.PendingCursorId;
+                                _targetingService.ClearTargetCursor();
+                                _packetService.SendToServer(PacketBuilder.TargetObject(targetSerial, cursorId));
+                            }
 
                             int delayMs = CalculateBandageDelay(player.Dex, config.CustomDelay);
+
+                            // FR-036: countdown overhead display
+                            if (config.ShowCountdown)
+                                _ = ShowCountdownAsync(target, delayMs, token);
+
                             await Task.Delay(delayMs, token);
                         }
                     }
@@ -171,27 +194,63 @@ namespace TMRazorImproved.Core.Services
             {
                 "Self" => player.Serial,
                 "Last" => _targetingService.LastTarget,
-                "Friend" => GetNearestFriend(player, config.MaxRange),
+                "Friend" => GetWeakestFriend(player, config.MaxRange)?.Serial ?? 0,
+                // FR-034: FriendOrSelf — heals the friend or player with the lower HP%
+                "FriendOrSelf" => GetFriendOrSelfTarget(player, config.MaxRange),
                 _ => player.Serial
             };
         }
 
-        private uint GetNearestFriend(Mobile player, int range)
+        private Mobile? GetWeakestFriend(Mobile player, int range)
         {
-            var friend = _worldService.Mobiles
-                .Where(m => m.Serial != player.Serial && _friendsService.IsFriend(m.Serial))
-                .OrderBy(m => m.DistanceTo(player))
+            return _worldService.Mobiles
+                .Where(m => m.Serial != player.Serial &&
+                            _friendsService.IsFriend(m.Serial) &&
+                            m.DistanceTo(player) <= range)
+                .OrderBy(m => m.HitsMax > 0 ? (m.Hits * 100 / (int)m.HitsMax) : 100)
                 .FirstOrDefault();
-            
-            return friend?.Serial ?? 0;
+        }
+
+        // FR-034: returns the serial of whoever (player or weakest in-range friend) has the lower HP%
+        private uint GetFriendOrSelfTarget(Mobile player, int range)
+        {
+            var weakestFriend = GetWeakestFriend(player, range);
+            if (weakestFriend == null) return player.Serial;
+
+            int friendPct = weakestFriend.HitsMax > 0
+                ? weakestFriend.Hits * 100 / (int)weakestFriend.HitsMax
+                : 100;
+            int playerPct = player.HitsMax > 0
+                ? player.Hits * 100 / (int)player.HitsMax
+                : 100;
+
+            return friendPct < playerPct ? weakestFriend.Serial : player.Serial;
         }
 
         private int CalculateBandageDelay(ushort dex, int customDelay)
         {
             if (customDelay > 0) return customDelay;
 
-            // Formula UO suggerita in Final Review: base 8 secondi, -1 sec ogni 20 DEX (min 3 sec)
-            return Math.Max(3000, 8000 - (dex / 20) * 1000);
+            // FR-037: legacy formula — (11 - (dex - dex%10) / 20) * 1000, min 100ms
+            int delay = (11 - (dex - dex % 10) / 20) * 1000;
+            return Math.Max(100, delay);
+        }
+
+        // FR-036: shows an incrementing overhead countdown above the heal target
+        private async Task ShowCountdownAsync(Mobile target, int totalMs, CancellationToken token)
+        {
+            int elapsed = 0;
+            int tickMs = 1000;
+            while (elapsed < totalMs && !token.IsCancellationRequested)
+            {
+                await Task.Delay(tickMs, token).ConfigureAwait(false);
+                elapsed += tickMs;
+                int seconds = elapsed / 1000;
+                // Send overhead message to client (S→C 0xAE Unicode message above the mobile)
+                _packetService.SendToClient(PacketBuilder.OverheadUnicodeSpeech(
+                    seconds.ToString(), target.Serial, target.Graphic,
+                    type: 0x00, hue: 0x0035));
+            }
         }
 
         protected override void OnStopped()
