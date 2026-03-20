@@ -6,6 +6,7 @@ using TMRazorImproved.Shared.Models;
 using TMRazorImproved.Shared.Models.Config;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace TMRazorImproved.Tests.MockTests.Agents
 {
@@ -16,6 +17,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
         private readonly Mock<IWorldService> _worldServiceMock = new();
         private readonly Mock<ITargetingService> _targetingServiceMock = new();
         private readonly Mock<IFriendsService> _friendsServiceMock = new();
+        private readonly Mock<IMessenger> _messengerMock = new();
         private readonly Mock<IHotkeyService> _hotkeyServiceMock = new();
         private readonly Mock<ILogger<BandageHealService>> _loggerMock = new();
         private readonly UserProfile _profile = new();
@@ -50,6 +52,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _worldServiceMock.Object,
                 _targetingServiceMock.Object,
                 _friendsServiceMock.Object,
+                _messengerMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 
@@ -78,6 +81,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _worldServiceMock.Object,
                 _targetingServiceMock.Object,
                 _friendsServiceMock.Object,
+                _messengerMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 
@@ -105,6 +109,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _worldServiceMock.Object,
                 _targetingServiceMock.Object,
                 _friendsServiceMock.Object,
+                _messengerMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 
@@ -137,6 +142,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _worldServiceMock.Object,
                 _targetingServiceMock.Object,
                 _friendsServiceMock.Object,
+                _messengerMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 
@@ -162,6 +168,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _worldServiceMock.Object,
                 _targetingServiceMock.Object,
                 _friendsServiceMock.Object,
+                _messengerMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 
@@ -188,6 +195,7 @@ namespace TMRazorImproved.Tests.MockTests.Agents
                 _worldServiceMock.Object,
                 _targetingServiceMock.Object,
                 _friendsServiceMock.Object,
+                _messengerMock.Object,
                 _hotkeyServiceMock.Object,
                 _loggerMock.Object);
 

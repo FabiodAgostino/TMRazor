@@ -3,19 +3,22 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using CommunityToolkit.Mvvm.Messaging;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Models;
 using TMRazorImproved.Shared.Models.Config;
+using TMRazorImproved.Shared.Messages;
 using TMRazorImproved.Core.Utilities;
 
 namespace TMRazorImproved.Core.Services
 {
-    public class BandageHealService : AgentServiceBase, IBandageHealService
+    public class BandageHealService : AgentServiceBase, IBandageHealService, IRecipient<LoginCompleteMessage>
     {
         private readonly IPacketService _packetService;
         private readonly IWorldService _worldService;
         private readonly ITargetingService _targetingService;
         private readonly IFriendsService _friendsService;
+        private readonly IMessenger _messenger;
         private readonly ILogger<BandageHealService> _logger;
 
         public BandageHealService(
@@ -24,6 +27,7 @@ namespace TMRazorImproved.Core.Services
             IWorldService worldService,
             ITargetingService targetingService,
             IFriendsService friendsService,
+            IMessenger messenger,
             IHotkeyService hotkeyService,
             ILogger<BandageHealService> logger) : base(configService)
         {
@@ -31,11 +35,25 @@ namespace TMRazorImproved.Core.Services
             _worldService = worldService;
             _targetingService = targetingService;
             _friendsService = friendsService;
+            _messenger = messenger;
             _logger = logger;
+
+            _messenger.Register<LoginCompleteMessage>(this);
 
             hotkeyService.RegisterAction("BandageHeal Start", () => Start());
             hotkeyService.RegisterAction("BandageHeal Stop", () => _ = StopAsync());
             hotkeyService.RegisterAction("BandageHeal Toggle", () => { if (IsRunning) _ = StopAsync(); else Start(); });
+        }
+
+        // FR-052: AutoStart on login — enable BandageHeal if AutoStart == true
+        public void Receive(LoginCompleteMessage message)
+        {
+            var config = _configService.CurrentProfile?.BandageHeal;
+            if (config?.AutoStart == true)
+            {
+                config.Enabled = true;
+                _logger.LogInformation("BandageHeal: AutoStart attivato al login");
+            }
         }
 
         protected override async Task AgentLoopAsync(CancellationToken token)

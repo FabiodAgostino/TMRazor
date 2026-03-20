@@ -16,7 +16,7 @@ using TMRazorImproved.Core.Utilities;
 
 namespace TMRazorImproved.Core.Services
 {
-    public class AutoLootService : AgentServiceBase, IAutoLootService, IRecipient<ContainerContentMessage>, IRecipient<ContainerItemAddedMessage>
+    public class AutoLootService : AgentServiceBase, IAutoLootService, IRecipient<ContainerContentMessage>, IRecipient<ContainerItemAddedMessage>, IRecipient<LoginCompleteMessage>
     {
         private readonly IPacketService _packetService;
         private readonly IWorldService _worldService;
@@ -45,6 +45,7 @@ namespace TMRazorImproved.Core.Services
 
             _messenger.Register<ContainerContentMessage>(this);
             _messenger.Register<ContainerItemAddedMessage>(this);
+            _messenger.Register<LoginCompleteMessage>(this);
 
             hotkeyService.RegisterAction("AutoLoot Start", () => Start());
             hotkeyService.RegisterAction("AutoLoot Stop", () => _ = StopAsync());
@@ -125,6 +126,17 @@ namespace TMRazorImproved.Core.Services
         {
             _processedSerials.Clear();
             while (_lootQueue.TryDequeue(out _)) { }
+        }
+
+        // FR-052: AutoStart on login — enable the active list if AutoStart == true
+        public void Receive(LoginCompleteMessage message)
+        {
+            var config = GetActiveConfig();
+            if (config?.AutoStart == true)
+            {
+                config.Enabled = true;
+                _logger.LogInformation("AutoLoot: AutoStart attivato per lista '{Name}'", config.Name);
+            }
         }
 
         // BUG-P1-04 FIX: return type non-nullable con possibile return null → CS8603

@@ -15,7 +15,7 @@ using TMRazorImproved.Core.Utilities;
 
 namespace TMRazorImproved.Core.Services
 {
-    public class ScavengerService : AgentServiceBase, IScavengerService, IRecipient<WorldItemMessage>
+    public class ScavengerService : AgentServiceBase, IScavengerService, IRecipient<WorldItemMessage>, IRecipient<LoginCompleteMessage>
     {
         private readonly IPacketService _packetService;
         private readonly IWorldService _worldService;
@@ -43,6 +43,7 @@ namespace TMRazorImproved.Core.Services
             _logger = logger;
 
             _messenger.Register<WorldItemMessage>(this);
+            _messenger.Register<LoginCompleteMessage>(this);
 
             hotkeyService.RegisterAction("Scavenger Start", () => Start());
             hotkeyService.RegisterAction("Scavenger Stop", () => _ = StopAsync());
@@ -63,6 +64,17 @@ namespace TMRazorImproved.Core.Services
         private ScavengerConfig? GetActiveConfig()
         {
             return GetActiveConfig(p => p.ScavengerLists, p => p.ActiveScavengerList);
+        }
+
+        // FR-052: AutoStart on login — enable the active list if AutoStart == true
+        public void Receive(LoginCompleteMessage message)
+        {
+            var config = GetActiveConfig();
+            if (config?.AutoStart == true)
+            {
+                config.Enabled = true;
+                _logger.LogInformation("Scavenger: AutoStart attivato per lista '{Name}'", config.Name);
+            }
         }
 
         public void Receive(WorldItemMessage message)

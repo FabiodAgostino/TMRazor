@@ -67,7 +67,21 @@ namespace TMRazorImproved.Core.Handlers
                     RefreshStaffNpcs();
                 else if (m.PropertyName == nameof(UserProfile.FilterLight))
                     RefreshLight();
+                else if (m.PropertyName is nameof(UserProfile.FilterSeason) or nameof(UserProfile.ForcedSeason))
+                    RefreshSeason();
             });
+        }
+
+        private void SendForcedSeason()
+        {
+            byte season = _configService.CurrentProfile.ForcedSeason;
+            _packetService.SendToClient(new byte[] { 0xBC, season, 0x01 });
+        }
+
+        private void RefreshSeason()
+        {
+            if (_configService.CurrentProfile.FilterSeason)
+                SendForcedSeason();
         }
 
         private void RefreshLight()
@@ -123,14 +137,33 @@ namespace TMRazorImproved.Core.Handlers
             // Weather Filter (0x65)
             _packetService.RegisterFilter(PacketPath.ServerToClient, 0x65, _ => !_configService.CurrentProfile.FilterWeather);
 
-            // Sound Filter (0x54)
-            _packetService.RegisterFilter(PacketPath.ServerToClient, 0x54, _ => !_configService.CurrentProfile.FilterSound);
+            // Sound Filter (0x54) — FR-061
+            // FilterSound = true blocca tutti i suoni; FilteredSoundIds blocca solo gli ID specificati.
+            // Struttura pacchetto: [0]=id, [1]=flags, [2-3]=soundId
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0x54, data =>
+            {
+                var profile = _configService.CurrentProfile;
+                if (profile.FilterSound) return false; // blocca tutto
+                if (profile.FilteredSoundIds.Count > 0 && data.Length >= 4)
+                {
+                    ushort soundId = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(2));
+                    if (profile.FilteredSoundIds.Contains(soundId)) return false;
+                }
+                return true;
+            });
 
             // Death Filter (0x2C)
             _packetService.RegisterFilter(PacketPath.ServerToClient, 0x2C, _ => !_configService.CurrentProfile.FilterDeath);
 
-            // Season Filter (0xBC)
-            _packetService.RegisterFilter(PacketPath.ServerToClient, 0xBC, _ => !_configService.CurrentProfile.FilterSeason);
+            // Season Filter (0xBC) — FR-062
+            // Blocca il pacchetto stagione dal server e invia la stagione forzata dalla config.
+            // Struttura pacchetto 0xBC: [0]=id, [1]=season(0-4), [2]=flag(1=sound)
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0xBC, data =>
+            {
+                if (!_configService.CurrentProfile.FilterSeason) return true;
+                SendForcedSeason();
+                return false;
+            });
 
             // Staff Items Filter (0x1A)
             _packetService.RegisterFilter(PacketPath.ServerToClient, 0x1A, FilterStaffItems);
@@ -192,6 +225,45 @@ namespace TMRazorImproved.Core.Handlers
             _packetService.RegisterFilter(PacketPath.ServerToClient, 0xAE, data =>
             {
                 return FilterMessageContent(data, isUnicode: true);
+            });
+
+            // Localized Message Filter (0xC1) — FR-060
+            // Struttura: [0]=id, [1-2]=len, [3-6]=serial, [7-8]=body, [9]=type, [10-11]=hue, [12-13]=font, [14-17]=cliloc_num
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0xC1, data =>
+            {
+                var profile = _configService.CurrentProfile;
+                if (!profile.FilterLocMessages) return true;
+                if (data.Length < 18) return true;
+                if (profile.FilteredClilocNumbers.Count == 0) return true;
+
+                byte msgType = data[9];
+                int clilocNum = BinaryPrimitives.ReadInt32BigEndian(data.AsSpan(14));
+
+                // I cliloc delle spell paladino (1060718-1060727) vengono trattati come Spell (type 0x02)
+                if (clilocNum >= 1060718 && clilocNum <= 1060727)
+                    msgType = 0x02; // MessageType.Spell
+
+                return !profile.FilteredClilocNumbers.Contains(clilocNum);
+            });
+
+            // Localized Message Affix Filter (0xCC) — FR-064
+            // Stesso meccanismo di 0xC1: filtra per tipo messaggio e per numero cliloc.
+            // Struttura: [0]=id, [1-2]=len, [3-6]=serial, [7-8]=body, [9]=type, [10-11]=hue,
+            //            [12-13]=font, [14-17]=cliloc_num, [18]=affix_flags, [19+]=name[30]+affix+args
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0xCC, data =>
+            {
+                var profile = _configService.CurrentProfile;
+                if (data.Length < 19) return true;
+
+                byte msgType = data[9];
+                if (profile.FilteredMessageTypes.Contains((OverheadMessageType)msgType)) return false;
+
+                if (profile.FilterLocMessages && profile.FilteredClilocNumbers.Count > 0)
+                {
+                    int clilocNum = BinaryPrimitives.ReadInt32BigEndian(data.AsSpan(14));
+                    if (profile.FilteredClilocNumbers.Contains(clilocNum)) return false;
+                }
+                return true;
             });
 
             // Graphics Filters

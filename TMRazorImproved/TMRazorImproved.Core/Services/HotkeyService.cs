@@ -26,7 +26,9 @@ namespace TMRazorImproved.Core.Services
         private CancellationTokenSource? _cts;
         private Task? _hookTask;
         private IntPtr _hookId = IntPtr.Zero;
+        private IntPtr _mouseHookId = IntPtr.Zero;          // FR-090: mouse hook
         private NativeMethods.LowLevelKeyboardProc? _proc;
+        private NativeMethods.LowLevelMouseProc? _mouseProc; // FR-090
         private volatile string? _lastActionName;
 
         public bool IsEnabled { get; set; } = true;
@@ -38,6 +40,7 @@ namespace TMRazorImproved.Core.Services
             _serviceProvider = serviceProvider;
             _logger = logger;
             _proc = HookCallback;
+            _mouseProc = MouseHookCallback; // FR-090
         }
 
         public void Start()
@@ -68,6 +71,8 @@ namespace TMRazorImproved.Core.Services
             var organizer = Resolve<IOrganizerService>();
             var bandage   = Resolve<IBandageHealService>();
             var restock   = Resolve<IRestockService>();
+            var vendor    = Resolve<IVendorService>();
+            var friends   = Resolve<IFriendsService>();
 
             // 040-A: Spell per nome (tutte le scuole via loop)
             foreach (var spell in SpellDefinitions.All)
@@ -127,6 +132,83 @@ namespace TMRazorImproved.Core.Services
             // 040-I: Master Toggle (abilita/disabilita tutti gli hotkey)
             RegisterAction("Hotkey:Toggle", () => { IsEnabled = !IsEnabled; });
 
+            // 040-J: Pet Commands — FR-091
+            // Comandi vocali standard per i pet (inviati come UnicodeSpeech al server)
+            (string action, string text)[] petCmds =
+            {
+                ("PetFollow",  "all follow me"),
+                ("PetKill",    "all kill"),
+                ("PetStop",    "all stop"),
+                ("PetStay",    "all stay"),
+                ("PetGuard",   "all guard me"),
+                ("PetCome",    "all come"),
+                ("PetRelease", "all release"),
+                ("PetDrop",    "all drop"),
+            };
+            foreach (var (action, text) in petCmds)
+            {
+                string t = text;
+                RegisterAction($"Pet:{action}", () => ps.SendToServer(PacketBuilder.UnicodeSpeech(t)));
+            }
+
+            // 040-K: Show Names — FR-091
+            // Invia SingleClick (0x09) a tutti i mobile visibili nel raggio 18 tile
+            RegisterAction("ShowNames", () => ShowAllNames(ps, ws));
+
+            // 040-L: Skills attive — FR-091
+            // UO skill IDs standard (UseSkill 0x12)
+            (string name, int id)[] skillHotkeys =
+            {
+                ("Hiding",       21), ("Stealth",      47), ("Meditation",   46),
+                ("Tracking",     38), ("AnimalTaming", 35), ("Provocation",  22),
+                ("Discordance",  15), ("Peacemaking",   9), ("EvalInt",      16),
+                ("SpiritSpeak",  32), ("DetectHidden", 14), ("RemoveTrap",   48),
+                ("Veterinary",   39), ("Forensics",    19), ("Camping",      10),
+            };
+            foreach (var (name, id) in skillHotkeys)
+            {
+                int skillId = id;
+                RegisterAction($"Skill:{name}", () => ps.SendToServer(PacketBuilder.UseSkill(skillId)));
+            }
+
+            // 040-M: Vendor Buy/Sell agent toggle — FR-091
+            RegisterAction("Agent:VendorBuy",  () => ToggleAgent(vendor));
+            RegisterAction("Agent:VendorSell", () => ToggleAgent(vendor));
+
+            // 040-N: Friend list hotkeys — FR-091
+            RegisterAction("Friends:AddLastTarget", () =>
+            {
+                if (ts.LastTarget == 0) return;
+                var mobile = ws.FindMobile(ts.LastTarget);
+                friends.AddFriend(ts.LastTarget, mobile?.Name ?? "Unknown");
+            });
+            RegisterAction("Friends:RemoveLastTarget", () =>
+            {
+                if (ts.LastTarget != 0)
+                    friends.RemoveFriend(ts.LastTarget);
+            });
+
+            // 040-O: Dress list hotkeys — FR-091
+            // "Dress:ListName" cambia lista attiva e veste; "Undress:ListName" sveste
+            // Liste disponibili lette da config al momento dell'esecuzione
+            RegisterAction("Dress:ChangeThenDress", () =>
+            {
+                var list = _configService.CurrentProfile?.DressLists?.FirstOrDefault();
+                if (list != null) { ds.ChangeList(list.Name); ds.DressUp(); }
+            });
+
+            // 040-P: GraphFilter toggle per nome — FR-091
+            // "GraphFilter:toggle" abilita/disabilita il primo filtro grafico
+            RegisterAction("GraphFilter:ToggleAll", () =>
+            {
+                var profile = _configService.CurrentProfile;
+                if (profile == null) return;
+                bool newVal = !profile.FilterDragon;
+                profile.FilterDragon  = newVal;
+                profile.FilterDrake   = newVal;
+                profile.FilterDaemon  = newVal;
+            });
+
             _logger.LogDebug("System hotkey actions registered ({Count} actions)", _registeredActions.Count);
         }
 
@@ -178,6 +260,21 @@ namespace TMRazorImproved.Core.Services
                 _ = agent.StopAsync();
             else
                 agent.Start();
+        }
+
+        /// <summary>040-K FR-091: Invia SingleClick (0x09) a tutti i mobile visibili nel raggio 18 tile.</summary>
+        private static void ShowAllNames(IPacketService ps, IWorldService ws)
+        {
+            var player = ws.Player;
+            if (player == null) return;
+            foreach (var mobile in ws.Mobiles)
+            {
+                if (mobile.Serial == player.Serial) continue;
+                int dx = mobile.X - player.X;
+                int dy = mobile.Y - player.Y;
+                if (dx * dx + dy * dy <= 18 * 18)
+                    ps.SendToServer(PacketBuilder.SingleClick(mobile.Serial));
+            }
         }
 
         /// <summary>040-G: Rimuove gli item equipaggiati nelle mani (layer 0x01/0x02) e li mette nel backpack.</summary>
@@ -233,18 +330,25 @@ namespace TMRazorImproved.Core.Services
             {
                 if (curModule != null)
                 {
-                    _hookId = NativeMethods.SetWindowsHookEx(NativeMethods.WH_KEYBOARD_LL, _proc!, NativeMethods.GetModuleHandle(curModule.ModuleName!), 0);
+                    var hMod = NativeMethods.GetModuleHandle(curModule.ModuleName!);
+                    _hookId      = NativeMethods.SetWindowsHookEx(NativeMethods.WH_KEYBOARD_LL, _proc!,      hMod, 0);
+                    _mouseHookId = NativeMethods.SetWindowsHookEx(NativeMethods.WH_MOUSE_LL,    _mouseProc!, hMod, 0); // FR-090
                 }
-                
+
                 if (_hookId == IntPtr.Zero)
                 {
                     int err = Marshal.GetLastWin32Error();
                     _logger.LogError("Failed to install keyboard hook. Error: {Error}", err);
                     return;
                 }
+                if (_mouseHookId == IntPtr.Zero)
+                {
+                    int err = Marshal.GetLastWin32Error();
+                    _logger.LogWarning("Failed to install mouse hook. Error: {Error} — mouse hotkeys disabled", err);
+                }
             }
 
-            _logger.LogDebug("Keyboard hook installed successfully (ID: {HookId})", _hookId);
+            _logger.LogDebug("Keyboard hook installed (ID: {HookId}), Mouse hook installed (ID: {MouseHookId})", _hookId, _mouseHookId);
 
             // Un loop dei messaggi è necessario per ricevere le notifiche degli hook
             while (!token.IsCancellationRequested)
@@ -260,6 +364,11 @@ namespace TMRazorImproved.Core.Services
 
             NativeMethods.UnhookWindowsHookEx(_hookId);
             _hookId = IntPtr.Zero;
+            if (_mouseHookId != IntPtr.Zero)
+            {
+                NativeMethods.UnhookWindowsHookEx(_mouseHookId);
+                _mouseHookId = IntPtr.Zero;
+            }
         }
 
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
@@ -270,6 +379,39 @@ namespace TMRazorImproved.Core.Services
                 CheckHotkey(vkCode);
             }
             return NativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
+        }
+
+        // FR-090: Mouse low-level hook callback
+        private IntPtr MouseHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+        {
+            if (IsEnabled && nCode >= 0)
+            {
+                int msg = wParam.ToInt32();
+                MouseHotkeyType? mouseType = null;
+
+                if (msg == NativeMethods.WM_MBUTTONDOWN)
+                {
+                    mouseType = MouseHotkeyType.MiddleClick;
+                }
+                else if (msg == NativeMethods.WM_MOUSEWHEEL)
+                {
+                    // mouseData è al campo offset 8 della struttura MSLLHOOKSTRUCT
+                    // I 16 bit alti (HIWORD) contengono il delta della rotella
+                    int mouseData = Marshal.ReadInt32(lParam, 8);
+                    short delta = (short)(mouseData >> 16);
+                    mouseType = delta > 0 ? MouseHotkeyType.WheelUp : MouseHotkeyType.WheelDown;
+                }
+                else if (msg == NativeMethods.WM_XBUTTONDOWN)
+                {
+                    int mouseData = Marshal.ReadInt32(lParam, 8);
+                    int xButton = (mouseData >> 16) & 0xFFFF;
+                    mouseType = xButton == 1 ? MouseHotkeyType.XButton1 : MouseHotkeyType.XButton2;
+                }
+
+                if (mouseType.HasValue)
+                    CheckMouseHotkey(mouseType.Value);
+            }
+            return NativeMethods.CallNextHookEx(_mouseHookId, nCode, wParam, lParam);
         }
 
         private void CheckHotkey(int vkCode)
@@ -284,7 +426,26 @@ namespace TMRazorImproved.Core.Services
 
             foreach (var hk in profile.Hotkeys)
             {
-                if (hk.Enabled && hk.KeyCode == vkCode && hk.Ctrl == ctrl && hk.Alt == alt && hk.Shift == shift)
+                if (hk.Enabled && !hk.IsMouse && hk.KeyCode == vkCode && hk.Ctrl == ctrl && hk.Alt == alt && hk.Shift == shift)
+                {
+                    ExecuteAction(hk.Action);
+                }
+            }
+        }
+
+        // FR-090: Controlla gli hotkey mouse
+        private void CheckMouseHotkey(MouseHotkeyType mouseType)
+        {
+            bool ctrl  = (NativeMethods.GetKeyState(NativeMethods.VK_CONTROL) & 0x8000) != 0;
+            bool alt   = (NativeMethods.GetKeyState(NativeMethods.VK_MENU)    & 0x8000) != 0;
+            bool shift = (NativeMethods.GetKeyState(NativeMethods.VK_SHIFT)   & 0x8000) != 0;
+
+            var profile = _configService.CurrentProfile;
+            if (profile == null) return;
+
+            foreach (var hk in profile.Hotkeys)
+            {
+                if (hk.Enabled && hk.IsMouse && hk.MouseButton == mouseType && hk.Ctrl == ctrl && hk.Alt == alt && hk.Shift == shift)
                 {
                     ExecuteAction(hk.Action);
                 }
@@ -341,26 +502,34 @@ namespace TMRazorImproved.Core.Services
         public void Dispose()
         {
             if (_hookId != IntPtr.Zero)
-            {
                 NativeMethods.UnhookWindowsHookEx(_hookId);
-            }
+            if (_mouseHookId != IntPtr.Zero)
+                NativeMethods.UnhookWindowsHookEx(_mouseHookId);
             _cts?.Cancel();
         }
 
         private static class NativeMethods
         {
             public const int WH_KEYBOARD_LL = 13;
-            public const int WM_KEYDOWN = 0x0100;
-            public const int WM_SYSKEYDOWN = 0x0104;
-            public const int VK_SHIFT = 0x10;
+            public const int WH_MOUSE_LL    = 14;   // FR-090
+            public const int WM_KEYDOWN     = 0x0100;
+            public const int WM_SYSKEYDOWN  = 0x0104;
+            public const int WM_MBUTTONDOWN = 0x0207; // FR-090: middle button pressed
+            public const int WM_MOUSEWHEEL  = 0x020A; // FR-090: wheel rotated
+            public const int WM_XBUTTONDOWN = 0x020B; // FR-090: X button pressed
+            public const int VK_SHIFT   = 0x10;
             public const int VK_CONTROL = 0x11;
-            public const int VK_MENU = 0x12; // ALT key
-            public const int PM_REMOVE = 0x0001;
+            public const int VK_MENU    = 0x12; // ALT key
+            public const int PM_REMOVE  = 0x0001;
 
             public delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+            public delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam); // FR-090
 
             [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
             public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+
+            [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+            public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelMouseProc lpfn, IntPtr hMod, uint dwThreadId); // FR-090
 
             [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
             [return: MarshalAs(UnmanagedType.Bool)]

@@ -152,9 +152,9 @@ namespace TMRazorImproved.Core.Handlers
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0x97, HandleMovementDemand);
 
             // ── Container & Inventory ─────────────────────────────────────────────────────
-            _packetService.RegisterViewer(PacketPath.ServerToClient, 0x3C, HandleContainerContent);
-            _packetService.RegisterViewer(PacketPath.ServerToClient, 0x25, HandleAddItemToContainer);
-            _packetService.RegisterViewer(PacketPath.ServerToClient, 0x2E, HandleEquipUpdate);
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0x3C, data => { HandleContainerContent(data); return true; });    // FR-064
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0x25, data => { HandleAddItemToContainer(data); return true; }); // FR-064
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0x2E, data => { HandleEquipUpdate(data); return true; });         // FR-064
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0x89, HandleCorpseEquipment);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0x24, HandleBeginContainerContent);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0x27, HandleLiftReject);
@@ -223,13 +223,13 @@ namespace TMRazorImproved.Core.Handlers
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xBA, HandleTrackingArrow);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0x83, HandleDeleteCharacter);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xBC, HandleChangeSeason);
-            _packetService.RegisterViewer(PacketPath.ServerToClient, 0xC8, HandleSetUpdateRange);
+            _packetService.RegisterFilter(PacketPath.ServerToClient, 0xC8, data => { HandleSetUpdateRange(data); return true; });       // FR-064
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xD8, HandleCustomHouseInfo);
             _packetService.RegisterViewer(PacketPath.ServerToClient, 0xF0, HandleRunUOProtocol);
 
-            // ── C2S Viewers ───────────────────────────────────────────────────────────────
-            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x02, HandleMovementRequest);
-            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x05, HandleAttackRequest);
+            // ── C2S Filters (FR-064: erano viewer, ora filter per poter bloccare/modificare) ──
+            _packetService.RegisterFilter(PacketPath.ClientToServer, 0x02, HandleMovementRequest);  // NoRunStealth
+            _packetService.RegisterFilter(PacketPath.ClientToServer, 0x05, data => { HandleAttackRequest(data); return true; }); // future block
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x06, HandleClientDoubleClick);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x07, HandleLiftRequest);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x08, HandleDropRequest);
@@ -239,6 +239,19 @@ namespace TMRazorImproved.Core.Handlers
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x75, HandleRenameMobile);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0xBF, HandleExtendedClientCommand);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0xD7, HandleClientEncodedPacket);
+
+            // ── C2S Viewers aggiuntivi (FR-063) ──────────────────────────────────────────
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x22, HandleResyncRequest);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x3A, HandleSetSkillLockC2S);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x5D, HandlePlayCharacter);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x7D, HandleMenuResponseC2S);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x80, HandleServerListLogin);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x91, HandleGameLogin);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x95, HandleHueResponseC2S);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x9A, HandleAsciiPromptResponseC2S);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0xA0, HandlePlayServer);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0xAC, HandleResponseStringQueryC2S);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0xC2, HandleUnicodePromptResponseC2S);
         }
 
         // ─────────────────────────────────────────────────────────────────────────────────
@@ -2584,10 +2597,21 @@ namespace TMRazorImproved.Core.Handlers
         #region C2S Viewers
         // ─────────────────────────────────────────────────────────────────────────────────
 
-        private void HandleMovementRequest(byte[] data)
+        private bool HandleMovementRequest(byte[] data)
         {
             // 0x02 C2S: cmd(1) dir(1) seq(1) key(4) — richiesta di movimento del client
-            // Tracking-only: il PacketService può filtrare (stealth, no-run)
+            // FR-064: NoRunStealth — se il player è invisibile (stealth) e l'opzione è attiva,
+            //         rimuove il flag di corsa (bit 0x80) dalla direzione per non rivelare la posizione.
+            if (data.Length >= 2)
+            {
+                var player = _worldService.Player;
+                if (player != null && player.IsHidden && _configService.CurrentProfile?.NoRunStealth == true)
+                {
+                    if ((data[1] & 0x80) != 0)
+                        data[1] = (byte)(data[1] & ~0x80);
+                }
+            }
+            return true; // sempre pass-through, ma il pacchetto può essere modificato in-place
         }
 
         private void HandleAttackRequest(byte[] data)
@@ -2728,6 +2752,98 @@ namespace TMRazorImproved.Core.Handlers
                 int ability = reader.ReadInt32();
                 // Tracking special ability usage
             }
+        }
+
+        #endregion
+
+        // ─────────────────────────────────────────────────────────────────────────────────
+        #region C2S Handlers aggiuntivi (FR-063)
+        // ─────────────────────────────────────────────────────────────────────────────────
+
+        /// <summary>0x22 C2S — Resync Request: il client chiede una risincronizzazione.</summary>
+        private void HandleResyncRequest(byte[] data)
+        {
+            // Pacchetto fisso 2 byte: [0]=0x22 [1]=0x00
+        }
+
+        /// <summary>0x3A C2S — SetSkillLock inviato direttamente da ClassicUO (cambio lock in-game).</summary>
+        private void HandleSetSkillLockC2S(byte[] data)
+        {
+            // Struttura: cmd(1) len(2) skillId(2) lockType(1) = 6 bytes
+            if (data.Length < 6) return;
+            // skillId e lockType sono già gestiti da SkillsService.SetLock() per il path script/UI.
+            // Qui teniamo solo traccia per il ScriptRecorder (già registrato).
+        }
+
+        /// <summary>0x5D C2S — PlayCharacter: il client seleziona un personaggio.</summary>
+        private void HandlePlayCharacter(byte[] data)
+        {
+            // Struttura: cmd(1) pattern(4) name(30) 0(2) slot(4) ip(4) = 73 bytes
+            // Tracking only
+        }
+
+        /// <summary>0x7D C2S — MenuResponse: il client ha risposto a un menu classico (0x7C).</summary>
+        private void HandleMenuResponseC2S(byte[] data)
+        {
+            // Struttura: cmd(1) serial(4) menuId(2) index(2) itemId(2) hue(2) = 13 bytes
+            if (data.Length < 13) return;
+            // Rimuoviamo il menu dallo store: l'utente ha già risposto
+            MenuStore.Clear();
+        }
+
+        /// <summary>0x80 C2S — ServerListLogin: login account alla shard list.</summary>
+        private void HandleServerListLogin(byte[] data)
+        {
+            // Struttura: cmd(1) account(30) password(30) nextKey(1) = 62 bytes
+            // Tracking only — nessuna azione interna richiesta
+        }
+
+        /// <summary>0x91 C2S — GameLogin: game login sulla shard selezionata.</summary>
+        private void HandleGameLogin(byte[] data)
+        {
+            // Struttura: cmd(1) key(4) account(30) password(30) = 65 bytes
+            // Tracking only
+        }
+
+        /// <summary>0x95 C2S — HueResponse: risposta al color picker (C2S).</summary>
+        private void HandleHueResponseC2S(byte[] data)
+        {
+            // Struttura: cmd(1) serial(4) graphic(2) hue(2) = 9 bytes
+            // Tracking only
+        }
+
+        /// <summary>0x9A C2S — ClientAsciiPromptResponse: risposta al prompt ASCII.</summary>
+        private void HandleAsciiPromptResponseC2S(byte[] data)
+        {
+            // Struttura: cmd(1) serial(4) promptId(4) type(4) text(null-terminated ASCII)
+            if (data.Length < 13) return;
+            // Aggiorna il targeting service: il prompt è stato risposto
+            _targetingService.SetPrompt(false);
+        }
+
+        /// <summary>0xA0 C2S — PlayServer: il client seleziona il server.</summary>
+        private void HandlePlayServer(byte[] data)
+        {
+            // Struttura: cmd(1) index(2) = 3 bytes
+            // Tracking only
+        }
+
+        /// <summary>0xAC C2S — ResponseStringQuery: risposta al query string (StringQueryStore).</summary>
+        private void HandleResponseStringQueryC2S(byte[] data)
+        {
+            // Struttura: cmd(1) len(2) serial(4) parentId(1) buttonId(1) yesno(1) textLen(2) text(ASCII)
+            if (data.Length < 11) return;
+            // Rimuoviamo la query dallo store: è stata risposta
+            StringQueryStore.Clear();
+        }
+
+        /// <summary>0xC2 C2S — UnicodePromptResponse: risposta al prompt Unicode.</summary>
+        private void HandleUnicodePromptResponseC2S(byte[] data)
+        {
+            // Struttura: cmd(1) len(2) serial(4) promptId(4) type(4) lang(4) text(unicode LE null-term)
+            if (data.Length < 17) return;
+            // Aggiorna il targeting service: il prompt Unicode è stato risposto
+            _targetingService.SetPrompt(false);
         }
 
         #endregion

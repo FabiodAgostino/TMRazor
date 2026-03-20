@@ -832,11 +832,269 @@ namespace TMRazorImproved.Core.Services
                     break;
                 }
 
+                // ── FR-053 — DISCONNECT ─────────────────────────────────────────────────────────
+                case "DISCONNECT":
+                    _packetService.SendToServer(new byte[] { 0x01, 0xFF });
+                    break;
+
+                // ── FR-054 — WALK / RUN / PATHFIND ──────────────────────────────────────────────
+                case "WALK":
+                {
+                    if (TryParseDirection(args, out byte walkDir))
+                        _packetService.SendToServer(new byte[] { 0x02, walkDir, 0x00 });
+                    else
+                        _logger.LogWarning("WALK: direzione non valida: '{D}'", args);
+                    break;
+                }
+
+                case "RUN":
+                {
+                    if (TryParseDirection(args, out byte runDir))
+                        _packetService.SendToServer(new byte[] { 0x02, (byte)(runDir | 0x80), 0x00 });
+                    else
+                        _logger.LogWarning("RUN: direzione non valida: '{D}'", args);
+                    break;
+                }
+
+                case "PATHFIND":
+                {
+                    int pfX = 0, pfY = 0, pfZ = 0;
+                    bool pfOk = false;
+                    var pfParts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (pfParts.Length >= 3
+                        && int.TryParse(pfParts[0], out pfX)
+                        && int.TryParse(pfParts[1], out pfY)
+                        && int.TryParse(pfParts[2], out pfZ))
+                    {
+                        pfOk = true;
+                    }
+                    else if (pfParts.Length >= 1)
+                    {
+                        uint pfSerial = ResolveSerial(pfParts[0]);
+                        var pfMobile = _worldService.Mobiles.FirstOrDefault(m => m.Serial == pfSerial);
+                        if (pfMobile != null)
+                        {
+                            pfX = pfMobile.X; pfY = pfMobile.Y; pfZ = pfMobile.Z; pfOk = true;
+                        }
+                        else
+                        {
+                            var pfItem = _worldService.Items.FirstOrDefault(i => i.Serial == pfSerial);
+                            if (pfItem != null)
+                            {
+                                pfX = pfItem.X; pfY = pfItem.Y; pfZ = pfItem.Z; pfOk = true;
+                            }
+                        }
+                    }
+                    if (pfOk && (pfX != 0 || pfY != 0))
+                    {
+                        // 0x38 PathfindMove — inviato al client per attivare il pathfinding interno di ClassicUO
+                        var pfPkt = new byte[7];
+                        pfPkt[0] = 0x38;
+                        System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(pfPkt.AsSpan(1), (ushort)pfX);
+                        System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(pfPkt.AsSpan(3), (ushort)pfY);
+                        System.Buffers.Binary.BinaryPrimitives.WriteInt16BigEndian(pfPkt.AsSpan(5), (short)pfZ);
+                        _packetService.SendToClient(pfPkt);
+                    }
+                    else
+                        _logger.LogWarning("PATHFIND: coordinate non risolvibili: '{A}'", args);
+                    break;
+                }
+
+                // ── FR-055 — QUERYSTRINGRESPONSE ────────────────────────────────────────────────
+                case "QUERYSTRINGRESPONSE":
+                {
+                    // Formato: QUERYSTRINGRESPONSE [true|false] <testo> [timeout_ms]
+                    bool qsAccept = true;
+                    string qsText = args;
+                    int qsTimeout = 10000;
+                    var qsParts = args.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries);
+                    if (qsParts.Length >= 1 && (qsParts[0].Equals("false", StringComparison.OrdinalIgnoreCase) || qsParts[0] == "0"))
+                    {
+                        qsAccept = false;
+                        qsText = qsParts.Length > 1 ? qsParts[1] : "";
+                        if (qsParts.Length > 2 && int.TryParse(qsParts[2], out int qsT)) qsTimeout = qsT;
+                    }
+                    else if (qsParts.Length >= 1 && qsParts[0].Equals("true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        qsText = qsParts.Length > 1 ? qsParts[1] : "";
+                        if (qsParts.Length > 2 && int.TryParse(qsParts[2], out int qsT)) qsTimeout = qsT;
+                    }
+                    Utilities.StringQueryStore.WaitForQuery(qsTimeout);
+                    var qsQuery = Utilities.StringQueryStore.Get();
+                    if (qsQuery != null)
+                    {
+                        var qsPkt = PacketBuilder.StringQueryResponse(qsQuery.Serial, qsQuery.QueryType, (byte)qsQuery.QueryId, qsAccept, qsText);
+                        _packetService.SendToServer(qsPkt);
+                        Utilities.StringQueryStore.Clear();
+                    }
+                    break;
+                }
+
+                // ── FR-056 — WHISPER / YELL ──────────────────────────────────────────────────────
+                case "WHISPER":
+                    _packetService.SendToServer(PacketBuilder.UnicodeSpeech(args, 0x02));
+                    await Task.Delay(100, token);
+                    break;
+
+                case "YELL":
+                    _packetService.SendToServer(PacketBuilder.UnicodeSpeech(args, 0x01));
+                    await Task.Delay(100, token);
+                    break;
+
+                // ── FR-057 — Target modalità estese ─────────────────────────────────────────────
+                case "TARGETSELF":
+                {
+                    uint selfSerial = _worldService.Player?.Serial ?? 0;
+                    if (selfSerial != 0)
+                    {
+                        uint cursorId = _targetingService.PendingCursorId;
+                        _targetingService.ClearTargetCursor();
+                        _packetService.SendToServer(PacketBuilder.TargetObject(selfSerial, cursorId));
+                    }
+                    break;
+                }
+
+                case "TARGETLAST":
+                {
+                    uint lastSerial = _targetingService.LastTarget;
+                    if (lastSerial != 0)
+                    {
+                        uint cursorId = _targetingService.PendingCursorId;
+                        _targetingService.ClearTargetCursor();
+                        _packetService.SendToServer(PacketBuilder.TargetObject(lastSerial, cursorId));
+                    }
+                    break;
+                }
+
+                case "TARGETCLOSEST":
+                {
+                    var player = _worldService.Player;
+                    if (player != null)
+                    {
+                        var closest = _worldService.Mobiles
+                            .Where(m => m.Serial != player.Serial)
+                            .OrderBy(m => m.DistanceTo(player))
+                            .FirstOrDefault();
+                        if (closest != null)
+                        {
+                            uint cursorId = _targetingService.PendingCursorId;
+                            _targetingService.ClearTargetCursor();
+                            _packetService.SendToServer(PacketBuilder.TargetObject(closest.Serial, cursorId));
+                        }
+                    }
+                    break;
+                }
+
+                case "TARGETRANDOM":
+                {
+                    var player = _worldService.Player;
+                    if (player != null)
+                    {
+                        var mobs = _worldService.Mobiles.Where(m => m.Serial != player.Serial).ToList();
+                        if (mobs.Count > 0)
+                        {
+                            var rnd = mobs[new Random().Next(mobs.Count)];
+                            uint cursorId = _targetingService.PendingCursorId;
+                            _targetingService.ClearTargetCursor();
+                            _packetService.SendToServer(PacketBuilder.TargetObject(rnd.Serial, cursorId));
+                        }
+                    }
+                    break;
+                }
+
+                case "TARGETLOCATION":
+                {
+                    // Formato: TARGETLOCATION <x> <y> <z>
+                    var tlParts = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (tlParts.Length >= 3
+                        && ushort.TryParse(tlParts[0], out ushort tlX)
+                        && ushort.TryParse(tlParts[1], out ushort tlY)
+                        && short.TryParse(tlParts[2], out short tlZ))
+                    {
+                        // 0x6C location target: type=1, serial=0, x,y,z,graphic=0
+                        uint cursorId = _targetingService.PendingCursorId;
+                        _targetingService.ClearTargetCursor();
+                        var tlPkt = new byte[19];
+                        tlPkt[0] = 0x6C;
+                        tlPkt[1] = 0x01; // location type
+                        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(tlPkt.AsSpan(2), cursorId);
+                        tlPkt[6] = 0x00; // cursor type neutral
+                        // serial = 0 (bytes 7-10 already zero)
+                        System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(tlPkt.AsSpan(11), tlX);
+                        System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(tlPkt.AsSpan(13), tlY);
+                        System.Buffers.Binary.BinaryPrimitives.WriteInt16BigEndian(tlPkt.AsSpan(15), tlZ);
+                        // graphic = 0 (bytes 17-18 already zero)
+                        _packetService.SendToServer(tlPkt);
+                    }
+                    else
+                        _logger.LogWarning("TARGETLOCATION: formato non valido. Atteso: TARGETLOCATION <x> <y> <z>");
+                    break;
+                }
+
+                // ── FR-058 — RESPONDGUMP esteso (switches + text entries) ───────────────────────
+                // Formato: RESPONDGUMP <serial> <typeId> <buttonId> [SW:id1,id2,...] [TX:idx:text,...]
+                case "RESPONDGUMPEX":
+                {
+                    var t = args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    if (t.Length < 3) break;
+                    if (!uint.TryParse(t[0], out uint gs) || !uint.TryParse(t[1], out uint gt) || !int.TryParse(t[2], out int gb)) break;
+
+                    int[]? switches = null;
+                    System.Collections.Generic.List<(int, string)>? texts = null;
+
+                    for (int ri = 3; ri < t.Length; ri++)
+                    {
+                        if (t[ri].StartsWith("SW:", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var swParts = t[ri].Substring(3).Split(',');
+                            switches = swParts.Select(s => int.TryParse(s, out int sv) ? sv : -1).Where(s => s >= 0).ToArray();
+                        }
+                        else if (t[ri].StartsWith("TX:", StringComparison.OrdinalIgnoreCase))
+                        {
+                            texts = new System.Collections.Generic.List<(int, string)>();
+                            foreach (var txPart in t[ri].Substring(3).Split(','))
+                            {
+                                var colon = txPart.IndexOf(':');
+                                if (colon > 0 && int.TryParse(txPart[..colon], out int txIdx))
+                                    texts.Add((txIdx, txPart[(colon + 1)..]));
+                            }
+                        }
+                    }
+                    _packetService.SendToServer(PacketBuilder.RespondGump(gs, gt, gb, switches, texts?.ToArray()));
+                    break;
+                }
+
                 default:
                     _logger.LogWarning("Unknown macro action: {Action}", action);
                     break;
             }
         }
+
+        // FR-054: mappa stringhe direzione → byte per pacchetto 0x02 (Walk/Run)
+        private static bool TryParseDirection(string s, out byte dir)
+        {
+            dir = (s.Trim().ToUpperInvariant()) switch
+            {
+                "NORTH" or "N" => 0,
+                "NORTHEAST" or "NE" or "RIGHT" => 1,
+                "EAST"  or "E" => 2,
+                "SOUTHEAST" or "SE" or "DOWN" => 3,
+                "SOUTH" or "S" => 4,
+                "SOUTHWEST" or "SW" or "LEFT" => 5,
+                "WEST"  or "W" => 6,
+                "NORTHWEST" or "NW" or "UP" => 7,
+                _ => 0xFF
+            };
+            return dir != 0xFF;
+        }
+
+        // FR-059: converte byte direzione in nome (per recording)
+        private static string DirectionName(byte d) => (d & 0x07) switch
+        {
+            0 => "North", 1 => "Northeast", 2 => "East", 3 => "Southeast",
+            4 => "South", 5 => "Southwest", 6 => "West", 7 => "Northwest",
+            _ => "North"
+        };
 
         /// <summary>
         /// Risolve un argomento serial: prima controlla gli alias locali,
@@ -948,6 +1206,58 @@ namespace TMRazorImproved.Core.Services
                     lock (_recordingBuffer) _recordingBuffer.Add(_worldService.Player?.Flying ?? false ? "FLY" : "LAND");
             };
 
+            // FR-059 recording: 0x02 Walk/Run
+            Action<byte[]> onMovement = data =>
+            {
+                if (data.Length >= 2)
+                {
+                    byte dirByte = data[1];
+                    bool running = (dirByte & 0x80) != 0;
+                    string dirName = DirectionName(dirByte);
+                    lock (_recordingBuffer) _recordingBuffer.Add(running ? $"RUN {dirName}" : $"WALK {dirName}");
+                }
+            };
+            // FR-059 recording: 0x07 PickUp
+            Action<byte[]> onPickup = data =>
+            {
+                if (data.Length >= 5)
+                {
+                    uint serial = System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(1));
+                    lock (_recordingBuffer) _recordingBuffer.Add($"PICKUP {serial}");
+                }
+            };
+            // FR-059 recording: 0x08 Drop
+            Action<byte[]> onDrop = data =>
+            {
+                if (data.Length >= 14)
+                {
+                    uint serial = System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(1));
+                    ushort dx = System.Buffers.Binary.BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(5));
+                    ushort dy = System.Buffers.Binary.BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(7));
+                    sbyte  dz = (sbyte)data[9];
+                    lock (_recordingBuffer) _recordingBuffer.Add($"DROP {serial} {dx} {dy} {dz}");
+                }
+            };
+            // FR-059 recording: 0x13 Equip
+            Action<byte[]> onEquip = data =>
+            {
+                if (data.Length >= 10)
+                {
+                    uint serial = System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(1));
+                    byte layer  = data[5];
+                    lock (_recordingBuffer) _recordingBuffer.Add($"EQUIPITEM {serial} {layer}");
+                }
+            };
+            // FR-059 recording: 0xD7 SA Ability (sub 0x00 0x18/0x19)
+            Action<byte[]> onAbility = data =>
+            {
+                if (data.Length >= 9 && data[7] == 0x00)
+                {
+                    string abilityName = data[8] switch { 1 => "primary", 2 => "secondary", _ => "clear" };
+                    lock (_recordingBuffer) _recordingBuffer.Add($"SETABILITY {abilityName}");
+                }
+            };
+
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x06, onDoubleClick);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x09, onSingleClick);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0xAD, onSpeech);
@@ -956,6 +1266,11 @@ namespace TMRazorImproved.Core.Services
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x05, onAttack);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0x72, onWarMode);
             _packetService.RegisterViewer(PacketPath.ClientToServer, 0xBF, onExtendedC2S);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x02, onMovement);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x07, onPickup);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x08, onDrop);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0x13, onEquip);
+            _packetService.RegisterViewer(PacketPath.ClientToServer, 0xD7, onAbility);
 
             _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0x06, onDoubleClick));
             _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0x09, onSingleClick));
@@ -965,6 +1280,11 @@ namespace TMRazorImproved.Core.Services
             _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0x05, onAttack));
             _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0x72, onWarMode));
             _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0xBF, onExtendedC2S));
+            _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0x02, onMovement));
+            _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0x07, onPickup));
+            _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0x08, onDrop));
+            _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0x13, onEquip));
+            _recordingUnsubscribers.Add(() => _packetService.UnregisterViewer(PacketPath.ClientToServer, 0xD7, onAbility));
 
             _logger.LogInformation("Recording macro '{Name}' started", name);
         }

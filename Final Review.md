@@ -704,9 +704,9 @@
 
 ### 4.9 LoginAutostart per Tutti gli Agenti
 
-#### TASK-FR-052: LoginAutostart Mancante per Tutti gli Agenti
+#### TASK-FR-052: LoginAutostart Mancante per Tutti gli Agenti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: Vari agenti -> `LoginAutostart()`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `AutoLootService`, `ScavengerService` e `BandageHealService` implementano ora `IRecipient<LoginCompleteMessage>`. Nel metodo `Receive(LoginCompleteMessage)`, ciascun servizio controlla se la config attiva ha `AutoStart == true` e in tal caso imposta `Enabled = true`. `BandageHealService` ha ricevuto anche `IMessenger` come dipendenza nel costruttore. Aggiornati i test in `BandageHealServiceTests.cs` per passare il mock del messenger. Fix pre-esistente in `ScriptingIntegrationTests.cs`: aggiunto mock mancante di `ISecureTradeService`. Build Core: 0 errori C#.
 - **Dettaglio**: Nel legacy, AutoLoot, Scavenger e BandageHeal possono essere configurati per avviarsi automaticamente al login. Nessun agente nel nuovo codice ha questa funzionalita.
 - **Impatto Utente**: L'utente deve avviare manualmente ogni agente dopo il login.
 - **Documentazione per Junior Dev**: In `App.xaml.cs` o in un servizio dedicato, registrarsi al messaggio `LoginConfirmMessage` e avviare automaticamente gli agenti configurati per autostart nella config del profilo corrente.
@@ -726,16 +726,16 @@
 
 ### 5.2 Azioni Macro Mancanti
 
-#### TASK-FR-053: MacroAction DisconnectAction Mancante
+#### TASK-FR-053: MacroAction DisconnectAction Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Macros/Actions/DisconnectAction.cs`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `case "DISCONNECT":` aggiunto in `MacrosService.ExecuteActionAsync()`. Invia pacchetto `0x01 0xFF` al server.
 - **Dettaglio**: Nessun comando `DISCONNECT` esiste nelle macro.
 - **Impatto Utente**: Macro che disconnettono dal gioco (es. safety macro) non funzioneranno.
 - **Documentazione per Junior Dev**: In `MacrosService.cs`, aggiungere `case "DISCONNECT":` che chiama `_packetService.Disconnect()` o equivalente.
 
-#### TASK-FR-054: MacroAction MovementAction Mancante (CRITICO)
+#### TASK-FR-054: MacroAction MovementAction Mancante (CRITICO) ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Macros/Actions/MovementAction.cs`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `case "WALK":`, `case "RUN":` e `case "PATHFIND":` aggiunti in `MacrosService`. `WALK`/`RUN` inviano pacchetto `0x02` con byte direzione (RUN aggiunge flag `0x80`). Helper `TryParseDirection()` mappa N/NE/E/SE/S/SW/W/NW + abbreviazioni. `PATHFIND` accetta `<x> <y> <z>` oppure serial/alias (risolve coordinate da `_worldService`), poi invia pacchetto `0x38` (PathfindMove) al client per attivare il pathfinding interno di ClassicUO.
 - **Dettaglio**: Nessun comando `WALK`, `RUN` o `PATHFIND` esiste nelle macro. Il legacy supporta 8 direzioni + pathfinding a coordinate/serial/alias.
 - **Impatto Utente**: **CRITICO** - Macro di movimento (farming routes, mining, lumber) non funzioneranno affatto.
 - **Documentazione per Junior Dev**: In `MacrosService.cs`, aggiungere:
@@ -744,41 +744,41 @@
   3. `case "PATHFIND":` -> delega a `IPathFindingService.PathFindTo(x, y, z)`
   Referenziare `MovementAction.cs` legacy per i dettagli dei pacchetti.
 
-#### TASK-FR-055: MacroAction QueryStringResponseAction Mancante
+#### TASK-FR-055: MacroAction QueryStringResponseAction Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Macros/Actions/QueryStringResponseAction.cs`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `case "QUERYSTRINGRESPONSE":` aggiunto. Formato: `QUERYSTRINGRESPONSE [true|false] <testo> [timeout_ms]`. Usa `StringQueryStore.WaitForQuery()` + `PacketBuilder.StringQueryResponse()` come già fa `MiscApi`.
 - **Dettaglio**: Nessun comando `QUERYSTRINGRESPONSE` per rispondere ai prompt del server.
 - **Impatto Utente**: Macro che rispondono a prompt testuali del server non funzioneranno.
 - **Documentazione per Junior Dev**: Aggiungere `case "QUERYSTRINGRESPONSE":` in `MacrosService.cs`. Referenziare `QueryStringResponseAction.cs` legacy.
 
-#### TASK-FR-056: MacroAction Whisper/Yell Mancanti
+#### TASK-FR-056: MacroAction Whisper/Yell Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Macros/Actions/MessagingAction.cs` -> Whisper, Yell
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — `case "WHISPER":` (speech type 0x02) e `case "YELL":` (speech type 0x01) aggiunti in `MacrosService`. Entrambi usano `PacketBuilder.UnicodeSpeech()` con il tipo appropriato.
 - **Dettaglio**: Solo `SAY` e `EMOTE` esistono. `WHISPER` e `YELL` mancano.
 - **Impatto Utente**: Macro che sussurrano o gridano non funzioneranno.
 - **Documentazione per Junior Dev**: In `MacrosService.cs`, aggiungere `case "WHISPER":` (MessageType 0x02) e `case "YELL":` (MessageType 0x01).
 
 ### 5.3 Azioni Macro Parzialmente Implementate
 
-#### TASK-FR-057: TargetAction Modalita Mancanti
+#### TASK-FR-057: TargetAction Modalita Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Macros/Actions/TargetAction.cs`
-- **Stato nel Nuovo Codice**: ⚠️ Incompleto
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti `TARGETSELF` (player.Serial), `TARGETLAST` (_targetingService.LastTarget), `TARGETCLOSEST` (mobile più vicino != player), `TARGETRANDOM` (mobile casuale), `TARGETLOCATION <x> <y> <z>` (pacchetto 0x6C tipo location).
 - **Dettaglio**: Legacy supporta 6 modalita: Self, Serial, Location, Last, Closest, Random. Nuovo ha solo `TARGET <serial>`. Mancano: `TARGETSELF`, `TARGETLAST`, `TARGETCLOSEST`, `TARGETRANDOM`, `TARGETLOCATION <x> <y> <z>`.
 - **Impatto Utente**: La maggior parte delle macro di targeting non funzionera.
 - **Documentazione per Junior Dev**: In `MacrosService.cs`, aggiungere comandi separati per ogni modalita target. `TARGETSELF` usa `_worldService.Player.Serial`. `TARGETLAST` usa `_targetingService.LastTarget`. `TARGETCLOSEST` + `TARGETRANDOM` richiedono `_worldService.GetMobilesInRange()` con selettore.
 
-#### TASK-FR-058: GumpResponseAction Avanzata Mancante
+#### TASK-FR-058: GumpResponseAction Avanzata Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Macros/Actions/GumpResponseAction.cs`
-- **Stato nel Nuovo Codice**: ⚠️ Incompleto
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto comando `RESPONDGUMPEX <serial> <typeId> <buttonId> [SW:id1,id2,...] [TX:idx:text,...]` che usa l'overload `PacketBuilder.RespondGump(serial, typeId, buttonId, switches, textEntries)` già esistente. Il comando `RESPONDGUMP` esistente rimane per la forma semplice (retro-compatibilità).
 - **Dettaglio**: Legacy supporta risposte gump con switches e text entries. Nuovo `RESPONDGUMP` invia solo button ID.
 - **Impatto Utente**: Macro che rispondono a gump complessi (con checkbox e campi testo) non funzioneranno correttamente.
 - **Documentazione per Junior Dev**: Estendere `RESPONDGUMP` per accettare parametri aggiuntivi: `RESPONDGUMP <serial> <typeId> <buttonId> [switches=1,2,3] [texts="text1","text2"]`.
 
 ### 5.4 Registrazione Macro Mancanti
 
-#### TASK-FR-059: Recording Pacchetti Mancanti
+#### TASK-FR-059: Recording Pacchetti Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/Macros/MacroManager.cs`
-- **Stato nel Nuovo Codice**: ⚠️ Incompleto
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti viewer di registrazione in `MacrosService.StartRecording()` per: `0x02` (Walk/Run → `WALK <dir>` / `RUN <dir>` con helper `DirectionName()`), `0x07` (PickUp → `PICKUP <serial>`), `0x08` (Drop → `DROP <serial> <x> <y> <z>`), `0x13` (Equip → `EQUIPITEM <serial> <layer>`), `0xD7` (SA Ability → `SETABILITY primary/secondary/clear`). Tutti registrati e de-registrati correttamente.
 - **Dettaglio**: Il nuovo recorder non registra: Movement (0x02), PickUp (0x07), Drop (0x08), Equip (0x13), Ability (0xD7).
 - **Impatto Utente**: Registrando una macro, movimenti, pickup, drop, equip e abilita non vengono catturati.
 - **Documentazione per Junior Dev**: In `MacrosService.cs`, aggiungere viewer per i pacchetti mancanti nella funzione di registrazione. Per ogni pacchetto, generare il comando testuale corrispondente (es. 0x02 -> `WALK North`, 0x07 -> `PICKUP <serial>`, 0x08 -> `DROP <serial> <x> <y> <z>`, etc.).
@@ -808,23 +808,23 @@
 | WallStaticFilter | ✅ Portato | In WorldPacketHandler |
 | TargetFilterManager | ✅ Portato | Come TargetFilterService |
 
-#### TASK-FR-060: LocMessageFilter (0xC1) Mancante
+#### TASK-FR-060: LocMessageFilter (0xC1) Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/Filters/MessageFilter.cs` -> `LocMessageFilter`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto filtro 0xC1 in `FilterHandler.RegisterFilters()`. Aggiunto `FilterLocMessages` (bool) e `FilteredClilocNumbers` (List<int>) a `UserProfile`. Il filtro legge il cliloc number a offset 14 (int32 big-endian), rimappa il range 1060718-1060727 a MessageType.Spell (spell paladino, come nel legacy), e blocca se il cliloc è nella lista configurata.
 - **Dettaglio**: Il filtraggio di messaggi localizzati per numero cliloc non e implementato. Include: messaggi spell paladino (1060718-1060727), e qualsiasi altro messaggio filtrabile per cliloc ID.
 - **Impatto Utente**: I messaggi di spam del paladino e altri messaggi localizzati filtrabili appariranno nel journal.
 - **Documentazione per Junior Dev**: In `FilterHandler.cs`, aggiungere un handler per il pacchetto 0xC1 che controlla il cliloc number contro una lista configurabile e blocca se presente. Referenziare `MessageFilter.cs` legacy per i numeri cliloc specifici.
 
-#### TASK-FR-061: SoundFilter Per-Categoria Mancante
+#### TASK-FR-061: SoundFilter Per-Categoria Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/Filters/SoundFilters.cs`
-- **Stato nel Nuovo Codice**: ⚠️ Incompleto
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto `FilteredSoundIds` (List<int>) a `UserProfile`. Il filtro 0x54 in `FilterHandler` è stato esteso: `FilterSound=true` continua a bloccare tutti i suoni; se `FilteredSoundIds` è popolato blocca solo gli sound ID specificati. Il filtro footsteps esistente rimane invariato (opera in parallelo).
 - **Dettaglio**: Il legacy carica filtri sonori per categoria da `ConfigFiles.FilterSounds` (es. draghi, uccelli, etc.) con toggle individuali. Il nuovo ha solo un boolean `FilterSound` che blocca TUTTI i suoni.
 - **Impatto Utente**: L'utente non puo filtrare selettivamente i suoni (es. solo rumori ambientali mantenendo suoni di combattimento).
 - **Documentazione per Junior Dev**: In `FilterHandler.cs`, sostituire il check `FilterSound` singolo con un check contro una lista di sound ID configurabili in `UserProfile.FilteredSoundIds`.
 
-#### TASK-FR-062: SeasonFilter ForceSend Mancante
+#### TASK-FR-062: SeasonFilter ForceSend Mancante ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/Filters/Season.cs`
-- **Stato nel Nuovo Codice**: ⚠️ Incompleto
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto `ForcedSeason` (byte, default 0=Spring) a `UserProfile`. Il filtro 0xBC in `FilterHandler` ora chiama `SendForcedSeason()` che invia `[0xBC, season, 0x01]` al client prima di bloccare il pacchetto. Aggiunto `RefreshSeason()` richiamato da `ConfigChangedMessage` su cambio di `FilterSeason`/`ForcedSeason`.
 - **Dettaglio**: Legacy invia `ForceSendToClient(new SeasonChange(forcedSeason))` per applicare la stagione scelta. Nuovo blocca solo il pacchetto senza inviare la stagione forzata.
 - **Impatto Utente**: Abilitando il filtro stagione, la stagione del client non cambia effettivamente.
 - **Documentazione per Junior Dev**: In `FilterHandler.cs`, quando `FilterSeason` e attivo, oltre a bloccare il pacchetto in arrivo, inviare un pacchetto 0xBC con la stagione forzata dalla config usando `_packetService.SendToClient()`.
@@ -833,9 +833,9 @@
 
 ### 6.2 Handler Pacchetti C2S Mancanti
 
-#### TASK-FR-063: 13 Handler C2S Mancanti
+#### TASK-FR-063: 13 Handler C2S Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/Network/Handlers.cs`
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti 11 viewer C2S in `WorldPacketHandler.RegisterHandlers()` con i relativi metodi: `HandleResyncRequest`(0x22), `HandleSetSkillLockC2S`(0x3A), `HandlePlayCharacter`(0x5D), `HandleMenuResponseC2S`(0x7D→chiama `MenuStore.Clear()`), `HandleServerListLogin`(0x80), `HandleGameLogin`(0x91), `HandleHueResponseC2S`(0x95), `HandleAsciiPromptResponseC2S`(0x9A→chiama `_targetingService.SetPrompt(false)`), `HandlePlayServer`(0xA0), `HandleResponseStringQueryC2S`(0xAC→chiama `StringQueryStore.Clear()`), `HandleUnicodePromptResponseC2S`(0xC2→chiama `_targetingService.SetPrompt(false)`). I handler 0x00/0xF8 (CreateCharacter) non registrati — non presenti come pacchetti C2S intercettabili in questo contesto (creazione personaggio avviene prima del game login).
 
 | Pacchetto | Handler Legacy | Impatto |
 |-----------|---------------|---------|
@@ -860,9 +860,9 @@
 
 ### 6.3 Handler Downgrade da Filter a Viewer
 
-#### TASK-FR-064: Handler Degradati (Filter -> Viewer)
+#### TASK-FR-064: Handler Degradati (Filter -> Viewer) ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/Network/Handlers.cs`
-- **Stato nel Nuovo Codice**: ⛔ Discrepanza Strutturale
+- **Stato nel Nuovo Codice**: ✅ Implementato — 0x77/0xAE/0xC1 già gestiti come filter in FilterHandler. Aggiunto filter 0xCC (LocalizedMessageAffix) in FilterHandler con check FilteredMessageTypes+FilteredClilocNumbers. In WorldPacketHandler: 0x02 C2S cambiato da viewer a filter con NoRunStealth logic (IsHidden + strip bit 0x80); 0x05 C2S cambiato a filter (pass-through); 0x25/0x2E/0x3C S2C cambiati a filter (lambda pass-through); 0xC8 S2C cambiato a filter (pass-through). Build Core: 0 errori.
 - **Dettaglio**: Diversi handler legacy registrati come **filter** (possono bloccare/modificare pacchetti) sono stati portati come **viewer** (solo lettura). Questo impedisce di bloccare certi pacchetti.
 
 | Pacchetto | Funzionalita Persa |
@@ -1099,16 +1099,16 @@
 
 ### 9.2 HotkeyService Gap
 
-#### TASK-FR-090: Hotkey Mouse Button/Wheel Mancanti
+#### TASK-FR-090: Hotkey Mouse Button/Wheel Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/HotKey.cs` -> supporto mouse
-- **Stato nel Nuovo Codice**: ❌ Mancante
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto `MouseHotkeyType` enum (MiddleClick/WheelUp/WheelDown/XButton1/XButton2) in ConfigModels.cs; `HotkeyDefinition` estesa con `MouseButton` property e `IsMouse` helper. In HotkeyService: aggiunto `WH_MOUSE_LL` hook con delegate `LowLevelMouseProc`; `MouseHookCallback` gestisce WM_MBUTTONDOWN/WM_MOUSEWHEEL/WM_XBUTTONDOWN leggendo `HIWORD(mouseData)` via `Marshal.ReadInt32(lParam, 8)`; `CheckMouseHotkey()` cerca hotkey mouse in config; `CheckHotkey()` aggiornato con `!hk.IsMouse` guard; hook rimosso in Dispose. Build Core: 0 errori.
 - **Dettaglio**: Il legacy supporta: middle click, wheel up/down, X buttons 1-2, con combinazioni Ctrl/Alt/Shift. Il nuovo usa solo keyboard hook (`WH_KEYBOARD_LL`).
 - **Impatto Utente**: Utenti che usano pulsanti mouse per hotkey (molto comuni nel PvP) non potranno assegnarli.
 - **Documentazione per Junior Dev**: In `HotkeyService.cs`, aggiungere un mouse hook (`WH_MOUSE_LL`) accanto al keyboard hook. Definire `MouseHotkeyType` enum (MiddleClick, WheelUp, WheelDown, XButton1, XButton2) e supportarli nella registrazione hotkey.
 
-#### TASK-FR-091: Hotkey Categorie Mancanti
+#### TASK-FR-091: Hotkey Categorie Mancanti ✅ DONE (2026-03-20)
 - **File/Classe Legacy**: `Razor/RazorEnhanced/HotKey.cs`
-- **Stato nel Nuovo Codice**: ⚠️ Incompleto
+- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunte in `RegisterAllSystemActions()`: Pet Commands (PetFollow/Kill/Stop/Stay/Guard/Come/Release/Drop → UnicodeSpeech); ShowNames (SingleClick a tutti i mobile entro 18 tile); Skills (15 skill attive via UseSkill: Hiding/Stealth/Meditation/Tracking/Taming/Provocation/Discordance/Peacemaking/EvalInt/SpiritSpeak/DetectHidden/RemoveTrap/Veterinary/Forensics/Camping); Agent:VendorBuy/VendorSell (IVendorService toggle); Friends:AddLastTarget/RemoveLastTarget (IFriendsService); Dress:ChangeThenDress; GraphFilter:ToggleAll. BoneCutter/AutoCarver/AutoRemount non implementati (servizi non esistenti). Build Core: 0 errori.
 - **Dettaglio**: Categorie hotkey mancanti nel nuovo codice:
   - Pet Commands (all'follow, all kill, all stay, etc.)
   - Show Names (mostra nomi overhead)

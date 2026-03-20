@@ -55,6 +55,8 @@ namespace TMRazorImproved.Shared.Models.Config
         public bool FilterFootsteps { get; set; }
         public bool FilterKarmaFame { get; set; }
         public bool FilterSeason { get; set; }
+        /// <summary>Stagione forzata inviata al client quando FilterSeason è attivo. 0=Spring,1=Summer,2=Fall,3=Winter,4=Desolation.</summary>
+        public byte ForcedSeason { get; set; } = 0;
         public bool FilterDragon { get; set; }
         public bool FilterDrake { get; set; }
         public bool FilterDaemon { get; set; }
@@ -64,6 +66,15 @@ namespace TMRazorImproved.Shared.Models.Config
         public ushort FilterDrakeGraphic { get; set; } = 0x0033;
         public ushort FilterDaemonGraphic { get; set; } = 0x0033;
         public List<OverheadMessageType> FilteredMessageTypes { get; set; } = new();
+
+        // LocMessage Filter (0xC1) — FR-060
+        public bool FilterLocMessages { get; set; }
+        public List<int> FilteredClilocNumbers { get; set; } = new();
+
+        // Sound Filter per-categoria (0x54) — FR-061
+        // Blocca solo i sound ID presenti in questa lista, indipendentemente da FilterSound.
+        // FilterSound rimane il toggle "blocca tutto i suoni".
+        public List<int> FilteredSoundIds { get; set; } = new();
         
         // Advanced Filters
         public bool HighlightFlags { get; set; }
@@ -404,14 +415,31 @@ namespace TMRazorImproved.Shared.Models.Config
         public Dictionary<byte, uint> LayerItems { get; set; } = new(); // Layer -> Serial
     }
 
+    /// <summary>FR-090: Tipo di pulsante mouse per hotkey mouse.</summary>
+    public enum MouseHotkeyType
+    {
+        None        = 0,
+        MiddleClick = 1,
+        WheelUp     = 2,
+        WheelDown   = 3,
+        XButton1    = 4,
+        XButton2    = 5,
+    }
+
     public class HotkeyDefinition
     {
         public string Action { get; set; } = string.Empty;
+        /// <summary>VK code keyboard hotkey. 0 = usa MouseButton.</summary>
         public int KeyCode { get; set; }
+        /// <summary>FR-090: Mouse hotkey type. None = keyboard hotkey.</summary>
+        public MouseHotkeyType MouseButton { get; set; } = MouseHotkeyType.None;
         public bool Ctrl { get; set; }
         public bool Alt { get; set; }
         public bool Shift { get; set; }
         public bool PassThrough { get; set; } = true;
         public bool Enabled { get; set; } = true;
+
+        /// <summary>True se è un hotkey mouse (KeyCode == 0 e MouseButton != None).</summary>
+        public bool IsMouse => KeyCode == 0 && MouseButton != MouseHotkeyType.None;
     }
 }
