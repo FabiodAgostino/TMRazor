@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using TMRazorImproved.Shared.Enums;
@@ -85,5 +86,53 @@ namespace TMRazorImproved.Shared.Interfaces
         /// non esiste nello scope corrente o se si verifica un errore durante l'invocazione.
         /// </summary>
         object? CallPythonFunction(string functionName, params object[] args);
+
+        // ----------------------------------------------------------------
+        // Debug API (Python only — via sys.settrace)
+        // ----------------------------------------------------------------
+
+        /// <summary>True se lo script è attualmente in pausa su un breakpoint o step.</summary>
+        bool IsPaused { get; }
+
+        /// <summary>Numero di riga (1-based) dove lo script è attualmente in pausa.</summary>
+        int CurrentDebugLine { get; }
+
+        /// <summary>Scattato quando l'esecuzione si ferma su un breakpoint o step. Param = numero riga.</summary>
+        event Action<int>? DebugPaused;
+
+        /// <summary>Aggiunge un breakpoint alla riga specificata (1-based).</summary>
+        void SetBreakpoint(int line);
+
+        /// <summary>Rimuove il breakpoint dalla riga specificata.</summary>
+        void ClearBreakpoint(int line);
+
+        /// <summary>Rimuove tutti i breakpoint.</summary>
+        void ClearAllBreakpoints();
+
+        /// <summary>Ritorna i numeri di riga con breakpoint attivi.</summary>
+        IEnumerable<int> GetBreakpoints();
+
+        /// <summary>Riprende l'esecuzione fino al prossimo breakpoint (o alla fine).</summary>
+        void ContinueExecution();
+
+        /// <summary>Esegue una singola riga Python e poi si ferma di nuovo.</summary>
+        void StepInto();
+
+        // ----------------------------------------------------------------
+        // Inspector Debug API (FR-079)
+        // ----------------------------------------------------------------
+
+        /// <summary>Snapshot dei dati condivisi tra script (Misc.SetSharedValue/GetSharedValue).</summary>
+        IReadOnlyDictionary<string, object> GetSharedScriptData();
+
+        /// <summary>Snapshot dei timer attivi creati dagli script (Timer.Create).</summary>
+        IReadOnlyList<ScriptTimerInfo> GetActiveTimers();
     }
+
+    /// <summary>FR-079: Info snapshot di un timer script attivo.</summary>
+    public record ScriptTimerInfo(
+        string Name,
+        double IntervalMs,
+        double TimeLeftMs,
+        bool IsRunning);
 }

@@ -20,6 +20,9 @@ namespace TMRazorImproved.Shared.Models.Config
         public string Theme { get; set; } = "Dark"; // Light, Dark, HighContrast, Auto
         public string AccentColor { get; set; } = "Default"; // Default or Hex string
 
+        // FR-074: Password memory — credenziali salvate per auto-login (cifrate DPAPI)
+        public List<SavedCredential> SavedCredentials { get; set; } = new();
+
         // Engine Patches
         public bool PatchEncryption { get; set; } = true;
         public bool AllowMultiClient { get; set; } = true;
@@ -66,6 +69,8 @@ namespace TMRazorImproved.Shared.Models.Config
         public ushort FilterDrakeGraphic { get; set; } = 0x0033;
         public ushort FilterDaemonGraphic { get; set; } = 0x0033;
         public List<OverheadMessageType> FilteredMessageTypes { get; set; } = new();
+        /// <summary>Stringhe di testo configurabili: i messaggi ASCII/Unicode che contengono una di queste stringhe vengono bloccati (case-insensitive). Equivalente al filtro testo configurabile del legacy.</summary>
+        public List<string> FilteredMessageStrings { get; set; } = new();
 
         // LocMessage Filter (0xC1) — FR-060
         public bool FilterLocMessages { get; set; }
@@ -177,6 +182,12 @@ namespace TMRazorImproved.Shared.Models.Config
 
         // Script settings (autostart, loop mode per-script)
         public List<ScriptConfig> Scripts { get; set; } = new();
+
+        // Toolbar floating items (spell/item/command shortcuts)
+        public List<ToolbarItem> ToolbarItems { get; set; } = new();
+
+        // Journal filter patterns (FR-075) — messaggi il cui testo contiene uno di questi pattern vengono nascosti dal journal
+        public List<JournalFilterEntry> JournalFilters { get; set; } = new();
     }
 
     /// <summary>
@@ -189,6 +200,33 @@ namespace TMRazorImproved.Shared.Models.Config
         public bool Loop { get; set; }
         /// <summary>Se true, lo script C# viene pre-compilato all'avvio per ridurre la latenza della prima esecuzione.</summary>
         public bool Preload { get; set; }
+    }
+
+    public enum ToolbarItemType
+    {
+        Spell = 0,
+        Item = 1,
+        Command = 2,
+        Skill = 3,
+        Agent = 4
+    }
+
+    /// <summary>
+    /// Rappresenta un elemento nella toolbar floating (equivalente di TOOLBAR_ITEMS nel legacy).
+    /// </summary>
+    public class ToolbarItem
+    {
+        public ToolbarItemType Type { get; set; } = ToolbarItemType.Spell;
+        /// <summary>ID spell / graphic item / nome comando/skill.</summary>
+        public string Id { get; set; } = string.Empty;
+        /// <summary>Etichetta mostrata nella toolbar.</summary>
+        public string Name { get; set; } = string.Empty;
+        /// <summary>Hotkey opzionale (formato "Ctrl+F1" ecc.). Vuoto = nessuna hotkey.</summary>
+        public string Hotkey { get; set; } = string.Empty;
+        /// <summary>Indice posizione nella toolbar (0-based).</summary>
+        public int Slot { get; set; }
+        /// <summary>Soglia di avviso per slot di tipo Item: evidenzia in arancio se il conteggio scende sotto questo valore. 0 = disabilitato.</summary>
+        public int WarningCount { get; set; } = 0;
     }
 
     public class MediaConfig
@@ -441,5 +479,33 @@ namespace TMRazorImproved.Shared.Models.Config
 
         /// <summary>True se è un hotkey mouse (KeyCode == 0 e MouseButton != None).</summary>
         public bool IsMouse => KeyCode == 0 && MouseButton != MouseHotkeyType.None;
+    }
+
+    /// <summary>
+    /// FR-075: Voce di filtro journal. I messaggi il cui testo contiene il Pattern (case-insensitive)
+    /// vengono nascosti dal journal UI. Equivale a una riga nella JOURNAL_FILTER table del legacy.
+    /// </summary>
+    public class JournalFilterEntry
+    {
+        /// <summary>Testo da cercare nel messaggio journal (case-insensitive, Contains).</summary>
+        public string Pattern { get; set; } = string.Empty;
+        /// <summary>Se false, la voce è temporaneamente disabilitata senza essere rimossa.</summary>
+        public bool Enabled { get; set; } = true;
+    }
+
+    /// <summary>
+    /// FR-074: Credenziale salvata per un shard/account (per auto-login).
+    /// La password è cifrata con DPAPI (Windows ProtectedData) — non trasportabile tra macchine.
+    /// </summary>
+    public class SavedCredential
+    {
+        /// <summary>IP o hostname del shard.</summary>
+        public string Host { get; set; } = string.Empty;
+        /// <summary>Porta del shard (default 2593).</summary>
+        public int Port { get; set; } = 2593;
+        /// <summary>Nome utente / account.</summary>
+        public string Username { get; set; } = string.Empty;
+        /// <summary>Password cifrata con DPAPI (Base64). Vuota = nessuna password salvata.</summary>
+        public string EncryptedPassword { get; set; } = string.Empty;
     }
 }

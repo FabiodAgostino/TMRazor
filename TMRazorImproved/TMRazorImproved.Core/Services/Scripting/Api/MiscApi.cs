@@ -33,6 +33,8 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
 
         // Shared values accessible across all scripts (global, static)
         private static readonly ConcurrentDictionary<string, object> _sharedValues = new(StringComparer.OrdinalIgnoreCase);
+        /// <summary>FR-079: Accesso diretto ai dati condivisi per l'Inspector.</summary>
+        public static ConcurrentDictionary<string, object> SharedValues => _sharedValues;
 
         public MiscApi(
             IWorldService world,

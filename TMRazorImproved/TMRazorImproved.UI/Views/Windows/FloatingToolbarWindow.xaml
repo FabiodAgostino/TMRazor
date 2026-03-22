@@ -96,10 +96,59 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
+            <!-- Toolbar Slots (spell/item/command shortcuts) — visibili solo se configurati -->
+            <ItemsControl ItemsSource="{Binding Slots}"
+                          Visibility="{Binding Slots.Count, Converter={StaticResource IntToVisibilityConverter}}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <!-- Slot compatto: bordo arancio se in warning, altrimenti neutro -->
+                        <Border Width="36" Height="36" Margin="2,0" CornerRadius="4"
+                                BorderThickness="1"
+                                ToolTip="{Binding Name}">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}"/>
+                                    <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsWarning}" Value="True">
+                                            <Setter Property="BorderBrush" Value="#F97316"/>
+                                            <Setter Property="Background" Value="#1AF97316"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <!-- Nome (abbreviato ai primi 4 caratteri) -->
+                                <ui:TextBlock FontSize="9" FontWeight="Bold"
+                                             Text="{Binding Name}"
+                                             TextTrimming="CharacterEllipsis"
+                                             MaxWidth="32"
+                                             VerticalAlignment="Center"
+                                             HorizontalAlignment="Center"
+                                             TextAlignment="Center"/>
+                                <!-- Conteggio item (visibile solo per slot Item) -->
+                                <ui:TextBlock FontSize="9"
+                                             Text="{Binding Count}"
+                                             VerticalAlignment="Bottom"
+                                             HorizontalAlignment="Right"
+                                             Margin="0,0,2,1"
+                                             Foreground="#F97316"
+                                             Visibility="{Binding ShowCount, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
             <!-- Close Button (Optional, can be context menu) -->
-            <ui:Button Icon="{ui:SymbolIcon Dismiss16}" 
-                       Padding="4" 
-                       Margin="8,0,0,0" 
+            <ui:Button Icon="{ui:SymbolIcon Dismiss16}"
+                       Padding="4"
+                       Margin="8,0,0,0"
                        Appearance="Secondary"
                        Click="CloseButton_Click"
                        ToolTip="Close Toolbar"/>

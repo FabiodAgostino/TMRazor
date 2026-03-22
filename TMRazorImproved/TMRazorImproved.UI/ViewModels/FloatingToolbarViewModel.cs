@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Messages;
+using TMRazorImproved.Shared.Models.Config;
 using TMRazorImproved.UI.Utilities;
 
 namespace TMRazorImproved.UI.ViewModels
@@ -40,6 +41,9 @@ namespace TMRazorImproved.UI.ViewModels
 
         public ObservableCollection<CounterStatus> ActiveCounters { get; } = new();
 
+        /// <summary>Slot personalizzabili (spell/item/comando/skill/agente) configurati nel profilo.</summary>
+        public ObservableCollection<ToolbarSlotViewModel> Slots { get; } = new();
+
         public FloatingToolbarViewModel(IMessenger messenger, IWorldService worldService, IConfigService config, ICounterService counterService)
         {
             _worldService = worldService;
@@ -47,7 +51,7 @@ namespace TMRazorImproved.UI.ViewModels
             _counterService = counterService;
             _throttler = new UiThrottler(TimeSpan.FromMilliseconds(100), FlushPendingUpdates);
             messenger.RegisterAll(this);
-            
+
             _counterService.CounterChanged += OnCounterChanged;
 
             // Initial values
@@ -67,6 +71,7 @@ namespace TMRazorImproved.UI.ViewModels
             }
 
             InitializeCounters();
+            InitializeSlots();
         }
 
         private void InitializeCounters()
@@ -74,24 +79,46 @@ namespace TMRazorImproved.UI.ViewModels
             ActiveCounters.Clear();
             foreach (var def in _config.CurrentProfile.Counters.Where(c => c.Enabled))
             {
-                ActiveCounters.Add(new CounterStatus 
-                { 
-                    Abbreviation = def.Abbreviation, 
-                    Graphic = def.Graphic, 
+                ActiveCounters.Add(new CounterStatus
+                {
+                    Abbreviation = def.Abbreviation,
+                    Graphic = def.Graphic,
                     Hue = def.Hue,
                     Count = _counterService.GetCount(def.Graphic, def.Hue)
                 });
             }
         }
 
+        private void InitializeSlots()
+        {
+            Slots.Clear();
+            foreach (var item in _config.CurrentProfile.ToolbarItems.OrderBy(i => i.Slot))
+            {
+                var slot = new ToolbarSlotViewModel(item);
+                if (slot.Type == ToolbarItemType.Item && ushort.TryParse(slot.Id, System.Globalization.NumberStyles.Any, null, out var graphic))
+                    slot.Count = _counterService.GetCount(graphic, 0);
+                Slots.Add(slot);
+            }
+        }
+
+        /// <summary>Ricarica gli slot dalla config (chiamare dopo modifiche al profilo).</summary>
+        public void RefreshSlots() => App.Current.Dispatcher.Invoke(InitializeSlots);
+
         private void OnCounterChanged(ushort graphic, ushort hue, int count)
         {
             var status = ActiveCounters.FirstOrDefault(c => c.Graphic == graphic && c.Hue == hue);
             if (status != null)
-            {
-                // UI update via Dispatcher if needed, but Messenger usually handles thread safety or UiThrottler
                 App.Current.Dispatcher.Invoke(() => status.Count = count);
-            }
+
+            // Aggiorna anche gli slot di tipo Item che corrispondono a questo graphic/hue
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                foreach (var slot in Slots.Where(s => s.Type == ToolbarItemType.Item))
+                {
+                    if (ushort.TryParse(slot.Id, System.Globalization.NumberStyles.Any, null, out var g) && g == graphic)
+                        slot.Count = count;
+                }
+            });
         }
 
         public void Receive(PlayerStatusMessage message)

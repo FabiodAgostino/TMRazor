@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.Messaging;
 using TMRazorImproved.Core.Utilities;
@@ -22,11 +23,13 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         private readonly ILogger<ItemsApi>? _logger;
         private readonly IMessenger _messenger;
         private readonly IWeaponService? _weaponService;
+        private readonly IDragDropCoordinator? _dragDrop;
 
         private static readonly List<int> _ignoreList = new();
 
         public ItemsApi(IWorldService world, IPacketService packet, ITargetingService targeting, ScriptCancellationController cancel,
-            ILogger<ItemsApi>? logger = null, IMessenger? messenger = null, IWeaponService? weaponService = null)
+            ILogger<ItemsApi>? logger = null, IMessenger? messenger = null, IWeaponService? weaponService = null,
+            IDragDropCoordinator? dragDrop = null)
         {
             _world = world;
             _packet = packet;
@@ -35,6 +38,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
             _logger = logger;
             _messenger = messenger ?? WeakReferenceMessenger.Default;
             _weaponService = weaponService;
+            _dragDrop = dragDrop;
         }
 
         private ScriptItem? Wrap(Item? item) => item == null ? null : new ScriptItem(item, _world, _packet, _targeting);
@@ -251,10 +255,29 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public virtual void UseItem(uint serial) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.DoubleClick(serial)); }
         /// <summary>Single-clicks an item by its serial (requests name/OPL).</summary>
         public virtual void Click(uint serial) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.SingleClick(serial)); }
-        /// <summary>Moves an item to a target container.</summary>
-        public virtual void Move(uint serial, uint targetContainer, int amount = 1) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount)); _packet.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer)); }
+        /// <summary>Moves an item to a target container. Uses the DragDropCoordinator for proper sequencing when available.</summary>
+        public virtual void Move(uint serial, uint targetContainer, int amount = 1)
+        {
+            _cancel.ThrowIfCancelled();
+            if (_dragDrop != null)
+            {
+                _dragDrop.RequestDragDrop(serial, targetContainer, (ushort)amount).GetAwaiter().GetResult();
+            }
+            else
+            {
+                _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount));
+                Thread.Sleep(50);
+                _packet.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer));
+            }
+        }
         /// <summary>Moves an item to a specific slot position within a container.</summary>
-        public virtual void Move(uint serial, uint targetContainer, int amount, int x, int y) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount)); _packet.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer, (ushort)x, (ushort)y)); }
+        public virtual void Move(uint serial, uint targetContainer, int amount, int x, int y)
+        {
+            _cancel.ThrowIfCancelled();
+            _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount));
+            Thread.Sleep(50);
+            _packet.SendToServer(PacketBuilder.DropToContainer(serial, targetContainer, (ushort)x, (ushort)y));
+        }
 
         /// <summary>Returns true if a container with the given serial exists in the world or has child items.</summary>
         public virtual bool ContainerExists(uint serial) { _cancel.ThrowIfCancelled(); return _world.FindItem(serial) != null || _world.Items.Any(i => i.ContainerSerial == serial); }
@@ -417,7 +440,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         /// <summary>Drops the currently held item (from the cursor hand) into the player's backpack.</summary>
         public virtual void DropFromHand(uint serial) { _cancel.ThrowIfCancelled(); var bp = _world.Player?.Backpack; if (bp != null) Drop(serial, bp.Serial); }
         /// <summary>Drops the given item on the ground at the player's current map position.</summary>
-        public virtual void DropItemGroundSelf(uint serial, int amount = 1) { _cancel.ThrowIfCancelled(); var p = _world.Player; if (p != null) { _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount)); _packet.SendToServer(PacketBuilder.DropToWorld(serial, (ushort)p.X, (ushort)p.Y, (short)p.Z)); } }
+        public virtual void DropItemGroundSelf(uint serial, int amount = 1) { _cancel.ThrowIfCancelled(); var p = _world.Player; if (p != null) { _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount)); Thread.Sleep(50); _packet.SendToServer(PacketBuilder.DropToWorld(serial, (ushort)p.X, (ushort)p.Y, (short)p.Z)); } }
         /// <summary>Finds the first item whose display name or OPL name contains the given string (case-insensitive).</summary>
         public virtual ScriptItem? FindByName(string name, bool recurse = true) { _cancel.ThrowIfCancelled(); return Wrap(_world.Items.FirstOrDefault(i => (i.Name != null && i.Name.Contains(name, StringComparison.OrdinalIgnoreCase)) || (i.OPL != null && i.OPL.GetNameOrEmpty().Contains(name, StringComparison.OrdinalIgnoreCase)))); }
         /// <summary>Returns all OPL property strings for the given entity serial. Alias for <see cref="GetPropStringList"/>.</summary>
@@ -442,7 +465,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         /// <summary>Moves an item to the given world coordinate with amount 1.</summary>
         public virtual void MoveOnGround(uint serial, int x, int y, int z) => MoveOnGround(serial, x, y, z, 1);
         /// <summary>Moves the given amount of an item to the specified world (X, Y, Z) coordinate.</summary>
-        public virtual void MoveOnGround(uint serial, int x, int y, int z, int amount) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount)); _packet.SendToServer(PacketBuilder.DropToWorld(serial, (ushort)x, (ushort)y, (short)z)); }
+        public virtual void MoveOnGround(uint serial, int x, int y, int z, int amount) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.LiftItem(serial, (ushort)amount)); Thread.Sleep(50); _packet.SendToServer(PacketBuilder.DropToWorld(serial, (ushort)x, (ushort)y, (short)z)); }
         /// <summary>Double-clicks a container item, opening it at the given screen coordinates (coordinates are informational only).</summary>
         public virtual void OpenAt(uint serial, int x, int y) { _cancel.ThrowIfCancelled(); _packet.SendToServer(PacketBuilder.DoubleClick(serial)); }
         /// <summary>Opens a container at the given screen coordinates. Alias for <see cref="OpenAt"/>.</summary>

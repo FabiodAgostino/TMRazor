@@ -48,6 +48,19 @@ namespace TMRazorImproved.UI.ViewModels
         [ObservableProperty]
         private bool _isRecordingScript;
 
+        // Debug state
+        [ObservableProperty]
+        private bool _isPaused;
+
+        [ObservableProperty]
+        private int _currentDebugLine;
+
+        /// <summary>Breakpoint attivi (numeri di riga 1-based). Osservabile dalla UI.</summary>
+        public ObservableCollection<int> Breakpoints { get; } = new();
+
+        /// <summary>Evento sparato quando la riga corrente del debugger cambia (per aggiornare il margin).</summary>
+        public event Action? BreakpointsChanged;
+
         /// <summary>Inverso di IsRecordingScript — usato per la visibilità del pulsante "Registra".</summary>
         public bool IsNotRecordingScript => !IsRecordingScript;
 
@@ -67,6 +80,8 @@ namespace TMRazorImproved.UI.ViewModels
         public IRelayCommand      SaveScriptCommand     { get; }
         public IRelayCommand      StartRecordCommand    { get; }
         public IRelayCommand      StopRecordCommand     { get; }
+        public IRelayCommand      ContinueCommand       { get; }
+        public IRelayCommand      StepIntoCommand       { get; }
 
         public ScriptingViewModel(IScriptingService scriptingService, IScriptRecorderService? recorder = null)
         {
@@ -82,10 +97,13 @@ namespace TMRazorImproved.UI.ViewModels
             SaveScriptCommand  = new RelayCommand(SaveScript);
             StartRecordCommand = new RelayCommand(StartRecording, () => !IsRecordingScript && !IsRunning);
             StopRecordCommand  = new RelayCommand(StopRecording,  () => IsRecordingScript);
+            ContinueCommand    = new RelayCommand(ContinueExecution, () => IsPaused);
+            StepIntoCommand    = new RelayCommand(StepInto,          () => IsPaused);
 
             _scriptingService.OutputReceived  += OnOutputReceived;
             _scriptingService.ErrorReceived   += OnErrorReceived;
             _scriptingService.ScriptCompleted += OnScriptCompleted;
+            _scriptingService.DebugPaused     += OnDebugPaused;
         }
 
         partial void OnSelectedLanguageChanged(ScriptLanguage value)
@@ -252,6 +270,10 @@ namespace TMRazorImproved.UI.ViewModels
 
                 ExecutionStatus = status;
                 AddLog($"--- {status} ---", ScriptLogType.System);
+                IsPaused = false;
+                CurrentDebugLine = 0;
+                ContinueCommand.NotifyCanExecuteChanged();
+                StepIntoCommand.NotifyCanExecuteChanged();
             });
         }
 
@@ -307,6 +329,51 @@ namespace TMRazorImproved.UI.ViewModels
             NotifyCommandsCanExecuteChanged();
         }
 
+        // ------------------------------------------------------------------
+        // Debug commands
+        // ------------------------------------------------------------------
+
+        private void ContinueExecution()
+        {
+            _scriptingService.ContinueExecution();
+            AddLog($"[Debug] Continua da riga {CurrentDebugLine}", ScriptLogType.System);
+        }
+
+        private void StepInto()
+        {
+            AddLog($"[Debug] Step da riga {CurrentDebugLine}", ScriptLogType.System);
+            _scriptingService.StepInto();
+        }
+
+        /// <summary>Toggle breakpoint alla riga specificata. Chiamato dal BreakpointMargin.</summary>
+        public void ToggleBreakpoint(int line)
+        {
+            if (_scriptingService.GetBreakpoints().Contains(line))
+            {
+                _scriptingService.ClearBreakpoint(line);
+                RunOnUIThread(() => { Breakpoints.Remove(line); BreakpointsChanged?.Invoke(); });
+                AddLog($"[Debug] Breakpoint rimosso — riga {line}", ScriptLogType.System);
+            }
+            else
+            {
+                _scriptingService.SetBreakpoint(line);
+                RunOnUIThread(() => { Breakpoints.Add(line); BreakpointsChanged?.Invoke(); });
+                AddLog($"[Debug] Breakpoint aggiunto — riga {line}", ScriptLogType.System);
+            }
+        }
+
+        private void OnDebugPaused(int line)
+        {
+            RunOnUIThread(() =>
+            {
+                CurrentDebugLine = line;
+                IsPaused = true;
+                ContinueCommand.NotifyCanExecuteChanged();
+                StepIntoCommand.NotifyCanExecuteChanged();
+                AddLog($"[Debug] Pausa alla riga {line}", ScriptLogType.System);
+            });
+        }
+
         private void NotifyCommandsCanExecuteChanged()
         {
             RunScriptCommand.NotifyCanExecuteChanged();
@@ -322,6 +389,7 @@ namespace TMRazorImproved.UI.ViewModels
             _scriptingService.OutputReceived  -= OnOutputReceived;
             _scriptingService.ErrorReceived   -= OnErrorReceived;
             _scriptingService.ScriptCompleted -= OnScriptCompleted;
+            _scriptingService.DebugPaused     -= OnDebugPaused;
         }
     }
 }

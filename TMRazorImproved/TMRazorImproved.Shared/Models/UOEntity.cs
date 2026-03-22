@@ -20,6 +20,8 @@ namespace TMRazorImproved.Shared.Models
         public virtual byte Flags { get; set; }
         public virtual UOPropertyList? OPL { get; set; }
         public virtual System.Collections.Generic.List<string> Properties => OPL?.Properties.Select(p => p.Arguments).ToList() ?? new();
+        /// <summary>Flag soft-delete: true se l'entità è stata rimossa dal mondo ma non ancora deallocata.</summary>
+        public virtual bool Deleted { get; set; }
 
         protected UOEntity(uint serial)
         {
@@ -42,6 +44,8 @@ namespace TMRazorImproved.Shared.Models
     public class Mobile : UOEntity
     {
         public virtual bool IsHidden { get; set; }
+        /// <summary>Inverso di IsHidden — usato dalle API di scripting.</summary>
+        public virtual bool Visible => !IsHidden;
         public virtual bool IsHuman => Graphic == 0x0190 || Graphic == 0x0191 || Graphic == 0x025D || Graphic == 0x025E || Graphic == 0x025F || Graphic == 0x0260 || Graphic == 0x02E8 || Graphic == 0x02E9;
 
         // Stats base
@@ -120,6 +124,19 @@ namespace TMRazorImproved.Shared.Models
         // Feature flags del server (0xB9)
         public virtual ushort Features { get; set; }
 
+        // Race, rename, mount
+        /// <summary>Razza del personaggio (1=Human, 2=Elf, 3=Gargoyle). Dalla packet 0x11 type>=5.</summary>
+        public virtual byte Race { get; set; }
+        /// <summary>Il giocatore può rinominare questo mobile (dalla packet 0x11).</summary>
+        public virtual bool CanRename { get; set; }
+        /// <summary>True se il mobile sta cavalcando (layer Mount occupato).</summary>
+        public virtual bool Mounted { get; set; }
+        /// <summary>Incremento massimo mana (da stat estese AOS+).</summary>
+        public virtual int MaximumManaIncrease { get; set; }
+
+        // Lista seriali item equipaggiati/portati (popolata da 0x78/0x2E)
+        public virtual System.Collections.Generic.List<uint> EquippedItemSerials { get; } = new();
+
         // Flags fisici aggiuntivi
         public virtual bool Female { get; set; }
         public virtual bool Paralyzed { get; set; }
@@ -182,6 +199,12 @@ namespace TMRazorImproved.Shared.Models
         /// <summary>Alias per Container — usato dalle API di scripting.</summary>
         public virtual uint ContainerSerial { get => Container; set => Container = value; }
         public virtual byte Layer { get; set; }
+        /// <summary>Layer come enum nominato (FR-072). Permette confronti tipo <c>item.LayerName == Layer.Mount</c>.</summary>
+        public virtual TMRazorImproved.Shared.Enums.Layer LayerName
+        {
+            get => (TMRazorImproved.Shared.Enums.Layer)Layer;
+            set => Layer = (byte)value;
+        }
         public virtual uint RootContainer { get; set; }
 
         // Proprietà aggiuntive per compatibilità RazorEnhanced
@@ -215,6 +238,9 @@ namespace TMRazorImproved.Shared.Models
         public virtual int Weight { get; set; }
         public virtual int Durability { get; set; }
         public virtual int MaxDurability { get; set; }
+
+        /// <summary>Seriali degli item contenuti (solo per container). Popolata da packet 0x3C/0x25.</summary>
+        public virtual System.Collections.Generic.List<uint> ContainedItemSerials { get; } = new();
 
         public Item(uint serial) : base(serial) { }
     }

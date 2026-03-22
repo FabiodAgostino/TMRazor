@@ -1,1254 +1,1163 @@
-# Final Review: Mappatura Architetturale 1:1 TMRazor -> TMRazorImproved
+# Final Review — TMRazor Legacy → TMRazorImproved Migration Audit
 
-**Data**: 2026-03-20
-**Autore**: Senior Architect Review (AI-Assisted)
-**Scopo**: Garantire che NESSUNA funzionalita, classe o metodo venga perso durante la migrazione
-**Formato**: Ogni discrepanza e un Task azionabile per un Junior Developer
+> **Autore**: AI Architecture Review
+> **Data**: 2026-03-22
+> **Scopo**: Mappatura esaustiva 1:1 di ogni file, classe e metodo tra il codice legacy (`Razor/`) e il nuovo codice (`TMRazorImproved/`) per garantire che nessuna funzionalita venga persa.
+> **Destinatari**: Senior Architect (validazione) + Junior Developer (esecuzione dei Task)
+
+---
+
+## Legenda Stato
+
+| Simbolo | Significato |
+|---------|-------------|
+| :white_check_mark: | Migrato correttamente, parita funzionale |
+| :warning: | Parzialmente migrato / incompleto |
+| :x: | Mancante nel nuovo codice |
+| :no_entry: | Discrepanza strutturale (approccio diverso, potenziale perdita di feature) |
+| :bulb: | Nuovo nel codice TMRazorImproved (non presente nel legacy) |
 
 ---
 
 ## Indice
 
-1. [Riepilogo Esecutivo](#1-riepilogo-esecutivo)
-2. [Motori di Scripting](#2-motori-di-scripting)
-3. [API di Gioco (Script-Facing)](#3-api-di-gioco-script-facing)
-4. [Sistema Agenti](#4-sistema-agenti)
-5. [Sistema Macro](#5-sistema-macro)
-6. [Filtri e Rete](#6-filtri-e-rete)
-7. [Modelli Core e Configurazione](#7-modelli-core-e-configurazione)
-8. [UI Forms e Dialoghi](#8-ui-forms-e-dialoghi)
-9. [Sistemi Utility](#9-sistemi-utility)
-10. [Riepilogo Task per Priorita](#10-riepilogo-task-per-priorita)
+1. [Core Entity Models](#1-core-entity-models)
+2. [Packet Handling & Network](#2-packet-handling--network)
+3. [Filters](#3-filters)
+4. [Enhanced Services & Agents](#4-enhanced-services--agents)
+5. [Scripting Engine](#5-scripting-engine)
+6. [Scripting API](#6-scripting-api)
+7. [Macro System](#7-macro-system)
+8. [UI Components](#8-ui-components)
+9. [Utility & Support Files](#9-utility--support-files)
+10. [Riepilogo Priorita](#10-riepilogo-priorita)
 
 ---
 
-## 1. Riepilogo Esecutivo
+## 1. Core Entity Models
 
-### Statistiche Globali
+### 1.1 UOEntity (Base Class)
 
-| Metrica | Legacy (TMRazor) | Nuovo (TMRazorImproved) | Copertura |
-|---------|-------------------|--------------------------|-----------|
-| File .cs totali | ~510 | ~335 | N/A (architettura diversa) |
-| Motori scripting | 3 (C#, Python, UOSteam) | 3 (C#, Python, UOSteam) | 100% motori, ~16% UOSteam |
-| API scripting (classi) | 18 | 22 | ~89% metodi |
-| Agenti automazione | 8 | 8 + 3 nuovi | 100% agenti, ~77% metodi |
-| Azioni macro | 43 tipi | ~33 coperti | 77% |
-| Filtri pacchetti | 13 classi | 1 handler unificato | ~85% |
-| Handler pacchetti C2S | 25 | 13 | 52% |
-| Handler pacchetti S2C | 48 | 56 (8 nuovi) | ~94% legacy + nuovi |
-| Configurazione | ~6.893 righe | ~816 righe | ~85-90% settings |
-| Form/Dialoghi UI | 17 form | 10 window + 27 page | ~90% funzionalita |
+**Legacy**: `Razor/Core/UOEntity.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Shared/Models/UOEntity.cs`
 
-### Aree Critiche Identificate
+| ID | Membro Legacy | Stato | Dettaglio | Impatto Utente |
+|----|---------------|-------|-----------|----------------|
+| TASK-ENT-001 | `UOEntity.ContextMenu` (`Dictionary<ushort, int>`) | :x: Mancante | Il dictionary dei context menu non esiste nel nuovo UOEntity | Script/agent che leggono le voci del context menu di un NPC non funzioneranno |
+| TASK-ENT-002 | `UOEntity.Body` (alias di TypeID) | :x: Mancante | Nel nuovo codice esiste solo `Graphic`. Il legacy usa `Body` come alias per il grafico del mobile | Script che usano `entity.Body` falliranno |
+| TASK-ENT-003 | `UOEntity.TypeID` (struct con accesso a `ItemData`) | :no_entry: Discrepanza | Legacy ha una struct `TypeID` che accede a Ultima.dll per tile flags, peso, qualita, CalcHeight. Nuovo ha solo `ushort Graphic` | Perdita accesso dati tiles (flags, peso). Accettabile se ClassicUO fornisce equivalenti |
+| TASK-ENT-004 | `UOEntity.OnPositionChanging()` (virtual hook) | :x: Mancante | Hook chiamato prima del cambio posizione. Usato per rimuovere entita fuori range | Entita fuori range non vengono ripulite al cambio posizione |
+| TASK-ENT-005 | `UOEntity.ReadPropertyList(PacketReader)` | :no_entry: Discrepanza | Legacy parsa OPL dal pacchetto direttamente sull'entita. Nuovo gestisce OPL in `WorldPacketHandler` | Nessun impatto diretto — architettura diversa ma funzionalita preservata |
 
-| # | Area | Severita | Impatto Utente |
-|---|------|----------|----------------|
-| 1 | UOSteam Interpreter copre ~16% del legacy | CRITICO | Script UOSteam complessi non funzioneranno |
-| 2 | API Trade completamente assente | CRITICO | Script di trading non funzioneranno |
-| 3 | API CUO completamente assente | CRITICO | Integrazione ClassicUO da script impossibile |
-| 4 | `int` -> `uint` seriali in TUTTE le API | CRITICO | Potenziale rottura di tutti gli script esistenti |
-| 5 | `Gumps` -> `Gump` namespace | ALTO | Tutti gli script con gump non compilano |
-| 6 | Spell school-specific targeted overloads mancanti | ALTO | `Spells.CastMagery("Heal", target)` fallisce |
-| 7 | Movement/Pathfind nelle macro assenti | ALTO | Macro di movimento non funzionano |
-| 8 | 13 handler C2S mancanti | MEDIO | Alcune interazioni client non tracciate |
-| 9 | Debug stepping nello script editor assente | MEDIO | Sviluppatori script perdono debugging |
-| 10 | Inspector Mobile/Item degradato | BASSO | Meno dettagli nell'ispezione entita |
+**Azione Junior per TASK-ENT-001**: Aprire `TMRazorImproved.Shared/Models/UOEntity.cs`. Nella classe base `UOEntity`, aggiungere `public Dictionary<ushort, int> ContextMenu { get; set; } = new();`. Poi cercare in `WorldPacketHandler.cs` dove arriva il pacchetto 0xBF sub-command context menu e popolare questo dictionary.
+
+**Azione Junior per TASK-ENT-002**: Aprire `TMRazorImproved.Shared/Models/UOEntity.cs`, classe `Mobile`. Aggiungere `public ushort Body { get => Graphic; set => Graphic = value; }` come alias.
+
+**Azione Junior per TASK-ENT-004**: Considerare l'aggiunta di un setter personalizzato per `X`, `Y`, `Z` nelle proprietà di `UOEntity` che invochi un metodo virtuale `OnPositionChanging()`.
 
 ---
 
-## 2. Motori di Scripting
+### 1.2 Mobile
 
-### 2.1 CSharpEngine.cs -> CSharpScriptEngine.cs
+**Legacy**: `Razor/Core/Mobile.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Shared/Models/UOEntity.cs` (classe `Mobile`)
 
-| Aspetto | Legacy | Nuovo |
-|---------|--------|-------|
-| Righe | 473 | 116 |
-| Compilatore | `CSharpCodeProvider` (out-of-process csc.exe) | `Microsoft.CodeAnalysis.CSharp.Scripting` (Roslyn in-process) |
-| Pattern | Singleton `CSharpEngine.Instance` | DI, istanza per-esecuzione |
+| ID | Membro Legacy | Stato | Dettaglio | Impatto Utente |
+|----|---------------|-------|-----------|----------------|
+| TASK-MOB-001 | `Mobile.Contains` (`List<Item>`) con `AddItem`/`RemoveItem` | :no_entry: Discrepanza | Nuovo ha solo `EquippedItemSerials` (`List<uint>`). Non si possono ottenere riferimenti `Item` diretti | `GetItemOnLayer`, `FindItemByID`, `Backpack`, `Quiver` dipendono tutti da riferimenti oggetto |
+| TASK-MOB-002 | `Mobile.GetItemOnLayer(Layer)` | :x: Mancante | Cerca negli items equipaggiati per layer | Script/agent che controllano equipaggiamento (mani, zaino, cavalcatura) non funzionano |
+| TASK-MOB-003 | `Mobile.Quiver` | :x: Mancante | Ritorna il container nel layer mantello | Feature auto-search/auto-loot nella faretra rotta |
+| TASK-MOB-004 | `Mobile.FindItemByID(TypeID)` | :x: Mancante | Cerca items equipaggiati per graphic | Non si puo trovare un item specifico su un mobile |
+| TASK-MOB-005 | `Mobile.GetNotorietyColor()` | :x: Mancante | Ritorna colore RGB per notorieta | Colorazione nomi overhead dei mobili mancante |
+| TASK-MOB-006 | `Mobile.GetStatusCode()` | :x: Mancante | Ritorna byte di stato (1=avvelenato) | Display stato mancante |
+| TASK-MOB-007 | `Mobile.GetPacketFlags()` / `ProcessPacketFlags()` | :x: Mancante | Costruisce/parsa il byte flag 0x78 (paralizzato, femmina, avvelenato, benedetto, warmode, visibile) | Flag non decodificati correttamente dai pacchetti di movimento |
+| TASK-MOB-008 | `Mobile.OverheadMessage()` (6 overload) | :x: Mancante | Invia messaggi overhead al client | Script che usano `Mobile.OverheadMessage()` falliranno |
+| TASK-MOB-009 | `Mobile.Remove()` (cascading) | :x: Mancante | Rimozione in cascata degli items equipaggiati + check party | Items rimangono orfani quando un mobile viene rimosso |
+| TASK-MOB-010 | `Mobile.OnNotoChange()` | :x: Mancante | Hook virtuale per cambio notorieta (timer criminale nel Player) | Timer criminale non scatta al cambio notorieta |
+| TASK-MOB-011 | `Mobile.OnMapChange()` | :x: Mancante | Hook virtuale per cambio mappa | Pulizia range al cambio mappa non attivata |
+| TASK-MOB-012 | `Mobile.NameToFameKarma` (dictionary statico) | :x: Mancante | Mappa titoli karma -> valori fama/karma | Risoluzione titolo-karma -> valore rotta |
+| TASK-MOB-013 | `Mobile.StatsUpdated` / `PropsUpdated` (flag di tracking) | :x: Mancante | Distingue "zero hits" da "stats mai ricevute" | Non si puo distinguere se le stats sono state ricevute o meno |
+| TASK-MOB-014 | `Mobile.InParty` (property) | :no_entry: Discrepanza | Legacy controlla `PacketHandlers.Party`. Nuovo traccia party in `WorldService` | Usare `WorldService.IsPartyMember()` — nessun impatto se implementato |
+| TASK-MOB-015 | `Mobile.ButtonPoint` | :x: Mancante | Posizione 2D per bottone toolbar | Bassa priorita — tracking posizione toolbar per mobili specifici |
 
-#### TASK-FR-001: Direttive C# Script Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/CSharpEngine.cs` -> `FindDirectivesInFile()`, `ExtractFileNameFromDirective()`, `FindAllAssembliesIncludedInCSharpScripts()`, `FindAllIncludedCSharpScript()`, `CheckForceDebugDirective()`
-- **Stato nel Nuovo Codice**: ✅ Implementato in `CSharpScriptEngine.cs` — metodi `PreprocessDirectives()`, `ParseDirectives()`, `TryResolvePath()`
-- **Dettaglio**: Il legacy supporta le direttive `//#import` (includere altri file .cs), `//#assembly` (referenziare assembly custom) e `//#forcedebug` (forzare compilazione debug). Nessuna di queste e implementata nel nuovo `CSharpScriptEngine.cs`.
-- **Impatto Utente**: Gli script C# che usano `//#import` per dividere il codice in piu file o `//#assembly` per caricare DLL custom **non compileranno**. Questo influenza utenti avanzati che organizzano i propri script in moduli.
-- **Documentazione per Junior Dev**: Aprire `TMRazorImproved.Core/Services/Scripting/Engines/CSharpScriptEngine.cs`. Attualmente il metodo `Execute()` usa `CSharpScript.RunAsync()`. Bisogna aggiungere un pre-processing del codice sorgente prima della compilazione:
-  1. Scansionare le righe del file per `//#import <filename>` e sostituirle con il contenuto del file referenziato (vedi `FindAllIncludedCSharpScript()` in `CSharpEngine.cs` righe 85-130)
-  2. Scansionare per `//#assembly <path>` e aggiungerle a `ScriptOptions.WithReferences()` (vedi `FindAllAssembliesIncludedInCSharpScripts()` righe 60-84)
-  3. Scansionare per `//#forcedebug` e se presente impostare `OptimizationLevel.Debug` nelle opzioni Roslyn
+**Azione Junior per TASK-MOB-001**: Questo e il gap piu critico del modello entita. Bisogna decidere se memorizzare `List<Item>` nell'entita oppure implementare lookup via `WorldService`. Approccio consigliato: aggiungere un metodo `GetItemOnLayer(byte layer)` al `WorldService` che cerca in `_items` un item il cui `ContainerSerial == mobile.Serial && Layer == layer`. Poi wrappare in property computate su `Mobile`.
 
----
+**Azione Junior per TASK-MOB-002**: Implementare `GetItemOnLayer(byte layer)` come descritto sopra. Questo sblocca TASK-MOB-003 (Quiver = layer Cloak/Waist container) e TASK-MOB-004.
 
-### 2.2 PythonEngine.cs -> ScriptingService.ExecutePythonInternal()
+**Azione Junior per TASK-MOB-007**: In `WorldPacketHandler.cs`, dentro `HandleMobileIncoming` (0x78) e `HandleMobileUpdate` (0x20), leggere il byte dei flag e impostare le proprieta: `mobile.Paralyzed = (flags & 0x01) != 0; mobile.Female = (flags & 0x02) != 0;` ecc. Riferimento: `Razor/Core/Mobile.cs` righe 200-230.
 
-| Aspetto | Legacy | Nuovo |
-|---------|--------|-------|
-| Righe | 269 | ~70 (inline) |
-| Architettura | Classe standalone riutilizzabile | Inline in `ScriptingService` |
-| Engine | IronPython con riuso istanza | IronPython3, nuova istanza per esecuzione |
+**Azione Junior per TASK-MOB-008**: Implementare come metodo helper in `PacketBuilder` o nella scripting API. Il metodo deve costruire un pacchetto 0xAE (UnicodeMessage) o 0x1C (AsciiMessage) e inviarlo al client via `_packetService.SendToClient()`.
 
-#### TASK-FR-002: Python Call() da C# Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/PythonEngine.cs` -> `Call(PythonFunction, params object[])`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `ScriptingService.CallPythonFunction(string, params object[])` + aggiunto a `IScriptingService`
-- **Dettaglio**: Il legacy permette di invocare funzioni Python da codice C# tramite `Call()`. Questo metodo non esiste nel nuovo codice.
-- **Impatto Utente**: Funzionalita interna usata da alcuni componenti per callback Python. Impatto diretto utente **basso** ma puo impedire estensioni future.
-- **Documentazione per Junior Dev**: In `ScriptingService.cs`, metodo `ExecutePythonInternal()` (riga ~430). Se necessario, aggiungere un metodo `CallPythonFunction(string functionName, params object[] args)` che usi `scope.GetVariable<Func<...>>()` di IronPython per invocare la funzione.
+**Azione Junior per TASK-MOB-009**: In `WorldService.RemoveMobile(serial)`, prima di rimuovere il mobile, iterare su `EquippedItemSerials` e rimuovere ogni item da `_items`.
 
 ---
 
-### 2.3 UOSteamEngine.cs -> UOSteamInterpreter.cs (GAP CRITICO)
+### 1.3 Item
 
-| Aspetto | Legacy | Nuovo |
-|---------|--------|-------|
-| Righe | 8.331 | 1.307 (~15.7%) |
-| Parser | AST completo (Lexer + Parser + nodi AST) | Tokenizer riga-per-riga con regex |
-| Comandi registrati | 121 | ~105 |
-| Espressioni registrate | 85+ | ~40 |
-| Totale handler | ~206 | ~145 |
-| Eccezioni custom | 5 classi (`UOSScriptError`, `UOSSyntaxError`, etc.) | try/catch generico |
+**Legacy**: `Razor/Core/Item.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Shared/Models/UOEntity.cs` (classe `Item`)
 
-#### TASK-FR-003: Comandi UOSteam Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/UOSteamEngine.cs` -> Interpreter.RegisterCommandHandler()
-- **Stato nel Nuovo Codice**: ✅ Implementati tutti i 16 comandi in `UOSteamInterpreter.cs` (switch ExecuteLine)
-- **Dettaglio**: I seguenti comandi UOSteam non esistono nel nuovo interprete:
+| ID | Membro Legacy | Stato | Dettaglio | Impatto Utente |
+|----|---------------|-------|-----------|----------------|
+| TASK-ITEM-001 | `Item.Contains` (`List<Item>`) con albero parent-child | :no_entry: Discrepanza | Nuovo ha solo `ContainedItemSerials` (`List<uint>`). Non si puo attraversare la gerarchia container | `IsChildOf`, `GetWorldPosition`, `RootContainer` calcolato — tutto dipende da riferimenti oggetto |
+| TASK-ITEM-002 | `Item.Container` (riferimento oggetto con lazy resolution via `UpdateContainer()`) | :no_entry: Discrepanza | Nuovo ha solo `uint ContainerSerial` | Perdita risoluzione parent-child e aggiornamenti cascata container |
+| TASK-ITEM-003 | `Item.RootContainer` (calcolato, attraversa gerarchia) | :no_entry: Discrepanza | Nuovo ha `uint RootContainer` come auto-property semplice (non calcolata) | Il valore deve essere mantenuto manualmente; script che si affidano al root-finding automatico riceveranno dati stantii |
+| TASK-ITEM-004 | `Item.IsChildOf(parent)` (attraversa albero fino a 100 livelli) | :x: Mancante | Check contenimento zaino/faretra rotto | Script/agent non possono verificare se un item e dentro un container specifico |
+| TASK-ITEM-005 | `Item.GetWorldPosition()` (risale al root container) | :x: Mancante | Items dentro container riportano la grid-position, non la world-position | Coordinate errate per items in container |
+| TASK-ITEM-006 | `Item.Amount` (getter complesso con check stackability via TileFlag) | :no_entry: Discrepanza | Nuovo ha auto-property semplice | Items non-stackable potrebbero riportare quantita errate |
+| TASK-ITEM-007 | `Item.Layer` (auto-risoluzione via `ItemData.Quality`) | :no_entry: Discrepanza | Nuovo ha `byte Layer` semplice | Layer non auto-risolto per items con layer invalido dal server |
+| TASK-ITEM-008 | `Item.IsContainer` (check via `ContainersData.json` + conteggio items) | :no_entry: Discrepanza | Nuovo ha `bool` auto-property semplice | Deve essere impostato esternamente nel packet handler |
+| TASK-ITEM-009 | `Item.IsCorpse` (check TypeID == 0x2006 o range 0x0ECA-0x0ED2) | :no_entry: Discrepanza | Nuovo ha `bool` auto-property semplice | Deve essere impostato nel packet handler alla creazione item |
+| TASK-ITEM-010 | `Item.IsDoor` (check via `DoorData.json`) | :no_entry: Discrepanza | Nuovo ha `bool` auto-property | Deve essere impostato esternamente |
+| TASK-ITEM-011 | `Item.IsLootable` (check via `NotLootableData.json`, esclude capelli/barbe) | :no_entry: Discrepanza | Nuovo ha `bool` (default true) | Capelli/barbe erroneamente marcati come lootable |
+| TASK-ITEM-012 | `Item.IsResource` (range grafici hardcoded per minerali/pesci/legno/granito/sabbia) | :no_entry: Discrepanza | Nuovo ha `bool` auto-property | Deve essere impostato esternamente |
+| TASK-ITEM-013 | `Item.IsPotion` (range grafici 0x0F06-0x0F0D + cintura ninja) | :no_entry: Discrepanza | Nuovo ha `bool` auto-property | Deve essere impostato esternamente |
+| TASK-ITEM-014 | `Item.IsTwoHanded` (logica complessa con `weapons.json` + OPL) | :no_entry: Discrepanza | Nuovo ha `bool` auto-property | Deve essere impostato esternamente |
+| TASK-ITEM-015 | `Item.Factory()` (crea `MapItem` o `CorpseItem` in base al graphic) | :x: Mancante | Nessun sottotipo `MapItem` (pin mappa/mappe del tesoro) o `CorpseItem` (auto-open corpse) | Feature mappe del tesoro e auto-open corpse mancanti |
+| TASK-ITEM-016 | `Item.Weapon` / `Weapons` static (carica `weapons.json`) | :x: Mancante | Nessun dato abilita armi (primaria/secondaria) | Abilita speciali armi non disponibili |
+| TASK-ITEM-017 | `Item.AutoStackResource()` | :x: Mancante | Auto-impila risorse a terra | Feature auto-stack rotta |
+| TASK-ITEM-018 | `Item.Remove()` (cascading child removal) | :x: Mancante | Items figli orfani quando container rimossi | Items fantasma nel world state |
+| TASK-ITEM-019 | `Item.HouseRevision` / `HousePacket` | :x: Mancante | Tracking revisione multi/case | Bassa priorita |
 
-| Comando Mancante | Descrizione | Impatto Utente |
-|-------------------|-------------|----------------|
-| `uniquejournal` | Filtraggio journal | Script journal avanzati falliscono |
-| `info` | Popup info item | Script che mostrano info item falliscono |
-| `clickscreen` | Click su coordinate schermo | Automazione basata su coordinate fallisce |
-| `mapuo` | Integrazione mappa | Script mappa falliscono |
-| `questsbutton` | Apri finestra quest | Automazione quest fallisce |
-| `logoutbutton` | Logout dal gioco | Script logout falliscono |
-| `chatmsg` | Messaggio chat | Script chat falliscono |
-| `promptmsg` | Messaggio prompt | Script prompt falliscono |
-| `timermsg` | Messaggio timer overhead | Timer visivi falliscono |
-| `waitforprompt` | Attesa prompt server | Script interattivi falliscono |
-| `cancelprompt` | Cancella prompt | Script interattivi falliscono |
-| `setskill` | Set skill lock | Gestione skill fallisce |
-| `autocolorpick` | Color picker automatico | Script dyeing falliscono |
-| `canceltarget` | Cancella target cursor | Targeting fallisce |
-| `namespace` | Namespace script | Organizzazione script avanzata impossibile |
-| `script` | Chiamata inter-script | Composizione script impossibile |
+**Azione Junior per TASK-ITEM-001/002/003/004/005**: Questi sono tutti interconnessi. Approccio consigliato:
+1. In `WorldService.cs`, aggiungere metodo `GetRootContainer(uint serial)` che risale la catena `ContainerSerial` fino al primo item senza container o al mobile.
+2. Aggiungere metodo `IsChildOf(uint itemSerial, uint parentSerial, int maxDepth = 100)` che risale la catena verificando ogni container.
+3. Aggiungere metodo `GetWorldPosition(uint itemSerial)` che risale al root container e usa la sua posizione.
+4. Questi metodi risolvono TUTTI i task ITEM-001 attraverso ITEM-005.
 
-- **Documentazione per Junior Dev**: Aprire `TMRazorImproved.Core/Services/Scripting/Engines/UOSteamInterpreter.cs`. Il metodo `ExecuteLine()` usa uno `switch` su `cmd.ToUpperInvariant()`. Per ogni comando mancante:
-  1. Aggiungere un nuovo `case "NOMECOMANDO":` nello switch
-  2. Implementare la logica referenziando il legacy `UOSteamEngine.cs` dove il comando e registrato con `RegisterCommandHandler("nomecomando", HandlerMethod)`
-  3. Cercare il metodo handler corrispondente nel legacy (es. `HandleNamespace`, `HandleScript`, etc.)
+**Azione Junior per TASK-ITEM-008/009/010/011/012/013**: In `WorldPacketHandler.cs`, nei metodi `HandleWorldItem` e `HandleSAWorldItem`, dopo aver creato l'`Item`, impostare le proprietà booleane in base al graphic:
+```csharp
+item.IsCorpse = item.Graphic == 0x2006 || (item.Graphic >= 0x0ECA && item.Graphic <= 0x0ED2);
+item.IsPotion = (item.Graphic >= 0x0F06 && item.Graphic <= 0x0F0D);
+// ecc.
+```
+Per `IsContainer` e `IsDoor`, caricare le tabelle da file JSON come nel legacy.
 
-#### TASK-FR-004: Espressioni UOSteam Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/UOSteamEngine.cs` -> Interpreter.RegisterExpressionHandler()
-- **Stato nel Nuovo Codice**: ✅ Implementate le espressioni mancanti in `UOSteamInterpreter.cs` — `findalias`, `organizing`, `restocking`, `buffexists`, `findwand` (stub), `contents`, `distance`, `bandage`, `name` (confronto stringa). Le espressioni numeriche già presenti: `x/y/z`, `inregion`, `skillbase`, `findobject`, `amount`, `graphic`, `inrange`, `property`, `durability`, `findlayer`, `skillstate`, `counttypeground`, `infriendlist`, `ingump`, `gumpexists`, `weight/maxweight/diffweight`, `mana/stam/str/dex/int`, `followers/gold/luck`, resistenze, `diffhits`, `serial`, `direction/directionname`, notorietà.
-- **Dettaglio**: Le seguenti espressioni booleane/valore per IF/WHILE non esistono:
-
-| Espressione | Tipo | Uso Tipico |
-|-------------|------|------------|
-| `findalias` | bool | `if findalias 'myalias'` |
-| `x`, `y`, `z` | int | `if x = 1234` (coordinate player) |
-| `organizing` | bool | `if organizing` (agente attivo?) |
-| `restocking` | bool | `if restocking` |
-| `contents` | int | `if contents 'backpack' < 125` |
-| `inregion` | bool | `if inregion 'town'` |
-| `skillbase` | int | `if skillbase 'Magery' >= 1000` |
-| `findobject` | bool | `if findobject 0x1234` |
-| `amount` | int | `if amount 'found' > 5` |
-| `distance` | int | `if distance 'enemy' <= 2` |
-| `graphic` | int | `if graphic 'found' = 0x1234` |
-| `inrange` | bool | `if inrange 'enemy' 10` |
-| `buffexists` | bool | `if buffexists 'Strength'` |
-| `property` | mixed | `if property 'Damage Increase' 'self' >= 50` |
-| `durability` | int | `if durability 'self' < 20` |
-| `findlayer` | serial | `if findlayer 'self' InnerTorso` |
-| `skillstate` | string | `if skillstate 'Magery' = 'up'` |
-| `counttypeground` | int | `if counttypeground 0x0EED 0 3` |
-| `findwand` | bool | `if findwand 'heal'` |
-| `infriendlist` | bool | `if infriendlist 'found'` |
-| `ingump` | bool | `if ingump 0xABCD 'text'` |
-| `gumpexists` | bool | `if gumpexists 0xABCD` |
-| `serial` | int | `if serial 'found' = 0x1234` |
-| `weight` | int | `if weight < 300` |
-| `maxweight` | int | Peso massimo |
-| `diffweight` | int | Peso disponibile |
-| `mana` / `maxmana` | int | Mana corrente/max |
-| `stam` / `maxstam` | int | Stamina corrente/max |
-| `dex` / `int` / `str` | int | Statistiche base |
-| `followers` | int | Numero follower |
-| `gold` | int | Gold in backpack |
-| `luck` | int | Luck stat |
-| `criminal` / `enemy` / `friend` / `gray` / `innocent` / `murderer` | bool | Check notorieta |
-| `bandage` | int | Conta bende |
-| `color` / `direction` / `directionname` / `name` | mixed | Attributi entita |
-| `diffhits` | int | HP mancanti |
-| Tutte le resistenze (`fireresist`, `coldresist`, etc.) | int | Resistenze player |
-
-- **Impatto Utente**: **CRITICO** - La maggior parte degli script UOSteam usa queste espressioni in condizioni IF/WHILE. Senza di esse, script anche basilari di combattimento, healing e farming **non funzioneranno**.
-- **Documentazione per Junior Dev**: Aprire `UOSteamInterpreter.cs`, metodo `EvaluateExpression()`. Per ogni espressione mancante:
-  1. Aggiungere un `case "nomeespressione":` nello switch
-  2. Recuperare il valore richiesto tramite i servizi iniettati (es. `_worldService`, `_scriptGlobals`)
-  3. Referenziare `UOSteamEngine.cs` cercando `RegisterExpressionHandler("nome", HandlerMethod)` per la logica esatta
-
-#### TASK-FR-005: Stub UOSteam Esistenti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/UOSteamEngine.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato in `UOSteamInterpreter.cs` — `equipwand`: cerca nel backpack item col nome "wand" + tipo richiesto e lo equipaggia; `shownames`: invia SingleClick (0x09) per ogni mobile/corpse visibile nel range 18 tile; `replay`: già correttamente implementato (reset `_currentLineIndex=-1` → ripartenza da riga 0). Nota: `equipwand` e `shownames` erano stub anche nel legacy (NotImplemented).
-- **Dettaglio**: I seguenti comandi esistono nel nuovo codice ma sono stub non funzionali:
-  - `equipwand` (riga ~714: "Stub")
-  - `shownames` (riga ~847: "Stub for now, requires interop integration")
-  - `replay` (riga ~856: "Stub")
-- **Documentazione per Junior Dev**: Cercare "Stub" in `UOSteamInterpreter.cs`. Per `equipwand`: implementare la ricerca di bacchette nel backpack e l'equip (vedi `HandleEquipWand` nel legacy). Per `shownames`: inviare il pacchetto 0x98 tramite `IPacketService`. Per `replay`: implementare la registrazione e replay di sequenze di azioni.
+**Azione Junior per TASK-ITEM-018**: In `WorldService.RemoveItem(serial)`, prima di rimuovere l'item, se ha `ContainedItemSerials.Count > 0`, rimuovere ricorsivamente tutti i figli.
 
 ---
 
-### 2.4 EnhancedScript.cs + Scripts.cs -> ScriptingService.cs
+### 1.4 Player (PlayerData)
 
-#### TASK-FR-006: Script Loop Mode Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/EnhancedScript.cs` -> `bool loop`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `RunAsync()` e `RunScript()` accettano `bool loop = false`; se `true` lo script viene rieseguito in `do-while` finché il CancellationToken non viene cancellato. Aggiornata anche `IScriptingService`.
-- **Dettaglio**: Il legacy supporta l'esecuzione ciclica degli script (loop infinito fino a Stop). Non presente nel nuovo codice.
-- **Impatto Utente**: Gli utenti che configurano script per eseguirsi in loop continuo (es. farming bot) dovranno aggiungere manualmente un `while True:` nel codice.
-- **Documentazione per Junior Dev**: In `ScriptingService.cs`, metodo `RunAsync()`. Aggiungere un parametro `bool loop = false`. Se `loop == true`, wrappare l'esecuzione in un ciclo `while (!cancellationToken.IsCancellationRequested)`.
+**Legacy**: `Razor/Core/Player.cs`
+**Nuovo**: Appiattito nella classe `Mobile` + servizi vari
 
-#### TASK-FR-007: Script Autostart Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Scripts.cs` -> `AutoStart()`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunta classe `ScriptConfig` (Name, AutoStart, Loop) in `ConfigModels.cs` + lista `Scripts` in `UserProfile`. `ScriptingService` ora implementa `IRecipient<LoginCompleteMessage>` e chiama `AutoStartScripts()` al login, che avvia in background tutti gli script marcati con `AutoStart=true` (con eventuale `Loop=true`).
-- **Dettaglio**: Il legacy permette di marcare script per l'avvio automatico al login. Non presente nel nuovo codice.
-- **Impatto Utente**: Gli utenti che hanno script configurati per partire automaticamente al login dovranno avviarli manualmente.
-- **Documentazione per Junior Dev**: In `ScriptingService.cs`, aggiungere un metodo `AutoStartScripts()` che legga dalla configurazione (`IConfigService.CurrentProfile`) gli script marcati come autostart e li avvii con `RunAsync()`. Chiamare questo metodo quando si riceve il messaggio `LoginConfirmMessage`.
+| ID | Membro Legacy | Stato | Dettaglio | Impatto Utente |
+|----|---------------|-------|-----------|----------------|
+| TASK-PLR-001 | `PlayerData.MoveReq/MoveAck/MoveRej` (coda movimento completa) | :x: Mancante | Coda movimento con tracking sequenza walk, auto-open-doors, conteggio passi stealth | Predizione/validazione movimento rotta; auto-open-doors non funzionante; contatore stealth mancante |
+| TASK-PLR-002 | `PlayerData.Menu state` (`CurrentMenuS/I`, `HasMenu`, `MenuQuestionText`, `MenuEntry`) | :x: Mancante | Menu popup vecchio stile (pacchetto 0x7C) non gestiti | Menu popup dei server custom non funzionano |
+| TASK-PLR-003 | `PlayerData.DoubleClick()` (logica complessa) | :x: Mancante | Check equip pozione, mano libera, `ActionQueue.DoubleClick` | Auto-equip pozioni (mano libera prima di bere) non implementato |
+| TASK-PLR-004 | `PlayerData.LastWeaponRight/Left` | :x: Mancante | Tracking per hotkey ri-equip arma | Macro ri-equip arma rotta |
+| TASK-PLR-005 | `PlayerData.CriminalTime/CriminalTimer` | :x: Mancante | Timer countdown stato criminale (5 min) | Display timer criminale rotto |
+| TASK-PLR-006 | `PlayerData.VisRange` default | :no_entry: Discrepanza | Legacy: 31 per player, 18 per NPC. Nuovo: `VisRange = 18` su Mobile | Default errato; 31 e specifico per il player |
+| TASK-PLR-007 | `PlayerData.MaxWeight` (auto-calc da STR: `(STR * 3.5) + 40`) | :no_entry: Discrepanza | Nuovo ha auto-property semplice | Peso non auto-calcolato |
+| TASK-PLR-008 | `PlayerData.ForcedSeason` | :x: Mancante | Override stagione server | Feature override stagione rotta |
+| TASK-PLR-009 | `PlayerData.LocalLightLevel/GlobalLightLevel` | :no_entry: Discrepanza | Nuovo ha solo `CurrentLight` in WorldService (no local vs global) | Feature override luce parzialmente mancanti |
+| TASK-PLR-010 | `PlayerData.LastSkill/LastSpell` | :x: Mancante | Tracking per replay macro | Solo `LastObject` e `AttackTarget` presenti su Mobile |
+| TASK-PLR-011 | `PlayerData.Max Resistance caps` (MaxPhysic/Fire/Cold/Poison/Energy) | :x: Mancante | Cap resistenze | Display cap resistenze rotto |
+| TASK-PLR-012 | `PlayerData.MaxDefenseChanceIncrease` | :x: Mancante | Cap DCI | Display cap DCI rotto |
+| TASK-PLR-013 | `PlayerData.QueryString*` state | :x: Mancante | Stato prompt query string | Prompt query string dei shard custom non gestiti |
 
-#### TASK-FR-008: Script FileSystemWatcher Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Scripts.cs` -> `ScriptChanged()` (FileSystemWatcher)
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto `FileSystemWatcher` in `ScriptingService` (InitScriptsWatcher), event `ScriptsChanged` in `IScriptingService` e implementazione. Monitora `ScriptsPath` con sottocartelle su Created/Deleted/Renamed/Changed, notificando la UI via evento.
-- **Dettaglio**: Il legacy monitora la cartella degli script per modifiche e ricarica automaticamente. Non presente.
-- **Impatto Utente**: Modificare un file .py/.cs esternamente non aggiorna la lista script nell'UI. Bisogna riaprire manualmente.
-- **Documentazione per Junior Dev**: In `ScriptingService.cs`, aggiungere un `FileSystemWatcher` nel costruttore che monitora `ScriptsDirectory`. Al cambiamento file, invocare un event `ScriptsChanged` che la UI osserva per aggiornare la lista.
+**Azione Junior per TASK-PLR-001**: Questo e un gap MAGGIORE. Creare un nuovo servizio `MovementService.cs` in `TMRazorImproved.Core/Services/` che gestisca la coda di movimento. Riferimento completo: `Razor/Core/Player.cs` sezione `MoveReq`/`MoveAck`/`MoveRej`. Deve tracciare la sequenza walk, gestire auto-open-doors e contare i passi stealth.
 
-#### TASK-FR-009: Script Preload/Precompile Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/EnhancedScript.cs` -> `bool preload`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunta property `Preload` in `ScriptConfig`; `CSharpScriptEngine.Precompile()` usa `CSharpScript.Create().Compile()` senza eseguire; `IScriptingService.PreloadScripts()` + implementazione in `ScriptingService` che itera il profilo e pre-compila in background tutti gli script C# con `Preload=true`.
-- **Dettaglio**: Il legacy pre-compila gli script C# all'avvio per ridurre il tempo di esecuzione alla prima invocazione.
-- **Impatto Utente**: La prima esecuzione di uno script C# sara piu lenta.
-- **Documentazione per Junior Dev**: Aggiungere un metodo `PreloadScripts()` in `ScriptingService.cs` che compili (senza eseguire) gli script C# marcati per preload usando `CSharpScript.Create()` di Roslyn.
+**Azione Junior per TASK-PLR-006**: In `WorldPacketHandler.cs`, nel metodo `HandleLoginConfirm`, impostare `player.VisRange = 31`.
 
-#### TASK-FR-010: ScriptRecorder Copertura Pacchetti Incompleta ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/ScriptRecorder.cs` -> tutti i metodi `Record_*`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti 8 handler mancanti in `ScriptRecorderService`: 0x08 DropRequest, 0x75 RenameMobile, 0x9A AsciiPromptResponse, 0xB1 GumpsResponse, 0xD7 SADisarm/SAStun, 0xBF sub 0x0015 ContextMenuResponse, 0xAC ResponseStringQuery, 0x7D MenuResponse. Handler 0xBF esteso da gestire anche sub 0x0015.
-- **Dettaglio**: Il nuovo ScriptRecorderService copre 9 tipi di pacchetto vs ~15 del legacy. Pacchetti mancanti nella registrazione:
-
-| Azione | Pacchetto | Stato |
-|--------|-----------|-------|
-| DropRequest | 0x08 | ❌ Mancante |
-| RenameMobile | 0x75 | ❌ Mancante |
-| AsciiPromptResponse | 0x9A | ❌ Mancante |
-| GumpsResponse | 0xB1 | ❌ Mancante |
-| SADisarm/SAStun | 0xD7 | ❌ Mancante |
-| ContextMenuResponse | 0xBF sub | ❌ Mancante |
-| ResponseStringQuery | 0xAC | ❌ Mancante |
-| MenuResponse | 0x7D | ❌ Mancante |
-
-- **Impatto Utente**: Registrando macro, azioni come drop item, rinomina mobile, risposte a gump e context menu **non vengono catturate**.
-- **Documentazione per Junior Dev**: Aprire il file che contiene ScriptRecorderService (probabilmente sotto `Core/Services/`). Aggiungere viewer per ciascun pacchetto mancante usando `IPacketService.RegisterClientToServerViewer()`. Per il formato dell'output, referenziare `ScriptRecorder.cs` nel legacy, metodi `Record_DropRequest()`, `Record_RenameMobile()`, etc.
-
+**Azione Junior per TASK-PLR-007**: In `Mobile`, cambiare `MaxWeight` da auto-property a property calcolata: `public ushort MaxWeight => _maxWeightOverride > 0 ? _maxWeightOverride : (ushort)((Str * 3.5) + 40);`
 
 ---
 
-## 3. API di Gioco (Script-Facing)
+### 1.5 World
 
-### NOTA CRITICA: Cambio Tipo Seriale `int` -> `uint`
+**Legacy**: `Razor/Core/World.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/WorldService.cs`
 
-#### TASK-FR-012: Breaking Change Pervasivo int -> uint ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: TUTTE le API in `Razor/RazorEnhanced/`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti overload `int` per tutti i metodi serial-taking in ItemsApi, MobilesApi, PlayerApi, TargetApi, SpellsApi, MiscApi, FriendApi, JournalApi, SoundApi via `#region int-serial overloads` (opzione 1 consigliata). Build Core: 0 errori.
-- **Dettaglio**: TUTTE le API nel nuovo codice usano `uint` per i seriali dove il legacy usava `int`. Questo e un cambio pervasivo che influenza OGNI API.
-- **Impatto Utente**: **CRITICO** - Script Python possono funzionare grazie al typing dinamico, ma script C# con `int serial` non compileranno. Confronti come `serial == -1` o `serial == 0` potrebbero comportarsi diversamente.
-- **Documentazione per Junior Dev**: Due opzioni:
-  1. **(Consigliata)** Aggiungere overload `int` per tutti i metodi API che accettano serial, con cast implicito `(uint)serial`
-  2. Aggiungere conversioni implicite nello ScriptGlobals o wrapper Python
+| ID | Membro Legacy | Stato | Dettaglio | Impatto Utente |
+|----|---------------|-------|-----------|----------------|
+| TASK-WLD-001 | `World.Multis` (`ConcurrentDictionary<int, MultiData>`) | :x: Mancante | Tracking multi/case non supportato | Feature case non disponibili |
+| TASK-WLD-002 | `World.FindItems(x,y,z)` | :x: Mancante | Ricerca items per posizione specifica | Ricerca items per posizione non funziona |
+| TASK-WLD-003 | `World.FindAllEntityByID(type, color)` | :x: Mancante | Ricerca entita per graphic + hue | `Items.FindByID` / `Mobiles.FindByID` dello scripting API rotti |
+| TASK-WLD-004 | `World.CorpsesInRange(range)` | :x: Mancante | Trova cadaveri nel range | Feature auto-open-corpse rotta |
+| TASK-WLD-005 | `World.ShardName/OrigPlayerName/AccountName` | :x: Mancante | Metadati server | Display nome shard, switch profili |
 
-### NOTA CRITICA: Cambio Namespace Gumps -> Gump
-
-#### TASK-FR-013: Breaking Change Namespace Gumps ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Gumps.cs` (nome classe: `Gumps`)
-- **Stato nel Nuovo Codice**: ✅ Implementato — `ScriptGlobals.cs` riga 20: `public GumpsApi Gumps { get => Gump; set => Gump = value; }` — alias bidirezionale già presente. Per Python, lo scope IronPython riceve `Gumps` tramite ScriptGlobals. Build verificata.
-- **Dettaglio**: Ogni script che chiama `Gumps.HasGump()`, `Gumps.SendGump()`, etc. fallira con `NameError: name 'Gumps' is not defined`.
-- **Impatto Utente**: **TUTTI** gli script che usano l'API Gumps non funzioneranno.
-- **Documentazione per Junior Dev**: In `ScriptGlobals.cs` o nel setup dello scope Python, aggiungere un alias: `scope.SetVariable("Gumps", scope.GetVariable("Gump"))`. Per C#, creare una classe wrapper `public static class Gumps` che delega a `Gump`.
+**Azione Junior per TASK-WLD-002/003/004**: Aggiungere i seguenti metodi a `WorldService.cs`:
+```csharp
+public IEnumerable<Item> FindItems(int x, int y, int z) => _items.Values.Where(i => i.X == x && i.Y == y && i.Z == z);
+public IEnumerable<UOEntity> FindAllByGraphicAndHue(ushort graphic, ushort hue) => ...;
+public IEnumerable<Item> CorpsesInRange(int range) => _items.Values.Where(i => i.IsCorpse && Distance(i) <= range);
+```
 
 ---
 
-### 3.1 Player API
+### 1.6 Serial
 
-**Legacy**: `Razor/RazorEnhanced/Player.cs` (~104KB)
-**Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/PlayerApi.cs`
+**Legacy**: `Razor/Core/Serial.cs`
+**Nuovo**: `uint` semplice ovunque
 
-**Proprieta**: Tutte le ~60 proprieta sono presenti nel nuovo codice (Hits, HitsMax, Str, Mana, ManaMax, Int, Stam, StamMax, Dex, StatCap, AR, tutte le resistenze, tutte le stats AOS, IsGhost, Poisoned, YellowHits, Visible, WarMode, Paralized, HasSpecial, Female, Name, Notoriety, Serial, Gold, Luck, Body, MobileID, Followers, MaxWeight, Weight, Map, Direction, Position, Backpack, Bank, Quiver, Mount, Connected, Pets, StaticMount).
+| ID | Membro Legacy | Stato | Dettaglio | Impatto Utente |
+|----|---------------|-------|-----------|----------------|
+| TASK-SER-001 | `Serial.IsMobile` / `Serial.IsItem` / `Serial.IsValid` | :x: Mancante | Non si puo distinguere serial mobile vs item | Confusione tipo entita |
+| TASK-SER-002 | `Serial.Parse(string)` | :x: Mancante | Parsa "0x..." hex o decimale | Parsing serial negli script rotto |
 
-**Metodi presenti**: TrackingArrow, Area, Zone, ToggleAlwaysRun, DistanceTo, InRange/InRangeMobile/InRangeItem, GetSkillValue, GetRealSkillValue, GetSkillCap, GetSkillStatus, SetSkillStatus, GetStatStatus, SetStatStatus, BuffsExist, GetBuffInfo, BuffTime, SpellIsEnabled, Buffs, BuffsInfo, UnEquipItemByLayer, EquipItem, EquipUO3D, UnEquipUO3D, GetItemOnLayer, ChatSay/ChatWhisper/ChatYell/ChatEmote/ChatChannel/ChatParty, PartyInvite, PartyAccept, LeaveParty, KickMember, PartyCanLoot, SetWarMode, Attack, AttackLast, InvokeVirtue, Run, Walk, PathFindTo, Fly, HeadMessage, OpenPaperDoll, QuestButton, GuildButton, EquipLastWeapon, WeaponPrimarySA/SecondarySA/ClearSA/DisarmSA/StunSA, SumAttribute, GetPropStringList, GetPropStringByIndex, GetPropValue, ClearCorpseList, SetStaticMount.
-
-#### TASK-FR-014: Player.AttackType() Overload Complessi Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Player.cs` -> `AttackType(int graphic, int rangemax, string selector, ...)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti `AttackType(int graphic, int rangemax, string selector, List<int>? color, List<byte>? notoriety)` e `AttackType(List<int> graphics, ...)` in `PlayerApi.cs`. Selectors: Nearest/Farthest/Weakest/Strongest/Random/Next/Previous. Helper privato `ApplyMobileSelector()`. Build: 0 errori.
-- **Dettaglio**: Il legacy ha overload complessi di `AttackType` che trovano e attaccano mobile per graphic/color/notorieta con selettori (Nearest/Farthest/Weakest/Strongest/Random). Il nuovo ha solo `AttackType(string type)` per "disarm"/"grapple".
-- **Impatto Utente**: Script di combattimento che usano `Player.AttackType(0x00EC, 10, "Nearest")` per attaccare il nemico piu vicino di un certo tipo **non funzioneranno**.
-- **Documentazione per Junior Dev**: In `PlayerApi.cs`, aggiungere overload `AttackType(int graphic, int rangemax, string selector, int color = -1, int notoriety = -1)`. La logica deve: 1) Usare `_worldService` per ottenere i mobile nel range, 2) Filtrare per graphic/color/notoriety, 3) Applicare il selettore (Nearest = min distanza, etc.), 4) Chiamare `Attack(serial)` sul risultato. Referenziare `Player.cs` legacy per i selettori (cerca `AttackType`).
-
-#### TASK-FR-015: Player.Corpses Property Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Player.cs` -> `Corpses` (HashSet)
-- **Stato nel Nuovo Codice**: ✅ Implementato — `Corpses` property in `PlayerApi.cs` restituisce merge di `_corpseSerials` (HashSet statico) + corpse items in world (graphic 0x2006). `TrackCorpse(uint)` statico per hook WorldPacketHandler. `ClearCorpseList()` ora svuota il set.
-- **Dettaglio**: La proprieta `Corpses` traccia i seriali dei cadaveri uccisi dal player. Non presente nel nuovo.
-- **Impatto Utente**: Script di looting che usano `Player.Corpses` per iterare i cadaveri recenti non funzioneranno.
-- **Documentazione per Junior Dev**: Aggiungere `HashSet<uint> CorpseSerials` nel modello `Mobile` (UOEntity.cs) e una proprieta `Corpses` in `PlayerApi.cs` che la espone. Popolarla in `WorldPacketHandler` quando si riceve un pacchetto di morte (0x2C).
-
-#### TASK-FR-016: Player Chat Overload Interi Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Player.cs` -> `ChatEmote(int color, int msg)`, `ChatWhisper(int color, int msg)`, `ChatYell(int color, int msg)`, `ChatChannel(int msg)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti overload `ChatEmote(int,int)`, `ChatWhisper(int,int)`, `ChatYell(int,int)`, `ChatChannel(int)` in `PlayerApi.cs`. Usano msgId.ToString() come testo (cliloc resolution stub).
-- **Dettaglio**: Overload che accettano ID messaggio intero (da cliloc) invece di stringa. Solo le versioni stringa esistono.
-- **Impatto Utente**: Script che usano ID messaggio localizzato per le chat non funzioneranno. Impatto **basso** (pochi script usano questa variante).
-- **Documentazione per Junior Dev**: In `PlayerApi.cs`, aggiungere overload come `ChatEmote(int color, int msgId)` che risolvono il cliloc ID in stringa e chiamano la versione stringa.
-
-#### TASK-FR-017: Differenze Tipo Ritorno in Player API ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Player.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `Run()` e `Walk()` ora ritornano `bool` (true se direzione valida e pacchetto inviato); `PartyAccept()` ritorna `bool true`. Build: 0 errori.
-- **Dettaglio**: Alcune signature hanno tipi ritorno diversi:
-  - `PartyAccept` ritorna `bool` nel legacy, `void` nel nuovo
-  - `Run`/`Walk` ritornano `bool` nel legacy, `void` nel nuovo
-- **Impatto Utente**: Script che controllano il valore di ritorno (`if Player.Walk("North"):`) avranno un errore a runtime.
-- **Documentazione per Junior Dev**: Modificare le signature in `PlayerApi.cs` per ritornare `bool` dove il legacy lo faceva. Per `Walk`/`Run`, ritornare `true` se il movimento e stato inviato con successo.
+**Azione Junior per TASK-SER-001/002**: Creare una classe statica `SerialHelper` in `TMRazorImproved.Shared/Utilities/`:
+```csharp
+public static class SerialHelper {
+    public static bool IsMobile(uint serial) => serial > 0 && serial < 0x40000000;
+    public static bool IsItem(uint serial) => serial >= 0x40000000 && serial <= 0x7FFFFF00;
+    public static bool IsValid(uint serial) => serial > 0 && serial <= 0x7FFFFF00;
+    public static uint Parse(string s) => s.StartsWith("0x") ? uint.Parse(s[2..], System.Globalization.NumberStyles.HexNumber) : uint.Parse(s);
+}
+```
 
 ---
 
-### 3.2 Items API
+### 1.7 Geometry
 
-**Legacy**: `Razor/RazorEnhanced/Item.cs`
-**Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/ItemsApi.cs`
+**Legacy**: `Razor/Core/Geometry.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Shared/Models/Geometry.cs`
 
-**Metodi presenti**: FindBySerial, FindByID (overload multipli), FindAllByID, WaitForContents, UseItem, UseItemByID, Move (overload multipli), MoveOnGround, Lift, SingleClick, GetPropStringList, GetPropStringByIndex, GetPropValue, GetPropValueString, WaitForProps, Message, Hide, Close, OpenAt/OpenContainerAt, ContainerCount, BackpackCount, ApplyFilter, SetColor/Color, ChangeDyeingTubColor, DropItemGroundSelf, DropFromHand, FindByName, ContextExist, IgnoreTypes.
-
-#### TASK-FR-018: Items.Select() con Selettore Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Item.cs` -> `Select(List<Item> items, string selector)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `Select(IEnumerable<ScriptItem>, string)` e `Select(IList, string)` in `ItemsApi.cs`. Selectors: Nearest/Farthest/Less/Most/Lightest/Heaviest/Random.
-- **Dettaglio**: Il legacy ha `Select(List<Item>, string)` dove selector puo essere "Nearest"/"Farthest"/"Less"/"Most"/"Lightest"/"Heaviest". Il nuovo ha solo `Select(uint serial)` che e una cosa diversa.
-- **Impatto Utente**: Script che filtrano liste di item per prossimita/peso/quantita non funzioneranno.
-- **Documentazione per Junior Dev**: In `ItemsApi.cs`, aggiungere un metodo `Select(List<dynamic> items, string selector)` che ordina la lista secondo il criterio e ritorna il primo elemento. Referenziare `Item.cs` legacy, metodo `Select()`.
-
-#### TASK-FR-019: Items.GetImage() Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Item.cs` -> `GetImage(int itemID, int hue)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `GetImage(int itemID, int hue = 0)` in `ItemsApi.cs` usa `Ultima.Art.GetStatic()` + `Ultima.Hues.GetHue().ApplyTo()`. Ritorna `Ultima.Data.Bitmap?` (tipo nativo SDK, non `System.Drawing.Bitmap`). Il clone della bitmap è necessario per non modificare la cache dell'SDK.
-- **Dettaglio**: Ritorna un `Bitmap` dell'immagine dell'item con hue applicato. Usa UltimaSDK.
-- **Impatto Utente**: Script che mostrano immagini item in gump custom non funzioneranno.
-- **Documentazione per Junior Dev**: In `ItemsApi.cs`, aggiungere `GetImage(int itemID, int hue)`. Servira un riferimento a UltimaSDK o un equivalente per caricare l'art statica. In WPF, ritornare un `BitmapImage` invece di `System.Drawing.Bitmap`.
-
-#### TASK-FR-020: Items.GetWeaponAbility() Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Item.cs` -> `GetWeaponAbility(int itemId)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `GetWeaponAbility(int itemId)` in `ItemsApi.cs` delega a `IWeaponService.GetWeaponInfo()` (iniettato come param opzionale nel ctor). Ritorna `(string Primary, string Secondary)` tuple. Graceful null-check se weaponService non iniettato.
-- **Dettaglio**: Ritorna una tupla `(string primary, string secondary)` con i nomi delle abilita arma. Usa dati da `weapons.json`.
-- **Impatto Utente**: Script che controllano l'abilita dell'arma equipaggiata non funzioneranno.
-- **Documentazione per Junior Dev**: Aggiungere in `ItemsApi.cs` un metodo che delega a `IWeaponService.GetAbilities(itemId)`. Il `WeaponService` dovrebbe gia avere queste info (verificare `WeaponInfo` model).
-
-#### TASK-FR-021: Items.ContainerCount() Semantica Diversa ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Item.cs` -> `ContainerCount(Item container, int itemid, int color, bool recursive)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto overload `ContainerCount(uint containerSerial, int itemid, int color = -1, bool recursive = true)` con `CountInContainer` ricorsiva. Overload int aggiunto. L'originale `ContainerCount(uint)` (conta tutti) resta invariato.
-- **Dettaglio**: Il legacy conta item specifici (per ID e colore) in un container. Il nuovo `ContainerCount(uint containerSerial)` conta TUTTI gli item nel container, senza filtro per tipo.
-- **Impatto Utente**: Script che usano `Items.ContainerCount(backpack, 0x0EED, 0, true)` per contare gold in backpack riceveranno il conteggio TOTALE di tutti gli item.
-- **Documentazione per Junior Dev**: In `ItemsApi.cs`, aggiungere un overload `ContainerCount(uint containerSerial, int itemid, int color = -1, bool recursive = true)` che filtra per graphic e hue prima di contare.
+| ID | Membro Legacy | Stato | Dettaglio | Impatto Utente |
+|----|---------------|-------|-----------|----------------|
+| TASK-GEO-001 | `Point3D.Parse(string)` | :x: Mancante | Parsa "(x, y, z)" | Script API `Point3D.Parse` rotto |
+| TASK-GEO-002 | `Point3D` operatori +/- | :x: Mancante | Operatori aritmetici per math posizioni | Calcoli posizione negli script rotti |
+| TASK-GEO-003 | `Line2D` struct completa | :x: Mancante | Nessun supporto geometria linee | Controlli geometrici avanzati mancanti |
+| TASK-GEO-004 | `Rectangle2D.Contains(Rectangle2D)` / `MakeHold()` | :x: Mancante | Check contenimento regioni | Controlli regione rotti |
 
 ---
 
-### 3.3 Mobiles API
+### 1.8 Facet
 
-**Legacy**: `Razor/RazorEnhanced/Mobile.cs`
-**Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/MobilesApi.cs`
+**Legacy**: `Razor/Core/Facet.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Shared/Models/Facet.cs`
 
-**Metodi presenti**: FindBySerial, ApplyFilter, Select, FindMobile, UseMobile, SingleClick, Message, WaitForProps, WaitForStats, GetPropStringList, GetPropStringByIndex, GetPropValue, ContextExist, GetTrackingInfo, GetTargetingFilter.
-
-**Stato**: ✅ Copertura buona. Nessun metodo critico mancante.
-
----
-
-### 3.4 Gumps API
-
-**Legacy**: `Razor/RazorEnhanced/Gumps.cs` (~59KB)
-**Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/GumpsApi.cs`
-
-**Stato**: ✅ Copertura eccellente. Tutti i metodi di building e querying gump presenti. Unico problema: il cambio namespace `Gumps` -> `Gump` (vedi TASK-FR-013).
+| ID | Membro Legacy | Stato | Dettaglio | Impatto Utente |
+|----|---------------|-------|-----------|----------------|
+| TASK-FAC-001 | `Facet.GetMap(int)` (ritorna `Ultima.Map`) | :x: Mancante | Nessuna dipendenza Ultima.dll | Impatto su pathfinding/ZTop; probabilmente gestito internamente da ClassicUO |
+| TASK-FAC-002 | `Facet.ZTop()` / `GetAverageZ()` | :x: Mancante | Calcolo Z camminabile alla posizione | Non necessario se CUO gestisce il movimento |
 
 ---
 
-### 3.5 Spells API
+### 1.9 Buffs
 
-**Legacy**: `Razor/RazorEnhanced/Spells.cs` (~58KB)
-**Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/SpellsApi.cs`
+**Legacy**: `Razor/Core/Buffs.cs` + `Razor/Core/BuffInfo.cs`
+**Nuovo**: `Mobile.ActiveBuffs` dictionary + `WorldService._buffNames`
 
-#### TASK-FR-022: Spell School-Specific Targeted Overloads Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Spells.cs` -> `CastMagery(string, uint target, bool wait)`, `CastNecro(string, uint target, bool wait)`, etc.
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti overload `(string name, uint target, bool wait)` per tutte le cerchie (Magery/Necro/Chivalry/Bushido/Ninjitsu/Spellweaving/Mysticism/Mastery/Cleric/Druid) + versioni `int target` per FR-012.
-- **Dettaglio**: Il legacy ha overload per ogni scuola di magia che accettano un target serial e flag wait. Nel nuovo, `CastMagery(string name)` delega solo a `Cast(name)` senza target.
-- **Impatto Utente**: **ALTO** - Script come `Spells.CastMagery("Greater Heal", Player.Serial)` falliranno con wrong argument count. Questo e uno dei pattern piu comuni negli script.
-- **Documentazione per Junior Dev**: In `SpellsApi.cs`, aggiungere overload per ogni metodo school-specific:
-  ```csharp
-  public void CastMagery(string name, uint target, bool wait = true)
-  {
-      Cast(name, target, wait);
-  }
-  ```
-  Ripetere per: CastNecro, CastChivalry, CastBushido, CastNinjitsu, CastSpellweaving, CastMysticism, CastMastery, CastCleric, CastDruid.
+| ID | Membro Legacy | Stato | Dettaglio | Impatto Utente |
+|----|---------------|-------|-----------|----------------|
+| TASK-BUF-001 | `BuffIcon` enum (170+ entries) | :warning: Incompleto | Nuovo ha solo ~48 entries in `_buffNames` | Molte icone buff non riconosciute (Sleep, StoneForm, SpellPlague, tutte le Skill Masteries 1169+) |
+| TASK-BUF-002 | `BuffInfo` class (Duration, StartTime, Cliloc*) | :no_entry: Discrepanza | Nuovo ha solo `Dictionary<string, int>` (nome -> secondi) | Persi: tempo inizio buff, descrizioni cliloc, info tooltip dettagliate |
 
-#### TASK-FR-023: CastLastSpell Targeted Overload Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Spells.cs` -> `CastLastSpell(uint target)`, `CastLastSpell(Mobile m)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `CastLastSpell(uint target)` e `CastLastSpell(int target)` aggiunti nel region int-serial overloads di `SpellsApi.cs`.
-- **Dettaglio**: Overload che lanciano l'ultimo spell su un target specifico.
-- **Impatto Utente**: Script che usano `Spells.CastLastSpell(target.Serial)` non funzioneranno.
-- **Documentazione per Junior Dev**: In `SpellsApi.cs`, aggiungere `CastLastSpell(uint target)` che chiama `Cast(GetLastSpell(), target)`.
+**Azione Junior per TASK-BUF-001**: Aprire `WorldPacketHandler.cs`, metodo che gestisce 0xDF (HandleBuffDebuff). Espandere la mappa `_buffNames` copiando tutti i 170+ valori dall'enum `BuffIcon` in `Razor/Core/Buffs.cs`.
 
 ---
 
-### 3.6 Target API
+### 1.10 Spells
 
-**Legacy**: `Razor/RazorEnhanced/Target.cs`
-**Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/TargetApi.cs`
+**Legacy**: `Razor/Core/Spells.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Shared/Models/SpellDefinitions.cs`
 
-#### TASK-FR-024: TargetExecute 3-Parametri Ground Target Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Target.cs` -> `TargetExecute(int x, int y, int z)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `TargetExecute(int x, int y, int z)` in `TargetApi.cs` delega a `TargetExecute(x, y, z, 0)` (graphic=0 = terreno puro).
-- **Dettaglio**: Overload per target su coordinate ground senza StaticID. Il nuovo ha solo la versione a 4 parametri `(x, y, z, graphic)`.
-- **Impatto Utente**: Script che targetano il terreno con `Target.TargetExecute(x, y, z)` non funzioneranno.
-- **Documentazione per Junior Dev**: In `TargetApi.cs`, aggiungere overload `TargetExecute(int x, int y, int z)` che chiama la versione a 4 parametri con `graphic: 0`.
+| ID | Membro Legacy | Stato | Dettaglio | Impatto Utente |
+|----|---------------|-------|-----------|----------------|
+| TASK-SPL-001 | `Spell.Flag` (Beneficial/Harmful/Neutral) | :x: Mancante | Nessun flag B/H/N per spell nel nuovo `SpellInfo` | Smart targeting (harm/bene) non puo cercare tipo spell |
+| TASK-SPL-002 | `Spell.WordsOfPower` | :x: Mancante | Parole di potere per spell | Display/detection parole potere rotto |
+| TASK-SPL-003 | `Spell.Reagents` | :x: Mancante | Reagenti richiesti per spell | Conteggio/display reagenti rotto |
+| TASK-SPL-004 | `Spell.GetHue()` | :x: Mancante | Hue configurato per tipo spell | Feature override hue spell rotta |
+| TASK-SPL-005 | `Spell.Cast()` con auto-unequip mani | :x: Mancante | SpellUnequip feature | Auto-disarm prima del cast rotto |
+| TASK-SPL-006 | `spells.def` file loading | :no_entry: Discrepanza | Legacy carica da `spells.def` (estensibile). Nuovo ha lista hardcoded | Estensibilita persa (spell custom server via .def file) |
 
----
-
-### 3.7 Journal API
-
-**Legacy**: `Razor/RazorEnhanced/Journal.cs`
-**Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/JournalApi.cs`
-
-#### TASK-FR-025: Journal.Clear(string) Overload Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Journal.cs` -> `Clear(string toBeRemoved)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `Clear(string toBeRemoved)` in `JournalApi.cs` chiama `_journal.RemoveWhere(...)`. Aggiunto `RemoveWhere(Func<JournalEntry, bool>)` all'interfaccia `IJournalService` e a `JournalService` (drena e riempie la `ConcurrentQueue` filtrando le entry matchate).
-- **Dettaglio**: Overload che rimuove solo le entry contenenti una stringa specifica.
-- **Impatto Utente**: Script che puliscono selettivamente il journal non funzioneranno.
-- **Documentazione per Junior Dev**: In `JournalApi.cs`, aggiungere `Clear(string text)` che filtra `_journalService.Entries` rimuovendo quelle contenenti `text`.
-
-#### TASK-FR-026: Journal.GetJournalEntry con Timestamp Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Journal.cs` -> `GetJournalEntry(double afterTimestamp)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `GetJournalEntry(double afterTimestamp)` in `JournalApi.cs` filtra le entry con `e.Timestamp > DateTime.FromOADate(afterTimestamp)` e ritorna `List<string>`. `JournalEntry.Timestamp` (DateTime.Now) già esistente nel modello.
-- **Dettaglio**: Permette di ottenere entry journal dopo un certo timestamp.
-- **Impatto Utente**: Script che monitorano il journal dall'ultimo check non funzioneranno.
-- **Documentazione per Junior Dev**: In `JournalApi.cs`, aggiungere `GetJournalEntry(double afterTimestamp)` che filtra per `DateTime.FromOADate(afterTimestamp)`.
+**Azione Junior per TASK-SPL-001/002/003**: Aprire `TMRazorImproved.Shared/Models/SpellDefinitions.cs`. Per ogni `SpellInfo`, aggiungere i campi:
+```csharp
+public SpellFlag Flag { get; init; } // enum { Beneficial, Harmful, Neutral }
+public string WordsOfPower { get; init; }
+public string[] Reagents { get; init; }
+```
+Popolare i dati copiando da `Razor/Core/Spells.cs` (o dal file `spells.def`).
 
 ---
 
-### 3.8 Misc API
+## 2. Packet Handling & Network
 
-**Legacy**: `Razor/RazorEnhanced/Misc.cs` (~54KB)
-**Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/MiscApi.cs`
+### 2.1 Architettura
 
-**Stato**: ✅ Copertura molto buona. Tutti i metodi principali presenti. Il nuovo aggiunge anche funzionalita non presenti nel legacy (CreateList/PushList/PopList per UOSteam list API, PlayMusic/StopMusic, WaitFor, Random, Log, Timestamp, ReadFile/WriteFile, GetWindowSize).
+| Aspetto | Legacy | Nuovo | Stato |
+|---------|--------|-------|-------|
+| Classe Packet | `Packet` con `MemoryStream`, `Read*/Write*`, `Compile()` | Raw `byte[]` + `UOBufferReader` + `BinaryPrimitives` | :no_entry: Approccio diverso, funzionalmente equivalente |
+| Tabella lunghezze pacchetti | `PacketTable.cs` hardcoded `short[255]` | Protocollo length-prefix (4 byte LE) | :no_entry: Cambio architetturale intenzionale |
+| Registrazione handler | `ConcurrentDictionary<int, List<callback>>` statiche | DI-based `ConcurrentDictionary<(PacketPath, int), List<Action<byte[]>>>` | :white_check_mark: |
+| Packet builder | Classi packet nominate (`EmoteAction`, `QueryPartyLocs`, etc.) | Array byte inline | :no_entry: Funzionalmente equivalente |
+
+### 2.2 Confronto Handler S2C (Server-to-Client)
+
+| Packet ID | Handler Legacy | Handler Nuovo | Stato |
+|-----------|---------------|---------------|-------|
+| 0x0B | Damage | HandleDamage | :white_check_mark: |
+| 0x11 | MobileStatus | HandleMobileStatus | :white_check_mark: |
+| 0x16 | SAMobileStatus | HandleSAMobileStatus | :white_check_mark: |
+| 0x17 | NewMobileStatus | HandleNewMobileStatus | :white_check_mark: |
+| 0x1A | WorldItem (Viewer) | HandleWorldItem (**Filter**) | :no_entry: Promosso a filter (puo bloccare staff items) |
+| 0x1B | LoginConfirm | HandleLoginConfirm | :white_check_mark: |
+| 0x1C | AsciiSpeech (**Filter**) | HandleAsciiMessage (**Viewer**) | :no_entry: Downgrade a viewer; filtering spostato in FilterHandler |
+| 0x1D | RemoveObject | HandleRemoveObject | :white_check_mark: |
+| 0x20 | MobileUpdate (Filter) | HandleMobileUpdate (Filter) | :white_check_mark: |
+| 0x21 | MovementRej | HandleWalkReject | :white_check_mark: |
+| 0x22 | MovementAck | HandleMovementAck | :white_check_mark: |
+| 0x24 | BeginContainerContent | HandleBeginContainerContent | :white_check_mark: |
+| 0x25 | ContainerContentUpdate (Filter) | HandleAddItemToContainer (Filter) | :white_check_mark: |
+| 0x27 | LiftReject | HandleLiftReject | :white_check_mark: |
+| 0x2C | MyDeath | HandlePlayerDeath | :white_check_mark: |
+| 0x2D | MobileStatInfo | HandleMobileStatInfo | :white_check_mark: |
+| 0x2E | EquipmentUpdate (Filter) | HandleEquipUpdate (Filter) | :white_check_mark: |
+| 0x3A | Skills | HandleSkillsUpdate | :white_check_mark: |
+| 0x3C | ContainerContent (Filter) | HandleContainerContent (Filter) | :white_check_mark: |
+| 0x4E | PersonalLight | HandlePersonalLightLevel | :white_check_mark: |
+| 0x4F | GlobalLight | HandleGlobalLightLevel | :white_check_mark: |
+| 0x56 | PinLocation | HandlePinLocation | :white_check_mark: |
+| 0x6F | TradeRequest | HandleTradeRequest | :white_check_mark: |
+| 0x72 | ServerSetWarMode | HandleWarMode | :white_check_mark: |
+| 0x73 | PingResponse | HandlePing | :white_check_mark: |
+| 0x74 | StoreBuyList | HandleBuyWindow | :white_check_mark: |
+| 0x76 | ServerChange | HandleServerChange | :white_check_mark: |
+| 0x77 | MobileMoving (**Filter**) | HandleMobileMoving (**Viewer**) | :no_entry: Downgrade da filter a viewer |
+| 0x78 | MobileIncoming (Filter) | HandleMobileIncoming (Filter) | :white_check_mark: |
+| 0x7C | SendMenu | HandleOpenMenu | :white_check_mark: |
+| 0x88 | OpenPaperdoll | HandleOpenPaperdoll | :white_check_mark: |
+| 0x90 | MapDetails | HandleMapDisplay | :white_check_mark: |
+| 0x95 | HueResponse | HandleHueResponse | :white_check_mark: |
+| 0x97 | MovementDemand | HandleMovementDemand | :white_check_mark: |
+| 0x9A | AsciiPromptResponse | HandleAsciiPrompt | :white_check_mark: |
+| 0x9E | StoreSellList | HandleSellWindow | :white_check_mark: |
+| 0xA1 | HitsUpdate | HandleHitsUpdate | :white_check_mark: |
+| 0xA2 | ManaUpdate | HandleManaUpdate | :white_check_mark: |
+| 0xA3 | StamUpdate | HandleStaminaUpdate | :white_check_mark: |
+| 0xA8 | ServerList | HandleServerList | :white_check_mark: |
+| 0xAB | DisplayStringQuery | HandleDisplayStringQuery | :white_check_mark: |
+| 0xAE | UnicodeSpeech (**Filter**) | HandleUnicodeMessage (**Viewer**) | :no_entry: Downgrade a viewer; filtering in FilterHandler |
+| 0xAF | DeathAnimation | HandleDeathAnimation | :white_check_mark: |
+| 0xB0 | SendGump + **GumpIgnore** (2 viewer) | HandleGump (1 viewer) | :warning: Callback GumpIgnore mancante |
+| 0xB8 | Profile | HandleProfile | :white_check_mark: |
+| 0xB9 | Features | HandleFeatures | :white_check_mark: |
+| 0xBA | TrackingArrow | HandleTrackingArrow | :white_check_mark: |
+| 0xBC | ChangeSeason | HandleChangeSeason | :white_check_mark: |
+| 0xBF | ExtendedPacket | HandleExtendedPacket | :white_check_mark: |
+| 0xC1 | LocalizedMessage (**Filter**) | HandleLocalizedMessage (**Viewer**) | :no_entry: Downgrade a viewer; filtering in FilterHandler |
+| 0xC2 | UnicodePromptReceived (S2C) | **MANCANTE** | :x: Nessun handler S2C per 0xC2 |
+| 0xC8 | SetUpdateRange (Filter) | HandleSetUpdateRange (Filter) | :white_check_mark: |
+| 0xCC | LocalizedMessageAffix (**Filter**) | HandleLocalizedMessageAffix (**Viewer**) | :no_entry: Downgrade a viewer |
+| 0xD6 | EncodedPacket (OPL) | HandleOPL | :white_check_mark: |
+| 0xD8 | CustomHouseInfo | HandleCustomHouseInfo | :white_check_mark: |
+| 0xDD | CompressedGump + **GumpIgnore** | HandleCompressedGump | :warning: Callback GumpIgnore mancante |
+| 0xDF | BuffDebuff + **BandageHeal.BuffDebuff** | HandleBuffDebuff | :warning: Callback BandageHeal.BuffDebuff mancante |
+| 0xE2 | TestAnimation | HandleTestAnimation | :white_check_mark: |
+| 0xF0 | RunUOProtocolExtention | HandleRunUOProtocol | :white_check_mark: |
+| 0xF3 | SAWorldItem (Viewer) | HandleSAWorldItem (**Filter**) | :no_entry: Promosso a filter |
+| 0xF5 | MapDetails | HandleMapDisplay | :white_check_mark: |
+| 0xF6 | MoveBoatHS | HandleMoveBoat | :white_check_mark: |
+
+### 2.3 Confronto Handler C2S (Client-to-Server)
+
+| Packet ID | Handler Legacy | Handler Nuovo | Stato |
+|-----------|---------------|---------------|-------|
+| 0x00 | CreateCharacter | **MANCANTE** | :x: |
+| 0x02 | MovementRequest (Filter) | HandleMovementRequest (Filter) | :white_check_mark: |
+| 0x05 | AttackRequest (Filter) | HandleAttackRequest (Filter) | :white_check_mark: |
+| 0x06 | ClientDoubleClick | HandleClientDoubleClick | :white_check_mark: |
+| 0x07 | LiftRequest | HandleLiftRequest | :white_check_mark: |
+| 0x08 | DropRequest | HandleDropRequest | :white_check_mark: |
+| 0x09 | ClientSingleClick | HandleClientSingleClick | :white_check_mark: |
+| 0x12 | ClientTextCommand | HandleClientTextCommand | :white_check_mark: |
+| 0x13 | EquipRequest | HandleEquipRequest | :white_check_mark: |
+| 0x22 | ResyncRequest | HandleResyncRequest | :white_check_mark: |
+| 0x3A | SetSkillLock | HandleSetSkillLockC2S | :white_check_mark: |
+| 0x5D | PlayCharacter | HandlePlayCharacter | :white_check_mark: |
+| 0x6F | TradeRequestFromClient | HandleTradeRequestC2S | :white_check_mark: |
+| 0x75 | RenameMobile | HandleRenameMobile | :white_check_mark: |
+| 0x7D | MenuResponse | HandleMenuResponseC2S | :white_check_mark: |
+| 0x80 | ServerListLogin (**Filter**) | HandleServerListLogin (**Viewer**) | :no_entry: Downgrade intenzionale — password gestite da PasswordService |
+| 0x91 | GameLogin (**Filter**) | HandleGameLogin (**Viewer**) | :no_entry: Downgrade intenzionale |
+| 0x95 | HueResponse | HandleHueResponseC2S | :white_check_mark: |
+| 0x9A | AsciiPromptResponse | HandleAsciiPromptResponseC2S | :white_check_mark: |
+| 0xA0 | PlayServer | HandlePlayServer | :white_check_mark: |
+| 0xAC | ResponseStringQuery | HandleResponseStringQueryC2S | :white_check_mark: |
+| 0xB1 | ClientGumpResponse | HandleGumpResponse | :white_check_mark: |
+| 0xBF | ExtendedClientCommand (**Filter**) | HandleExtendedClientCommand (**Viewer**) | :no_entry: Downgrade |
+| 0xC2 | UnicodePromptSend | HandleUnicodePromptResponseC2S | :white_check_mark: |
+| 0xD7 | ClientEncodedPacket | HandleClientEncodedPacket | :white_check_mark: |
+| 0xF8 | CreateCharacter v2 | **MANCANTE** | :x: |
+
+### 2.4 Handler mancanti — Task
+
+| ID | Packet | Direzione | Dettaglio | Impatto | Priorita |
+|----|--------|-----------|-----------|---------|----------|
+| TASK-PKT-001 | 0xC2 | S2C | UnicodePromptReceived — nessun handler S2C | Prompt unicode dal server non gestiti | Media |
+| TASK-PKT-002 | 0x00 | C2S | CreateCharacter — tracking creazione personaggio | Perdita tracking creazione char | Bassa |
+| TASK-PKT-003 | 0xF8 | C2S | CreateCharacter v2 — come sopra, versione nuova | Perdita tracking creazione char | Bassa |
+| TASK-PKT-004 | 0xB0/0xDD | S2C | GumpIgnore callback secondaria mancante | Feature GumpIgnore non funzionante | Media |
+| TASK-PKT-005 | 0xDF | S2C | BandageHeal.BuffDebuff callback secondaria mancante | Timing BandageHeal da pacchetti buff/debuff mancante | Alta |
+
+**Azione Junior per TASK-PKT-001**: In `WorldPacketHandler.cs`, aggiungere un viewer S2C per 0xC2 che legga serial e ID del prompt e li salvi nel `TargetingService` (come `_hasPrompt`, `_promptSerial`, `_promptId`).
+
+**Azione Junior per TASK-PKT-004**: Nel metodo che gestisce 0xB0 e 0xDD, aggiungere un check per i gump da ignorare (caricare la lista ignora dalla config e confrontare il gumpId).
+
+**Azione Junior per TASK-PKT-005**: Nel metodo `HandleBuffDebuff`, aggiungere una chiamata a `BandageHealService.OnBuffDebuff(buffId, isAdded)` per il timing del bandage heal.
 
 ---
 
-### 3.9 Sound API
+### 2.5 Nuovi handler in TMRazorImproved (non nel legacy)
 
-**Legacy**: `Razor/RazorEnhanced/Sound.cs`
-**Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/SoundApi.cs`
-
-#### TASK-FR-027: Sound Filtering API Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Sound.cs` -> `AddFilter()`, `RemoveFilter()`, `WaitForSound()`, `LastSoundMatch()`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `AddFilter(string name, List<int> soundIds)`, `RemoveFilter(string name)`, `WaitForSound(List<int> soundIds, int timeout=-1)`, `LastSoundMatch()` aggiunti a `SoundApi.cs`. Usa viewer su pacchetto 0x54 (S2C) registrato lazily via `IPacketService`. Stato statico thread-safe con `lock(_syncRoot)` + `ManualResetEvent` per `WaitForSound`. `IPacketService` ora passato al ctor di SoundApi (opzionale) e propagato da `ScriptingService`.
-- **Dettaglio**: Il legacy permette di aggiungere filtri sonori per nome/ID, rimuoverli, attendere suoni specifici e ottenere l'ultimo suono matchato. Il nuovo `SoundApi` ha solo metodi di riproduzione (PlaySoundEffect, PlayMusic, etc.), nessun metodo di filtraggio.
-- **Impatto Utente**: Script che usano `Sound.WaitForSound()` per reagire a suoni nel gioco (es. suono di morte, suono di scoperta) non funzioneranno.
-- **Documentazione per Junior Dev**: In `SoundApi.cs`, aggiungere:
-  1. `AddFilter(string name, List<int> soundIds)` - registra un filtro nel `ISoundService`
-  2. `RemoveFilter(string name)` - rimuove filtro
-  3. `WaitForSound(List<int> soundIds, int timeout)` - attende un suono specifico (usa `TaskCompletionSource` + viewer su pacchetto 0x54)
-  4. `LastSoundMatch()` - ritorna posizione dell'ultimo suono filtrato
-
----
-
-### 3.10 Trade API (COMPLETAMENTE ASSENTE)
-
-#### TASK-FR-028: Trade API Completamente Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Trade.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — creato `TradeApi.cs` in `Services/Scripting/Api/`. Metodi: `TradeList()→List<TradeData>`, `Accept(uint tradeId, bool accept=true)`, `Accept(bool)`, `Cancel(uint tradeId)`, `Cancel()`, `Offer(uint tradeId, int gold, int platinum)`, `Offer(int gold, int platinum)` + overload `int` serial per FR-012. `ISecureTradeService` aggiunto al costruttore di `ScriptingService`. `Trade` registrato in `ScriptGlobals` e in entrambi i percorsi di istanziazione (Python scope + C# globals).
-- **Dettaglio**: L'intero modulo Trade API non ha controparte nelle API di scripting. Nel legacy:
-  - `Trade.TradeList()` - ritorna lista trade attivi
-  - `Trade.Accept()` - accetta un trade
-  - `Trade.Cancel()` - cancella un trade
-  - `Trade.Offer(int serial, int amount)` - offre un item nel trade
-- **Impatto Utente**: **CRITICO** - Tutti gli script di trading automatizzato non funzioneranno. Questo include script di vendor, scambio items tra account, etc.
-- **Documentazione per Junior Dev**: Creare una nuova classe `TradeApi.cs` in `Services/Scripting/Api/`. Il servizio `ISecureTradeService` esiste gia nel nuovo codice. La nuova API deve esporre:
-  1. `TradeList()` -> ritorna lista di `TradeSession` da `ISecureTradeService`
-  2. `Accept(uint tradeSerial)` -> invia pacchetto 0x6F (accetta)
-  3. `Cancel(uint tradeSerial)` -> invia pacchetto 0x6F (cancella)
-  4. `Offer(uint itemSerial, int amount)` -> move item nella finestra trade
-  Registrare la nuova API in `ScriptGlobals.cs`.
+| Packet ID | Dir | Handler | Note |
+|-----------|-----|---------|------|
+| 0x55 | S2C | HandleLoginComplete | :bulb: Segnale completamento login |
+| 0x65 | S2C | HandleWeather | :bulb: Pacchetto meteo (era solo nei Filters) |
+| 0x6C | S2C | HandleTargetCursorFromServer | :bulb: Gestione cursore target |
+| 0x6D | S2C | HandlePlayMusic | :bulb: Riproduzione musica |
+| 0x6E | S2C | HandleCharacterAnimation | :bulb: Animazioni personaggio |
+| 0x83 | S2C | HandleDeleteCharacter | :bulb: Eliminazione personaggio |
+| 0x89 | S2C | HandleCorpseEquipment | :bulb: Lista equipaggiamento cadavere |
+| 0x8C | S2C | HandleRelayServer | :bulb: Relay login |
+| 0x98 | S2C | HandleMobileName | :bulb: Richiesta nome mobile |
+| 0xAA | S2C | HandleAttackOK | :bulb: Conferma attacco |
+| 0xAD | S2C | HandleEncodedUnicodeSpeech | :bulb: Discorso unicode codificato |
+| 0xBD | S2C | HandleClientVersion | :bulb: Negoziazione versione |
+| 0xC0 | S2C | HandleGraphicalEffect | :bulb: Effetti grafici |
+| 0x54 | S2C | HandlePlaySoundEffect | :bulb: Effetti sonori |
 
 ---
 
-### 3.11 CUO API (COMPLETAMENTE ASSENTE)
+## 3. Filters
 
-#### TASK-FR-029: CUO API Completamente Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/CUO.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — creato `CuoApi.cs` in `Services/Scripting/Api/`. Metodi implementati via packet/interop: `OpenContainerAt` (usa `IClientInteropService.NextContPosition` + double-click 0x06), `CloseGump` (invia S2C 0xBF/0x0004). `FollowMobile`/`FollowOff`/`Following` (tracking interno serial). Tutti gli altri metodi (LoadMarkers, GoToMarker, FreeView, CloseTMap, ProfilePropertySet, GetSetting, PlayMacro, SetGumpOpenLocation, MoveGump, OpenMobileHealthBar, CloseMobileHealthBar, etc.) sono stub che loggano un warning — richiedono accesso in-process a ClassicUO non disponibile nell'architettura out-of-process di TMRazorImproved. `CUO` registrato in ScriptGlobals e in entrambi i percorsi di istanziazione.
-- **Dettaglio**: L'intero modulo di integrazione ClassicUO non ha controparte. Metodi legacy:
-  - `CUO.LoadMarkers()`, `CUO.GoToMarker()` - gestione marker mappa
-  - `CUO.FreeView()`, `CUO.CloseTMap()` - vista mappa
-  - `CUO.ProfilePropertySet(string, string)` (3 overload) - modifica settings CUO
-  - `CUO.OpenContainerAt(serial, x, y)` - apri container a posizione
-  - `CUO.SetGumpOpenLocation(gumpId, x, y)`, `CUO.MoveGump(gumpId, x, y)` - posiziona gump
-  - `CUO.CloseMyStatusBar()`, `CUO.OpenMyStatusBar()` - barra status
-  - `CUO.OpenMobileHealthBar(serial)`, `CUO.CloseMobileHealthBar(serial)` - barra HP mobile
-  - `CUO.CloseGump(gumpId)` - chiudi gump
-  - `CUO.GetSetting(section, key)` - leggi setting CUO
-  - `CUO.PlayMacro(name)` - esegui macro CUO
-  - `CUO.FollowMobile(serial)`, `CUO.FollowOff()`, `CUO.Following()` - segui mobile
-- **Impatto Utente**: **CRITICO per utenti ClassicUO** - Script che interagiscono con il client ClassicUO (posizionamento gump, marker mappa, follow mobile, etc.) non funzioneranno.
-- **Documentazione per Junior Dev**: Creare `CuoApi.cs` in `Services/Scripting/Api/`. Poiche TMRazorImproved usa TmClient (basato su ClassicUO), molte di queste funzionalita possono essere implementate tramite il plugin `TMRazorPlugin`. Per i metodi che richiedono comunicazione con il client, usare `IPacketService.SendToClient()` con pacchetti personalizzati o estendere il protocollo IPC del plugin.
+**Legacy**: `Razor/Filters/` (13 file)
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Handlers/FilterHandler.cs`
 
----
+| Filter Legacy | Nuovo | Stato |
+|---------------|-------|-------|
+| `Death.cs` (blocca 0x2C) | Filtro 0x2C registrato | :white_check_mark: |
+| `Light.cs` (blocca 0x4E, 0x4F) | Filtri 0x4E, 0x4F registrati | :white_check_mark: |
+| `Weather.cs` (blocca 0x65) | Filtro 0x65 registrato | :white_check_mark: |
+| `Season.cs` (blocca/riscrive 0xBC) | Filtro 0xBC + SendForcedSeason | :white_check_mark: |
+| `SoundFilters.cs` (blocca 0x54 per ID) | Filtro 0x54 con lista ID | :white_check_mark: |
+| `MessageFilter.cs` (AsciiMessageFilter) | Filtro 0x1C con match testo | :white_check_mark: |
+| `MessageFilter.cs` (LocMessageFilter) | Filtro 0xC1 con lista cliloc | :white_check_mark: |
+| `VetRewardGump.cs` (blocca 0xB0/0xDD) | Filtri 0xB0, 0xDD con check contenuto | :white_check_mark: |
+| `StaffItems.cs` (blocca 0x1A per ID) | Filtro 0x1A check 0x36FF/0x1183 | :white_check_mark: |
+| `StaffNpcs.cs` (blocca 0x78/0x20/0x77 per flags) | Filtri 0x78, 0x20, 0x77 check byte flag | :white_check_mark: |
+| `MobileFilter.cs` (riscrive body ID) | Filtri grafici su 0x78/0x20 | :white_check_mark: |
+| `WallStaticFilter.cs` (riscrive wall item + **label**) | `MorphGraphic()` in WorldPacketHandler | :warning: Grafico OK ma **label mancanti** |
+| `TargetFilterManager.cs` | `TargetFilterService.cs` | :white_check_mark: |
 
-### 3.12 Filters API
+| ID | Feature Filter Mancante | Dettaglio | Impatto |
+|----|-------------------------|-----------|---------|
+| TASK-FLT-001 | Label Wall Static Field | Legacy `WallStaticFilter` invia un pacchetto `UnicodeMessage` follow-up con label come "[Wall Of Stone]", "[Fire Field]" quando `ShowStaticWallLabels` e abilitato. Il nuovo `MorphGraphic()` cambia solo grafico/hue — nessun pacchetto label inviato | Giocatori non vedranno le label sui campi magici |
 
-**Legacy**: `Razor/RazorEnhanced/Filters.cs`
-**Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/FiltersApi.cs`
-
-**Stato**: ✅ Copertura adeguata. Il nuovo aggiunge Enable/Disable/IsEnabled che migliora il legacy.
-
----
-
-### 3.13 Statics API
-
-**Legacy**: `Razor/RazorEnhanced/Statics.cs`
-**Nuovo**: `TMRazorImproved.Core/Services/Scripting/Api/StaticsApi.cs`
-
-**Stato**: ✅ Copertura buona. Il nuovo aggiunge GetHighestZ, GetTilesInRange, GetTileFlags, IsLand, IsImpassable, GetLOS, GetStaticFlagsAt, CanFit che migliorano il legacy.
+**Nuovi filtri in TMRazorImproved** (non nel legacy):
+- :bulb: Filtro Footsteps (0x54 con ID suono passi 0x12-0x1A)
+- :bulb: Filtro BardMusic (0x6D)
+- :bulb: Filtro Block Trade Request (0x6F)
+- :bulb: Filtro Block Party Invite (0xBF sub-0x06/0x07 con auto-decline)
+- :bulb: Filtro per tipo messaggio (`OverheadMessageType` + `FilteredMessageStrings` configurabili)
 
 ---
 
-## 4. Sistema Agenti
+## 4. Enhanced Services & Agents
 
 ### 4.1 AutoLoot
 
 **Legacy**: `Razor/RazorEnhanced/AutoLoot.cs`
-**Nuovo**: `TMRazorImproved.Core/Services/AutoLootService.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/AutoLootService.cs`
 
-**Metodi presenti**: Start, Stop, Status (IsRunning), ChangeList.
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-001 | `GetLootBag()` con ricerca ricorsiva sub-container + waist layer | :warning: Incompleto | Nuovo cerca solo `_worldService.FindItem(config.Container)` — non cerca sub-container o waist layer | Items nella belly pouch non trovati |
+| TASK-AGT-002 | Per-item loot bag override (`LootBagOverride`) | :x: Mancante | Ogni item nella lista puo avere il suo container destinazione. Nuovo `LootItem` non ha override per-item | Tutto il loot va in un singolo container |
+| TASK-AGT-003 | Auto-open corpses before looting | :x: Mancante | Legacy invia `Items.WaitForContents` per aprire cadaveri prima del loot | Cadaveri non aperti, loot perso |
 
-#### TASK-FR-030: AutoLoot.RunOnce() Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/AutoLoot.cs` -> `RunOnce(string listName, int msDelay, Items.Filter filter)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `AutoLootService.RunOnce(string, int)` esegue un Task.Run one-shot che drena la lootQueue corrente usando la config della lista nominata. Esposto in `AutoLootApi.RunOnce(string, int msDelay=600)`.
-- **Dettaglio**: Esecuzione singola dell'autoloot su un container specifico con filtro custom.
-- **Impatto Utente**: Script che lanciano il loot manualmente su container specifici non funzioneranno.
-- **Documentazione per Junior Dev**: In `AutoLootService.cs`, aggiungere metodo `RunOnce(string listName, int msDelay)` che esegue un singolo ciclo di scansione e si ferma. Referenziare `AutoLoot.cs` legacy metodo `RunOnce`.
-
-#### TASK-FR-031: AutoLoot.SetNoOpenCorpse() Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/AutoLoot.cs` -> `SetNoOpenCorpse(bool)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `AutoLootService.SetNoOpenCorpse(bool)` toglie/imposta `AutoLootConfig.NoOpenCorpse` della lista attiva e ritorna il valore precedente. Esposto in `AutoLootApi.SetNoOpenCorpse(bool)`.
-- **Dettaglio**: Disabilita l'apertura automatica dei cadaveri (solo loot da container gia aperti).
-- **Impatto Utente**: Script che configurano il loot silenzioso non funzioneranno.
-- **Documentazione per Junior Dev**: Aggiungere configurazione in `AutoLootConfig` e esporre via `AgentApis.cs`.
-
-#### TASK-FR-032: AutoLoot.GetList() / GetLootBag() / ResetIgnore() Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/AutoLoot.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `GetList(string)` ritorna `AutoLootConfig.ItemList` della lista nominata; `GetLootBag()` verifica il container configurato (fallback al backpack); `ResetIgnore()` svuota `_processedSerials` e `_lootQueue`. Tutti esposti in `AutoLootApi` e in `IAutoLootService`.
-- **Dettaglio**:
-  - `GetList(string name, bool filter)` - ritorna lista item con filtro opzionale
-  - `GetLootBag()` - ritorna seriale del contenitore loot
-  - `ResetIgnore()` - resetta la lista dei cadaveri gia processati
-- **Impatto Utente**: Script che interagiscono programmaticamente con le liste di loot non funzioneranno.
-- **Documentazione per Junior Dev**: In `AgentApis.cs` o `AutoLootService.cs`, esporre questi metodi. `ResetIgnore` deve fare `_processedSerials.Clear()`.
-
-#### TASK-FR-033: AutoLoot Shared Loot Container Detection Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/AutoLoot.cs` -> logica shared loot
-- **Stato nel Nuovo Codice**: ✅ Implementato — `IsCorpse(uint)` in `AutoLootService` ora controlla anche container NON-corpse che si trovano entro 3 tile da un corpse (graphic 0x2006) tramite `_worldService.Items`. Questo copre UO Dreams Instanced Loot e OSI shared containers.
-- **Dettaglio**: Il legacy rileva container di loot condiviso (UO Dreams Instanced Loot, OSI shared containers). Il nuovo non ha questa logica.
-- **Impatto Utente**: Su shard che usano container condivisi, il loot automatico potrebbe non rilevare correttamente i cadaveri.
-- **Documentazione per Junior Dev**: In `AutoLootService.cs`, aggiungere logica per rilevare container condivisi controllando il graphic del container e la distanza dal cadavere.
+**Azione Junior per TASK-AGT-003**: In `AutoLootService.cs`, prima di iterare gli items del cadavere, aggiungere una chiamata per aprire il container (inviare doppio-click al serial del cadavere tramite `_packetService`) e attendere il pacchetto 0x3C (ContainerContent).
 
 ---
 
 ### 4.2 BandageHeal
 
 **Legacy**: `Razor/RazorEnhanced/BandageHeal.cs`
-**Nuovo**: `TMRazorImproved.Core/Services/BandageHealService.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/BandageHealService.cs`
 
-#### TASK-FR-034: BandageHeal FriendOrSelf Mode Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/BandageHeal.cs` -> modalita "FriendOrSelf"
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto `"FriendOrSelf"` case in `GetTargetSerial()` di `BandageHealService`. `GetFriendOrSelfTarget()` trova il friend più debole (HP%), lo confronta con player e cura chi ha meno HP%. Anche `GetNearestFriend` refactored in `GetWeakestFriend` (ordine per HP%).
-- **Dettaglio**: Il legacy ha 4 modalita: Self, Target, Friend, FriendOrSelf. La modalita FriendOrSelf confronta gli HP del player e del friend piu debole e cura quello con meno vita. Il nuovo ha Self, Last, Friend ma non FriendOrSelf.
-- **Impatto Utente**: Utenti che usano la modalita di cura automatica friend-or-self perderanno questa funzionalita.
-- **Documentazione per Junior Dev**: In `BandageHealService.cs`, aggiungere un case "FriendOrSelf" che: 1) Cerca il friend con meno HP, 2) Confronta con HP del player, 3) Cura il piu debole.
-
-#### TASK-FR-035: BandageHeal Text-Based Healing Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/BandageHeal.cs` -> `SelfHealUseText`, `ChatSay`
-- **Stato nel Nuovo Codice**: ✅ Implementato — in `AgentLoopAsync` aggiunto branch `if (config.SendTextMsg)`: per self invia `UnicodeSpeech(TextMsgSelf)`, per target invia `UnicodeSpeech(TextMsgTarget)` + wait + TargetObject. Config `SendTextMsg`/`TextMsgSelf`/`TextMsgTarget` già presenti in `BandageHealConfig`.
-- **Dettaglio**: Il legacy supporta la cura tramite comando testuale (es. `[bandageself]`) invece che tramite double-click su bende.
-- **Impatto Utente**: Su shard custom che usano comandi testuali per le bende, la cura automatica non funzionera.
-- **Documentazione per Junior Dev**: In `BandageHealService.cs`, aggiungere supporto per config `UseTextHeal` e `TextHealCommand` che invia un messaggio chat invece di usare l'item benda.
-
-#### TASK-FR-036: BandageHeal Countdown Display Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/BandageHeal.cs` -> `ShowCount(Mobile)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `ShowCountdownAsync(target, totalMs, token)` invia overhead unicode (0xAE) al client con il numero di secondi trascorsi ogni secondo, per la durata del bandage. Attivato quando `config.ShowCountdown == true`.
-- **Dettaglio**: Il legacy mostra un countdown overhead sopra il target durante la cura. Non presente nel nuovo.
-- **Impatto Utente**: L'utente non vedra il timer visivo di cura sopra il target. Feature di usabilita perduta.
-- **Documentazione per Junior Dev**: In `BandageHealService.cs`, dopo aver avviato la cura, calcolare il delay (basato su DEX) e inviare messaggi overhead periodici tramite `IPacketService.SendToClient()` (pacchetto 0x1C) decrementando il timer.
-
-#### TASK-FR-037: BandageHeal Formula DEX Diversa ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/BandageHeal.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `CalculateBandageDelay` ora usa `(11 - (dex - dex % 10) / 20) * 1000` (formula legacy esatta, min 100ms).
-- **Dettaglio**: Legacy formula: `(11 - (Dex - Dex%10)/20) * 1000`. Nuova formula: `max(3000, 8000 - (dex/20)*1000)`. La nuova formula e piu generosa ad alta DEX.
-- **Impatto Utente**: Il timing della cura sara leggermente diverso, potrebbe causare sovrappopolamento di bende ad alta DEX.
-- **Documentazione per Junior Dev**: In `BandageHealService.cs`, sostituire la formula attuale con quella legacy: `int delay = (11 - (dex - dex % 10) / 20) * 1000;`. Referenziare `BandageHeal.cs` legacy per la formula esatta.
-
-#### TASK-FR-038: BandageHeal Mortal Strike Detection Diversa ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/BandageHeal.cs` -> check `BuffIcon.MortalStrike`
-- **Stato nel Nuovo Codice**: ✅ Implementato — in `AgentLoopAsync` aggiunto `isMortalByBuff` che controlla `player.ActiveBuffs.ContainsKey("Mortal Strike")` solo per target self. `isMortal = target.IsYellowHits || isMortalByBuff`.
-- **Dettaglio**: Legacy controlla `World.Player.Buffs.ContainsKey(BuffIcon.MortalStrike)`. Nuovo controlla `IsYellowHits` (check basato su hue). Sono metodi di rilevamento diversi.
-- **Impatto Utente**: Mortal Strike potrebbe non essere rilevato correttamente in tutti i casi con il check hue-based.
-- **Documentazione per Junior Dev**: In `BandageHealService.cs`, aggiungere un check buff-based: `player.ActiveBuffs.ContainsKey("Mortal Strike")` oltre al check YellowHits esistente.
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-004 | `SearchBandage()` cerca belly pouch (waist layer container) | :x: Mancante | Nuovo cerca solo backpack | Bende nella pouch non trovate |
+| TASK-AGT-005 | Warning "Low bandage: X left" overhead | :x: Mancante | Nessun warning bende scarse | Utente non avvisato |
+| TASK-AGT-006 | Ghost check (`World.Player.IsGhost`) bail-out | :x: Mancante | Nuovo non controlla se player e ghost | Tentativo di fasciare da ghost |
 
 ---
 
 ### 4.3 Dress
 
 **Legacy**: `Razor/RazorEnhanced/Dress.cs`
-**Nuovo**: `TMRazorImproved.Core/Services/DressService.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/DressService.cs`
 
-#### TASK-FR-039: Dress.ReadPlayerDress() Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Dress.cs` -> `ReadPlayerDress()`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `DressService.ReadPlayerDress()` itera `_worldService.Items` dove `Container == player.Serial && Layer > 0 && Layer <= 0x1A`, resetta `LayerItems` della lista attiva e la ripopola. Esposto in `IDressService` e `DressApi`.
-- **Dettaglio**: Scansiona l'equipaggiamento corrente del player e lo salva come dress list.
-- **Impatto Utente**: L'utente non puo "catturare" il suo outfit corrente come template di dress.
-- **Documentazione per Junior Dev**: In `DressService.cs`, aggiungere metodo che itera `_worldService.GetPlayerEquipment()` e salva i serial/layer come nuova dress list nella config.
-
-#### TASK-FR-040: Dress UO3D EquipItemMacro Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Dress.cs` -> `DressUseUO3D`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `DressService.Dress()`/`Undress()` verificano `DressList.Use3D`; se true inviano `PacketBuilder.EquipItemMacro` (0xEC) / `PacketBuilder.UnEquipItemMacro` (0xED) in batch. Aggiunti i due metodi builder in `PacketBuilder.cs`.
-- **Dettaglio**: Il legacy supporta il pacchetto UO3D EquipItemMacro/UnEquipItemMacro per dress/undress piu veloce. Il nuovo usa solo LiftItem + WearItem tradizionale.
-- **Impatto Utente**: Dress piu lento su client che supportano UO3D.
-- **Documentazione per Junior Dev**: In `DressService.cs`, aggiungere opzione per inviare il pacchetto 0xEC (EquipItemMacro) quando disponibile. Referenziare `Dress.cs` legacy sezione `DressUseUO3D`.
-
-#### TASK-FR-041: Dress/Undress Status Separati Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Dress.cs` -> `DressStatus()`, `UnDressStatus()`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto campo `_isDressingNow` (volatile bool); `DressStatus()` = `IsRunning && _isDressingNow`; `UnDressStatus()` = `IsRunning && !_isDressingNow`. Esposti in `IDressService` e `DressApi`.
-- **Dettaglio**: Legacy ha status separati per dress e undress (thread separati). Nuovo ha un singolo `IsRunning`.
-- **Impatto Utente**: Script che controllano `Dress.DressStatus()` e `Dress.UnDressStatus()` separatamente avranno solo un valore.
-- **Documentazione per Junior Dev**: Valutare se aggiungere `IsDressing` e `IsUndressing` separati, o se il singolo `IsRunning` e sufficiente con un campo aggiuntivo che indica l'operazione corrente.
+**Stato**: :white_check_mark: Parita funzionale buona. Nuovo aggiunge tracking stato dress/undress separato (FR-041).
 
 ---
 
 ### 4.4 Organizer
 
-#### TASK-FR-042: Organizer.RunOnce() Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Organizer.cs` -> `RunOnce(string, int, int, int)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `OrganizerService.RunOnce(string, uint, uint, int)` esegue un Task.Run one-shot che legge `GetItemsInContainer(src)`, applica filtri ItemList con color matching, sposta in `dst`. Esposto in `IOrganizerService` e `OrganizerApi`.
+**Legacy**: `Razor/RazorEnhanced/Organizer.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/OrganizerService.cs`
+
+**Stato**: :white_check_mark: Parita funzionale buona. Nuovo aggiunge `RunOnce()` e evento `OnComplete`.
 
 ---
 
 ### 4.5 Restock
 
-#### TASK-FR-043: Restock.RunOnce() Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Restock.cs` -> `RunOnce(string, int, int, int)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `RestockService.RunOnce(string, uint, uint, int)` esegue un Task.Run one-shot che calcola il delta backpack, poi muove gli item necessari. Esposto in `IRestockService` e `RestockApi`.
+**Legacy**: `Razor/RazorEnhanced/Restock.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/RestockService.cs`
 
-#### TASK-FR-044: Restock Color Matching Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Restock.cs` -> filtraggio per colore
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto `(restockItem.Color == -1 || i.Hue == restockItem.Color)` sia nella query sorgente che nel conteggio backpack in `AgentLoopAsync` e `RunOnce`. `LootItem.Color` già presente nel model.
+**Stato**: :white_check_mark: Parita funzionale buona. Nuovo aggiunge FR-043 `RunOnce()` e FR-044 color filter.
 
 ---
 
 ### 4.6 Scavenger
 
-#### TASK-FR-045: Scavenger.RunOnce() / GetScavengerBag() / ResetIgnore() Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Scavenger.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `RunOnce()` drena la queue in un Task.Run; `GetScavengerBag()` verifica il container configurato (fallback backpack); `ResetIgnore()` svuota `_processedSerials` + queue. Esposti in `IScavengerService` e `ScavengerApi`.
+**Legacy**: `Razor/RazorEnhanced/Scavenger.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/ScavengerService.cs`
 
-#### TASK-FR-046: Scavenger Locked-Down Items Detection Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Scavenger.cs` -> check `GetPropValue("Locked Down")`
-- **Stato nel Nuovo Codice**: ✅ Implementato — in `AgentLoopAsync` e `RunOnce`, prima di spostare un item, si controlla `item.Properties.Any(p => p.Contains("Locked Down"))` e si fa skip se trovato.
-
----
-
-### 4.7 Vendor (Buy/Sell)
-
-**Legacy**: `Razor/RazorEnhanced/Vendor.cs` (3 classi: Vendor, SellAgent, BuyAgent)
-**Nuovo**: `TMRazorImproved.Core/Services/VendorService.cs`
-
-#### TASK-FR-047: Vendor.Buy() Script API Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Vendor.cs` -> `Buy(int vendorSerial, string itemName, int amount, int maxPrice)`, `Buy(int vendorSerial, int itemID, int amount, int maxPrice)`, `BuyList(int vendorSerial)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti `Buy(uint, int, int, int)`, `Buy(uint, string, int, int)`, `BuyList(uint)` in `VendorService`. Usano `_worldService.LastOpenedContainer` + `_lastBuyItems` cache (popolata da 0x74). Esposti in `IVendorService` e `VendorApi`.
-
-#### TASK-FR-048: Vendor CompareName / CompleteAmount Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Vendor.cs` -> BuyAgent con `CompareName`, `CompleteAmount`
-- **Stato nel Nuovo Codice**: ✅ Implementato — in `Receive(VendorBuyMessage)`: se `config.CompareName`, confronta `buyReq.Name` con `match.Name` (Contains); se `config.CompleteAmount`, sottrae il count già in backpack prima di inviare la quantità. `CompleteAmount` aggiunto a `VendorConfig`.
-
-#### TASK-FR-049: Vendor Max Price Filter Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Vendor.cs` -> SellAgent con max price
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto `MaxBuyPrice` (int, 0=no limit) a `VendorConfig`. In `Receive(VendorBuyMessage)` e `Buy()` script methods, la price viene verificata contro `_lastBuyItems` e l'item viene skippato se `price > MaxBuyPrice`.
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-007 | Check `MaxWeight` con messaggio utente quando sovrappeso | :x: Mancante | Nuovo non controlla peso (DragDropCoordinator ritorna false silenziosamente) | Scavenger tenta di raccogliere items quando sovrappeso senza avvisare |
+| TASK-AGT-008 | `IsLootableTarget` check per saltare cadaveri | :x: Mancante | Nuovo non ha questo check | Potrebbe tentare di raccogliere cadaveri |
 
 ---
 
-### 4.8 DPSMeter
+### 4.7 Vendor
 
-#### TASK-FR-050: DPSMeter.Pause() Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/DPSMeter.cs` -> `Pause()`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `Pause()` aggiunto a `IDPSMeterService`, `DPSMeterService` e `DPSMeterApi`. Ferma il timer e accumula il tempo in `_totalTime`; `IsPaused` property esposta. `Start()` riprende la sessione se `IsPaused==true`. `CombatTime` aggiornato per non incrementare durante la pausa. Build Core: 0 errori.
-- **Dettaglio**: Pausa il conteggio DPS senza resettare i dati.
-- **Impatto Utente**: Non si puo mettere in pausa il DPS meter durante pause di combattimento.
-- **Documentazione per Junior Dev**: In `DPSMeterService.cs`, aggiungere `Pause()` che ferma il timer ma preserva `_totalDamage` e `_combatStartTime`.
+**Legacy**: `Razor/RazorEnhanced/Vendor.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/VendorService.cs`
 
-#### TASK-FR-051: DPSMeter.GetDamage(serial) Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/DPSMeter.cs` -> `GetDamage(int serial)`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `GetDamage(uint serial)` aggiunto a `IDPSMeterService`, `DPSMeterService` (cerca in `_targetDamage`) e `DPSMeterApi` (con overload `int` per FR-012). Build Core: 0 errori.
-- **Dettaglio**: Ritorna il danno totale inflitto a/da un mobile specifico.
-- **Impatto Utente**: Script che monitorano il danno per target specifico non funzioneranno.
-- **Documentazione per Junior Dev**: In `DPSMeterService.cs`, il `TargetDamage` dictionary esiste. Esporre `GetDamage(uint serial)` che cerca nel dictionary.
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-009 | `LastResellList` (tracking separato per layer rivendita vendor) | :x: Mancante | Nuovo traccia solo buy list e sell list | Script che accedono a `Vendor.LastResellList` non avranno equivalente |
 
 ---
 
-### 4.9 LoginAutostart per Tutti gli Agenti
+### 4.8 Friend
 
-#### TASK-FR-052: LoginAutostart Mancante per Tutti gli Agenti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: Vari agenti -> `LoginAutostart()`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `AutoLootService`, `ScavengerService` e `BandageHealService` implementano ora `IRecipient<LoginCompleteMessage>`. Nel metodo `Receive(LoginCompleteMessage)`, ciascun servizio controlla se la config attiva ha `AutoStart == true` e in tal caso imposta `Enabled = true`. `BandageHealService` ha ricevuto anche `IMessenger` come dipendenza nel costruttore. Aggiornati i test in `BandageHealServiceTests.cs` per passare il mock del messenger. Fix pre-esistente in `ScriptingIntegrationTests.cs`: aggiunto mock mancante di `ISecureTradeService`. Build Core: 0 errori C#.
-- **Dettaglio**: Nel legacy, AutoLoot, Scavenger e BandageHeal possono essere configurati per avviarsi automaticamente al login. Nessun agente nel nuovo codice ha questa funzionalita.
-- **Impatto Utente**: L'utente deve avviare manualmente ogni agente dopo il login.
-- **Documentazione per Junior Dev**: In `App.xaml.cs` o in un servizio dedicato, registrarsi al messaggio `LoginConfirmMessage` e avviare automaticamente gli agenti configurati per autostart nella config del profilo corrente.
+**Legacy**: `Razor/RazorEnhanced/Friend.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/FriendsService.cs`
 
----
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-010 | `AutoacceptParty` (auto-accetta inviti party da amici) | :x: Mancante logica | `FriendsConfig` ha il campo ma nessun handler implementa l'auto-accept | Feature auto-accept party non funzionante |
+| TASK-AGT-011 | `PreventAttack` (previene attacco ad amici) | :x: Mancante logica | Nessun filtro pacchetto per bloccare attacchi ai target amici | Feature prevenzione attacco amici non funzionante |
 
-## 5. Sistema Macro
+**Azione Junior per TASK-AGT-010**: In `FriendsHandler.cs` o in un nuovo filtro nel `PacketService`, registrare un filtro sul pacchetto 0xBF sub-command party-invite. Se il serial del mittente e nella lista amici e `AutoacceptParty` e abilitato, inviare automaticamente il pacchetto di accettazione party.
 
-### 5.1 Architettura
-
-| Aspetto | Legacy | Nuovo |
-|---------|--------|-------|
-| Pattern | Classe-per-azione OOP (43 classi) | Engine a comandi testo (switch statement) |
-| Serializzazione | Pipe-delimited `ActionType\|param1\|param2\|...` | Plain text (un comando per riga) |
-| Flow control | Scansione lineare con `FindMatchingEndIf()` | Jump table precomputata `BuildJumpTables()` |
-| Loop | `Macro.Loop` property | Non supportato (workaround: `WHILE TRUE`/`ENDWHILE`) |
-
-### 5.2 Azioni Macro Mancanti
-
-#### TASK-FR-053: MacroAction DisconnectAction Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Macros/Actions/DisconnectAction.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `case "DISCONNECT":` aggiunto in `MacrosService.ExecuteActionAsync()`. Invia pacchetto `0x01 0xFF` al server.
-- **Dettaglio**: Nessun comando `DISCONNECT` esiste nelle macro.
-- **Impatto Utente**: Macro che disconnettono dal gioco (es. safety macro) non funzioneranno.
-- **Documentazione per Junior Dev**: In `MacrosService.cs`, aggiungere `case "DISCONNECT":` che chiama `_packetService.Disconnect()` o equivalente.
-
-#### TASK-FR-054: MacroAction MovementAction Mancante (CRITICO) ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Macros/Actions/MovementAction.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `case "WALK":`, `case "RUN":` e `case "PATHFIND":` aggiunti in `MacrosService`. `WALK`/`RUN` inviano pacchetto `0x02` con byte direzione (RUN aggiunge flag `0x80`). Helper `TryParseDirection()` mappa N/NE/E/SE/S/SW/W/NW + abbreviazioni. `PATHFIND` accetta `<x> <y> <z>` oppure serial/alias (risolve coordinate da `_worldService`), poi invia pacchetto `0x38` (PathfindMove) al client per attivare il pathfinding interno di ClassicUO.
-- **Dettaglio**: Nessun comando `WALK`, `RUN` o `PATHFIND` esiste nelle macro. Il legacy supporta 8 direzioni + pathfinding a coordinate/serial/alias.
-- **Impatto Utente**: **CRITICO** - Macro di movimento (farming routes, mining, lumber) non funzioneranno affatto.
-- **Documentazione per Junior Dev**: In `MacrosService.cs`, aggiungere:
-  1. `case "WALK":` con direzione (North/South/East/West/NE/NW/SE/SW) -> invia pacchetto 0x02
-  2. `case "RUN":` con direzione e flag running
-  3. `case "PATHFIND":` -> delega a `IPathFindingService.PathFindTo(x, y, z)`
-  Referenziare `MovementAction.cs` legacy per i dettagli dei pacchetti.
-
-#### TASK-FR-055: MacroAction QueryStringResponseAction Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Macros/Actions/QueryStringResponseAction.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — `case "QUERYSTRINGRESPONSE":` aggiunto. Formato: `QUERYSTRINGRESPONSE [true|false] <testo> [timeout_ms]`. Usa `StringQueryStore.WaitForQuery()` + `PacketBuilder.StringQueryResponse()` come già fa `MiscApi`.
-- **Dettaglio**: Nessun comando `QUERYSTRINGRESPONSE` per rispondere ai prompt del server.
-- **Impatto Utente**: Macro che rispondono a prompt testuali del server non funzioneranno.
-- **Documentazione per Junior Dev**: Aggiungere `case "QUERYSTRINGRESPONSE":` in `MacrosService.cs`. Referenziare `QueryStringResponseAction.cs` legacy.
-
-#### TASK-FR-056: MacroAction Whisper/Yell Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Macros/Actions/MessagingAction.cs` -> Whisper, Yell
-- **Stato nel Nuovo Codice**: ✅ Implementato — `case "WHISPER":` (speech type 0x02) e `case "YELL":` (speech type 0x01) aggiunti in `MacrosService`. Entrambi usano `PacketBuilder.UnicodeSpeech()` con il tipo appropriato.
-- **Dettaglio**: Solo `SAY` e `EMOTE` esistono. `WHISPER` e `YELL` mancano.
-- **Impatto Utente**: Macro che sussurrano o gridano non funzioneranno.
-- **Documentazione per Junior Dev**: In `MacrosService.cs`, aggiungere `case "WHISPER":` (MessageType 0x02) e `case "YELL":` (MessageType 0x01).
-
-### 5.3 Azioni Macro Parzialmente Implementate
-
-#### TASK-FR-057: TargetAction Modalita Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Macros/Actions/TargetAction.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti `TARGETSELF` (player.Serial), `TARGETLAST` (_targetingService.LastTarget), `TARGETCLOSEST` (mobile più vicino != player), `TARGETRANDOM` (mobile casuale), `TARGETLOCATION <x> <y> <z>` (pacchetto 0x6C tipo location).
-- **Dettaglio**: Legacy supporta 6 modalita: Self, Serial, Location, Last, Closest, Random. Nuovo ha solo `TARGET <serial>`. Mancano: `TARGETSELF`, `TARGETLAST`, `TARGETCLOSEST`, `TARGETRANDOM`, `TARGETLOCATION <x> <y> <z>`.
-- **Impatto Utente**: La maggior parte delle macro di targeting non funzionera.
-- **Documentazione per Junior Dev**: In `MacrosService.cs`, aggiungere comandi separati per ogni modalita target. `TARGETSELF` usa `_worldService.Player.Serial`. `TARGETLAST` usa `_targetingService.LastTarget`. `TARGETCLOSEST` + `TARGETRANDOM` richiedono `_worldService.GetMobilesInRange()` con selettore.
-
-#### TASK-FR-058: GumpResponseAction Avanzata Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Macros/Actions/GumpResponseAction.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto comando `RESPONDGUMPEX <serial> <typeId> <buttonId> [SW:id1,id2,...] [TX:idx:text,...]` che usa l'overload `PacketBuilder.RespondGump(serial, typeId, buttonId, switches, textEntries)` già esistente. Il comando `RESPONDGUMP` esistente rimane per la forma semplice (retro-compatibilità).
-- **Dettaglio**: Legacy supporta risposte gump con switches e text entries. Nuovo `RESPONDGUMP` invia solo button ID.
-- **Impatto Utente**: Macro che rispondono a gump complessi (con checkbox e campi testo) non funzioneranno correttamente.
-- **Documentazione per Junior Dev**: Estendere `RESPONDGUMP` per accettare parametri aggiuntivi: `RESPONDGUMP <serial> <typeId> <buttonId> [switches=1,2,3] [texts="text1","text2"]`.
-
-### 5.4 Registrazione Macro Mancanti
-
-#### TASK-FR-059: Recording Pacchetti Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Macros/MacroManager.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti viewer di registrazione in `MacrosService.StartRecording()` per: `0x02` (Walk/Run → `WALK <dir>` / `RUN <dir>` con helper `DirectionName()`), `0x07` (PickUp → `PICKUP <serial>`), `0x08` (Drop → `DROP <serial> <x> <y> <z>`), `0x13` (Equip → `EQUIPITEM <serial> <layer>`), `0xD7` (SA Ability → `SETABILITY primary/secondary/clear`). Tutti registrati e de-registrati correttamente.
-- **Dettaglio**: Il nuovo recorder non registra: Movement (0x02), PickUp (0x07), Drop (0x08), Equip (0x13), Ability (0xD7).
-- **Impatto Utente**: Registrando una macro, movimenti, pickup, drop, equip e abilita non vengono catturati.
-- **Documentazione per Junior Dev**: In `MacrosService.cs`, aggiungere viewer per i pacchetti mancanti nella funzione di registrazione. Per ogni pacchetto, generare il comando testuale corrispondente (es. 0x02 -> `WALK North`, 0x07 -> `PICKUP <serial>`, 0x08 -> `DROP <serial> <x> <y> <z>`, etc.).
+**Azione Junior per TASK-AGT-011**: Registrare un filtro C2S sul pacchetto 0x05 (AttackRequest). Se il serial target e nella lista amici e `PreventAttack` e abilitato, bloccare il pacchetto.
 
 ---
 
-## 6. Filtri e Rete
+### 4.9 DPSMeter
 
-### 6.1 Filtri Pacchetti
+**Legacy**: `Razor/RazorEnhanced/DPSMeter.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/DPSMeterService.cs`
 
-**Legacy**: 13 classi separate in `Razor/Filters/`
-**Nuovo**: 1 handler unificato `FilterHandler.cs` + `TargetFilterService.cs`
-
-| Filtro Legacy | Stato Nuovo | Note |
-|---------------|-------------|------|
-| DeathFilter (0x2C) | ✅ Portato | |
-| LightFilter (0x4E, 0x4F) | ✅ Portato (migliorato) | Invia 0x00 brightness attivamente |
-| WeatherFilter (0x65) | ✅ Portato | |
-| SeasonFilter (0xBC) | ⚠️ Parziale | Non invia stagione forzata al client |
-| SoundFilter (0x54) | ⚠️ Parziale | Solo tutto/niente, perde categorie |
-| VetRewardGumpFilter (0xB0, 0xDD) | ✅ Portato | |
-| StaffItemFilter (0x1A) | ✅ Portato | |
-| StaffNpcsFilter (0x78, 0x20, 0x77) | ✅ Portato | |
-| AsciiMessageFilter (0x1C) | ⚠️ Cambiato | Filtra per keyword, non per stringhe configurabili |
-| LocMessageFilter (0xC1) | ❌ Non portato | |
-| MobileFilter (graphics) | ✅ Portato (migliorato) | Supporta custom GraphFilters |
-| WallStaticFilter | ✅ Portato | In WorldPacketHandler |
-| TargetFilterManager | ✅ Portato | Come TargetFilterService |
-
-#### TASK-FR-060: LocMessageFilter (0xC1) Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/Filters/MessageFilter.cs` -> `LocMessageFilter`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto filtro 0xC1 in `FilterHandler.RegisterFilters()`. Aggiunto `FilterLocMessages` (bool) e `FilteredClilocNumbers` (List<int>) a `UserProfile`. Il filtro legge il cliloc number a offset 14 (int32 big-endian), rimappa il range 1060718-1060727 a MessageType.Spell (spell paladino, come nel legacy), e blocca se il cliloc è nella lista configurata.
-- **Dettaglio**: Il filtraggio di messaggi localizzati per numero cliloc non e implementato. Include: messaggi spell paladino (1060718-1060727), e qualsiasi altro messaggio filtrabile per cliloc ID.
-- **Impatto Utente**: I messaggi di spam del paladino e altri messaggi localizzati filtrabili appariranno nel journal.
-- **Documentazione per Junior Dev**: In `FilterHandler.cs`, aggiungere un handler per il pacchetto 0xC1 che controlla il cliloc number contro una lista configurabile e blocca se presente. Referenziare `MessageFilter.cs` legacy per i numeri cliloc specifici.
-
-#### TASK-FR-061: SoundFilter Per-Categoria Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/Filters/SoundFilters.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto `FilteredSoundIds` (List<int>) a `UserProfile`. Il filtro 0x54 in `FilterHandler` è stato esteso: `FilterSound=true` continua a bloccare tutti i suoni; se `FilteredSoundIds` è popolato blocca solo gli sound ID specificati. Il filtro footsteps esistente rimane invariato (opera in parallelo).
-- **Dettaglio**: Il legacy carica filtri sonori per categoria da `ConfigFiles.FilterSounds` (es. draghi, uccelli, etc.) con toggle individuali. Il nuovo ha solo un boolean `FilterSound` che blocca TUTTI i suoni.
-- **Impatto Utente**: L'utente non puo filtrare selettivamente i suoni (es. solo rumori ambientali mantenendo suoni di combattimento).
-- **Documentazione per Junior Dev**: In `FilterHandler.cs`, sostituire il check `FilterSound` singolo con un check contro una lista di sound ID configurabili in `UserProfile.FilteredSoundIds`.
-
-#### TASK-FR-062: SeasonFilter ForceSend Mancante ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/Filters/Season.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto `ForcedSeason` (byte, default 0=Spring) a `UserProfile`. Il filtro 0xBC in `FilterHandler` ora chiama `SendForcedSeason()` che invia `[0xBC, season, 0x01]` al client prima di bloccare il pacchetto. Aggiunto `RefreshSeason()` richiamato da `ConfigChangedMessage` su cambio di `FilterSeason`/`ForcedSeason`.
-- **Dettaglio**: Legacy invia `ForceSendToClient(new SeasonChange(forcedSeason))` per applicare la stagione scelta. Nuovo blocca solo il pacchetto senza inviare la stagione forzata.
-- **Impatto Utente**: Abilitando il filtro stagione, la stagione del client non cambia effettivamente.
-- **Documentazione per Junior Dev**: In `FilterHandler.cs`, quando `FilterSeason` e attivo, oltre a bloccare il pacchetto in arrivo, inviare un pacchetto 0xBC con la stagione forzata dalla config usando `_packetService.SendToClient()`.
+**Stato**: :white_check_mark: Nuovo e piu ricco. Aggiunge rolling-window DPS, MaxDPS, CombatTime, pause/resume, breakdown per-target.
 
 ---
 
-### 6.2 Handler Pacchetti C2S Mancanti
+### 4.10 DragDrop
 
-#### TASK-FR-063: 13 Handler C2S Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/Network/Handlers.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunti 11 viewer C2S in `WorldPacketHandler.RegisterHandlers()` con i relativi metodi: `HandleResyncRequest`(0x22), `HandleSetSkillLockC2S`(0x3A), `HandlePlayCharacter`(0x5D), `HandleMenuResponseC2S`(0x7D→chiama `MenuStore.Clear()`), `HandleServerListLogin`(0x80), `HandleGameLogin`(0x91), `HandleHueResponseC2S`(0x95), `HandleAsciiPromptResponseC2S`(0x9A→chiama `_targetingService.SetPrompt(false)`), `HandlePlayServer`(0xA0), `HandleResponseStringQueryC2S`(0xAC→chiama `StringQueryStore.Clear()`), `HandleUnicodePromptResponseC2S`(0xC2→chiama `_targetingService.SetPrompt(false)`). I handler 0x00/0xF8 (CreateCharacter) non registrati — non presenti come pacchetti C2S intercettabili in questo contesto (creazione personaggio avviene prima del game login).
+**Legacy**: `Razor/RazorEnhanced/DragDropManager.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/DragDropCoordinator.cs`
 
-| Pacchetto | Handler Legacy | Impatto |
-|-----------|---------------|---------|
-| 0x00/0xF8 | `CreateCharacter` | Creazione personaggio non tracciata |
-| 0x22 | `ResyncRequest` | Resync non tracciato |
-| 0x3A | `SetSkillLock` | Cambi skill lock non catturati |
-| 0x5D | `PlayCharacter` | Selezione personaggio non tracciata |
-| 0x7D | `MenuResponse` | Risposte menu non tracciate |
-| 0x80 | `ServerListLogin` | Login non filtrato (auto-login) |
-| 0x91 | `GameLogin` | Game login non filtrato |
-| 0x95 | `HueResponse` (C2S) | Hue picker non tracciato |
-| 0x9A | `ClientAsciiPromptResponse` | Prompt response non tracciato |
-| 0xA0 | `PlayServer` | Selezione server non tracciata |
-| 0xAC | `ResponseStringQuery` | Query response non tracciato |
-| 0xC2 | `UnicodePromptSend` | Unicode prompt non tracciato |
-| 0xC2 | `UnicodePromptRecevied` (S2C) | Unicode prompt ricevuto non gestito |
-
-- **Impatto Utente**: La maggior parte sono per tracking interno (basso impatto diretto). **0x7D MenuResponse** e **0x9A PromptResponse** sono i piu impattanti perche il ScriptRecorder e il sistema di Prompt non li tracciano.
-- **Documentazione per Junior Dev**: In `WorldPacketHandler.cs`, aggiungere handler per ciascun pacchetto. I piu urgenti sono 0x7D (registrare in `MenuStore`) e 0x9A/0xAC (notificare `MiscApi` per Prompt/StringQuery). Per la struttura dei pacchetti, referenziare `Handlers.cs` legacy.
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-012 | `CorpseToCutSerial` queue (auto-cut cadaveri per risorse) | :x: Mancante | Nessuna integrazione corpse-cutting nel drag-drop flow. `BoneCutterService` e `AutoCarverService` esistono separatamente ma non collegati | Auto-cut cadaveri non funzionante nel flusso drag-drop |
+| TASK-AGT-013 | `AutoLootSerialCorpseRefresh` (auto-open cadaveri prima loot) | :x: Mancante | `AutoLootService` non invia `WaitForContents` per aprire cadaveri | Cadaveri non refreshati, loot perso |
 
 ---
 
-### 6.3 Handler Downgrade da Filter a Viewer
+### 4.11 HotKey
 
-#### TASK-FR-064: Handler Degradati (Filter -> Viewer) ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/Network/Handlers.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — 0x77/0xAE/0xC1 già gestiti come filter in FilterHandler. Aggiunto filter 0xCC (LocalizedMessageAffix) in FilterHandler con check FilteredMessageTypes+FilteredClilocNumbers. In WorldPacketHandler: 0x02 C2S cambiato da viewer a filter con NoRunStealth logic (IsHidden + strip bit 0x80); 0x05 C2S cambiato a filter (pass-through); 0x25/0x2E/0x3C S2C cambiati a filter (lambda pass-through); 0xC8 S2C cambiato a filter (pass-through). Build Core: 0 errori.
-- **Dettaglio**: Diversi handler legacy registrati come **filter** (possono bloccare/modificare pacchetti) sono stati portati come **viewer** (solo lettura). Questo impedisce di bloccare certi pacchetti.
+**Legacy**: `Razor/RazorEnhanced/HotKey.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/HotkeyService.cs`
 
-| Pacchetto | Funzionalita Persa |
-|-----------|-------------------|
-| 0x02 MovementRequest | Non puo piu bloccare movimenti (queued movement) |
-| 0x05 AttackRequest | Non puo piu bloccare attacchi |
-| 0x25 ContainerContentUpdate | Non puo piu manipolare contenuto container |
-| 0x2E EquipmentUpdate | Non puo piu bloccare cambi equipaggiamento |
-| 0x3C ContainerContent | Non puo piu manipolare contenuto container |
-| 0x77 MobileMoving | Non puo piu filtrare movimenti mobile |
-| 0xAE UnicodeSpeech | Non puo piu filtrare speech |
-| 0xC1 LocalizedMessage | Non puo piu filtrare messaggi localizzati |
-| 0xC8 SetUpdateRange | Non puo piu modificare update range |
-| 0xCC LocalizedMessageAffix | Non puo piu filtrare messaggi con affisso |
+**Stato**: :white_check_mark: Nuovo e significativamente piu ricco con hook keyboard/mouse a basso livello globale (FR-090).
 
-- **Impatto Utente**: Le funzionalita di filtraggio speech, manipolazione container e queued movement sono perse. **Speech filtering** e il piu impattante (non si possono piu bloccare messaggi spam di altri giocatori).
-- **Documentazione per Junior Dev**: In `WorldPacketHandler.cs`, per gli handler che devono poter bloccare pacchetti, registrarli con `RegisterFilter()` invece di `RegisterViewer()`. Il filtro deve ritornare `false` per bloccare il pacchetto. Iniziare con 0xAE (UnicodeSpeech) e 0xC1 (LocalizedMessage) che sono i piu richiesti.
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-014 | `MasterKey` (tasto on/off separato per tutti gli hotkey) | :x: Mancante | Nuovo ha `Hotkey:Toggle` ma nessun "master key" distinto | Trascurabile |
 
 ---
 
-### 6.4 Client Layer
+### 4.12 Journal
 
-#### TASK-FR-065: UOAssist Compatibility Layer Mancante
-- **File/Classe Legacy**: `Razor/Client/UOAssist.cs`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Il layer di compatibilita UOAssist non e stato portato.
-- **Impatto Utente**: **Basso** - UOAssist e un tool legacy. Se necessario su shard specifici, andra implementato.
-- **Documentazione per Junior Dev**: Se richiesto, creare `UoAssistAdapter.cs` in `Services/Adapters/` implementando il protocollo WM_COPYDATA di UOAssist.
+**Legacy**: `Razor/RazorEnhanced/Journal.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/JournalService.cs`
 
-#### TASK-FR-066: FeatureBit System Mancante
-- **File/Classe Legacy**: `Razor/Client/Client.cs` -> `FeatureBit` flags
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Il legacy usa FeatureBits per abilitare/disabilitare feature per server (es. alcuni shard disabilitano il packet filtering). Il nuovo usa boolean config senza gate server-enforced.
-- **Impatto Utente**: **Basso** - La maggior parte dei shard non usa FeatureBits.
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-015 | Per-script journal instances (`new Journal(size)`) | :no_entry: Discrepanza | Nuovo ha un singolo `JournalService` globale con una coda. Legacy: ogni script ha il suo snapshot delle entries dal momento dell'attivazione | Script che creano multiple istanze Journal per tracciare finestre temporali diverse non funzioneranno correttamente |
+
+**Azione Junior per TASK-AGT-015**: Nella `JournalApi` (scripting), aggiungere un sistema di "snapshot" per script: quando uno script chiama `Journal.Clear()`, salvare un timestamp. Le ricerche successive filtrano solo entries dopo quel timestamp. Questo emula il comportamento legacy senza modificare il service globale.
 
 ---
 
-## 7. Modelli Core e Configurazione
+### 4.13 Target
 
-### 7.1 Modello UOEntity
+**Legacy**: `Razor/RazorEnhanced/Target.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/TargetingService.cs`
 
-#### TASK-FR-067: UOEntity.Deleted Flag Mancante
-- **File/Classe Legacy**: `Razor/Core/UOEntity.cs` -> `bool Deleted`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Il flag di soft-delete non esiste nel nuovo modello. Le entita vengono rimosse direttamente dalla world.
-- **Impatto Utente**: **Basso** - Il soft-delete e un pattern di gestione stato interno.
-
-### 7.2 Modello Mobile
-
-#### TASK-FR-068: Mobile.Visible Mancante
-- **File/Classe Legacy**: `Razor/Core/Mobile.cs` -> `bool Visible`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: La proprieta `Visible` non e sul modello Mobile nel nuovo codice.
-- **Impatto Utente**: Script che controllano `mobile.Visible` falliranno con AttributeError.
-- **Documentazione per Junior Dev**: Aggiungere `bool Visible` al modello `Mobile` in `UOEntity.cs`. Popolarlo da flag byte bit 0x80 in `WorldPacketHandler.HandleMobileIncoming()`.
-
-#### TASK-FR-069: Mobile Items (Equipment List) Mancante
-- **File/Classe Legacy**: `Razor/Core/Mobile.cs` -> `List<Item> m_Items`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: La lista degli item equipaggiati/portati non e nel modello Mobile.
-- **Impatto Utente**: Script che iterano `mobile.Items` o cercano item equipaggiati su un mobile falliranno.
-- **Documentazione per Junior Dev**: Aggiungere `List<uint> EquippedItemSerials` al modello Mobile, o usare un metodo in `WorldService.GetMobileEquipment(serial)`.
-
-#### TASK-FR-070: Mobile Race/Expansion/CanRename/Mounted/MaximumManaIncrease Mancanti
-- **File/Classe Legacy**: `Razor/Core/Player.cs` (PlayerData)
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Le seguenti proprieta player non sono nel modello:
-  - `Race` (Human/Elf/Gargoyle)
-  - `Expansion` (livello espansione)
-  - `CanRename` (puo rinominare il mobile)
-  - `Mounted` (sta cavalcando)
-  - `MaximumManaIncrease`
-- **Impatto Utente**: Script che usano queste proprieta falliranno. `Mounted` e `Race` sono i piu usati.
-- **Documentazione per Junior Dev**: Aggiungere queste proprieta al modello `Mobile` in `UOEntity.cs`. Per `Mounted`, controllare se esiste un item nel Layer.Mount. Per `Race`, leggere dal pacchetto 0x11 (MobileStatus).
-
-### 7.3 Modello Item
-
-#### TASK-FR-071: Item Child Items List Mancante
-- **File/Classe Legacy**: `Razor/Core/Item.cs` -> `List<Item> m_Items`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: La lista di sotto-item (contenuto di un container) non e nel modello Item.
-- **Impatto Utente**: Script che iterano `container.Contains` o `item.Items` falliranno.
-- **Documentazione per Junior Dev**: Aggiungere `List<uint> ContainedItemSerials` al modello `Item`, oppure esporre via `WorldService.GetItemsInContainer(serial)`.
-
-#### TASK-FR-072: Item Layer Enum Persa
-- **File/Classe Legacy**: `Razor/Core/Item.cs` -> `Layer` enum con nomi descrittivi
-- **Stato nel Nuovo Codice**: ⚠️ Semplificato
-- **Dettaglio**: Il legacy ha un enum `Layer` con nomi (InnerTorso, OuterTorso, Bracelet, etc.). Il nuovo usa `byte Layer` senza nomi.
-- **Impatto Utente**: Script che usano `Layer.InnerTorso` etc. non funzioneranno.
-- **Documentazione per Junior Dev**: Verificare se l'enum `Layer` esiste in `TMRazorImproved.Shared/Enums/Layer.cs`. Se si, usarlo nel modello Item. Altrimenti, crearlo con tutti i valori dal legacy.
-
-### 7.4 Configurazione
-
-#### TASK-FR-073: Toolbar Items Config Mancante
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Settings.cs` -> tabella TOOLBAR_ITEMS
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: La configurazione degli item nella toolbar (spell/ability/command shortcuts) non ha un modello config nel nuovo codice.
-- **Impatto Utente**: La toolbar floating non sara configurabile con spell/item custom.
-- **Documentazione per Junior Dev**: Aggiungere `List<ToolbarItem>` a `UserProfile` in `ConfigModels.cs` dove `ToolbarItem` ha: Type (Spell/Item/Command), Id, Name, Hotkey.
-
-#### TASK-FR-074: Password Memory Mancante
-- **File/Classe Legacy**: `Razor/RazorEnhanced/PasswordMemory.cs`, `Settings.cs` tabella PASSWORD
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Il salvataggio password per auto-login non e implementato.
-- **Impatto Utente**: L'utente dovra inserire la password ogni volta al login.
-- **Documentazione per Junior Dev**: Creare un `PasswordService.cs` che salvi password criptate per shard/account. Usare DPAPI o altro metodo sicuro per la persistenza.
-
-#### TASK-FR-075: Journal Filter Config Mancante
-- **File/Classe Legacy**: `Razor/RazorEnhanced/Settings.cs` -> tabella JOURNAL_FILTER
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: La configurazione dei filtri journal (quali messaggi mostrare/nascondere) non ha un modello config dedicato.
-- **Impatto Utente**: L'utente non puo configurare filtri persistenti per il journal.
-- **Documentazione per Junior Dev**: Aggiungere `JournalFilterConfig` con lista di pattern testo/tipo da filtrare a `UserProfile`.
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-016 | `WaitForTargetOrFizzle(delay)` | :x: Mancante | Attende cursore target O suono pacchetto 0x54 (fizzle) | Script PvP che usano questo metodo devono essere adattati |
+| TASK-AGT-017 | `PromptAlias` (target per alias string) | :x: Mancante | Target aliased | Feature target per alias mancante |
 
 ---
 
-## 8. UI Forms e Dialoghi
+### 4.14 SpellGrid
 
-### 8.1 Inspector
+**Legacy**: `Razor/RazorEnhanced/SpellGrid.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.UI/Views/Windows/SpellGridWindow.xaml` + ViewModel
 
-#### TASK-FR-076: Item Inspector Flags Section Mancante
-- **File/Classe Legacy**: `Razor/RazorEnhanced/UI/EnhancedItemInspector.cs`
-- **Stato nel Nuovo Codice**: ⚠️ Incompleto
-- **Dettaglio**: L'inspector unificato in `InspectorPage.xaml` non mostra i 10 flag item: IsContainer, IsCorpse, IsDoor, IsMulti, IsPotion, Movable, IsDamagable, IsTwoHanded, OnGround, Visible.
-- **Impatto Utente**: Meno informazioni disponibili per debugging degli script.
-- **Documentazione per Junior Dev**: In `InspectorPage.xaml`, aggiungere una sezione "Flags" sotto i dettagli entity con toggle/checkbox per ogni flag. Leggere i valori dalla `UOEntity.Flags` e dalle proprieta bool dell'`Item`.
-
-#### TASK-FR-077: Mobile Inspector Dettagli Mancanti
-- **File/Classe Legacy**: `Razor/RazorEnhanced/UI/EnhancedMobileInspector.cs`
-- **Stato nel Nuovo Codice**: ⚠️ Incompleto
-- **Dettaglio**: Mancano: barre HP/Mana/Stam, flag mobile (7 flag), notorieta, direzione, animazione, stats estese player, SumAttributes per item equipaggiati.
-- **Impatto Utente**: L'utente perde funzionalita di ispezione dettagliata dei mobile, utile per debugging.
-- **Documentazione per Junior Dev**: In `InspectorPage.xaml`, aggiungere pannello mobile con: ProgressBar per HP/Mana/Stam, TextBlocks per stats, StackPanel per flags, e metodo SumAttributes che itera l'equipaggiamento.
-
-#### TASK-FR-078: Static Inspector Assente
-- **File/Classe Legacy**: `Razor/RazorEnhanced/UI/EnhancedStaticInspector.cs`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Il Map Inspector nella nuova UI e una mappa mondo, NON un ispettore di tile statiche. Mancano: dati land tile (ID, Hue, Z, texture), 14 flag per tile, lista tile statiche a una posizione, dettagli singola tile statica.
-- **Impatto Utente**: Utenti che sviluppano script di pathfinding o costruzione non possono ispezionare i dati del terreno.
-- **Documentazione per Junior Dev**: Aggiungere un tab "Tile Inspector" in `InspectorPage.xaml` che, data una coordinata, mostra: LandTile (ID, Hue, Z, flag), lista StaticTile (ID, Hue, Z, flag) tramite `StaticsApi` metodi `GetStaticsLandInfo`/`GetStaticsTileInfo`.
-
-#### TASK-FR-079: Object Inspector (SharedData/Timers) Mancante
-- **File/Classe Legacy**: `Razor/RazorEnhanced/UI/EnhancedObjectInspector.cs`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: L'inspector per SharedScriptData e Timer non ha controparte.
-- **Impatto Utente**: Utenti non possono ispezionare dati condivisi tra script e timer attivi.
-- **Documentazione per Junior Dev**: Creare un tab "Debug" in `InspectorPage.xaml` con due DataGrid: uno per `Misc.SharedScriptData` (key/value) e uno per timer attivi.
-
-### 8.2 Script Editor
-
-#### TASK-FR-080: Debug Stepping Mancante
-- **File/Classe Legacy**: `Razor/RazorEnhanced/UI/EnhancedScriptEditor.cs` -> debug stepping
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Il legacy supporta breakpoint, step-by-line, step-into-call, step-over-return. Il nuovo script editor non ha nessuna funzionalita di debug.
-- **Impatto Utente**: **MEDIO** - Gli sviluppatori di script perdono il debugger integrato.
-- **Documentazione per Junior Dev**: Questo e un task complesso. Richiede:
-  1. Aggiungere breakpoint tracking nel `ScriptingService`
-  2. Per Python: usare `sys.settrace()` con callback che verifica breakpoints
-  3. Per C#: usare Roslyn debug symbols
-  4. Per UOSteam: check per-riga nell'interprete
-  5. UI: aggiungere margine clickable in AvalonEdit per set breakpoints, e toolbar Step/StepInto/StepOut
-
-### 8.3 Dialoghi Mancanti
-
-#### TASK-FR-081: RE_MessageBox Custom Mancante
-- **File/Classe Legacy**: `Razor/RazorEnhanced/UI/RE_MessageBox.cs`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Message box custom con bottoni configurabili, colori, link, sizing dinamico.
-- **Impatto Utente**: **Basso** - WPF ha dialoghi built-in. Ma il look&feel sara diverso.
-- **Documentazione per Junior Dev**: Se necessario, creare `MessageDialog.xaml` con ContentDialog WPF e stile coerente con il tema TMRazor.
-
-#### TASK-FR-082: Scavenger Edit Props Window Mancante
-- **File/Classe Legacy**: `Razor/RazorEnhanced/UI/EnhancedScavengerEditItemProps.cs`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: L'edit delle property per item scavenger non ha una finestra dedicata (l'`EditLootItemWindow` sembra essere solo per AutoLoot).
-- **Impatto Utente**: L'utente non puo configurare filtri property per lo scavenger.
-- **Documentazione per Junior Dev**: Riutilizzare `EditLootItemWindow.xaml` per lo scavenger, o creare una window simile. Verificare che la `ScavengerPage.xaml` abbia il binding corretto.
-
-#### TASK-FR-083: Predefined Property List (~90 proprieta) Mancante
-- **File/Classe Legacy**: `Razor/RazorEnhanced/UI/EnhancedAutolootEditItemProps.cs` -> ComboBox con ~90 proprieta
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Il legacy ha un ComboBox con ~90 nomi di proprieta predefinite (resistenze, slayer, cariche, etc.). Il nuovo `EditLootItemWindow` richiede inserimento manuale del nome.
-- **Impatto Utente**: L'utente deve ricordare i nomi esatti delle proprieta invece di sceglierli da una lista.
-- **Documentazione per Junior Dev**: In `EditLootItemWindow.xaml`, aggiungere un ComboBox con la lista delle proprieta. La lista si trova in `EnhancedAutolootEditItemProps.cs` nel costruttore (righe 30-120 circa).
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-018 | SpellGrid floating panel con bottoni spell configurabili, icone abilita, stati highlight | :warning: Incompleto | Esiste `SpellGridConfig` in Shared e la finestra XAML, ma manca il service di backend che gestisce il grid, le icone e gli highlight | **ALTO** — SpellGrid e uno strumento di combattimento molto usato |
 
 ---
 
-## 9. Sistemi Utility
+### 4.15 SpecialMoves
 
-### 9.1 Utility Mancanti
+**Legacy**: `Razor/RazorEnhanced/SpecialMoves.cs`
+**Nuovo**: Scripting API `SpecialMovesApi.cs`
 
-#### TASK-FR-084: Geometry.cs (Point3D, Line2D, Rectangle2D) Mancante
-- **File/Classe Legacy**: `Razor/Core/Geometry.cs` (573 righe)
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Struct geometriche Point3D, Line2D, Rectangle2D con calcoli di angolo, distanza, intersezione.
-- **Impatto Utente**: **Basso** - Usato internamente. Le coordinate nel nuovo codice usano proprietA X,Y,Z inline.
-
-#### TASK-FR-085: ActionQueue.cs Mancante
-- **File/Classe Legacy**: `Razor/Core/ActionQueue.cs` (640 righe)
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Coda di azioni sequenziali con delay. Il macro engine gestisce il sequenziamento diversamente.
-- **Impatto Utente**: **Basso** - Pattern interno. Il nuovo usa Task/async.
-
-#### TASK-FR-086: ToolBar.cs Logica Mancante
-- **File/Classe Legacy**: `Razor/RazorEnhanced/ToolBar.cs` (1.768 righe)
-- **Stato nel Nuovo Codice**: ⚠️ Parziale
-- **Dettaglio**: La logica della toolbar nel legacy include gestione slot personalizzabili, trascinamento spell/item, counting, e salvataggio configurazione. Il nuovo `FloatingToolbarWindow.xaml` esiste ma la logica di personalizzazione slot potrebbe essere incompleta.
-- **Impatto Utente**: La toolbar potrebbe non essere completamente personalizzabile.
-- **Documentazione per Junior Dev**: Verificare `FloatingToolbarViewModel.cs` per la completezza delle funzionalita di personalizzazione slot. Se mancante, aggiungere logica per drag&drop di spell/item nella toolbar e persistenza in config.
-
-#### TASK-FR-087: ZLib.cs Compressione Mancante
-- **File/Classe Legacy**: `Razor/Core/ZLib.cs` (346 righe)
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Utility di compressione/decompressione ZLib.
-- **Impatto Utente**: La decompressione gump compressi (pacchetto 0xDD) potrebbe non funzionare senza ZLib.
-- **Documentazione per Junior Dev**: Verificare se il handler di `HandleCompressedGump` in `WorldPacketHandler.cs` ha gia la decompressione implementata (potrebbe usare `System.IO.Compression`). Se si, questo task e non necessario.
-
-#### TASK-FR-088: Serial.IsMobile / Serial.IsItem Helper Mancanti
-- **File/Classe Legacy**: `Razor/Core/Serial.cs` -> `IsMobile`, `IsItem`, `IsValid`
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Helper statici per determinare se un serial uint e un mobile (>= 0x00000001 e < 0x40000000) o un item (>= 0x40000000).
-- **Impatto Utente**: Script che usano `Serial.IsMobile(serial)` falliranno.
-- **Documentazione per Junior Dev**: Aggiungere metodi statici in `MiscApi.cs` o in una utility class:
-  ```csharp
-  public static bool IsMobile(uint serial) => serial >= 1 && serial < 0x40000000;
-  public static bool IsItem(uint serial) => serial >= 0x40000000 && serial < 0x80000000;
-  ```
-
-#### TASK-FR-089: Facet.cs Map Metadata Mancante
-- **File/Classe Legacy**: `Razor/Core/Facet.cs` (167 righe)
-- **Stato nel Nuovo Codice**: ❌ Mancante
-- **Dettaglio**: Definizioni metadata per le mappe (Felucca, Trammel, Ilshenar, Malas, Tokuno, TerMur) con dimensioni, ID e nomi.
-- **Impatto Utente**: **Basso** - Usato internamente per boundary checking.
-
-### 9.2 HotkeyService Gap
-
-#### TASK-FR-090: Hotkey Mouse Button/Wheel Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/HotKey.cs` -> supporto mouse
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunto `MouseHotkeyType` enum (MiddleClick/WheelUp/WheelDown/XButton1/XButton2) in ConfigModels.cs; `HotkeyDefinition` estesa con `MouseButton` property e `IsMouse` helper. In HotkeyService: aggiunto `WH_MOUSE_LL` hook con delegate `LowLevelMouseProc`; `MouseHookCallback` gestisce WM_MBUTTONDOWN/WM_MOUSEWHEEL/WM_XBUTTONDOWN leggendo `HIWORD(mouseData)` via `Marshal.ReadInt32(lParam, 8)`; `CheckMouseHotkey()` cerca hotkey mouse in config; `CheckHotkey()` aggiornato con `!hk.IsMouse` guard; hook rimosso in Dispose. Build Core: 0 errori.
-- **Dettaglio**: Il legacy supporta: middle click, wheel up/down, X buttons 1-2, con combinazioni Ctrl/Alt/Shift. Il nuovo usa solo keyboard hook (`WH_KEYBOARD_LL`).
-- **Impatto Utente**: Utenti che usano pulsanti mouse per hotkey (molto comuni nel PvP) non potranno assegnarli.
-- **Documentazione per Junior Dev**: In `HotkeyService.cs`, aggiungere un mouse hook (`WH_MOUSE_LL`) accanto al keyboard hook. Definire `MouseHotkeyType` enum (MiddleClick, WheelUp, WheelDown, XButton1, XButton2) e supportarli nella registrazione hotkey.
-
-#### TASK-FR-091: Hotkey Categorie Mancanti ✅ DONE (2026-03-20)
-- **File/Classe Legacy**: `Razor/RazorEnhanced/HotKey.cs`
-- **Stato nel Nuovo Codice**: ✅ Implementato — aggiunte in `RegisterAllSystemActions()`: Pet Commands (PetFollow/Kill/Stop/Stay/Guard/Come/Release/Drop → UnicodeSpeech); ShowNames (SingleClick a tutti i mobile entro 18 tile); Skills (15 skill attive via UseSkill: Hiding/Stealth/Meditation/Tracking/Taming/Provocation/Discordance/Peacemaking/EvalInt/SpiritSpeak/DetectHidden/RemoveTrap/Veterinary/Forensics/Camping); Agent:VendorBuy/VendorSell (IVendorService toggle); Friends:AddLastTarget/RemoveLastTarget (IFriendsService); Dress:ChangeThenDress; GraphFilter:ToggleAll. BoneCutter/AutoCarver/AutoRemount non implementati (servizi non esistenti). Build Core: 0 errori.
-- **Dettaglio**: Categorie hotkey mancanti nel nuovo codice:
-  - Pet Commands (all'follow, all kill, all stay, etc.)
-  - Show Names (mostra nomi overhead)
-  - Equip Wands (equip bacchette specifiche)
-  - Skills (usa skill via hotkey)
-  - Sell/Buy agent toggles
-  - BoneCutter/AutoCarver/AutoRemount (toggle via hotkey)
-  - GraphFilter, Friend list hotkeys
-  - Target list hotkeys
-  - Dress list hotkeys
-- **Impatto Utente**: Utenti che usano queste categorie di hotkey dovranno trovare alternative.
-- **Documentazione per Junior Dev**: In `HotkeyService.cs`, espandere le categorie di azioni registrate. Per ciascuna categoria mancante, aggiungere handler che delegano al servizio appropriato (es. `ICommandService` per Pet Commands, `ITargetingService` per Target list, etc.).
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-019 | Mappa completa weapon-to-ability (centinaia di grafici armi -> abilita primary/secondary) | :x: Mancante | Nuovo invia solo pacchetti toggle generici senza sapere quale abilita specifica | SpellGrid non puo mostrare icone abilita corrette |
+| TASK-AGT-020 | `PrimaryGumpId` / `SecondaryGumpId` | :x: Mancante | ID icona delle abilita dell'arma corrente per display SpellGrid | Display icone abilita rotto |
 
 ---
 
-## 10. Riepilogo Task per Priorita
+### 4.16 Config/Settings/Profiles
 
-### CRITICO (Blocca funzionalita core per la maggior parte degli utenti)
+**Legacy**: `Razor/RazorEnhanced/Config.cs` + `Settings.cs` + `Profiles.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/ConfigService.cs`
 
-| Task | Descrizione | Area |
-|------|-------------|------|
-| TASK-FR-003 | 16 comandi UOSteam mancanti | Scripting |
-| TASK-FR-004 | ~45 espressioni UOSteam mancanti | Scripting |
-| TASK-FR-012 | Breaking change int -> uint seriali | API |
-| TASK-FR-013 | Breaking change Gumps -> Gump | API |
-| TASK-FR-022 | Spell school-specific targeted overloads | API |
-| TASK-FR-028 | Trade API completamente mancante | API |
-| TASK-FR-029 | CUO API completamente mancante | API |
-| TASK-FR-054 | Movement/Pathfind nelle macro | Macro |
-
-### ALTO (Blocca funzionalita significative)
-
-| Task | Descrizione | Area |
-|------|-------------|------|
-| TASK-FR-001 | Direttive C# script (//#import, //#assembly) | Scripting |
-| TASK-FR-006 | Script loop mode | Scripting |
-| TASK-FR-007 | Script autostart | Scripting |
-| TASK-FR-010 | ScriptRecorder pacchetti mancanti | Scripting |
-| TASK-FR-014 | Player.AttackType() overload complessi | API |
-| TASK-FR-017 | Differenze tipo ritorno Player API | API |
-| TASK-FR-021 | Items.ContainerCount() semantica diversa | API |
-| TASK-FR-027 | Sound filtering API | API |
-| TASK-FR-030 | AutoLoot.RunOnce() | Agenti |
-| TASK-FR-034 | BandageHeal FriendOrSelf mode | Agenti |
-| TASK-FR-037 | BandageHeal formula DEX diversa | Agenti |
-| TASK-FR-047 | Vendor.Buy() script API | Agenti |
-| TASK-FR-048 | Vendor CompareName/CompleteAmount | Agenti |
-| TASK-FR-052 | LoginAutostart tutti agenti | Agenti |
-| TASK-FR-053 | Macro DisconnectAction | Macro |
-| TASK-FR-057 | Macro Target modalita mancanti | Macro |
-| TASK-FR-059 | Recording pacchetti mancanti | Macro |
-| TASK-FR-060 | LocMessageFilter mancante | Filtri |
-| TASK-FR-064 | Handler degradati filter->viewer | Rete |
-| TASK-FR-090 | Hotkey mouse button/wheel | Hotkey |
-| TASK-FR-091 | Hotkey categorie mancanti | Hotkey |
-
-### MEDIO (Funzionalita secondarie o di nicchia)
-
-| Task | Descrizione | Area |
-|------|-------------|------|
-| TASK-FR-002 | Python Call() da C# | Scripting |
-| TASK-FR-005 | Stub UOSteam (equipwand, shownames, replay) | Scripting |
-| TASK-FR-008 | Script FileSystemWatcher | Scripting |
-| TASK-FR-009 | Script preload/precompile | Scripting |
-| TASK-FR-011 | AutoDoc export formati | Scripting |
-| TASK-FR-015 | Player.Corpses property | API |
-| TASK-FR-016 | Player Chat overload interi | API |
-| TASK-FR-018 | Items.Select() con selettore | API |
-| TASK-FR-019 | Items.GetImage() | API |
-| TASK-FR-020 | Items.GetWeaponAbility() | API |
-| TASK-FR-023 | CastLastSpell targeted overload | API |
-| TASK-FR-024 | TargetExecute 3-parametri | API |
-| TASK-FR-025 | Journal.Clear(string) overload | API |
-| TASK-FR-026 | Journal.GetJournalEntry con timestamp | API |
-| TASK-FR-031 | AutoLoot.SetNoOpenCorpse() | Agenti |
-| TASK-FR-032 | AutoLoot.GetList/GetLootBag/ResetIgnore | Agenti |
-| TASK-FR-033 | AutoLoot shared loot container | Agenti |
-| TASK-FR-035 | BandageHeal text-based healing | Agenti |
-| TASK-FR-036 | BandageHeal countdown display | Agenti |
-| TASK-FR-038 | BandageHeal mortal strike detection | Agenti |
-| TASK-FR-039 | Dress.ReadPlayerDress() | Agenti |
-| TASK-FR-042 | Organizer.RunOnce() | Agenti |
-| TASK-FR-043 | Restock.RunOnce() | Agenti |
-| TASK-FR-044 | Restock color matching | Agenti |
-| TASK-FR-045 | Scavenger RunOnce/GetBag/ResetIgnore | Agenti |
-| TASK-FR-046 | Scavenger locked-down items | Agenti |
-| TASK-FR-049 | Vendor max price filter | Agenti |
-| TASK-FR-050 | DPSMeter.Pause() | Agenti |
-| TASK-FR-051 | DPSMeter.GetDamage(serial) | Agenti |
-| TASK-FR-055 | Macro QueryStringResponse | Macro |
-| TASK-FR-056 | Macro Whisper/Yell | Macro |
-| TASK-FR-058 | Macro GumpResponse avanzata | Macro |
-| TASK-FR-061 | SoundFilter per-categoria | Filtri |
-| TASK-FR-062 | SeasonFilter force send | Filtri |
-| TASK-FR-063 | 13 handler C2S mancanti | Rete |
-| TASK-FR-068 | Mobile.Visible | Modelli |
-| TASK-FR-069 | Mobile items (equipment list) | Modelli |
-| TASK-FR-070 | Mobile Race/Mounted/etc. | Modelli |
-| TASK-FR-071 | Item child items list | Modelli |
-| TASK-FR-073 | Toolbar items config | Config |
-| TASK-FR-076 | Item inspector flags | UI |
-| TASK-FR-077 | Mobile inspector dettagli | UI |
-| TASK-FR-078 | Static inspector assente | UI |
-| TASK-FR-080 | Script editor debug stepping | UI |
-| TASK-FR-088 | Serial.IsMobile/IsItem helper | Utility |
-
-### BASSO (Nice-to-have, impatto minimo)
-
-| Task | Descrizione | Area |
-|------|-------------|------|
-| TASK-FR-040 | Dress UO3D EquipItemMacro | Agenti |
-| TASK-FR-041 | Dress/Undress status separati | Agenti |
-| TASK-FR-065 | UOAssist compatibility layer | Rete |
-| TASK-FR-066 | FeatureBit system | Rete |
-| TASK-FR-067 | UOEntity.Deleted flag | Modelli |
-| TASK-FR-072 | Item Layer enum | Modelli |
-| TASK-FR-074 | Password memory | Config |
-| TASK-FR-075 | Journal filter config | Config |
-| TASK-FR-079 | Object inspector SharedData/Timers | UI |
-| TASK-FR-081 | RE_MessageBox custom | UI |
-| TASK-FR-082 | Scavenger edit props window | UI |
-| TASK-FR-083 | Predefined property list | UI |
-| TASK-FR-084 | Geometry.cs | Utility |
-| TASK-FR-085 | ActionQueue.cs | Utility |
-| TASK-FR-086 | ToolBar.cs logica | Utility |
-| TASK-FR-087 | ZLib.cs compressione | Utility |
-| TASK-FR-089 | Facet.cs map metadata | Utility |
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-021 | Profile auto-detection per serial personaggio (`Profiles.PlayerEntry.PlayerSerial`) | :x: Mancante | Profili auto-switch al login non implementato | Utenti con multipli personaggi non avranno auto-switch profilo |
 
 ---
 
-### Conteggio Finale
+### 4.17 SeasonManager
 
-| Priorita | Conteggio Task |
-|----------|----------------|
-| CRITICO | 8 |
-| ALTO | 21 |
-| MEDIO | 42 |
-| BASSO | 17 |
-| **TOTALE** | **88** |
+**Legacy**: `Razor/RazorEnhanced/SeasonManager.cs`
+**Nuovo**: **MANCANTE INTERAMENTE**
+
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-022 | Carica `seasons.txt` per remappare grafici tile per stagione | :x: Mancante | Nuovo `StaticsApi` nota "To perfectly match TMRazor we'd need SeasonManager" ma ritorna valori base | Basso — solo shards con stagioni custom |
 
 ---
 
-*Report generato il 2026-03-20. Ogni task e stato verificato leggendo direttamente il codice sorgente di entrambe le codebase. Nessun metodo e stato dato per scontato senza verifica.*
+### 4.18 PathFinding
+
+**Legacy**: `Razor/RazorEnhanced/PathFinding.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/PathFindingService.cs`
+
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-023 | `PathMove.RunPath()` (auto-walk un percorso) | :x: Mancante | Nessun equivalente nel nuovo service | Script che chiamano `PathMove.RunPath()` devono implementare il movimento manualmente |
+
+---
+
+### 4.19 CUO Integration
+
+**Legacy**: `Razor/RazorEnhanced/CUO.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/Scripting/Api/CuoApi.cs`
+
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-024 | `CUO.LoadMarkers()`, `GoToMarker()`, `FreeView()`, `CloseTMap()`, `ProfilePropertySet()`, `GetSetting()`, `SetGumpOpenLocation()`, `MoveGump()` | :warning: Tutti stub | Legacy usa reflection in-process per chiamare interni ClassicUO. Nuovo logga warning e ritorna no-op (out-of-process) | **Medio** — Script CUO falliranno silenziosamente |
+
+---
+
+### 4.20 UOSteam Engine
+
+**Legacy**: `Razor/RazorEnhanced/UOSteamEngine.cs`
+**Nuovo**: UOSteamInterpreter
+
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-025 | Famiglia comandi `gumplist` (create, activate, delete, move, get, set, print) | :warning: Stub | Tutti i comandi gumplist sono stub | Script UOSteam con manipolazione gump list falliranno |
+| TASK-AGT-026 | Comando `findwand` | :warning: Stub | Stub | Script UOSteam con `findwand` falliranno |
+
+---
+
+### 4.21 ScriptRecorder
+
+**Legacy**: `Razor/RazorEnhanced/ScriptRecorder.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/ScriptRecorderService.cs`
+
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-027 | `CsScriptRecorder` (output recording in C#) | :x: Mancante | Nuovo registra in Python e UOSteam ma non C# | Output recording C# non disponibile |
+
+---
+
+### 4.22 CommandService
+
+**Legacy**: `Razor/Core/Commands.cs`
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/CommandService.cs`
+
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-AGT-028 | Comandi `-bandage`, `-dress`, `-undress`, `-organizer`, `-restock`, `-scavenger` | :x: Mancanti | Questi comandi text non sono nel nuovo `CommandService` | Utenti che usano comandi text per attivare agenti non potranno farlo |
+
+---
+
+### 4.23 Servizi completamente migrati (nessuna discrepanza)
+
+| Legacy | Nuovo | Stato |
+|--------|-------|-------|
+| `Razor/RazorEnhanced/Trade.cs` | `SecureTradeService.cs` | :white_check_mark: |
+| `Razor/RazorEnhanced/Skills.cs` | `SkillsService.cs` | :white_check_mark: |
+| `Razor/RazorEnhanced/EncodedSpeech.cs` | `EncodedSpeechHelper.cs` | :white_check_mark: |
+| `Razor/RazorEnhanced/AutoDoc.cs` | `AutoDocService.cs` | :white_check_mark: |
+| `Razor/RazorEnhanced/Shards.cs` | `ShardService.cs` | :white_check_mark: |
+| `Razor/RazorEnhanced/Statics.cs` | `StaticsApi.cs` | :white_check_mark: |
+| `Razor/RazorEnhanced/Multi.cs` | `MultiService.cs` | :white_check_mark: |
+| `Razor/RazorEnhanced/Property.cs` | Gestito in `WorldPacketHandler` | :white_check_mark: |
+| `Razor/RazorEnhanced/CircularBuffer.cs` | `System.Threading.Channels` | :white_check_mark: |
+| `Razor/RazorEnhanced/SyncPrimitives.cs` | `SemaphoreSlim` built-in | :white_check_mark: |
+| `Razor/RazorEnhanced/JsonData.cs` | `HotkeyConfig` in `ConfigModels.cs` | :white_check_mark: |
+
+---
+
+## 5. Scripting Engine
+
+### 5.1 Differenze Architetturali
+
+| Feature | Legacy | Nuovo | Stato |
+|---------|--------|-------|-------|
+| Python engine | IronPython 3.4, `ScriptRuntime` persistente | IronPython 3.4, engine fresco per esecuzione | :no_entry: |
+| C# engine | CodeDom/csc.exe, trova metodo `Run()` | Roslyn `CSharpScript.RunAsync` con `ScriptGlobals` | :no_entry: |
+| Cancellazione script | `Thread.Abort()` (deprecato .NET 5+) | `CancellationToken` + `Thread.Interrupt()` + `sys.settrace` | :white_check_mark: Migliore |
+| Script concorrenti | Multipli script simultaneamente | Uno alla volta (`SemaphoreSlim(1,1)`) | :no_entry: **Regressione** |
+| Hot-reload | Per-file `FileSystemWatcher` | Per-directory `FileSystemWatcher` | :white_check_mark: |
+| Suspend/Resume | `ManualResetEvent` per script | `volatile bool _isSuspended` controllato in trace | :white_check_mark: |
+| Binding hotkey per-script | Hotkey con pass-through per script | Delegato a `IHotkeyService` | :white_check_mark: |
+| Liste script | 3 liste separate (Py/Cs/Uos) | Discovery basata su filesystem | :no_entry: Approccio diverso |
+| Thread agent | Thread dedicati per AutoLoot, Scavenger, etc. | Delegati alle rispettive interfacce service | :white_check_mark: |
+| Debug | Nessun debug | Breakpoint, step, REPL | :bulb: Nuova feature |
+
+| ID | Discrepanza | Impatto |
+|----|-------------|---------|
+| TASK-SCR-001 | **Script concorrenti non supportati** — legacy permette multipli script Python/C#/UOS simultanei, nuovo esegue uno alla volta | **ALTO** — Utenti che eseguono script paralleli (es. un bot combat + un bot loot) non potranno farlo |
+
+**Azione Junior per TASK-SCR-001**: Modificare `ScriptingService.cs` per usare `SemaphoreSlim(N, N)` dove N > 1, oppure gestire una coda di script con thread pool dedicato. Riferimento: `Razor/RazorEnhanced/EnhancedScript.cs` per il pattern di esecuzione multi-thread.
+
+---
+
+## 6. Scripting API
+
+### 6.1 Mobiles API
+
+**Legacy**: `Razor/RazorEnhanced/Mobile.cs` (API scripting)
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/Scripting/Api/MobilesApi.cs` + `Wrappers.cs`
+
+**Stato**: :white_check_mark: **Parita completa**. Tutti i metodi legacy hanno controparte. Il nuovo aggiunge molti metodi di convenienza (`FindNearest*`, `FilterBy*`, `GetHealthPercent`, etc.).
+
+---
+
+### 6.2 Items API
+
+**Legacy**: `Razor/RazorEnhanced/Item.cs` (API scripting)
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/Scripting/Api/ItemsApi.cs` + `Wrappers.cs`
+
+**Stato**: :white_check_mark: **Parita completa**.
+
+| ID | Discrepanza minore | Dettaglio |
+|----|-------------------|-----------|
+| TASK-API-001 | `Items.GetProperties(serial, delay)` — versione con delay | Nuovo ha `GetProperties` senza delay (ritorna cached) |
+
+---
+
+### 6.3 Player API
+
+**Legacy**: `Razor/RazorEnhanced/Player.cs` (API scripting)
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/Scripting/Api/PlayerApi.cs`
+
+**Stato**: :white_check_mark: **Parita completa**.
+
+---
+
+### 6.4 Spells API
+
+**Legacy**: `Razor/RazorEnhanced/Spells.cs` (API scripting)
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/Scripting/Api/SpellsApi.cs`
+
+**Stato**: :white_check_mark: **Parita completa**. Nuovo aggiunge `IsCasting`, `WaitCast`, `WaitForMana`, `HasManaToCast`, etc.
+
+---
+
+### 6.5 Target API
+
+**Stato**: :white_check_mark: **Parita completa** (incluso `WaitForTargetOrFizzle`).
+
+---
+
+### 6.6 Journal API
+
+**Stato**: :white_check_mark: **Parita completa**. Nuovo aggiunge `InJournalRegex`, `SearchJournal`, etc.
+
+---
+
+### 6.7 Gumps API
+
+**Stato**: :white_check_mark: **Parita completa**. Nuovo aggiunge `IsGumpVisible`, `GetTextEntry`, `GetSwitches`, etc.
+
+---
+
+### 6.8 Misc API
+
+**Stato**: :white_check_mark: **Parita completa**. Nuovo aggiunge `WaitFor`, `Log`, `Timestamp`, `Random`, liste UOS-compatibili (`CreateList`, `PushList`, etc.).
+
+---
+
+### 6.9 DPSMeter API
+
+**Stato**: :white_check_mark: Nuovo e piu ricco (`GetCurrentDPS`, `GetMaxDPS`, `GetTotalDamage`, `GetCombatTime`, etc.).
+
+---
+
+### 6.10 CUO API — Stub
+
+| ID | Metodo | Stato | Note |
+|----|--------|-------|------|
+| TASK-API-002 | `CUO.LoadMarkers()` | :warning: Stub | Logga warning, no-op |
+| TASK-API-003 | `CUO.GoToMarker()` | :warning: Stub | Logga warning, no-op |
+| TASK-API-004 | `CUO.FreeView()` | :warning: Stub | Logga warning, no-op |
+| TASK-API-005 | `CUO.ProfilePropertySet()` (3 overload) | :warning: Stub | Logga warning, no-op |
+| TASK-API-006 | `CUO.GetSetting()` | :warning: Stub | Logga warning, no-op |
+| TASK-API-007 | `CUO.SetGumpOpenLocation()` | :warning: Stub | Logga warning, no-op |
+| TASK-API-008 | `CUO.MoveGump()` | :warning: Stub | Logga warning, no-op |
+| TASK-API-009 | `CUO.CloseTMap()` | :warning: Stub | Logga warning, no-op |
+
+> **Nota architetturale**: Questi stub sono inevitabili perche TMRazorImproved gira out-of-process rispetto a TmClient. Per implementarli servirebbe un canale IPC aggiuntivo plugin→UI per invocare API interne di ClassicUO.
+
+---
+
+## 7. Macro System
+
+### 7.1 Architettura
+
+**Legacy**: `MacroManager` statico + `MacroAction` classi + 43 classi azione concrete
+**Nuovo**: `MacrosService` DI-based, formato testuale, engine program-counter con jump tables
+
+### 7.2 Confronto azioni macro
+
+**Stato**: :white_check_mark: **Tutte le 43 azioni legacy hanno handler corrispondente** nel `MacrosService.ExecuteActionAsync()`.
+
+| Azione Legacy | Comando Nuovo | Stato |
+|---------------|---------------|-------|
+| ArmDisarmAction | `ARMDISARM` | :white_check_mark: |
+| AttackAction | `ATTACK` | :white_check_mark: |
+| BandageAction | `BANDAGE` | :white_check_mark: |
+| CastSpellAction | `CAST` | :white_check_mark: |
+| ClearJournalAction | `CLEARJOURNAL` | :white_check_mark: |
+| CommentAction | `//` o `#` | :white_check_mark: |
+| DisconnectAction | `DISCONNECT` | :white_check_mark: |
+| DoubleClickAction | `DOUBLECLICK` / `DCLICK` | :white_check_mark: |
+| DropAction | `DROP` | :white_check_mark: |
+| ElseAction | `ELSE` | :white_check_mark: |
+| ElseIfAction | `ELSEIF` | :white_check_mark: |
+| EndForAction | `ENDFOR` | :white_check_mark: |
+| EndIfAction | `ENDIF` | :white_check_mark: |
+| EndWhileAction | `ENDWHILE` | :white_check_mark: |
+| FlyAction | `FLY` / `LAND` | :white_check_mark: |
+| ForAction | `FOR` | :white_check_mark: |
+| GumpResponseAction | `RESPONDGUMP` / `RESPONDGUMPEX` | :white_check_mark: |
+| IfAction | `IF` | :white_check_mark: |
+| InvokeVirtueAction | `INVOKEVIRTUE` | :white_check_mark: |
+| MessagingAction | `SAY`/`MSG`/`EMOTE`/`WHISPER`/`YELL` | :white_check_mark: |
+| MountAction | `MOUNT` / `DISMOUNT` | :white_check_mark: |
+| MoveItemAction | `MOVEITEM` | :white_check_mark: |
+| MovementAction | `WALK` / `RUN` / `PATHFIND` | :white_check_mark: |
+| PauseAction | `PAUSE` / `WAIT` | :white_check_mark: |
+| PickUpAction | `PICKUP` | :white_check_mark: |
+| PromptResponseAction | `PROMPTRESPONSE` | :white_check_mark: |
+| QueryStringResponseAction | `QUERYSTRINGRESPONSE` | :white_check_mark: |
+| RemoveAliasAction | `REMOVEALIAS` | :white_check_mark: |
+| RenameMobileAction | `RENAMEMOBILE` | :white_check_mark: |
+| ResyncAction | `RESYNC` | :white_check_mark: |
+| RunOrganizerOnceAction | `RUNORGANIZER` | :white_check_mark: |
+| SetAbilityAction | `SETABILITY` | :white_check_mark: |
+| SetAliasAction | `SETALIAS` | :white_check_mark: |
+| TargetAction | `TARGET`/`TARGETSELF`/`TARGETLAST`/etc. | :white_check_mark: |
+| TargetResourceAction | `TARGETRESOURCE` | :white_check_mark: |
+| ToggleWarModeAction | `WARMODE` | :white_check_mark: |
+| UseContextMenuAction | `USECONTEXTMENU` | :white_check_mark: |
+| UseEmoteAction | `EMOTE` | :white_check_mark: |
+| UsePotionAction | `USEPOTIONTYPE` | :white_check_mark: |
+| UseSkillAction | `USESKILL` | :white_check_mark: |
+| WaitForGumpAction | `WAITFORGUMP` | :white_check_mark: |
+| WaitForTargetAction | `WAITFORTARGET` | :white_check_mark: |
+| WhileAction | `WHILE` | :white_check_mark: |
+
+**Comandi aggiuntivi nel nuovo** (non nel legacy):
+- :bulb: `SINGLECLICK`
+- :bulb: `USETYPE`
+- :bulb: `EQUIPITEM`
+- :bulb: `WAITFORMENU`
+- :bulb: `MENURESPONSE`
+
+---
+
+## 8. UI Components
+
+### 8.1 Mappatura Pagine
+
+| # | Legacy | Nuovo | Stato |
+|---|--------|-------|-------|
+| 1 | `Razor/UI/Razor.cs` (main form) | `MainWindow.xaml` | :white_check_mark: |
+| 2 | `SplashScreen.cs` | WPF startup in `App.xaml.cs` | :white_check_mark: |
+| 3 | `Languages.cs` | `Strings.resx` + `LocExtension` | :white_check_mark: |
+| 4 | AutoLoot tab | `AutoLootPage.xaml` + VM | :white_check_mark: |
+| 5 | BandageHeal tab | `BandageHealPage.xaml` + VM | :white_check_mark: |
+| 6 | Dress tab | `DressPage.xaml` + VM | :white_check_mark: |
+| 7 | Organizer tab | `OrganizerPage.xaml` + VM | :white_check_mark: |
+| 8 | Restock tab | `RestockPage.xaml` + VM | :white_check_mark: |
+| 9 | Scavenger tab | `ScavengerPage.xaml` + VM | :white_check_mark: |
+| 10 | VendorBuy + VendorSell | `VendorPage.xaml` + VM (combinato) | :white_check_mark: |
+| 11 | Friends tab | `FriendsPage.xaml` + VM | :white_check_mark: |
+| 12 | Skills tab | `SkillsPage.xaml` + VM | :white_check_mark: |
+| 13 | Hotkey tab | `HotkeysPage.xaml` + VM | :white_check_mark: |
+| 14 | Profile tab | Integrato in `GeneralPage.xaml` | :white_check_mark: |
+| 15 | Script tab | `ScriptingPage.xaml` + VM | :warning: Redesign significativo |
+| 16 | Target tab | `TargetingPage.xaml` + VM | :white_check_mark: |
+| 17 | MacrosUI tab | `MacrosPage.xaml` + VM | :white_check_mark: |
+| 18 | Filters tab | `FiltersPage.xaml` + VM | :warning: Feature mancanti |
+| 19 | SpellGrid | `SpellGridWindow.xaml` + VM | :warning: Incompleto |
+| 20 | Toolbar | `FloatingToolbarWindow.xaml` + VM | :white_check_mark: |
+| 21 | EnhancedScriptEditor | Integrato in ScriptingPage (AvalonEdit) | :white_check_mark: |
+| 22 | EnhancedGumpInspector | `InspectorPage.xaml` tab Gump | :white_check_mark: |
+| 23-26 | Mobile/Item/Static/Object Inspector | `InspectorPage.xaml` tab Entity | :white_check_mark: |
+| 27 | RE_MessageBox | `MessageDialog.xaml` | :white_check_mark: |
+| 28 | EnhancedLauncher | `GeneralPage.xaml` | :white_check_mark: |
+| 29 | ChangeLog | `ChangelogWindow.xaml` | :white_check_mark: |
+| 30 | Custom Controls | WPF UI toolkit | :white_check_mark: |
+
+### 8.2 Feature UI Mancanti
+
+| ID | Feature Legacy | Stato | Dettaglio | Impatto |
+|----|----------------|-------|-----------|---------|
+| TASK-UI-001 | **Script List Management** (lista script con per-script hotkey, loop, autostart, preload, riordinamento) | :x: Mancante | Il nuovo ha solo un editor single-file (AvalonEdit) con New/Open/Save/Run/Stop. Nessuna lista script persistente, nessuna gestione multi-script, nessun loop/autostart/preload/hotkey per-script, nessuna separazione tab Python/UOS/C# | **ALTO** — Workflow multi-script completamente assente |
+| TASK-UI-002 | **Hue Override Settings** (Force Speech Hue, System Message Hue, Warning Hue, LT Highlight Hue, Beneficial/Harmful/Neutral Spell Hue) | :x: Mancante | Zero riferimenti a `SpeechHue`, `LTHilight`, `BeneficialSpellHue`, `HarmfulSpellHue`, `NeutralSpellHue` nella nuova UI. Il `HuePickerControl` esiste ma non e collegato | **Medio** — Personalizzazione colori mancante |
+| TASK-UI-003 | **Classic Combat/Targeting Tweaks** (Queue Targets, Queue Actions, Smart Last Target, Last Target Text Flags, Range Check LT, Block Dismount, Object Delay, Spell Unequip, Count Stealth Steps, Auto Open Corpses + range, Auto Open Doors + hidden, Force Game Size, Pre-AOS Status Bar) | :x: Mancante | Nessuna di queste impostazioni esiste in `OptionsPage.xaml` o `FiltersPage.xaml` | **ALTO** — Molte impostazioni di combattimento critiche |
+| TASK-UI-004 | **Profile Link/Unlink** a personaggio (auto-switch al login) | :x: Mancante | Ha Create, Clone, Rename, Delete profilo ma nessun Link/Unlink player | **Medio** — Auto-switch profilo mancante |
+| TASK-UI-005 | **Hotkey Master Key** (enable/disable globale tutti hotkey) | :x: Mancante | Ha action tree, set/clear individuali, pass-through. Nessun master key | **Basso** |
+| TASK-UI-006 | **Journal Filter Grid** (DataGridView per configurare filtri testo journal) | :x: Mancante | Ha Graph Filters (morphing) grid ma nessun journal filter grid | **Basso** |
+| TASK-UI-007 | **Enhanced Map Path Setting** | :x: Mancante | Nessuna UI per configurare percorso Enhanced Map esterna | **Basso** |
+| TASK-UI-008 | **DPS Meter Filter** (min/max damage, serial filter post-stop) | :warning: Da verificare | DPSMeterWindow esiste con Start/Pause/Stop/Clear | **Basso** |
+| TASK-UI-009 | **Video Playback & File Browser** | :x: Mancante | `MediaPage` ha start/stop recording e impostazioni. Nessun browser file video o playback | **Basso** |
+
+### 8.3 Nuove pagine UI (non nel legacy)
+
+| Pagina | Note |
+|--------|------|
+| :bulb: `DashboardPage.xaml` | Dashboard overview real-time |
+| :bulb: `CountersPage.xaml` | Contatori items |
+| :bulb: `JournalPage.xaml` | Viewer journal dedicato |
+| :bulb: `SoundPage.xaml` | Gestione suoni |
+| :bulb: `SecureTradePage.xaml` | Monitor trade sicuro |
+| :bulb: `PacketLoggerPage.xaml` | Packet logger |
+| :bulb: `DisplayPage.xaml` | Impostazioni display |
+| :bulb: `MapWindow.xaml` + `MapControl.xaml` | Mappa built-in |
+| :bulb: `TargetHPWindow.xaml` | Overlay HP target |
+| :bulb: `OverheadMessageOverlay.xaml` | Overlay messaggi combattimento |
+| :bulb: `ApiReferenceWindow.xaml` | Reference API scripting |
+| :bulb: `SearchOverlay.xaml` | Ricerca globale |
+| :bulb: `HuePickerWindow.xaml` + Control | Color picker |
+| :bulb: Script debugger (breakpoint, step, continue) | In ScriptingPage |
+| :bulb: Script recording | In ScriptingPage |
+| :bulb: `EditLootItemWindow.xaml` | Editor regole loot per-item |
+
+**Azione Junior per TASK-UI-001**: Questa e la feature UI piu grande da implementare. Creare un pannello laterale nella `ScriptingPage.xaml` con un `ListView` di script. Ogni script deve avere: nome file, stato (Running/Stopped), checkbox Loop, checkbox AutoStart, checkbox Preload, campo HotKey. Aggiungere i comandi nel `ScriptingViewModel.cs`: AddScript, RemoveScript, MoveUp, MoveDown, SetHotkey. Salvare la configurazione in `ProfileConfig.Scripts`. Riferimento pattern: `Razor/UI/Other/Script.cs`.
+
+**Azione Junior per TASK-UI-003**: Creare una sezione "Combat & Targeting" nell'`OptionsPage.xaml` con i seguenti controlli:
+- CheckBox "Queue Targets" → `ProfileConfig.QueueTargets`
+- CheckBox "Smart Last Target" → `ProfileConfig.SmartLastTarget`
+- CheckBox "Range Check Last Target" + NumericUpDown range → `ProfileConfig.RangeCheckLT`, `ProfileConfig.LTRange`
+- CheckBox "Auto Open Corpses" + NumericUpDown range → `ProfileConfig.AutoOpenCorpses`, `ProfileConfig.CorpseRange`
+- CheckBox "Auto Open Doors" → `ProfileConfig.AutoOpenDoors`
+- CheckBox "Count Stealth Steps" → `ProfileConfig.CountStealthSteps`
+- CheckBox "Spell Unequip" → `ProfileConfig.SpellUnequip`
+- CheckBox "Block Dismount" → `ProfileConfig.BlockDismount`
+Riferimento: `Razor/UI/Filter/Filters.cs` righe 30-213.
+
+---
+
+## 9. Utility & Support Files
+
+### 9.1 Client Adapters
+
+**Legacy**: `Razor/Client/` (4 file)
+**Nuovo**: `TMRazorImproved/TMRazorImproved.Core/Services/Adapters/` (4 file)
+
+| Legacy | Nuovo | Stato |
+|--------|-------|-------|
+| `Client.cs` (abstract base) | Architettura diversa — tutto I/O in `PacketService` + `ClientInteropService` | :no_entry: Cambio architetturale intenzionale |
+| `ClassicUO.cs` | `ClassicUOAdapter.cs` (stub thin) | :white_check_mark: |
+| `OSIClient.cs` | `OsiClientAdapter.cs` (stub thin) | :white_check_mark: |
+| `UOAssist.cs` | `UoAssistAdapter.cs` (implementazione completa WM_USER+200) | :white_check_mark: |
+
+### 9.2 File completamente mancanti (Legacy senza controparte)
+
+| Legacy File | Tipo | Stato | Impatto | Priorita |
+|-------------|------|-------|---------|----------|
+| `Razor/Core/StealthSteps.cs` | Contatore passi stealth | :x: Mancante | Conteggio passi stealth rotto | Media |
+| `Razor/Core/ActionQueue.cs` | Coda azioni generica | :x: Mancante | Nessuna coda double-click/lift/drop sequenziale oltre DragDropCoordinator | Media |
+| `Razor/Core/MsgQueue.cs` | Coda messaggi in uscita | :x: Mancante | Nessun queuing messaggi | Bassa |
+| `Razor/Core/TypeID.cs` | Struct wrapper con `ItemData` accessor | :x: Mancante | Perdita lookup `ItemData` da Ultima.dll | Media |
+| `Razor/Core/SkillIcon.cs` | Icone skill (mastery ability) | :x: Mancante | Tracking icone skill mancante | Bassa |
+| `Razor/Core/ZLib.cs` | Compressione ZLib | :x: Mancante | Non necessario se ClassicUO gestisce compressione | Bassa |
+| `Razor/Core/Utility.cs` | `InRange`, `Distance`, `Offset`, helpers | :x: Mancante | Metodi utility comuni non portati | Media |
+| `Razor/Core/Platform.cs` | Rilevamento piattaforma | :x: Mancante | Non necessario — WPF e solo Windows | Nessuna |
+| `Razor/RazorEnhanced/SeasonManager.cs` | Remap grafici tile per stagione | :x: Mancante | Solo shards con stagioni custom | Bassa |
+| `Razor/Network/UoWarper.cs` | Automazione client OSI via UO.dll COM | :x: Mancante | Specifico OSI, non necessario per ClassicUO | Nessuna |
+
+### 9.3 File migrati correttamente (conferma parita)
+
+| Legacy | Nuovo | Stato |
+|--------|-------|-------|
+| `Razor/Core/ScreenCapture.cs` | `ScreenCaptureService.cs` | :white_check_mark: Completo |
+| `Razor/Core/VideoCapture.cs` | `VideoCaptureService.cs` | :white_check_mark: Completo |
+| `Razor/Core/TitleBar.cs` | `TitleBarService.cs` | :white_check_mark: Completo |
+| `Razor/Core/PasswordMemory.cs` | `PasswordService.cs` | :white_check_mark: Migliorato (DPAPI) |
+| `Razor/Core/Timer.cs` | `Task.Delay` / async patterns | :white_check_mark: |
+| `Razor/Core/DLLImport.cs` + `NativeMethods.cs` | P/Invoke inline nei servizi | :white_check_mark: |
+| `Razor/Core/Main.cs` | DI container + `App.xaml.cs` | :white_check_mark: |
+| `Razor/Network/PacketLogger.cs` | `PacketLoggerService.cs` | :white_check_mark: |
+| `Razor/Network/Ping.cs` | In `WorldPacketHandler` con `Stopwatch` | :white_check_mark: |
+| `Razor/Network/UoMod.cs` | `UOModService.cs` | :white_check_mark: |
+| `Razor/RazorEnhanced/Proto-Control/*` | `ProtoControlService.cs` | :white_check_mark: |
+
+---
+
+## 10. Riepilogo Priorita
+
+### :red_circle: Priorita CRITICA (bloccano feature principali)
+
+| ID | Descrizione | Area |
+|----|-------------|------|
+| TASK-SCR-001 | Script concorrenti non supportati (uno alla volta vs multipli) | Scripting Engine |
+| TASK-MOB-001/002 | Mobile equipped item access (GetItemOnLayer, FindItemByID, Backpack) | Core Entity |
+| TASK-ITEM-001/002/003/004/005 | Container tree traversal (IsChildOf, GetWorldPosition, RootContainer) | Core Entity |
+| TASK-PLR-001 | Movement queue (MoveReq/MoveAck/MoveRej, auto-open-doors, stealth steps) | Player |
+| TASK-UI-001 | Script List Management (multi-script workflow con hotkey, loop, autostart) | UI |
+| TASK-UI-003 | Classic Combat/Targeting Tweaks (queue targets, smart LT, auto-open, spell unequip) | UI |
+| TASK-AGT-003/013 | Auto-open corpses before looting | AutoLoot |
+| TASK-PKT-005 | BandageHeal.BuffDebuff callback mancante | Packet Handler |
+
+### :orange_circle: Priorita ALTA (feature utente significative)
+
+| ID | Descrizione | Area |
+|----|-------------|------|
+| TASK-SER-001/002 | Serial helpers (IsMobile/IsItem/IsValid/Parse) | Core |
+| TASK-MOB-007 | ProcessPacketFlags (paralyzed/female/poisoned/blessed/warmode/visible) | Core Entity |
+| TASK-MOB-008 | OverheadMessage (6 overload) | Core Entity |
+| TASK-MOB-009 + TASK-ITEM-018 | Cascading remove (Mobile.Remove + Item.Remove) | Core Entity |
+| TASK-SPL-001/002/003 | Spell flags (B/H/N), WordsOfPower, Reagents | Spells |
+| TASK-BUF-001 | Buff icon table incompleta (~48 vs 170+) | Buffs |
+| TASK-AGT-010/011 | Friend auto-accept party + prevent attack | Friends |
+| TASK-AGT-015 | Per-script journal instances | Journal |
+| TASK-AGT-018 | SpellGrid service backend | SpellGrid |
+| TASK-AGT-019/020 | Weapon-ability mapping + icons | SpecialMoves |
+| TASK-UI-002 | Hue Override Settings | UI |
+| TASK-UI-004 | Profile Link/Unlink a personaggio | UI |
+| TASK-PKT-001 | 0xC2 S2C handler mancante | Packet |
+| TASK-PKT-004 | GumpIgnore callback mancante | Packet |
+
+### :yellow_circle: Priorita MEDIA
+
+| ID | Descrizione | Area |
+|----|-------------|------|
+| TASK-ENT-001 | ContextMenu dictionary su UOEntity | Core Entity |
+| TASK-ENT-002 | Body alias per Graphic | Core Entity |
+| TASK-MOB-005 | GetNotorietyColor | Mobile |
+| TASK-MOB-010/011 | OnNotoChange/OnMapChange hooks | Mobile |
+| TASK-MOB-012 | NameToFameKarma lookup table | Mobile |
+| TASK-PLR-002 | Menu state (pacchetto 0x7C) | Player |
+| TASK-PLR-004 | LastWeaponRight/Left tracking | Player |
+| TASK-PLR-005 | Criminal timer | Player |
+| TASK-PLR-007 | MaxWeight auto-calc da STR | Player |
+| TASK-PLR-010 | LastSkill/LastSpell tracking | Player |
+| TASK-PLR-011/012 | Max Resistance caps / MaxDCI | Player |
+| TASK-WLD-002/003/004 | FindItems, FindAllByGraphicAndHue, CorpsesInRange | World |
+| TASK-WLD-005 | ShardName/OrigPlayerName/AccountName | World |
+| TASK-GEO-001/002 | Point3D.Parse, operatori +/- | Geometry |
+| TASK-AGT-001 | AutoLoot: ricerca sub-container + waist layer | AutoLoot |
+| TASK-AGT-002 | AutoLoot: per-item loot bag override | AutoLoot |
+| TASK-AGT-004 | BandageHeal: ricerca belly pouch | BandageHeal |
+| TASK-AGT-007 | Scavenger: check weight | Scavenger |
+| TASK-AGT-016 | WaitForTargetOrFizzle | Target |
+| TASK-AGT-023 | PathMove.RunPath() auto-walk | PathFinding |
+| TASK-AGT-024 | CUO API stub (LoadMarkers, GoToMarker, etc.) | CUO |
+| TASK-AGT-028 | Comandi text agent mancanti | Commands |
+| TASK-FLT-001 | Label Wall Static Field | Filters |
+
+### :green_circle: Priorita BASSA
+
+| ID | Descrizione | Area |
+|----|-------------|------|
+| TASK-ENT-004 | OnPositionChanging hook | Core Entity |
+| TASK-MOB-006 | GetStatusCode | Mobile |
+| TASK-MOB-013 | StatsUpdated/PropsUpdated flags | Mobile |
+| TASK-MOB-015 | ButtonPoint | Mobile |
+| TASK-PLR-003 | DoubleClick logica complessa (auto-equip pozione) | Player |
+| TASK-PLR-006 | VisRange default (31 vs 18) | Player |
+| TASK-PLR-008 | ForcedSeason | Player |
+| TASK-PLR-009 | Local vs Global LightLevel | Player |
+| TASK-PLR-013 | QueryString state | Player |
+| TASK-WLD-001 | Multis tracking | World |
+| TASK-GEO-003/004 | Line2D, Rectangle2D.Contains | Geometry |
+| TASK-FAC-001/002 | GetMap, ZTop, GetAverageZ | Facet |
+| TASK-BUF-002 | BuffInfo rich object | Buffs |
+| TASK-SPL-004/005/006 | GetHue, auto-unequip cast, spells.def loading | Spells |
+| TASK-ITEM-006-014 | Auto-property classificazione items (IsResource, IsPotion, etc.) | Item |
+| TASK-ITEM-015 | MapItem/CorpseItem subtypes | Item |
+| TASK-ITEM-016 | Weapons data loading | Item |
+| TASK-ITEM-017 | AutoStackResource | Item |
+| TASK-ITEM-019 | HouseRevision/HousePacket | Item |
+| TASK-PKT-002/003 | CreateCharacter handler | Packet |
+| TASK-AGT-005/006 | BandageHeal: low warning, ghost check | BandageHeal |
+| TASK-AGT-008 | Scavenger: IsLootableTarget check | Scavenger |
+| TASK-AGT-009 | Vendor: LastResellList | Vendor |
+| TASK-AGT-014 | HotKey: MasterKey | HotKey |
+| TASK-AGT-021 | Profile auto-detect per serial | Config |
+| TASK-AGT-022 | SeasonManager | Seasons |
+| TASK-AGT-025/026 | UOSteam gumplist + findwand stubs | UOSteam |
+| TASK-AGT-027 | Script recording output C# | ScriptRecorder |
+| TASK-API-001 | Items.GetProperties con delay | API |
+| TASK-API-002-009 | CUO API stubs (architetturalmente limitati) | API |
+| TASK-UI-005 | Hotkey Master Key | UI |
+| TASK-UI-006 | Journal Filter Grid | UI |
+| TASK-UI-007 | Enhanced Map Path Setting | UI |
+| TASK-UI-008 | DPS Meter Filter | UI |
+| TASK-UI-009 | Video Playback & File Browser | UI |
+
+---
+
+## Statistiche Finali
+
+| Metrica | Valore |
+|---------|--------|
+| File legacy analizzati | ~257 |
+| File nuovo codice analizzati | ~299 |
+| Discrepanze totali identificate | **126** |
+| — Priorita Critica | 8 cluster |
+| — Priorita Alta | 14 task |
+| — Priorita Media | 27 task |
+| — Priorita Bassa | 38 task |
+| Feature con parita completa | ~75% delle classi/servizi |
+| Feature nuove (non nel legacy) | 14+ pagine UI, debug scripting, 14 nuovi packet handler |
+| Handler pacchetti con parita | 50 su 55 (91%) |
+| Azioni macro con parita | 43 su 43 (100%) |
+| Metodi API scripting con parita | ~98% |

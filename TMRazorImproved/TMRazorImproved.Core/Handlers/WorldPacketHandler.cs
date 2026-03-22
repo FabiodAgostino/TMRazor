@@ -662,6 +662,8 @@ namespace TMRazorImproved.Core.Handlers
             }
 
             // Lista equipaggiamento: termina con serial=0
+            var newEquipped = new System.Collections.Generic.List<uint>();
+            bool hasMountItem = false;
             while (reader.Remaining >= 4)
             {
                 uint itemSerial = reader.ReadUInt32();
@@ -690,6 +692,16 @@ namespace TMRazorImproved.Core.Handlers
                     item.Layer = layer;
                     item.Container = serial;
                 }
+
+                newEquipped.Add(itemSerial);
+                if (layer == (byte)Layer.Mount) hasMountItem = true;
+            }
+
+            lock (mobile.SyncRoot)
+            {
+                mobile.EquippedItemSerials.Clear();
+                mobile.EquippedItemSerials.AddRange(newEquipped);
+                mobile.Mounted = hasMountItem;
             }
 
             if (isPlayer)
@@ -1208,6 +1220,17 @@ namespace TMRazorImproved.Core.Handlers
 
             if (containerSerial != 0)
             {
+                var containerItem = _worldService.FindItem(containerSerial);
+                if (containerItem != null)
+                {
+                    lock (containerItem.SyncRoot)
+                    {
+                        containerItem.ContainedItemSerials.Clear();
+                        foreach (var ci in addedItems)
+                            containerItem.ContainedItemSerials.Add(ci.Serial);
+                    }
+                }
+
                 _worldService.SetLastOpenedContainer(containerSerial);
                 _messenger.Send(new ContainerContentMessage(containerSerial, addedItems.AsReadOnly()));
             }
@@ -1251,6 +1274,16 @@ namespace TMRazorImproved.Core.Handlers
                 item.Layer = 0;
             }
 
+            var containerItem = _worldService.FindItem(containerSerial);
+            if (containerItem != null)
+            {
+                lock (containerItem.SyncRoot)
+                {
+                    if (!containerItem.ContainedItemSerials.Contains(itemSerial))
+                        containerItem.ContainedItemSerials.Add(itemSerial);
+                }
+            }
+
             _messenger.Send(new ContainerItemAddedMessage(containerSerial, itemSerial));
         }
 
@@ -1285,11 +1318,20 @@ namespace TMRazorImproved.Core.Handlers
                 item.Z = 0;
             }
 
-            if (layer == (byte)Layer.Backpack)
+            var mobile = _worldService.FindMobile(mobileSerial);
+            if (mobile != null)
             {
-                var mobile = _worldService.FindMobile(mobileSerial);
-                if (mobile != null)
-                    lock (mobile.SyncRoot) { mobile.Backpack = item; }
+                lock (mobile.SyncRoot)
+                {
+                    if (layer == (byte)Layer.Backpack)
+                        mobile.Backpack = item;
+
+                    if (!mobile.EquippedItemSerials.Contains(itemSerial))
+                        mobile.EquippedItemSerials.Add(itemSerial);
+
+                    if (layer == (byte)Layer.Mount)
+                        mobile.Mounted = true;
+                }
             }
 
             _messenger.Send(new EquipmentChangedMessage(mobileSerial, itemSerial, layer));
@@ -1349,7 +1391,7 @@ namespace TMRazorImproved.Core.Handlers
             string name = reader.ReadString(30);
             ushort hits = reader.ReadUInt16();
             ushort maxHits = reader.ReadUInt16();
-            reader.ReadByte();           // can rename
+            byte canRename = reader.ReadByte();
             byte type = reader.ReadByte();
 
             var m = _worldService.FindMobile(serial);
@@ -1364,6 +1406,7 @@ namespace TMRazorImproved.Core.Handlers
                 m.Name = name.TrimEnd('\0');
                 m.Hits = hits;
                 m.HitsMax = maxHits;
+                m.CanRename = canRename != 0;
 
                 if (type >= 1 && reader.Remaining >= 14)
                 {
@@ -1387,7 +1430,7 @@ namespace TMRazorImproved.Core.Handlers
                 if (type >= 5 && reader.Remaining >= 3)
                 {
                     m.MaxWeight = reader.ReadUInt16();
-                    reader.ReadByte(); // race
+                    m.Race = reader.ReadByte();
                 }
 
                 if (type >= 3 && reader.Remaining >= 4)

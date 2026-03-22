@@ -12,6 +12,7 @@ using TMRazorImproved.Shared.Interfaces;
 using TMRazorImproved.Shared.Enums;
 using TMRazorImproved.Shared.Messages;
 using System.IO;
+using System.Collections.Generic;
 
 namespace TMRazorImproved.Core.Services.Scripting
 {
@@ -105,9 +106,14 @@ class _SafeTime_:
 _sys_.modules['time'] = _SafeTime_()
 del _SafeTime_, _time_orig_
 
-def _make_tracer_(_c_, _interval_, _svc_):
+def _make_tracer_(_c_, _interval_, _svc_, _dbg_):
     _n_ = [0]
     def _t_(frame, event, arg):
+        if event == 'line' and _dbg_ is not None:
+            if _dbg_.ShouldPause(frame.f_lineno):
+                _dbg_.PauseHere()
+                while _dbg_.IsPaused and not _c_.IsCancelled:
+                    Misc.Pause(50)
         _n_[0] += 1
         if _n_[0] >= _interval_:
             _n_[0] = 0
@@ -118,7 +124,7 @@ def _make_tracer_(_c_, _interval_, _svc_):
         return _t_
     return _t_
 
-_sys_.settrace(_make_tracer_(__cancel__, __trace_interval__, __script_svc__))
+_sys_.settrace(_make_tracer_(__cancel__, __trace_interval__, __script_svc__, __debug__))
 del _make_tracer_, _sys_
 ";
 
@@ -155,8 +161,34 @@ del _make_tracer_, _sys_
         // Un solo script alla volta
         private readonly SemaphoreSlim _executionLock = new(1, 1);
 
+        // Debug controller — persiste tra esecuzioni (breakpoint rimangono), ma stato pausa/step resettato
+        private readonly ScriptDebugController _debugController = new();
+
         public bool IsRunning => _isRunning;
         public string? CurrentScriptName => _currentScriptName;
+
+        // Debug interface
+        public bool IsPaused => _debugController.IsPaused;
+        public int CurrentDebugLine => _debugController.CurrentLine;
+        public event Action<int>? DebugPaused;
+        public void SetBreakpoint(int line) => _debugController.SetBreakpoint(line);
+        public void ClearBreakpoint(int line) => _debugController.ClearBreakpoint(line);
+        public void ClearAllBreakpoints() => _debugController.ClearAll();
+        public IEnumerable<int> GetBreakpoints() => _debugController.Breakpoints;
+        public void ContinueExecution() => _debugController.Continue();
+        public void StepInto() => _debugController.StepInto();
+
+        // FR-079: Inspector Debug API
+        public IReadOnlyDictionary<string, object> GetSharedScriptData()
+            => new System.Collections.Generic.Dictionary<string, object>(MiscApi.SharedValues);
+
+        public IReadOnlyList<ScriptTimerInfo> GetActiveTimers()
+        {
+            var result = new System.Collections.Generic.List<ScriptTimerInfo>();
+            foreach (var (name, timer) in TimerApi.Timers)
+                result.Add(new ScriptTimerInfo(name, timer.Interval, Math.Max(0, timer.TimeLeft), timer.Enabled));
+            return result;
+        }
 
         public event Action<string?>? ScriptsChanged;
         public event Action<string>? OutputReceived;
@@ -180,6 +212,7 @@ del _make_tracer_, _sys_
         private readonly IDPSMeterService _dpsMeter;
         private readonly IPacketLoggerService _packetLogger;
         private readonly IMultiService _multiService;
+        private readonly IDragDropCoordinator? _dragDropCoordinator;
 
         public ScriptingService(
             IWorldService world,
@@ -208,7 +241,8 @@ del _make_tracer_, _sys_
             IMultiService multiService,
             IMessenger messenger,
             ILogger<ScriptingService> logger,
-            ILoggerFactory loggerFactory)
+            ILoggerFactory loggerFactory,
+            IDragDropCoordinator? dragDropCoordinator = null)
         {
             _world = world;
             _packetService = packetService;
@@ -237,9 +271,13 @@ del _make_tracer_, _sys_
             _messenger = messenger;
             _logger = logger;
             _loggerFactory = loggerFactory;
+            _dragDropCoordinator = dragDropCoordinator;
 
             messenger.RegisterAll(this);
             InitScriptsWatcher(_config.Global.ScriptsPath);
+
+            // Propaga l'evento DebugPaused dal controller all'interfaccia pubblica
+            _debugController.DebugPaused += line => DebugPaused?.Invoke(line);
         }
 
         private void InitScriptsWatcher(string? path)
@@ -568,13 +606,17 @@ del _make_tracer_, _sys_
             var cancelCtrl = new ScriptCancellationController(cts.Token);
             var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService, hotkeyService: _hotkeyService);
 
+            // Reset stato pausa/step (mantiene i breakpoint impostati prima dell'esecuzione)
+            _debugController.Continue();
+
             scope.SetVariable("__stdout__",        stdout);
             scope.SetVariable("__stderr__",        stderr);
             scope.SetVariable("__cancel__",        cancelCtrl);
             scope.SetVariable("__trace_interval__", TraceInterval);
             scope.SetVariable("__script_svc__",     this);
+            scope.SetVariable("__debug__",          _debugController);
             scope.SetVariable("Misc",              miscApi);
-            var itemsApi = new ItemsApi(_world, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
+            var itemsApi = new ItemsApi(_world, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger, null, _dragDropCoordinator);
             var mobilesApi = new MobilesApi(_world, _friendsService, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
             var staticsApi = new StaticsApi(cancelCtrl, _multiService);
             
@@ -645,7 +687,7 @@ del _make_tracer_, _sys_
 
             var cancelCtrl = new ScriptCancellationController(cts.Token);
             var miscApi    = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService, hotkeyService: _hotkeyService);
-            var itemsApi   = new ItemsApi(_world, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
+            var itemsApi   = new ItemsApi(_world, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger, null, _dragDropCoordinator);
             var mobilesApi = new MobilesApi(_world, _friendsService, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
             var playerApi  = new PlayerApi(_world, _packetService, _targetingService, _skillsService, cancelCtrl, _interopService, logger: _loggerFactory.CreateLogger<PlayerApi>(), config: _config);
             var journalApi = new JournalApi(_journalService, cancelCtrl);
@@ -696,7 +738,7 @@ del _make_tracer_, _sys_
 
             var cancelCtrl = new ScriptCancellationController(cts.Token);
             var misc = new MiscApi(_world, _packetService, _interopService, cancelCtrl, line => OutputReceived?.Invoke(line), _targetingService, hotkeyService: _hotkeyService);
-            var itemsApi = new ItemsApi(_world, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger);
+            var itemsApi = new ItemsApi(_world, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<ItemsApi>(), _messenger, null, _dragDropCoordinator);
             var mobilesApi = new MobilesApi(_world, _friendsService, _packetService, _targetingService, cancelCtrl, _loggerFactory.CreateLogger<MobilesApi>());
             var staticsApi = new StaticsApi(cancelCtrl, _multiService);
             var globals = new ScriptGlobals

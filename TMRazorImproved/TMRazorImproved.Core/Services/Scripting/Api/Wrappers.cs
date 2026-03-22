@@ -159,7 +159,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
         public override bool IsYellowHits { get => _inner.IsYellowHits; set => _inner.IsYellowHits = value; }
         public new bool Poisoned => IsPoisoned;
         public new bool YellowHits => IsYellowHits;
-        public bool CanRename => false;
+        public override bool CanRename => false;
         public override byte Notoriety { get => _inner.Notoriety; set => _inner.Notoriety = value; }
         public override byte Direction { get => _inner.Direction; set => _inner.Direction = value; }
         public override bool WarMode { get => _inner.WarMode; set => _inner.WarMode = value; }
@@ -170,7 +170,7 @@ namespace TMRazorImproved.Core.Services.Scripting.Api
 
         public override Item? Backpack { get { var bp = _world.Items.FirstOrDefault(i => i.Container == _inner.Serial && i.Layer == 0x15); return bp != null ? new ScriptItem(bp, _world, _packet, _targeting) : null; } }
         public override bool IsHidden { get => _inner.IsHidden; set => _inner.IsHidden = value; }
-        public bool Visible => !IsHidden;
+        public override bool Visible => !IsHidden;
         public override ushort Str { get => _inner.Str; set => _inner.Str = value; }
         public override ushort Dex { get => _inner.Dex; set => _inner.Dex = value; }
         public override ushort Int { get => _inner.Int; set => _inner.Int = value; }

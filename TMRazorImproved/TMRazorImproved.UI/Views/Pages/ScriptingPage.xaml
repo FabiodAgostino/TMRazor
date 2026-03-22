@@ -102,6 +102,27 @@
                                Padding="12,6"
                                ToolTip="Apri il riferimento API di scripting"
                                Click="OpenApiReference_Click"/>
+
+                    <!-- Debug toolbar: visible only while paused -->
+                    <Border Width="1" Background="{DynamicResource ControlBorderColorBrush}"
+                            Margin="0,4,8,4"
+                            Visibility="{Binding IsPaused, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <ui:Button Content="▶ Continua"
+                               Appearance="Caution"
+                               Padding="12,6"
+                               Margin="0,0,4,0"
+                               Command="{Binding ContinueCommand}"
+                               ToolTip="Riprende l'esecuzione fino al prossimo breakpoint (F5)"
+                               Visibility="{Binding IsPaused, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <ui:Button Content="↓ Step"
+                               Appearance="Caution"
+                               Padding="12,6"
+                               Margin="0,0,8,0"
+                               Command="{Binding StepIntoCommand}"
+                               ToolTip="Esegue una riga e si ferma (F11)"
+                               Visibility="{Binding IsPaused, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </StackPanel>
             </Grid>
         </ui:Card>

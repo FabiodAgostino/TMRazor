@@ -359,6 +359,16 @@ namespace TMRazorImproved.Core.Handlers
             if (profile.FilterKarmaFame && (text.Contains("fame", StringComparison.OrdinalIgnoreCase) || text.Contains("karma", StringComparison.OrdinalIgnoreCase) || text.Contains("notoriety", StringComparison.OrdinalIgnoreCase))) return false;
             if (profile.FilterSnoop && (text.Contains("snoop", StringComparison.OrdinalIgnoreCase) || text.Contains("peek", StringComparison.OrdinalIgnoreCase))) return false;
 
+            // Stringhe configurabili dall'utente (equivalente legacy AsciiMessageFilter custom strings)
+            if (profile.FilteredMessageStrings.Count > 0)
+            {
+                foreach (var s in profile.FilteredMessageStrings)
+                {
+                    if (!string.IsNullOrEmpty(s) && text.Contains(s, StringComparison.OrdinalIgnoreCase))
+                        return false;
+                }
+            }
+
             return true;
         }
 
